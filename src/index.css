@@ -250,19 +250,17 @@ body {
 }
 
 /* ──────────────────────────────────────────
-   SCROLLBAR STYLING
+   SCROLLBAR STYLING (HIDDEN)
    ────────────────────────────────────────── */
 ::-webkit-scrollbar {
-    width: 4px;
+    display: none;
+    width: 0px;
+    height: 0px;
 }
 
-::-webkit-scrollbar-track {
-    background: var(--bg-main);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--brand-primary);
-    border-radius: 2px;
+html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
 /* ──────────────────────────────────────────
