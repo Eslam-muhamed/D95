@@ -1,0 +1,282 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ──────────────────────────────────────────
+   CSS CUSTOM PROPERTIES — D95 BRAND IDENTITY
+   ────────────────────────────────────────── */
+:root {
+    /* DARK MODE (default) */
+    --brand-primary: #9B1C1C;
+    --brand-primary-rgb: 155, 28, 28;
+    --brand-secondary: #D4A017;
+    --brand-accent: #C41E3A;
+    --brand-accent-rgb: 196, 30, 58;
+
+    --bg-main: #090707;
+    --bg-card: #110D0D;
+    --bg-card-alt: #1A1212;
+
+    --bg-main-rgb: 9, 7, 7;
+    --bg-card-rgb: 17, 13, 13;
+    --bg-card-alt-rgb: 26, 18, 18;
+
+    --text-1: #F2EDE8;
+    --text-2: #C8B0A0;
+    --text-3: #9A8070;
+    --text-4: #7A6358;
+    --text-5: #4A3830;
+
+    --border-1: rgba(155, 28, 28, 0.08);
+    --border-2: rgba(155, 28, 28, 0.12);
+    --border-3: rgba(155, 28, 28, 0.18);
+
+    --surface-1: rgba(255, 255, 255, 0.02);
+    --surface-2: rgba(255, 255, 255, 0.04);
+    --surface-3: rgba(255, 255, 255, 0.06);
+
+    --glass-bg: rgba(9, 7, 7, 0.88);
+    --modal-shadow: 0 0 80px rgba(155, 28, 28, 0.15), 0 -20px 60px rgba(0, 0, 0, 0.90);
+
+    --delete-bg: rgba(248, 113, 113, 0.08);
+    --delete-border: rgba(248, 113, 113, 0.18);
+    --delete-text: #f87171;
+
+    /* Guzel Palette */
+    --c-bg: #0f0608;
+    --c-card: #1a080c;
+    --c-card-alt: #220a10;
+    --c-text-1: #f5ece8;
+    --c-text-2: #d4b8bc;
+    --c-text-3: #a88890;
+    --c-text-4: #7a5a60;
+    --c-text-5: #4a3038;
+    --c-brand: #8B1A2A;
+    --c-brand-l: #C45C6A;
+    --c-on-card: #F4C2C8;
+    --c-border: rgba(139, 26, 42, 0.18);
+}
+
+[data-theme="light"] {
+    --brand-primary: #8B1A1A;
+    --brand-primary-rgb: 139, 26, 26;
+
+    --bg-main: #F5F0EB;
+    --bg-card: #ffffff;
+    --bg-card-alt: #EDE5DC;
+
+    --bg-main-rgb: 245, 240, 235;
+    --bg-card-rgb: 255, 255, 255;
+    --bg-card-alt-rgb: 237, 229, 220;
+
+    --text-1: #1A1010;
+    --text-2: #3D2820;
+    --text-3: #6B4A3A;
+    --text-4: #9A7060;
+    --text-5: #C8A898;
+
+    --border-1: rgba(139, 26, 26, 0.07);
+    --border-2: rgba(139, 26, 26, 0.11);
+    --border-3: rgba(139, 26, 26, 0.16);
+
+    --surface-1: rgba(0, 0, 0, 0.02);
+    --surface-2: rgba(0, 0, 0, 0.04);
+    --surface-3: rgba(0, 0, 0, 0.06);
+
+    --glass-bg: rgba(245, 240, 235, 0.94);
+    --modal-shadow: 0 0 60px rgba(139, 26, 26, 0.10), 0 -8px 40px rgba(0, 0, 0, 0.08);
+
+    --delete-bg: rgba(220, 60, 60, 0.06);
+    --delete-border: rgba(220, 60, 60, 0.15);
+    --delete-text: #c53030;
+}
+
+/* ──────────────────────────────────────────
+   BASE STYLES
+   ────────────────────────────────────────── */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Cairo', 'Inter', system-ui, sans-serif;
+    background: #090707;
+    background: var(--bg-main);
+    color: var(--text-1);
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
+    direction: rtl;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.font-serif {
+    font-family: 'Playfair Display', Georgia, serif;
+}
+
+.pt-safe {
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
+.pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/* ──────────────────────────────────────────
+   BRAND UTILITY CLASSES
+   ────────────────────────────────────────── */
+.brand-text {
+    background: linear-gradient(135deg, #8B1A2A 0%, #C45C6A 50%, #8B1A2A 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.brand-text-shimmer {
+    background: linear-gradient(135deg, #8B1A2A 0%, #C45C6A 25%, #F4C2C8 50%, #C45C6A 75%, #8B1A2A 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3.5s linear infinite;
+}
+
+.brand-border {
+    border: 1px solid var(--border-2);
+}
+
+.card-glow-hover:hover {
+    box-shadow: 0 0 28px rgba(139, 26, 42, 0.28);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Floating brand button */
+.brand-float-btn {
+    position: fixed;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    box-shadow: 0 4px 20px rgba(var(--brand-primary-rgb), 0.4);
+    animation: surprisePulse 3s ease-in-out infinite;
+    cursor: pointer;
+    border: none;
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+}
+
+/* ──────────────────────────────────────────
+   KEYFRAMES
+   ────────────────────────────────────────── */
+@keyframes shimmer {
+    to {
+        background-position: 200% center;
+    }
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0)
+    }
+
+    50% {
+        transform: translateY(-12px)
+    }
+}
+
+@keyframes beanFloat {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg)
+    }
+
+    50% {
+        transform: translateY(-18px) rotate(8deg)
+    }
+}
+
+@keyframes surprisePulse {
+
+    0%,
+    100% {
+        box-shadow: 0 4px 20px rgba(var(--brand-primary-rgb), 0.35)
+    }
+
+    50% {
+        box-shadow: 0 4px 32px rgba(var(--brand-primary-rgb), 0.65), 0 0 0 10px rgba(var(--brand-primary-rgb), 0.08)
+    }
+}
+
+@keyframes fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(24px)
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0)
+    }
+}
+
+@keyframes drip {
+    0% {
+        transform: scaleY(0) translateY(-100%);
+        opacity: 0
+    }
+
+    100% {
+        transform: scaleY(1) translateY(0);
+        opacity: 1
+    }
+}
+
+/* ──────────────────────────────────────────
+   SCROLLBAR STYLING
+   ────────────────────────────────────────── */
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-main);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--brand-primary);
+    border-radius: 2px;
+}
+
+/* ──────────────────────────────────────────
+   GLASS MORPHISM
+   ────────────────────────────────────────── */
+.glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+/* ──────────────────────────────────────────
+   ANIMATIONS UTILITY
+   ────────────────────────────────────────── */
+.animate-fade-up {
+    animation: fade-up 0.6s ease-out forwards;
+}
