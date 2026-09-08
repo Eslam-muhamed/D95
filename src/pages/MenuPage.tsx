@@ -9,12 +9,6 @@ import OffersSection from '@/components/features/OffersSection';
 import MenuSection from '@/components/features/MenuSection';
 import ItemCustomizerModal from '@/components/features/ItemCustomizerModal';
 import CartSheet from '@/components/features/CartSheet';
-import SurpriseButton from '@/components/features/SurpriseButton';
-import SurpriseModal from '@/components/features/SurpriseModal';
-import WhatsAppButton from '@/components/features/WhatsAppButton';
-import GamesButton from '@/components/features/GamesButton';
-import XOGame from '@/components/features/XOGame';
-import SpyGame from '@/components/features/SpyGame';
 import Footer from '@/components/layout/Footer';
 import ReviewsSection from '@/components/features/ReviewsSection';
 import ContactSection from '@/components/features/ContactSection';
@@ -69,9 +63,6 @@ export default function MenuPage() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
-  const [surpriseOpen, setSurpriseOpen] = useState(false);
-  const [xoOpen, setXoOpen] = useState(false);
-  const [spyOpen, setSpyOpen] = useState(false);
 
   const handleCategoryChange = (id: string) => {
     setActiveCategory(id);
@@ -232,16 +223,9 @@ export default function MenuPage() {
 
       {/* Scroll to Top */}
       <ScrollToTop />
-      <SurpriseButton onClick={() => setSurpriseOpen(true)} />
-      <WhatsAppButton />
-      <GamesButton onXO={() => setXoOpen(true)} onSpy={() => setSpyOpen(true)} />
-
       {/* ── Modals ── */}
       <ItemCustomizerModal item={selectedItem} onClose={() => setSelectedItem(null)} />
       <CartSheet open={cartOpen} onClose={() => setCartOpen(false)} />
-      <SurpriseModal open={surpriseOpen} onClose={() => setSurpriseOpen(false)} />
-      <XOGame open={xoOpen} onClose={() => setXoOpen(false)} />
-      <SpyGame open={spyOpen} onClose={() => setSpyOpen(false)} />
     </div>
   );
 }
