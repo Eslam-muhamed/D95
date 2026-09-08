@@ -8,9 +8,15 @@ import {
     Check,
     Lock,
     DoorClosed,
+    Gamepad2,
+    Tv,
+    Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+
+import room01InteriorImg from '@/assets/doors/room-01-interior.jpg';
+import room02InteriorImg from '@/assets/doors/room-02-interior.jpg';
 
 interface SnackAddon {
     id: string;
@@ -48,17 +54,27 @@ const AVAILABLE_ROOMS = [
     {
         id: 'room-1',
         name: 'غرفة 01 (Play Room)',
-        nameEn: 'ROOM 1',
+        nameEn: 'ROOM 01',
+        titleAr: 'غرفة الأبطال (THE ARENA)',
         rate: 100,
-        specs: 'شاشة 65 بوصة 4K 120Hz • 4 دراعات PS5',
+        specs: 'شاشة 65 بوصة 4K 120Hz • 4 دراعات PS5 • ساوند بار سينمائي',
+        accentColor: '#00d2ff',
+        neonBorder: 'border-[#00d2ff]',
+        neonGlow: 'shadow-[0_0_30px_rgba(0,210,255,0.35)]',
+        interiorImg: room01InteriorImg,
         bookedSlotsIndices: [2, 5], // Mock occupied slots
     },
     {
         id: 'room-2',
         name: 'غرفة 02 (Play Room)',
-        nameEn: 'ROOM 2',
+        nameEn: 'ROOM 02',
+        titleAr: 'غرفة النجوم (VIP SUITE)',
         rate: 100,
-        specs: 'شاشة 65 بوصة 4K 120Hz • 4 دراعات PS5',
+        specs: 'شاشة 65 بوصة 4K 120Hz • 4 دراعات PS5 • سقف نجوم وإضاءة نيون',
+        accentColor: '#ff007f',
+        neonBorder: 'border-[#ff007f]',
+        neonGlow: 'shadow-[0_0_30px_rgba(255,0,127,0.35)]',
+        interiorImg: room02InteriorImg,
         bookedSlotsIndices: [1, 4], // Mock occupied slots
     },
 ];
@@ -371,6 +387,57 @@ export default function BookingDetailsPage() {
 
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col relative z-10 w-full pt-20 pb-32 px-3.5 sm:px-6 max-w-4xl mx-auto space-y-3.5" dir="rtl">
+                {/* ─────────────────────────────────────────────────────────────
+                    ENTERED ROOM SHOWCASE BANNER (SEAMLESS IMMERSION FROM 3D DOOR)
+                   ───────────────────────────────────────────────────────────── */}
+                <section
+                    className={`relative rounded-2xl sm:rounded-3xl overflow-hidden border-2 ${currentRoom.neonBorder} ${currentRoom.neonGlow} backdrop-blur-md shadow-2xl transition-all duration-500`}
+                >
+                    <div className="relative h-44 sm:h-56 w-full overflow-hidden">
+                        <img
+                            src={currentRoom.interiorImg}
+                            alt={currentRoom.name}
+                            className="w-full h-full object-cover brightness-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0809] via-black/45 to-transparent" />
+
+                        {/* Status chip */}
+                        <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/85 border border-emerald-500/70 shadow-lg backdrop-blur-md">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="text-xs font-bold text-emerald-300 font-sans">
+                                ✦ تم فتح الباب والدخول بنجاح
+                            </span>
+                        </div>
+
+                        {/* Room Info */}
+                        <div className="absolute bottom-3 inset-x-3 sm:inset-x-5 z-10 flex items-end justify-between">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] sm:text-xs font-brush tracking-wider uppercase px-2 py-0.5 rounded bg-black/75 border border-white/20 text-white">
+                                        {currentRoom.nameEn}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-neutral-300">
+                                        PlayStation 5 Suite
+                                    </span>
+                                </div>
+                                <h2 className="font-brush text-xl sm:text-2xl text-white font-bold drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                                    {currentRoom.titleAr}
+                                </h2>
+                                <p className="text-[11px] sm:text-xs text-neutral-300 font-medium">
+                                    {currentRoom.specs}
+                                </p>
+                            </div>
+
+                            <div className="text-left bg-black/85 px-3 py-1.5 rounded-xl border border-white/15 shrink-0 hidden xs:block" dir="ltr">
+                                <span className="font-sans font-black text-base sm:text-lg text-white tabular-nums">
+                                    {currentRoom.rate} EGP
+                                </span>
+                                <span className="text-[10px] text-neutral-400 font-bold ml-1">/ HR</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 {/* ─────────────────────────────────────────────────────────────
                     SECTION 1: ATHLETIC ROOM SELECTOR TABS (ROOM 1 vs ROOM 2)
                    ───────────────────────────────────────────────────────────── */}
