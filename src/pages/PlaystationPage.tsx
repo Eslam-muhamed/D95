@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
 import roomInteriorImg from '@/assets/doors/room-interior.jpg';
+import { playPs5StartupSound } from '@/lib/sound';
 
 interface RoomData {
     id: string;
@@ -162,73 +163,6 @@ export default function PlaystationPage() {
     const [activeRoomData, setActiveRoomData] = useState<RoomData | null>(null);
 
     // ─────────────────────────────────────────────────────────────
-    // AUTHENTIC PLAYSTATION STARTUP & CONFIRM CHIME (WEB AUDIO API)
-    // ─────────────────────────────────────────────────────────────
-    const playPlayStationSound = () => {
-        try {
-            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-            if (!AudioCtx) return;
-            const ctx = new AudioCtx();
-            const now = ctx.currentTime;
-
-            // 1. Crystal Two-Tone PlayStation Chime (E6 -> A6 signature chord)
-            const chimeNotes = [
-                { f: 1318.51, t: 0.0, d: 0.85, g: 0.18 },   // E6
-                { f: 1760.00, t: 0.04, d: 0.95, g: 0.22 },  // A6 (Signature PS confirmation note)
-                { f: 2637.02, t: 0.08, d: 1.10, g: 0.12 },  // E7 (High shimmer overtone)
-                { f: 3520.00, t: 0.10, d: 0.60, g: 0.06 },  // A7 (Sparkle)
-            ];
-
-            chimeNotes.forEach((n) => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(n.f, now + n.t);
-
-                gain.gain.setValueAtTime(0, now + n.t);
-                gain.gain.linearRampToValueAtTime(n.g, now + n.t + 0.015);
-                gain.gain.exponentialRampToValueAtTime(0.0001, now + n.t + n.d);
-
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(now + n.t);
-                osc.stop(now + n.t + n.d);
-            });
-
-            // 2. PlayStation Ambient Warm Synth Swell (Deep ethereal pad)
-            const padOsc1 = ctx.createOscillator();
-            const padOsc2 = ctx.createOscillator();
-            const padGain = ctx.createGain();
-            const padFilter = ctx.createBiquadFilter();
-
-            padOsc1.type = 'sawtooth';
-            padOsc1.frequency.setValueAtTime(110.0, now); // A2
-            padOsc2.type = 'sine';
-            padOsc2.frequency.setValueAtTime(220.0, now); // A3
-
-            padFilter.type = 'lowpass';
-            padFilter.frequency.setValueAtTime(220, now);
-            padFilter.frequency.exponentialRampToValueAtTime(1400, now + 0.35);
-            padFilter.frequency.exponentialRampToValueAtTime(280, now + 1.25);
-
-            padGain.gain.setValueAtTime(0, now);
-            padGain.gain.linearRampToValueAtTime(0.14, now + 0.25);
-            padGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.25);
-
-            padOsc1.connect(padFilter);
-            padOsc2.connect(padFilter);
-            padFilter.connect(padGain);
-            padGain.connect(ctx.destination);
-
-            padOsc1.start(now);
-            padOsc2.start(now);
-            padOsc1.stop(now + 1.3);
-            padOsc2.stop(now + 1.3);
-        } catch {
-            // Audio fallback gracefully ignores
-        }
-    };
-
     // ─────────────────────────────────────────────────────────────
     // INTERACTIVE NATURAL DOOR OPENING & PORTAL TRANSITION
     // ─────────────────────────────────────────────────────────────
@@ -236,7 +170,7 @@ export default function PlaystationPage() {
         if (openingDoorId) return; // Prevent double click
         setActiveRoomData(room);
         setOpeningDoorId(room.id);
-        playPlayStationSound();
+        playPs5StartupSound();
 
         // Trigger the cinematic fly-through warp overlay after the door has visibly opened
         setTimeout(() => {

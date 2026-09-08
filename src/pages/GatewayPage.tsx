@@ -1,8 +1,25 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight, Gamepad2, Utensils, Clock, Sparkles } from 'lucide-react';
 import D95BrushLogo from '@/components/brand/D95BrushLogo';
+import { playPs5StartupSound } from '@/lib/sound';
 
 export default function GatewayPage() {
+    const navigate = useNavigate();
+    const [isBootingPs5, setIsBootingPs5] = useState(false);
+
+    const handlePlaystationClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (isBootingPs5) return;
+        setIsBootingPs5(true);
+        playPs5StartupSound();
+
+        // Brief delay to allow sound ignition & button press tactile feedback before routing
+        setTimeout(() => {
+            navigate('/playstation');
+        }, 200);
+    };
+
     return (
         <main className="min-h-[100dvh] w-full bg-[#0d0c0c] text-white overflow-y-auto relative flex flex-col justify-between p-3.5 sm:p-6 pb-20 md:pb-10 select-none bg-concrete-wall">
             {/* Ambient Lighting Cones */}
@@ -122,7 +139,12 @@ export default function GatewayPage() {
                     {/* PORTAL 1: PLAYSTATION & ROOMS */}
                     <Link
                         to="/playstation"
-                        className="group relative flex flex-col items-center justify-between p-3.5 sm:p-6 concrete-card rounded-2xl sm:rounded-3xl border border-white/10 hover:border-red-500/60 transition-all duration-300 active:scale-95 cursor-pointer h-60 sm:h-76 hover:shadow-[0_0_35px_rgba(181,24,36,0.45)]"
+                        onClick={handlePlaystationClick}
+                        className={`group relative flex flex-col items-center justify-between p-3.5 sm:p-6 concrete-card rounded-2xl sm:rounded-3xl border transition-all duration-300 active:scale-95 cursor-pointer h-60 sm:h-76 ${
+                            isBootingPs5
+                                ? 'border-red-500 scale-[0.97] shadow-[0_0_45px_rgba(225,29,72,0.85)] brightness-125'
+                                : 'border-white/10 hover:border-red-500/60 hover:shadow-[0_0_35px_rgba(181,24,36,0.45)]'
+                        }`}
                     >
                         {/* Corner Industrial Marks */}
                         <div className="absolute top-2.5 left-2.5 w-2.5 h-2.5 border-t-2 border-l-2 border-red-500" />
@@ -135,15 +157,16 @@ export default function GatewayPage() {
                             <span className="font-brush text-neutral-400 group-hover:text-red-400 transition-colors tracking-wider">
                                 ZONE 01
                             </span>
-                            <span className="px-1.5 py-0.5 rounded bg-red-600/30 text-red-300 font-bold text-[9px]">
+                            <span className="px-1.5 py-0.5 rounded bg-red-600/30 text-red-300 font-bold text-[9px] flex items-center gap-1">
+                                {isBootingPs5 && <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping" />}
                                 PS5 ARENA
                             </span>
                         </div>
 
                         {/* Center Icon */}
                         <div className="my-auto flex flex-col items-center justify-center relative">
-                            <div className="absolute w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-red-600/15 blur-xl group-hover:bg-red-600/35 transition-all" />
-                            <Gamepad2 className="w-12 h-12 sm:w-16 sm:h-16 text-white group-hover:text-red-400 group-hover:scale-110 transition-all duration-300 relative z-10 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]" />
+                            <div className={`absolute w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-red-600/15 blur-xl transition-all ${isBootingPs5 ? 'scale-125 bg-red-600/60' : 'group-hover:bg-red-600/35'}`} />
+                            <Gamepad2 className={`w-12 h-12 sm:w-16 sm:h-16 text-white transition-all duration-300 relative z-10 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] ${isBootingPs5 ? 'scale-110 text-red-400' : 'group-hover:text-red-400 group-hover:scale-110'}`} />
                         </div>
 
                         {/* Details & Action */}
@@ -152,10 +175,10 @@ export default function GatewayPage() {
                                 PLAYSTATION
                             </h2>
                             <div className="font-body text-[11px] sm:text-xs text-red-300 font-bold">
-                                صالة الألعاب والغرف
+                                {isBootingPs5 ? 'جاري تشغيل PS5...' : 'صالة الألعاب والغرف'}
                             </div>
-                            <div className="mt-1.5 w-full py-2 px-2 bg-gradient-to-r from-red-700 to-red-600 text-white font-body font-bold text-[11px] sm:text-xs rounded-xl flex items-center justify-center gap-1 group-hover:from-red-600 group-hover:to-red-500 transition-all shadow-md shadow-red-900/40">
-                                <span>دخول الصالة</span>
+                            <div className={`mt-1.5 w-full py-2 px-2 bg-gradient-to-r from-red-700 to-red-600 text-white font-body font-bold text-[11px] sm:text-xs rounded-xl flex items-center justify-center gap-1 transition-all shadow-md shadow-red-900/40 ${isBootingPs5 ? 'from-red-500 to-red-400 shadow-red-600/60 ring-2 ring-red-400/50' : 'group-hover:from-red-600 group-hover:to-red-500'}`}>
+                                <span>{isBootingPs5 ? 'STARTING...' : 'دخول الصالة'}</span>
                                 <ArrowRight className="w-3.5 h-3.5 rotate-180" />
                             </div>
                         </div>
