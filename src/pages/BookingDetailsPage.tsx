@@ -1,8 +1,22 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowRight, Gamepad2, Calendar, Clock, Receipt, CheckCircle2, Sparkles, Coffee, Plus, Check } from 'lucide-react';
+import {
+    ArrowRight,
+    Gamepad2,
+    Calendar,
+    Clock,
+    CheckCircle2,
+    Sparkles,
+    Coffee,
+    Plus,
+    Check,
+    Lock,
+    Zap,
+    DoorClosed,
+    Info,
+} from 'lucide-react';
 import { toast } from 'sonner';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface SnackAddon {
     id: string;
@@ -18,53 +32,86 @@ const SNACK_OPTIONS: SnackAddon[] = [
         name: 'كومبو الجيمرز (ريدبول + سناك شيبس ومكسرات)',
         price: 55,
         description: 'طاقة وتركيز إضافي للجلسات الطويلة',
-        icon: '⚡'
+        icon: '⚡',
     },
     {
         id: 'coffee_specialty',
         name: 'قهوة سبيشالتي دبل إسبريسو / آيس لاتيه',
         price: 40,
         description: 'بُن برازيلي فاخر محمص طازجاً',
-        icon: '☕'
+        icon: '☕',
     },
     {
         id: 'water_cold',
         name: 'مياه معدنية مثلجة (حجم كبير)',
         price: 15,
         description: 'انتعاش مستمر أثناء اللعب',
-        icon: '💧'
-    }
+        icon: '💧',
+    },
 ];
 
-// Pre-calculated popular time chips
-const TIME_SLOTS = [
-    { time: '14:00', label: '02:00 م', period: 'الظهيرة' },
-    { time: '16:00', label: '04:00 م', period: 'العصر' },
-    { time: '18:00', label: '06:00 م', period: 'المغرب' },
-    { time: '20:00', label: '08:00 م', period: 'ذروة الجيمرز 🔥' },
-    { time: '22:00', label: '10:00 م', period: 'السهرة' },
-    { time: '00:00', label: '12:00 ص', period: 'منتصف الليل' }
+const AVAILABLE_ROOMS = [
+    {
+        id: 'room-1',
+        name: 'غرفة 01 (Play Room)',
+        nameEn: 'ROOM 1',
+        rate: 100,
+        specs: 'شاشة 65 بوصة 4K 120Hz • 4 دراعات PS5',
+        bookedSlotsIndices: [2, 5], // Mock occupied slots
+    },
+    {
+        id: 'room-2',
+        name: 'غرفة 02 (Play Room)',
+        nameEn: 'ROOM 2',
+        rate: 100,
+        specs: 'شاشة 65 بوصة 4K 120Hz • 4 دراعات PS5',
+        bookedSlotsIndices: [1, 4], // Mock occupied slots
+    },
 ];
+
+interface DynamicSlot {
+    id: string;
+    index: number;
+    startDisplay: string;
+    endDisplay: string;
+    fullLabel: string;
+    periodName: string;
+    isBooked: boolean;
+    startHour: number;
+    startMinute: number;
+    endHour: number;
+    endMinute: number;
+}
 
 export default function BookingDetailsPage() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Read room details from router state or fallback
-    const roomDetails = location.state?.room || {
-        name: 'غرفة 01 (PlayStation 5)',
+    // Read room details from router state or fallback to Room 1
+    const initialRoom = location.state?.room || {
+        name: 'غرفة 01 (Play Room)',
         type: 'standard',
-        rate: 100
+        rate: 100,
     };
 
-    const ratePerHour = roomDetails.rate || (roomDetails.type === 'vip' ? 120 : 100);
+    const [selectedRoomId, setSelectedRoomId] = useState<string>(() => {
+        if (initialRoom.name && initialRoom.name.includes('02')) return 'room-2';
+        return 'room-1';
+    });
+
+    const currentRoom = useMemo(() => {
+        return AVAILABLE_ROOMS.find((r) => r.id === selectedRoomId) || AVAILABLE_ROOMS[0];
+    }, [selectedRoomId]);
 
     // Generate 7-day dynamic calendar list
     const calendarDays = useMemo(() => {
         const days = [];
         const arabicDayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-        const arabicMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-        
+        const arabicMonths = [
+            'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+            'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+        ];
+
         const now = new Date();
         for (let i = 0; i < 7; i++) {
             const d = new Date(now.getTime() + i * 86400000);
@@ -78,34 +125,165 @@ export default function BookingDetailsPage() {
     }, []);
 
     const [selectedDate, setSelectedDate] = useState(calendarDays[0].iso);
-    const [selectedDuration, setSelectedDuration] = useState(2); // 2 hours default
-    const [startTime, setStartTime] = useState('18:00');
+    const isToday = selectedDate === calendarDays[0].iso;
+
+    // ─────────────────────────────────────────────────────────────
+    // DYNAMIC 1-HOUR SLOTS GENERATOR (FROM EXACT CURRENT TIME)
+    // ─────────────────────────────────────────────────────────────
+    const generatedSlots = useMemo(() => {
+        const now = new Date();
+        let baseHour = now.getHours();
+        let baseMinute = now.getMinutes();
+
+        // If not today, slots start at venue opening time (08:00 AM)
+        if (!isToday) {
+            baseHour = 8;
+            baseMinute = 0;
+        }
+
+        const formatArabicTime = (h: number, m: number) => {
+            const period = h >= 12 && h < 24 ? 'م' : 'ص';
+            const displayH = h % 12 === 0 ? 12 : h % 12;
+            return `${String(displayH).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`;
+        };
+
+        const getPeriodName = (h: number) => {
+            if (h >= 6 && h < 12) return 'صباحاً';
+            if (h >= 12 && h < 16) return 'الظهيرة';
+            if (h >= 16 && h < 19) return 'العصر والمغرب';
+            if (h >= 19 && h < 23) return 'ذروة الجيمرز 🔥';
+            return 'سهرة الفجر 🌙';
+        };
+
+        const slots: DynamicSlot[] = [];
+        // Generate up to 14 slots ahead
+        const count = isToday ? 12 : 16;
+
+        for (let i = 0; i < count; i++) {
+            const startH = (baseHour + i) % 24;
+            const endH = (baseHour + i + 1) % 24;
+            const endM = (baseMinute - 1 + 60) % 60;
+
+            const startDisplay = formatArabicTime(startH, baseMinute);
+            const endDisplay = formatArabicTime(endH, endM);
+
+            // Mock occupied slot check based on room
+            const isBooked = currentRoom.bookedSlotsIndices.includes(i);
+
+            slots.push({
+                id: `${currentRoom.id}-${selectedDate}-slot-${i}`,
+                index: i,
+                startDisplay,
+                endDisplay,
+                fullLabel: `${startDisplay} - ${endDisplay}`,
+                periodName: getPeriodName(startH),
+                isBooked,
+                startHour: startH,
+                startMinute: baseMinute,
+                endHour: endH,
+                endMinute: endM,
+            });
+        }
+
+        return slots;
+    }, [isToday, selectedDate, currentRoom]);
+
+    // Selected Slot Indices (Array of numbers for multi-hour selection)
+    const [selectedSlotIndices, setSelectedSlotIndices] = useState<number[]>([0]);
     const [selectedSnacks, setSelectedSnacks] = useState<string[]>([]);
 
-    // Calculate end time dynamically
-    const endTime = useMemo(() => {
-        const [h, m] = startTime.split(':').map(Number);
-        const endH = (h + selectedDuration) % 24;
-        const period = endH >= 12 ? 'م' : 'ص';
-        const displayH = endH % 12 === 0 ? 12 : endH % 12;
-        return `${String(displayH).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`;
-    }, [startTime, selectedDuration]);
+    // If slots regenerate and current selected slot is booked, default to first available
+    useEffect(() => {
+        const firstAvailable = generatedSlots.find((s) => !s.isBooked);
+        if (firstAvailable && (!selectedSlotIndices.length || selectedSlotIndices.some((idx) => generatedSlots[idx]?.isBooked))) {
+            setSelectedSlotIndices([firstAvailable.index]);
+        }
+    }, [generatedSlots]);
 
-    const displayStartTime = useMemo(() => {
-        const [h, m] = startTime.split(':').map(Number);
-        const period = h >= 12 ? 'م' : 'ص';
-        const displayH = h % 12 === 0 ? 12 : h % 12;
-        return `${String(displayH).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`;
-    }, [startTime]);
+    // Multi-slot selection handler
+    const handleSlotClick = (slot: DynamicSlot) => {
+        if (slot.isBooked) {
+            toast.error('هذا الوقت محجوز مسبقاً، يرجى اختيار وقت آخر متاح 🔒');
+            return;
+        }
 
-    // Calculate Financials (with special gamer bundle discount for 5 hours)
-    const roomSubtotal = selectedDuration === 5 
-        ? Math.round(selectedDuration * ratePerHour * 0.85) // 15% OFF for 5-hr night
-        : selectedDuration * ratePerHour;
+        // If clicking already selected single slot, keep it
+        if (selectedSlotIndices.length === 1 && selectedSlotIndices[0] === slot.index) {
+            return;
+        }
+
+        // If slot is already selected, allow shrinking or toggling
+        if (selectedSlotIndices.includes(slot.index)) {
+            // Deselect this and following
+            const remaining = selectedSlotIndices.filter((idx) => idx < slot.index);
+            if (remaining.length > 0) {
+                setSelectedSlotIndices(remaining);
+            } else {
+                setSelectedSlotIndices([slot.index]);
+            }
+            return;
+        }
+
+        // If selecting a new slot:
+        const minIdx = Math.min(...selectedSlotIndices);
+        const maxIdx = Math.max(...selectedSlotIndices);
+
+        if (slot.index > maxIdx) {
+            // Select all consecutive available slots up to this slot
+            const newRange: number[] = [];
+            let hasBlocked = false;
+            for (let i = minIdx; i <= slot.index; i++) {
+                if (generatedSlots[i]?.isBooked) {
+                    hasBlocked = true;
+                    break;
+                }
+                newRange.push(i);
+            }
+            if (hasBlocked) {
+                toast.warning('لا يمكن اختيار أوقات يتخللها وقت محجوز');
+                setSelectedSlotIndices([slot.index]);
+            } else {
+                setSelectedSlotIndices(newRange);
+            }
+        } else {
+            // Set as the new single starting slot
+            setSelectedSlotIndices([slot.index]);
+        }
+    };
+
+    // Quick Duration Pills (1, 2, 3, 4 Hours)
+    const handleQuickDuration = (hours: number) => {
+        const startIdx = selectedSlotIndices.length ? Math.min(...selectedSlotIndices) : 0;
+        const newIndices: number[] = [];
+
+        for (let i = 0; i < hours; i++) {
+            const targetIdx = startIdx + i;
+            if (targetIdx >= generatedSlots.length || generatedSlots[targetIdx]?.isBooked) {
+                toast.warning(`متاح فقط ${newIndices.length} ساعة متتالية بدون تعارض`);
+                break;
+            }
+            newIndices.push(targetIdx);
+        }
+
+        if (newIndices.length > 0) {
+            setSelectedSlotIndices(newIndices);
+        }
+    };
+
+    // Derived Booking Calculations
+    const durationHours = selectedSlotIndices.length;
+    const sortedIndices = [...selectedSlotIndices].sort((a, b) => a - b);
+    const firstSlot = generatedSlots[sortedIndices[0]];
+    const lastSlot = generatedSlots[sortedIndices[sortedIndices.length - 1]];
+
+    const startDisplayTime = firstSlot ? firstSlot.startDisplay : '--:--';
+    const endDisplayTime = lastSlot ? lastSlot.endDisplay : '--:--';
+
+    const roomSubtotal = durationHours * currentRoom.rate;
 
     const snacksTotal = useMemo(() => {
         return selectedSnacks.reduce((sum, id) => {
-            const snack = SNACK_OPTIONS.find(s => s.id === id);
+            const snack = SNACK_OPTIONS.find((s) => s.id === id);
             return sum + (snack ? snack.price : 0);
         }, 0);
     }, [selectedSnacks]);
@@ -113,365 +291,362 @@ export default function BookingDetailsPage() {
     const grandTotal = roomSubtotal + snacksTotal;
 
     const toggleSnack = (id: string) => {
-        setSelectedSnacks(prev => 
-            prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+        setSelectedSnacks((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
         );
     };
 
     const handleContinue = () => {
-        if (!selectedDate) {
-            toast.error('يرجى اختيار يوم الحجز');
+        if (!durationHours) {
+            toast.error('يرجى تحديد وقت الحجز');
             return;
         }
 
-        const chosenSnackObjects = SNACK_OPTIONS.filter(s => selectedSnacks.includes(s.id));
+        const chosenSnacks = SNACK_OPTIONS.filter((s) => selectedSnacks.includes(s.id));
 
         navigate('/playstation/payment', {
             state: {
-                room: roomDetails,
+                room: {
+                    name: currentRoom.name,
+                    type: 'standard',
+                    rate: currentRoom.rate,
+                },
                 date: selectedDate,
-                startTime: displayStartTime,
-                endTime,
-                rawStartTime: startTime,
-                durationHours: selectedDuration,
+                startTime: startDisplayTime,
+                endTime: endDisplayTime,
+                durationHours,
                 roomSubtotal,
-                snacks: chosenSnackObjects,
+                snacks: chosenSnacks,
                 snacksTotal,
-                total: grandTotal
-            }
+                total: grandTotal,
+            },
         });
     };
 
     return (
         <div className="bg-[#090707] text-white font-body text-sm flex flex-col min-h-screen selection:bg-red-500/30">
-            {/* Top Bar */}
-            <header className="fixed top-0 inset-x-0 z-50 bg-[#090707]/95 backdrop-blur-xl pt-safe border-b border-white/5">
-                <div className="h-16 px-4 md:px-8 flex items-center justify-between max-w-6xl mx-auto">
+            {/* Ambient Background Lights */}
+            <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-red-950/20 blur-[130px] rounded-full" />
+                <div className="absolute bottom-10 right-10 w-[400px] h-[300px] bg-amber-950/15 blur-[120px] rounded-full" />
+            </div>
+
+            {/* Top Navigation Bar */}
+            <header className="fixed top-0 inset-x-0 z-50 bg-[#090707]/90 backdrop-blur-xl pt-safe border-b border-white/10">
+                <div className="h-16 px-4 md:px-8 flex items-center justify-between max-w-5xl mx-auto">
                     <div className="flex items-center gap-3">
                         <Link
                             to="/playstation"
                             aria-label="الرجوع للأجهزة"
-                            className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:text-red-400 transition-colors active:scale-95 cursor-pointer"
+                            className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:text-red-400 transition-colors active:scale-95 cursor-pointer border border-white/10"
                         >
                             <ArrowRight className="w-5 h-5" />
                         </Link>
                         <div className="flex flex-col text-right">
-                            <h1 className="font-display text-lg md:text-xl font-bold uppercase tracking-wider text-white">تفاصيل وموعد الحجز</h1>
-                            <span className="font-body text-[10px] md:text-xs text-neutral-400">D95 ESPORTS LOUNGE</span>
+                            <h1 className="font-brush text-lg text-white">حجز الغرفة ومواعيد اليوم</h1>
+                            <span className="font-body text-[10px] text-neutral-400">D95 GAMING &amp; CAFÉ</span>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600/20 border border-red-500/30 text-red-300 text-xs font-bold font-body">
-                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                        <span>حجز فوري مباشر</span>
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-950/80 border border-red-600/40 text-red-300 text-xs font-bold">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>مواعيد ديناميكية حية</span>
                     </div>
                 </div>
             </header>
 
-            <main className="flex-1 flex flex-col relative w-full pt-20 pb-32 lg:pb-16 px-3.5 md:px-8 max-w-6xl mx-auto" dir="rtl">
-                {/* 2-COLUMN RESPONSIVE LAYOUT FOR DESKTOP */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mt-2">
-                    {/* RIGHT COLUMN: BOOKING CONTROLS (7 of 12) */}
-                    <div className="lg:col-span-7 space-y-4">
-                        {/* STEP 1: 7-DAY HORIZONTAL CALENDAR STRIP */}
-                        <section className="bg-neutral-900/90 rounded-3xl p-5 border border-white/5 shadow-lg">
-                            <div className="flex items-center justify-between mb-3.5">
-                                <div className="flex items-center gap-2">
-                                    <Calendar className="w-5 h-5 text-red-400" />
-                                    <h3 className="font-bold text-sm md:text-base text-white font-body">١. اختر يوم الحجز</h3>
-                                </div>
-                                <span className="text-xs text-neutral-400 font-body">الأيام المتاحة</span>
-                            </div>
-
-                            {/* Horizontal Calendar Strip */}
-                            <div className="flex items-center gap-2.5 overflow-x-auto scrollbar-hide py-1 -mx-1 px-1">
-                                {calendarDays.map((day) => {
-                                    const isSelected = selectedDate === day.iso;
-                                    return (
-                                        <button
-                                            key={day.iso}
-                                            type="button"
-                                            onClick={() => setSelectedDate(day.iso)}
-                                            className={`shrink-0 flex flex-col items-center justify-center w-16 py-3 rounded-2xl transition-all cursor-pointer border ${
-                                                isSelected
-                                                    ? 'bg-gradient-to-b from-red-600 to-red-700 text-white border-red-400 shadow-[0_0_15px_rgba(196,30,58,0.5)] scale-105'
-                                                    : 'bg-neutral-800/80 text-neutral-300 border-white/5 hover:border-white/20'
-                                            }`}
-                                        >
-                                            <span className={`text-[11px] font-bold font-body ${isSelected ? 'text-white' : 'text-neutral-400'}`}>
-                                                {day.dayName}
-                                            </span>
-                                            <span className="font-display font-black text-lg my-0.5">
-                                                {day.dayNumber}
-                                            </span>
-                                            <span className={`text-[10px] font-body ${isSelected ? 'text-red-100' : 'text-neutral-500'}`}>
-                                                {day.monthName.slice(0, 5)}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </section>
-
-                        {/* STEP 2: SESSION DURATION */}
-                        <section className="bg-neutral-900/90 rounded-3xl p-5 border border-white/5 shadow-lg">
-                            <div className="flex items-center justify-between mb-3.5">
-                                <div className="flex items-center gap-2">
-                                    <Clock className="w-5 h-5 text-red-400" />
-                                    <h3 className="font-bold text-sm md:text-base text-white font-body">٢. مدة اللعب والتحدي</h3>
-                                </div>
-                                <span className="text-xs bg-red-600/20 text-red-400 px-3 py-1 rounded-full font-bold">
-                                    {selectedDuration === 5 ? 'سهرة 5 ساعات' : `${selectedDuration} ${selectedDuration === 1 ? 'ساعة' : 'ساعات'}`}
-                                </span>
-                            </div>
-
-                            <div className="grid grid-cols-4 gap-2.5">
-                                {[
-                                    { hours: 1, label: 'ساعة' },
-                                    { hours: 2, label: 'ساعتان', popular: true },
-                                    { hours: 3, label: '٣ ساعات' },
-                                    { hours: 5, label: 'سهرة ٥ س', discount: 'وفر 15%' }
-                                ].map((item) => (
-                                    <button
-                                        key={item.hours}
-                                        type="button"
-                                        onClick={() => setSelectedDuration(item.hours)}
-                                        className={`relative py-3.5 rounded-2xl flex flex-col items-center justify-center transition-all cursor-pointer border ${
-                                            selectedDuration === item.hours
-                                                ? 'bg-gradient-to-r from-red-600 to-red-700 text-white border-red-400 shadow-md shadow-red-600/30'
-                                                : 'bg-neutral-800/80 text-neutral-300 border-white/5 hover:bg-neutral-700/80'
-                                        }`}
-                                    >
-                                        {item.popular && (
-                                            <span className="absolute -top-2.5 bg-amber-500 text-black text-[9px] font-black px-2 py-0.5 rounded-full shadow">
-                                                الأفضل ⭐
-                                            </span>
+            {/* Main Content */}
+            <main className="flex-1 flex flex-col relative z-10 w-full pt-20 pb-32 px-3.5 sm:px-6 max-w-4xl mx-auto" dir="rtl">
+                {/* ─────────────────────────────────────────────────────────────
+                    SECTION 1: ROOM SELECTOR TABS (ROOM 1 vs ROOM 2)
+                   ───────────────────────────────────────────────────────────── */}
+                <section className="my-3">
+                    <div className="text-xs text-neutral-400 font-bold mb-2 flex items-center justify-between px-1">
+                        <span>اختر الغرفة المراد حجزها:</span>
+                        <span className="text-red-400 font-brush">100 ج.م / ساعة</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        {AVAILABLE_ROOMS.map((room) => {
+                            const isSelected = selectedRoomId === room.id;
+                            return (
+                                <button
+                                    key={room.id}
+                                    onClick={() => setSelectedRoomId(room.id)}
+                                    className={`relative p-3.5 sm:p-4 rounded-2xl border text-right transition-all duration-200 cursor-pointer ${
+                                        isSelected
+                                            ? 'bg-gradient-to-br from-red-950/80 to-neutral-900 border-red-500 shadow-[0_0_25px_rgba(181,24,36,0.35)]'
+                                            : 'bg-neutral-900/60 border-white/5 hover:border-white/20 hover:bg-neutral-900'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <div className="w-8 h-8 rounded-lg bg-black/40 flex items-center justify-center text-neutral-200">
+                                            <DoorClosed className={`w-4 h-4 ${isSelected ? 'text-red-400' : 'text-neutral-400'}`} />
+                                        </div>
+                                        {isSelected && (
+                                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                                         )}
-                                        {item.discount && (
-                                            <span className="absolute -top-2.5 bg-emerald-500 text-black text-[9px] font-black px-2 py-0.5 rounded-full shadow">
-                                                {item.discount}
-                                            </span>
-                                        )}
-                                        <span className="font-bold text-xs md:text-sm font-body">{item.label}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </section>
+                                    </div>
+                                    <div className="font-brush text-base sm:text-lg text-white">
+                                        {room.nameEn}
+                                    </div>
+                                    <div className="text-xs text-neutral-300 font-bold mt-0.5">
+                                        {room.name}
+                                    </div>
+                                    <div className="text-[10px] text-neutral-400 mt-1 truncate">
+                                        {room.specs}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </section>
 
-                        {/* STEP 3: QUICK TIME SLOTS */}
-                        <section className="bg-neutral-900/90 rounded-3xl p-5 border border-white/5 shadow-lg">
-                            <div className="flex items-center justify-between mb-3.5">
-                                <div className="flex items-center gap-2">
-                                    <Sparkles className="w-5 h-5 text-red-400" />
-                                    <h3 className="font-bold text-sm md:text-base text-white font-body">٣. اختر موعد البدء</h3>
-                                </div>
-                                <span className="text-xs text-neutral-400 font-body">المواعيد المتاحة</span>
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-2.5 mb-3">
-                                {TIME_SLOTS.map((slot) => {
-                                    const isSelected = startTime === slot.time;
-                                    return (
-                                        <button
-                                            key={slot.time}
-                                            type="button"
-                                            onClick={() => setStartTime(slot.time)}
-                                            className={`py-3 px-2 rounded-xl text-center transition-all cursor-pointer border flex flex-col items-center ${
-                                                isSelected
-                                                    ? 'bg-red-600/30 border-red-500 text-white shadow-[0_0_12px_rgba(196,30,58,0.4)]'
-                                                    : 'bg-neutral-800/80 text-neutral-300 border-white/5 hover:border-white/20'
-                                            }`}
-                                        >
-                                            <span className="font-bold text-xs md:text-sm font-body">{slot.label}</span>
-                                            <span className="text-[10px] text-neutral-400 mt-0.5">{slot.period}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            {/* Custom Time Selector Pill */}
-                            <div className="pt-3 border-t border-white/5 flex items-center justify-between text-xs md:text-sm">
-                                <span className="text-neutral-400 font-body">أو حدد توقيتاً مخصصاً:</span>
-                                <div className="flex items-center gap-2 bg-neutral-800 px-3.5 py-2 rounded-xl border border-white/10">
-                                    <input
-                                        type="time"
-                                        value={startTime}
-                                        onChange={(e) => setStartTime(e.target.value)}
-                                        className="bg-transparent text-white font-bold text-sm outline-none cursor-pointer"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="mt-3 bg-black/40 rounded-xl p-2.5 flex items-center justify-between text-xs md:text-sm text-neutral-300 font-body border border-white/5">
-                                <span>جلسة اللعب:</span>
-                                <span className="text-red-300 font-bold" dir="ltr">
-                                    {displayStartTime} ➔ {endTime}
-                                </span>
-                            </div>
-                        </section>
-
-                        {/* STEP 4: SNACKS & GAMING COMBOS (UPSELL) */}
-                        <section className="bg-neutral-900/90 rounded-3xl p-5 border border-white/5 shadow-lg">
-                            <div className="flex items-center justify-between mb-3.5">
-                                <div className="flex items-center gap-2">
-                                    <Coffee className="w-5 h-5 text-amber-400" />
-                                    <h3 className="font-bold text-sm md:text-base text-white font-body">٤. مشروبات وسناكس اللعب (اختياري)</h3>
-                                </div>
-                                <span className="text-[11px] text-amber-300 bg-amber-500/10 px-2.5 py-0.5 rounded-full font-bold border border-amber-500/20">
-                                    كافيه D95
-                                </span>
-                            </div>
-
-                            <div className="space-y-2.5">
-                                {SNACK_OPTIONS.map((snack) => {
-                                    const isChecked = selectedSnacks.includes(snack.id);
-                                    return (
-                                        <button
-                                            key={snack.id}
-                                            type="button"
-                                            onClick={() => toggleSnack(snack.id)}
-                                            className={`w-full text-right p-3.5 rounded-2xl border transition-all flex items-center justify-between cursor-pointer ${
-                                                isChecked
-                                                    ? 'bg-amber-950/30 border-amber-500/50 shadow-md shadow-amber-900/20'
-                                                    : 'bg-neutral-800/60 border-white/5 hover:border-white/15'
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <span className="text-2xl shrink-0">{snack.icon}</span>
-                                                <div className="flex flex-col min-w-0">
-                                                    <span className="font-bold text-xs md:text-sm text-white truncate font-body">{snack.name}</span>
-                                                    <span className="text-xs text-neutral-400 font-body mt-0.5">{snack.description}</span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-2.5 shrink-0 pl-1">
-                                                <span className="font-display font-bold text-sm md:text-base text-amber-300">+{snack.price} ج.م</span>
-                                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center border transition-all ${
-                                                    isChecked ? 'bg-amber-500 border-amber-500 text-black' : 'border-neutral-600'
-                                                }`}>
-                                                    {isChecked && <Check className="w-4 h-4 stroke-[3]" />}
-                                                </div>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </section>
+                {/* ─────────────────────────────────────────────────────────────
+                    SECTION 2: 7-DAY DATE SELECTOR
+                   ───────────────────────────────────────────────────────────── */}
+                <section className="my-3 bg-neutral-900/60 border border-white/5 rounded-2xl p-3.5 backdrop-blur-md">
+                    <div className="flex items-center justify-between mb-3 px-1">
+                        <div className="flex items-center gap-1.5 text-xs text-neutral-300 font-bold">
+                            <Calendar className="w-4 h-4 text-red-400" />
+                            <span>تاريخ الحجز:</span>
+                        </div>
+                        {isToday && (
+                            <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                يبدأ فوراً من الوقت الحالي
+                            </span>
+                        )}
                     </div>
 
-                    {/* LEFT COLUMN: ROOM CARD & STICKY SUMMARY (5 of 12) */}
-                    <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24">
-                        {/* Room Overview Pill Card */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-neutral-900/90 rounded-3xl p-5 border border-white/10 shadow-xl"
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-600/20 to-red-950/60 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
-                                        <Gamepad2 className="w-7 h-7" />
-                                    </div>
-                                    <div className="flex flex-col min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold text-base md:text-lg text-white truncate font-body">{roomDetails.name}</span>
-                                            {roomDetails.type === 'vip' && (
-                                                <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold border border-amber-500/30 shrink-0">VIP</span>
-                                            )}
-                                        </div>
-                                        <span className="text-xs text-neutral-400 font-body mt-1">شاشة 4K HDR 120Hz • دراعات لاسلكية • تكييف</span>
-                                    </div>
-                                </div>
-                                <div className="flex flex-col items-end shrink-0 pl-1">
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-2xl font-bold font-display text-red-400">{ratePerHour}</span>
-                                        <span className="text-xs text-neutral-400 font-body">ج.م</span>
-                                    </div>
-                                    <span className="text-[11px] text-neutral-500 font-body">/ ساعة</span>
-                                </div>
-                            </div>
-                        </motion.div>
+                    <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
+                        {calendarDays.map((d) => {
+                            const active = selectedDate === d.iso;
+                            return (
+                                <button
+                                    key={d.iso}
+                                    onClick={() => setSelectedDate(d.iso)}
+                                    className={`shrink-0 py-2.5 px-4 rounded-xl border text-center transition-all cursor-pointer min-w-[76px] ${
+                                        active
+                                            ? 'bg-red-700 border-red-500 text-white shadow-lg shadow-red-900/50 scale-105'
+                                            : 'bg-black/40 border-white/5 text-neutral-400 hover:text-white hover:border-white/20'
+                                    }`}
+                                >
+                                    <div className="text-[11px] font-bold">{d.dayName}</div>
+                                    <div className="text-base font-black font-brush my-0.5">{d.dayNumber}</div>
+                                    <div className="text-[9px] opacity-75">{d.monthName}</div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </section>
 
-                        {/* Booking Summary Card */}
-                        <div className="bg-neutral-900/90 rounded-3xl p-5 border border-white/10 shadow-xl space-y-4">
-                            <div className="flex items-center justify-between pb-3 border-b border-white/5">
-                                <div className="flex items-center gap-2">
-                                    <Receipt className="w-5 h-5 text-red-400" />
-                                    <span className="text-sm md:text-base font-bold text-white font-body">ملخص التكلفة</span>
-                                </div>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="font-display font-black text-2xl text-red-400">{grandTotal}</span>
-                                    <span className="text-xs text-neutral-400 font-body">ج.م</span>
-                                </div>
+                {/* ─────────────────────────────────────────────────────────────
+                    SECTION 3: DYNAMIC 1-HOUR SLOTS GRID (HEART OF THE FEATURE)
+                   ───────────────────────────────────────────────────────────── */}
+                <section className="my-3 bg-neutral-900/60 border border-white/5 rounded-2xl p-3.5 sm:p-5 backdrop-blur-md">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-white/5">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-red-400" />
+                                <h2 className="font-bold text-sm sm:text-base text-white">
+                                    الأوقات المتاحة للحجز اليوم ({currentRoom.nameEn})
+                                </h2>
                             </div>
+                            <p className="text-xs text-neutral-400 mt-1">
+                                كل خانة تمثل ساعة كاملة من وقت الحجز • انقر لاختيار ساعة أو أكثر
+                            </p>
+                        </div>
 
-                            <div className="space-y-2 text-xs md:text-sm text-neutral-300 font-body">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-neutral-400">اليوم والموعد:</span>
-                                    <span className="font-bold text-white">{selectedDate} ({displayStartTime})</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-neutral-400">المدة والتسعيرة:</span>
-                                    <span className="font-bold text-white">{selectedDuration} ساعات × {ratePerHour} ج.م</span>
-                                </div>
-                                {selectedDuration === 5 && (
-                                    <div className="flex items-center justify-between text-emerald-400">
-                                        <span>خصم باقة السهرة (15%):</span>
-                                        <span className="font-bold">مطبّق تلقائياً</span>
-                                    </div>
-                                )}
-                                {snacksTotal > 0 && (
-                                    <div className="flex items-center justify-between text-amber-300">
-                                        <span>سناكس ومشروبات إضافية:</span>
-                                        <span className="font-bold">+{snacksTotal} ج.م</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Desktop Button (Only visible on lg screens) */}
-                            <button
-                                type="button"
-                                onClick={handleContinue}
-                                className="hidden lg:flex w-full py-4 px-6 rounded-2xl font-bold font-body text-base text-white transition-all shadow-[0_4px_25px_rgba(196,30,58,0.45)] active:scale-[0.98] cursor-pointer items-center justify-center gap-2.5 mt-4"
-                                style={{
-                                    background: 'linear-gradient(135deg, #c41e3a, #8b1020)',
-                                    border: '1px solid rgba(255, 255, 255, 0.2)'
-                                }}
-                            >
-                                <span>متابعة للدفع والتأكيد</span>
-                                <ArrowRight className="w-5 h-5 rotate-180" />
-                            </button>
+                        {/* Quick Duration Pills */}
+                        <div className="flex items-center gap-1.5 self-start sm:self-auto bg-black/40 p-1 rounded-xl border border-white/5">
+                            <span className="text-[10px] text-neutral-400 px-1 font-bold">المدة:</span>
+                            {[1, 2, 3, 4].map((h) => (
+                                <button
+                                    key={h}
+                                    onClick={() => handleQuickDuration(h)}
+                                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                                        durationHours === h
+                                            ? 'bg-red-700 text-white shadow-sm'
+                                            : 'text-neutral-300 hover:text-white hover:bg-white/5'
+                                    }`}
+                                >
+                                    {h} س
+                                </button>
+                            ))}
                         </div>
                     </div>
-                </div>
+
+                    {/* Slots Legend */}
+                    <div className="flex items-center gap-4 text-xs mb-3 px-1">
+                        <div className="flex items-center gap-1.5 text-neutral-300">
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                            <span>متاح للحجز</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-neutral-300">
+                            <span className="w-2.5 h-2.5 rounded-full bg-red-600 shadow-[0_0_8px_#c41e3a]" />
+                            <span>محدد لحجزك</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-neutral-500">
+                            <span className="w-2.5 h-2.5 rounded-full bg-neutral-700" />
+                            <span>محجوز 🔒</span>
+                        </div>
+                    </div>
+
+                    {/* Dynamic Slots Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                        {generatedSlots.map((slot) => {
+                            const isSelected = selectedSlotIndices.includes(slot.index);
+                            const isBooked = slot.isBooked;
+
+                            return (
+                                <motion.div
+                                    key={slot.id}
+                                    whileTap={!isBooked ? { scale: 0.98 } : undefined}
+                                    onClick={() => handleSlotClick(slot)}
+                                    className={`relative p-3 rounded-xl border transition-all duration-200 select-none ${
+                                        isBooked
+                                            ? 'bg-black/40 border-white/5 opacity-50 cursor-not-allowed'
+                                            : isSelected
+                                            ? 'bg-gradient-to-r from-red-700 to-red-800 border-red-400 text-white shadow-[0_0_20px_rgba(181,24,36,0.4)] cursor-pointer scale-[1.02]'
+                                            : 'bg-black/30 border-white/5 hover:border-white/20 hover:bg-white/5 cursor-pointer'
+                                    }`}
+                                >
+                                    {/* Top Line: Period Badge + Status */}
+                                    <div className="flex items-center justify-between text-[10px] mb-1.5">
+                                        <span className={isSelected ? 'text-white/80' : 'text-neutral-400'}>
+                                            {slot.periodName}
+                                        </span>
+                                        {isBooked ? (
+                                            <span className="flex items-center gap-1 text-neutral-400 font-bold">
+                                                <Lock className="w-3 h-3" />
+                                                <span>محجوز</span>
+                                            </span>
+                                        ) : isSelected ? (
+                                            <span className="flex items-center gap-1 text-white font-bold bg-black/30 px-2 py-0.5 rounded-full">
+                                                <Check className="w-3 h-3" />
+                                                <span>ساعة محددة</span>
+                                            </span>
+                                        ) : (
+                                            <span className="flex items-center gap-1 text-emerald-400 font-bold">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                <span>متاح</span>
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Dynamic Time Range: Start to End (e.g. 04:15 م - 05:14 م) */}
+                                    <div className="text-right" dir="ltr">
+                                        <div
+                                            className={`font-brush text-base sm:text-lg tracking-wide ${
+                                                isBooked
+                                                    ? 'text-neutral-500 line-through'
+                                                    : isSelected
+                                                    ? 'text-white'
+                                                    : 'text-neutral-100'
+                                            }`}
+                                        >
+                                            {slot.fullLabel}
+                                        </div>
+                                    </div>
+
+                                    {/* Bottom Info: 60 minutes & rate */}
+                                    <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-white/5 text-[11px]">
+                                        <span className={isSelected ? 'text-white/80' : 'text-neutral-400'}>
+                                            جلسة 60 دقيقة
+                                        </span>
+                                        <span className={`font-bold ${isSelected ? 'text-white' : 'text-red-400 font-brush'}`}>
+                                            {currentRoom.rate} ج.م
+                                        </span>
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                </section>
+
+                {/* ─────────────────────────────────────────────────────────────
+                    SECTION 4: GAMING SNACKS & DRINKS (OPTIONAL ADDONS)
+                   ───────────────────────────────────────────────────────────── */}
+                <section className="my-3 bg-neutral-900/60 border border-white/5 rounded-2xl p-3.5 sm:p-4 backdrop-blur-md">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Coffee className="w-4 h-4 text-amber-400" />
+                        <h3 className="font-bold text-sm text-white">سناكس ومشروبات أثناء اللعب (اختياري)</h3>
+                    </div>
+
+                    <div className="space-y-2">
+                        {SNACK_OPTIONS.map((snack) => {
+                            const isChecked = selectedSnacks.includes(snack.id);
+                            return (
+                                <div
+                                    key={snack.id}
+                                    onClick={() => toggleSnack(snack.id)}
+                                    className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                                        isChecked
+                                            ? 'bg-red-950/40 border-red-600/50 text-white'
+                                            : 'bg-black/30 border-white/5 text-neutral-300 hover:border-white/20'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div
+                                            className={`w-5 h-5 rounded-md flex items-center justify-center border transition-colors ${
+                                                isChecked
+                                                    ? 'bg-red-600 border-red-500 text-white'
+                                                    : 'border-white/20 bg-black/40'
+                                            }`}
+                                        >
+                                            {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                                        </div>
+                                        <div>
+                                            <div className="text-xs font-bold flex items-center gap-1.5">
+                                                <span>{snack.icon}</span>
+                                                <span>{snack.name}</span>
+                                            </div>
+                                            <div className="text-[10px] text-neutral-400 mt-0.5">
+                                                {snack.description}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="font-brush text-sm font-bold text-amber-400 shrink-0">
+                                        +{snack.price} ج.م
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
             </main>
 
-            {/* STICKY BOTTOM CHECKOUT ACTION BAR (MOBILE ONLY: lg:hidden) */}
-            <div className="fixed bottom-0 inset-x-0 z-50 pb-safe bg-[#090707]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] lg:hidden">
-                <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3" dir="rtl">
-                    <div className="flex flex-col">
-                        <div className="flex items-center gap-1">
-                            <span className="text-[11px] text-neutral-400 font-body">الإجمالي:</span>
-                            {selectedDuration === 5 && (
-                                <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded font-bold">خصم 15%</span>
-                            )}
-                        </div>
-                        <div className="flex items-baseline gap-1">
-                            <span className="font-display font-black text-2xl text-red-400 leading-tight">
+            {/* ─────────────────────────────────────────────────────────────
+                FIXED BOTTOM STICKY SUMMARY BAR (SENIOR UX)
+               ───────────────────────────────────────────────────────────── */}
+            <div className="fixed bottom-0 inset-x-0 z-40 bg-[#0c090a]/95 border-t border-white/10 backdrop-blur-xl p-3 sm:p-4 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+                <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+                    {/* Left: Financial & Time Summary */}
+                    <div className="flex flex-col text-right">
+                        <div className="flex items-baseline gap-1.5">
+                            <span className="font-brush text-2xl sm:text-3xl font-black text-white">
                                 {grandTotal}
                             </span>
-                            <span className="text-xs text-neutral-400 font-body">ج.م</span>
+                            <span className="text-xs text-neutral-300 font-bold">ج.م</span>
+                            <span className="text-xs text-red-400 font-bold mr-2">
+                                ({durationHours} {durationHours === 1 ? 'ساعة' : durationHours === 2 ? 'ساعتان' : 'ساعات'})
+                            </span>
+                        </div>
+                        <div className="text-[11px] text-neutral-400 flex items-center gap-1 mt-0.5">
+                            <span className="font-bold text-neutral-300">{currentRoom.nameEn}</span>
+                            <span>•</span>
+                            <span dir="ltr" className="font-bold text-white">
+                                {startDisplayTime} - {endDisplayTime}
+                            </span>
                         </div>
                     </div>
 
+                    {/* Right: Continue CTA */}
                     <button
                         onClick={handleContinue}
-                        className="flex-1 py-3.5 px-4 rounded-2xl font-bold font-body text-sm text-white transition-all shadow-[0_4px_25px_rgba(196,30,58,0.45)] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
-                        style={{
-                            background: 'linear-gradient(135deg, #c41e3a, #8b1020)',
-                            border: '1px solid rgba(255, 255, 255, 0.2)'
-                        }}
+                        className="py-3 px-5 sm:px-8 rounded-xl bg-gradient-to-r from-red-700 to-red-600 text-white font-bold text-sm flex items-center gap-2 shadow-lg shadow-red-900/50 hover:from-red-600 hover:to-red-500 active:scale-95 transition-all cursor-pointer shrink-0"
                     >
-                        <span>متابعة للدفع والتأكيد</span>
+                        <span>تأكيد الحجز والدفع</span>
                         <ArrowRight className="w-4 h-4 rotate-180" />
                     </button>
                 </div>
