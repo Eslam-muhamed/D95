@@ -57,38 +57,55 @@
     --c-border: rgba(139, 26, 42, 0.18);
 }
 
-[data-theme="light"] {
-    --brand-primary: #8B1A1A;
-    --brand-primary-rgb: 139, 26, 26;
+[data-theme="light"], .light {
+    --brand-primary: #DC2626;
+    --brand-primary-rgb: 220, 38, 38;
+    --brand-secondary: #D4A017;
+    --brand-accent: #B91C1C;
+    --brand-accent-rgb: 185, 28, 28;
 
-    --bg-main: #F5F0EB;
-    --bg-card: #ffffff;
-    --bg-card-alt: #EDE5DC;
+    --bg-main: #F6F5F2;
+    --bg-card: #FFFFFF;
+    --bg-card-alt: #F0EEE9;
 
-    --bg-main-rgb: 245, 240, 235;
+    --bg-main-rgb: 246, 245, 242;
     --bg-card-rgb: 255, 255, 255;
-    --bg-card-alt-rgb: 237, 229, 220;
+    --bg-card-alt-rgb: 240, 238, 233;
 
-    --text-1: #1A1010;
-    --text-2: #3D2820;
-    --text-3: #6B4A3A;
-    --text-4: #9A7060;
-    --text-5: #C8A898;
+    --text-1: #120F11;
+    --text-2: #2A2427;
+    --text-3: #594E53;
+    --text-4: #877A80;
+    --text-5: #B5AAB0;
 
-    --border-1: rgba(139, 26, 26, 0.07);
-    --border-2: rgba(139, 26, 26, 0.11);
-    --border-3: rgba(139, 26, 26, 0.16);
+    --border-1: rgba(0, 0, 0, 0.08);
+    --border-2: rgba(0, 0, 0, 0.12);
+    --border-3: rgba(220, 38, 38, 0.20);
 
     --surface-1: rgba(0, 0, 0, 0.02);
     --surface-2: rgba(0, 0, 0, 0.04);
     --surface-3: rgba(0, 0, 0, 0.06);
 
-    --glass-bg: rgba(245, 240, 235, 0.94);
-    --modal-shadow: 0 0 60px rgba(139, 26, 26, 0.10), 0 -8px 40px rgba(0, 0, 0, 0.08);
+    --glass-bg: rgba(255, 255, 255, 0.94);
+    --modal-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
 
-    --delete-bg: rgba(220, 60, 60, 0.06);
-    --delete-border: rgba(220, 60, 60, 0.15);
-    --delete-text: #c53030;
+    --delete-bg: rgba(220, 38, 38, 0.08);
+    --delete-border: rgba(220, 38, 38, 0.20);
+    --delete-text: #DC2626;
+
+    /* Guzel Palette */
+    --c-bg: #F6F5F2;
+    --c-card: #FFFFFF;
+    --c-card-alt: #F0EEE9;
+    --c-text-1: #120F11;
+    --c-text-2: #2A2427;
+    --c-text-3: #594E53;
+    --c-text-4: #877A80;
+    --c-text-5: #B5AAB0;
+    --c-brand: #DC2626;
+    --c-brand-l: #EF4444;
+    --c-on-card: #120F11;
+    --c-border: rgba(0, 0, 0, 0.10);
 }
 
 /* ──────────────────────────────────────────
@@ -112,7 +129,7 @@ body {
     min-height: 100vh;
     min-height: 100dvh;
     overflow-x: hidden;
-    transition: background 0.3s ease, color 0.3s ease;
+    transition: background-color 0.25s ease, color 0.25s ease;
     direction: rtl;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
@@ -136,10 +153,27 @@ body {
         linear-gradient(180deg, #1c1a1a 0%, #131111 60%, #090808 100%);
 }
 
+.light .bg-concrete-wall,
+[data-theme="light"] .bg-concrete-wall {
+    background-color: #F6F5F2;
+    background-image: 
+        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(220, 38, 38, 0.06) 0%, rgba(0, 0, 0, 0.02) 45%, transparent 75%),
+        radial-gradient(circle 350px at 15% 0%, rgba(0, 0, 0, 0.03) 0%, transparent 70%),
+        radial-gradient(circle 350px at 85% 0%, rgba(0, 0, 0, 0.03) 0%, transparent 70%),
+        linear-gradient(180deg, #FFFFFF 0%, #F6F5F2 60%, #ECE9E4 100%);
+}
+
 .concrete-card {
     background: linear-gradient(160deg, rgba(32, 28, 28, 0.88) 0%, rgba(18, 16, 16, 0.96) 100%);
     border: 1px solid rgba(255, 255, 255, 0.10);
     box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.85), inset 0 1px 1px 0 rgba(255, 255, 255, 0.09);
+}
+
+.light .concrete-card,
+[data-theme="light"] .concrete-card {
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.10);
+    box-shadow: 0 8px 25px -4px rgba(0, 0, 0, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
 }
 
 .grunge-frame {
@@ -149,14 +183,28 @@ body {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.85);
 }
 
+.light .grunge-frame,
+[data-theme="light"] .grunge-frame {
+    border: 2px solid rgba(0, 0, 0, 0.18);
+    outline: 1px solid rgba(0, 0, 0, 0.15);
+    outline-offset: -3px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
 .brush-red {
-    color: #A3141E;
-    text-shadow: 0 0 18px rgba(163, 20, 30, 0.5);
+    color: #DC2626;
+    text-shadow: 0 0 18px rgba(220, 38, 38, 0.5);
 }
 
 .brush-black {
     color: #151515;
     text-shadow: 0 1px 2px rgba(255, 255, 255, 0.15);
+}
+
+.light .brush-black,
+[data-theme="light"] .brush-black {
+    color: #1A1215;
+    text-shadow: none;
 }
 
 .motto-banner {

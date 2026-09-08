@@ -62,15 +62,14 @@ export default function D95BrushLogo({
           />
         )}
 
-        {/* Letter "D" - Distressed Charcoal Ink with Paint Drips */}
+        {/* Letter "D" - Distressed Obsidian Ink in Light mode / Chalk Cream in Dark mode */}
         <div className="relative inline-block">
           <span
-            className={`font-brush font-black ${sizeMap.dSize} leading-none text-neutral-100 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]`}
+            className={`font-brush font-black ${sizeMap.dSize} leading-none text-[#141112] dark:text-[#F2EDE8] drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)] dark:drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]`}
             style={{
               display: 'inline-block',
               transform: 'skewX(-4deg) rotate(-1deg)',
-              color: '#F2EDE8',
-              WebkitTextStroke: '1px rgba(0,0,0,0.7)',
+              WebkitTextStroke: '1px rgba(0,0,0,0.3)',
             }}
           >
             D
@@ -79,14 +78,14 @@ export default function D95BrushLogo({
           {/* Dripping paint trails streaming from D */}
           <div className="absolute -bottom-1 left-2 flex items-start gap-1 pointer-events-none opacity-80">
             <span
-              className={`w-[2px] ${sizeMap.dripH} bg-neutral-300 rounded-b-full drop-shadow-[0_2px_3px_rgba(0,0,0,0.8)]`}
+              className={`w-[2px] ${sizeMap.dripH} bg-neutral-800 dark:bg-neutral-300 rounded-b-full drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)] dark:drop-shadow-[0_2px_3px_rgba(0,0,0,0.8)]`}
               style={{ animation: 'pulse 2.5s infinite ease-in-out' }}
             />
             <span
-              className={`w-[1.5px] h-2 bg-neutral-400 rounded-b-full ml-1`}
+              className={`w-[1.5px] h-2 bg-neutral-700 dark:bg-neutral-400 rounded-b-full ml-1`}
             />
             <span
-              className={`w-[1px] h-1.5 bg-neutral-500 rounded-b-full`}
+              className={`w-[1px] h-1.5 bg-neutral-600 dark:bg-neutral-500 rounded-b-full`}
             />
           </div>
         </div>
@@ -127,14 +126,14 @@ export default function D95BrushLogo({
       {/* Stencil Subtitle: GAMING & CAFÉ */}
       {showSubtitle && (
         <div className="mt-1 flex items-center justify-center gap-2">
-          <span className="w-3 md:w-5 h-[1px] bg-red-700/60" />
+          <span className="w-3 md:w-5 h-[1px] bg-red-600/70" />
           <p
-            className={`font-display font-black text-neutral-200 uppercase ${sizeMap.subSize} drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]`}
+            className={`font-display font-black text-neutral-800 dark:text-neutral-200 uppercase ${sizeMap.subSize} drop-shadow-sm`}
             style={{ letterSpacing: '0.35em' }}
           >
             GAMING &amp; CAFÉ
           </p>
-          <span className="w-3 md:w-5 h-[1px] bg-red-700/60" />
+          <span className="w-3 md:w-5 h-[1px] bg-red-600/70" />
         </div>
       )}
 
@@ -142,7 +141,7 @@ export default function D95BrushLogo({
       {showMotto && (
         <div className="mt-2 flex flex-col items-center">
           <p
-            className={`font-body font-bold text-neutral-400 uppercase ${sizeMap.mottoSize}`}
+            className={`font-body font-bold text-neutral-600 dark:text-neutral-400 uppercase ${sizeMap.mottoSize}`}
             style={{ letterSpacing: '0.28em' }}
           >
             PLAY • COMPETE • RELAX • REPEAT

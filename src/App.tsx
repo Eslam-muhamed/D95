@@ -65,7 +65,7 @@ function AppRoutes() {
                     <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
                 </Routes>
             </AnimatePresence>
-            {!isMenuPage && <BottomNav />}
+            <BottomNav />
             <Toaster position="top-center" richColors />
         </div>
     );

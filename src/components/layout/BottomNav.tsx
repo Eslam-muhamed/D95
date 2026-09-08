@@ -26,12 +26,7 @@ export default function BottomNav() {
         <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none pb-safe md:hidden">
             <div className="max-w-[440px] mx-auto px-3 pb-3">
                 <nav
-                    className="pointer-events-auto rounded-3xl p-1.5 flex items-center justify-around shadow-[0_8px_32px_rgba(0,0,0,0.85)] border border-white/10"
-                    style={{
-                        background: 'rgba(15, 8, 10, 0.94)',
-                        backdropFilter: 'blur(24px)',
-                        WebkitBackdropFilter: 'blur(24px)',
-                    }}
+                    className="pointer-events-auto rounded-3xl p-1.5 flex items-center justify-around shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.85)] border border-neutral-200/80 dark:border-white/10 bg-white/90 dark:bg-[#0f080a]/95 backdrop-blur-xl transition-colors duration-200"
                 >
                     {/* Nav Items */}
                     {navItems.map((item) => {
@@ -54,20 +49,20 @@ export default function BottomNav() {
                                 {isActive && (
                                     <motion.div
                                         layoutId="bottomNavHighlight"
-                                        className="absolute inset-0 rounded-2xl bg-gradient-to-r from-red-600/30 to-red-800/30 border border-red-500/40 shadow-inner"
+                                        className="absolute inset-0 rounded-2xl bg-red-50 dark:bg-gradient-to-r dark:from-red-600/30 dark:to-red-800/30 border border-red-200 dark:border-red-500/40 shadow-inner"
                                         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                                     />
                                 )}
                                 <Icon
                                     className={`w-5 h-5 transition-transform duration-200 relative z-10 ${
                                         isActive
-                                            ? 'text-red-400 scale-110 drop-shadow-[0_0_8px_rgba(255,80,100,0.6)]'
-                                            : 'text-neutral-400 group-hover:text-white'
+                                            ? 'text-red-600 dark:text-red-400 scale-110 drop-shadow-[0_0_8px_rgba(255,80,100,0.3)] dark:drop-shadow-[0_0_8px_rgba(255,80,100,0.6)]'
+                                            : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'
                                     }`}
                                 />
                                 <span
                                     className={`text-[10px] font-body tracking-tight mt-1 transition-colors relative z-10 ${
-                                        isActive ? 'text-white font-bold' : 'text-neutral-400 group-hover:text-neutral-200'
+                                        isActive ? 'text-neutral-900 dark:text-white font-bold' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-neutral-200'
                                     }`}
                                 >
                                     {item.label}
@@ -83,7 +78,7 @@ export default function BottomNav() {
                         className="relative flex flex-col items-center justify-center py-1.5 px-4 rounded-2xl transition-all cursor-pointer group"
                     >
                         <div className="relative">
-                            <ShoppingBag className="w-5 h-5 text-neutral-400 group-hover:text-white transition-colors" />
+                            <ShoppingBag className="w-5 h-5 text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white transition-colors" />
                             <AnimatePresence>
                                 {itemCount > 0 && (
                                     <motion.span
@@ -97,7 +92,7 @@ export default function BottomNav() {
                                 )}
                             </AnimatePresence>
                         </div>
-                        <span className="text-[10px] font-body text-neutral-400 group-hover:text-neutral-200 tracking-tight mt-1">
+                        <span className="text-[10px] font-body text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-neutral-200 tracking-tight mt-1">
                             السلة
                         </span>
                     </button>

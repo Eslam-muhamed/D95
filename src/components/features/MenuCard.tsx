@@ -8,9 +8,9 @@ interface Props {
 }
 
 const BADGE_STYLES: Record<string, { bg: string; color: string; border: string }> = {
-  'Popular':       { bg: 'bg-red-950/90',    color: 'text-red-300',    border: 'border-red-600/50' },
-  'New':           { bg: 'bg-emerald-950/90', color: 'text-emerald-300', border: 'border-emerald-500/50' },
-  "Chef's Choice": { bg: 'bg-amber-950/90',   color: 'text-amber-300',   border: 'border-amber-500/50' },
+  'Popular':       { bg: 'bg-red-100 dark:bg-red-950/90',    color: 'text-red-700 dark:text-red-300',    border: 'border-red-300 dark:border-red-600/50' },
+  'New':           { bg: 'bg-emerald-100 dark:bg-emerald-950/90', color: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-300 dark:border-emerald-500/50' },
+  "Chef's Choice": { bg: 'bg-amber-100 dark:bg-amber-950/90',   color: 'text-amber-800 dark:text-amber-300',   border: 'border-amber-300 dark:border-amber-500/50' },
 };
 
 export default function MenuCard({ item, onAdd }: Props) {
@@ -19,12 +19,12 @@ export default function MenuCard({ item, onAdd }: Props) {
   return (
     <motion.div
       whileTap={{ scale: 0.98 }}
-      className="flex items-center gap-3 rounded-xl p-3 bg-[#130f11] border border-white/[0.08] hover:border-red-600/40 hover:bg-[#181215] transition-all cursor-pointer shadow-sm group"
+      className="flex items-center gap-3 rounded-xl p-3 bg-white dark:bg-[#130f11] border border-neutral-200 dark:border-white/[0.08] hover:border-red-600/40 hover:bg-neutral-50 dark:hover:bg-[#181215] transition-all cursor-pointer shadow-sm group"
       dir="rtl"
       onClick={() => onAdd(item)}
     >
       {/* Image */}
-      <div className="relative shrink-0 rounded-lg overflow-hidden w-20 h-20 bg-black/40 border border-white/10">
+      <div className="relative shrink-0 rounded-lg overflow-hidden w-20 h-20 bg-neutral-100 dark:bg-black/40 border border-neutral-200 dark:border-white/10">
         <img
           src={item.image}
           alt={item.name}
@@ -33,7 +33,7 @@ export default function MenuCard({ item, onAdd }: Props) {
         />
         {badgeStyle && (
           <span
-            className={`absolute bottom-1 right-1 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border ${badgeStyle.bg} ${badgeStyle.color} ${badgeStyle.border} backdrop-blur-sm`}
+            className={`absolute bottom-1 right-1 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border ${badgeStyle.bg} ${badgeStyle.color} ${badgeStyle.border} backdrop-blur-sm`}
           >
             {item.badge}
           </span>
@@ -42,19 +42,19 @@ export default function MenuCard({ item, onAdd }: Props) {
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-bold text-sm text-white mb-0.5 truncate font-body">
+        <h3 className="font-bold text-sm text-neutral-900 dark:text-white mb-0.5 truncate font-body">
           {item.name}
         </h3>
-        <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2 mb-2 font-body">
+        <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed line-clamp-2 mb-2 font-body">
           {item.description}
         </p>
 
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-1" dir="ltr">
-            <span className="font-sans font-black text-base text-red-400 tabular-nums">
+            <span className="font-sans font-black text-base text-red-600 dark:text-red-400 tabular-nums">
               {item.price}
             </span>
-            <span className="text-[11px] font-bold text-neutral-400 font-body">
+            <span className="text-[11px] font-bold text-neutral-500 dark:text-neutral-400 font-body">
               ج.م
             </span>
           </div>
