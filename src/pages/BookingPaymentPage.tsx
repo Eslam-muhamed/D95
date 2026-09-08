@@ -1,6 +1,20 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowRight, Clock, User, Smartphone, Banknote, Check, Zap, Wallet, Copy, Info, CheckCircle2, ShieldCheck, Tag, FileText } from 'lucide-react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import {
+    ArrowRight,
+    Clock,
+    User,
+    Smartphone,
+    Banknote,
+    Check,
+    Zap,
+    Wallet,
+    Copy,
+    CheckCircle2,
+    ShieldCheck,
+    Tag,
+    FileText,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
@@ -12,7 +26,7 @@ export default function BookingPaymentPage() {
 
     // Booking context from state with rock-solid defaults
     const bookingState = location.state || {
-        room: { name: 'غرفة 01 (PlayStation 5)', type: 'standard', rate: 100 },
+        room: { name: 'غرفة 01 (Play Room)', type: 'standard', rate: 100 },
         date: new Date().toISOString().split('T')[0],
         startTime: '06:00 م',
         endTime: '08:00 م',
@@ -20,7 +34,7 @@ export default function BookingPaymentPage() {
         roomSubtotal: 200,
         snacks: [],
         snacksTotal: 0,
-        total: 200
+        total: 200,
     };
 
     const { room, date, startTime, endTime, durationHours, roomSubtotal, snacks, snacksTotal } = bookingState;
@@ -94,69 +108,80 @@ export default function BookingPaymentPage() {
                 name: name.trim(),
                 phone: cleanPhone,
                 notes: notes.trim(),
-                appliedPromo
-            }
+                appliedPromo,
+            },
         });
     };
 
     return (
-        <div className="bg-[#090707] text-white font-body text-sm flex flex-col min-h-screen selection:bg-red-500/30">
-            {/* Top Bar */}
-            <header className="fixed top-0 inset-x-0 z-50 bg-[#090707]/95 backdrop-blur-xl pt-safe border-b border-white/5">
-                <div className="h-16 px-4 md:px-8 flex items-center justify-between max-w-6xl mx-auto">
+        <div className="min-h-screen w-full bg-[#F4F1EA] text-neutral-900 font-body text-sm flex flex-col selection:bg-red-600 selection:text-white relative select-none">
+            {/* Ambient Warm Concrete Texture & Glow */}
+            <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[350px] bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,rgba(255,255,255,0.85)_0%,rgba(220,38,38,0.06)_50%,transparent_80%)] blur-[40px]" />
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:32px_32px] opacity-60" />
+            </div>
+
+            {/* Top Navigation Bar */}
+            <header className="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur-xl pt-safe border-b border-neutral-200/80 shadow-[0_2px_15px_rgba(0,0,0,0.05)]">
+                <div className="h-16 px-4 md:px-8 flex items-center justify-between max-w-5xl mx-auto">
                     <div className="flex items-center gap-3">
                         <button
                             type="button"
                             aria-label="الرجوع"
-                            className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:text-red-400 transition-colors active:scale-95 cursor-pointer"
+                            className="w-10 h-10 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center text-neutral-900 hover:text-red-600 transition-all active:scale-95 cursor-pointer border border-neutral-200 shadow-sm"
                             onClick={() => navigate(-1)}
                         >
                             <ArrowRight className="w-5 h-5" />
                         </button>
                         <div className="flex flex-col text-right">
-                            <h1 className="font-display text-lg md:text-xl font-bold uppercase tracking-wider text-white">طريقة الدفع والتأكيد</h1>
-                            <span className="font-body text-[10px] md:text-xs text-neutral-400">D95 SECURE CHECKOUT</span>
+                            <h1 className="font-bold text-base text-neutral-950 leading-tight font-body">
+                                طريقة الدفع وتأكيد الحجز
+                            </h1>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className="font-brush text-sm text-red-600 font-bold">D95</span>
+                                <span className="text-[11px] text-neutral-500 font-semibold tracking-wider">SECURE CHECKOUT</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold font-body bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                        <ShieldCheck className="w-4 h-4" />
+                    <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold shadow-sm">
+                        <ShieldCheck className="w-4 h-4 text-emerald-600" />
                         <span>دفع آمن ومعتمد</span>
                     </div>
                 </div>
             </header>
 
-            <main className="flex-1 flex flex-col relative w-full pt-20 pb-32 lg:pb-16 px-3.5 md:px-8 max-w-6xl mx-auto" dir="rtl">
-                {/* 2-COLUMN RESPONSIVE LAYOUT FOR DESKTOP */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mt-2">
+            {/* Main Content Area */}
+            <main className="flex-1 flex flex-col relative z-10 w-full pt-20 pb-32 lg:pb-16 px-3.5 sm:px-6 max-w-5xl mx-auto" dir="rtl">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start mt-2">
                     {/* RIGHT COLUMN: CONTACT & PAYMENT SELECTION (7 of 12) */}
                     <div className="lg:col-span-7 space-y-4">
                         {/* CUSTOMER CONTACT INFORMATION */}
-                        <section className="bg-neutral-900/90 rounded-3xl p-5 border border-white/5 shadow-lg">
-                            <label className="font-bold text-xs md:text-sm text-neutral-200 flex items-center gap-2 mb-3 font-body">
-                                <User className="w-4 h-4 text-red-400" />
-                                بيانات التواصل لتأكيد حجز مكانك
-                            </label>
+                        <section className="bg-white border-2 border-neutral-200/90 rounded-2xl p-4 sm:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+                            <div className="flex items-center gap-2 mb-3 text-neutral-900 font-bold text-sm">
+                                <User className="w-4 h-4 text-red-600" />
+                                <span>بيانات التواصل لتأكيد حجز مكانك</span>
+                            </div>
 
                             <div className="space-y-3">
-                                <div className="relative flex items-center bg-neutral-800/90 rounded-2xl px-3.5 py-3 border border-white/5 focus-within:border-red-500 transition-colors">
+                                <div className="relative flex items-center bg-neutral-50 rounded-xl px-3.5 py-2.5 border-2 border-neutral-200 focus-within:border-red-600 focus-within:bg-white transition-all">
                                     <User className="w-4 h-4 text-neutral-400 ml-3 shrink-0" />
                                     <input
                                         value={name}
-                                        onChange={e => setName(e.target.value)}
-                                        className="w-full bg-transparent font-body text-xs md:text-sm text-white placeholder:text-neutral-500 outline-none"
+                                        onChange={(e) => setName(e.target.value)}
+                                        className="w-full bg-transparent font-body text-xs sm:text-sm text-neutral-900 placeholder:text-neutral-400 outline-none font-medium"
                                         placeholder="الاسم بالكامل (مثال: كريم محمد)"
                                         type="text"
                                         required
                                     />
                                 </div>
 
-                                <div className="relative flex items-center bg-neutral-800/90 rounded-2xl px-3.5 py-3 border border-white/5 focus-within:border-red-500 transition-colors">
+                                <div className="relative flex items-center bg-neutral-50 rounded-xl px-3.5 py-2.5 border-2 border-neutral-200 focus-within:border-red-600 focus-within:bg-white transition-all">
                                     <Smartphone className="w-4 h-4 text-neutral-400 ml-3 shrink-0" />
                                     <input
                                         value={phone}
-                                        onChange={e => setPhone(e.target.value)}
-                                        className="w-full bg-transparent font-body text-xs md:text-sm text-white placeholder:text-neutral-500 outline-none"
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        className="w-full bg-transparent font-body text-xs sm:text-sm text-neutral-900 placeholder:text-neutral-400 outline-none font-medium"
                                         placeholder="رقم الموبايل (مثال: 01012345678)"
                                         type="tel"
                                         dir="rtl"
@@ -164,12 +189,12 @@ export default function BookingPaymentPage() {
                                     />
                                 </div>
 
-                                <div className="relative flex items-center bg-neutral-800/90 rounded-2xl px-3.5 py-3 border border-white/5 focus-within:border-red-500 transition-colors">
+                                <div className="relative flex items-center bg-neutral-50 rounded-xl px-3.5 py-2.5 border-2 border-neutral-200 focus-within:border-red-600 focus-within:bg-white transition-all">
                                     <FileText className="w-4 h-4 text-neutral-400 ml-3 shrink-0" />
                                     <input
                                         value={notes}
-                                        onChange={e => setNotes(e.target.value)}
-                                        className="w-full bg-transparent font-body text-xs md:text-sm text-white placeholder:text-neutral-500 outline-none"
+                                        onChange={(e) => setNotes(e.target.value)}
+                                        className="w-full bg-transparent font-body text-xs sm:text-sm text-neutral-900 placeholder:text-neutral-400 outline-none font-medium"
                                         placeholder="ملاحظات خاصة (مثال: ٤ دراعات، فيفا ٢٥ جاهزة)"
                                         type="text"
                                     />
@@ -179,36 +204,40 @@ export default function BookingPaymentPage() {
 
                         {/* PAYMENT METHOD SELECTION */}
                         <section className="space-y-3">
-                            <span className="font-bold text-xs md:text-sm text-neutral-300 flex items-center gap-2 font-body px-1">
-                                <Banknote className="w-4 h-4 text-red-400" />
-                                اختر طريقة الدفع المناسبة
-                            </span>
+                            <div className="flex items-center gap-2 px-1 text-sm font-bold text-neutral-900">
+                                <Banknote className="w-4 h-4 text-red-600" />
+                                <span>اختر طريقة الدفع المناسبة</span>
+                            </div>
 
                             {/* METHOD 1: INSTAPAY */}
                             <div
                                 onClick={() => setPaymentMethod('instapay')}
-                                className={`w-full text-right p-5 rounded-3xl border transition-all flex flex-col gap-3 cursor-pointer shadow-lg ${
+                                className={`w-full text-right p-4 rounded-2xl border-2 transition-all flex flex-col gap-3 cursor-pointer ${
                                     paymentMethod === 'instapay'
-                                        ? 'bg-gradient-to-br from-red-950/50 via-neutral-900 to-neutral-950 border-red-500/80 shadow-[0_0_20px_rgba(196,30,58,0.25)]'
-                                        : 'bg-neutral-900/90 border-white/5 hover:border-white/15'
+                                        ? 'bg-red-50/70 border-red-600 shadow-md scale-[1.01]'
+                                        : 'bg-white border-neutral-200 hover:border-neutral-300 text-neutral-800'
                                 }`}
                             >
                                 <div className="flex items-center justify-between w-full">
-                                    <div className="flex items-center gap-3.5">
-                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 text-white flex items-center justify-center shrink-0 shadow-md">
-                                            <Zap className="w-6 h-6" />
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-11 h-11 rounded-xl bg-red-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                            <Zap className="w-5 h-5" />
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-bold text-sm md:text-base text-white font-body">إنستاباي (InstaPay)</span>
-                                                <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded font-bold font-body">فوري بدون رسوم</span>
+                                                <span className="font-bold text-sm text-neutral-950 font-body">إنستاباي (InstaPay)</span>
+                                                <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold border border-red-200">
+                                                    فوري بدون رسوم
+                                                </span>
                                             </div>
-                                            <span className="text-xs text-neutral-400 font-body">تحويل لحظي مباشر وسهل لعنوان الدفع (IPA)</span>
+                                            <span className="text-xs text-neutral-600 font-medium">تحويل لحظي مباشر وسهل لعنوان الدفع (IPA)</span>
                                         </div>
                                     </div>
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
-                                        paymentMethod === 'instapay' ? 'bg-red-600 text-white' : 'border border-neutral-600'
-                                    }`}>
+                                    <div
+                                        className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${
+                                            paymentMethod === 'instapay' ? 'bg-red-600 border-red-600 text-white' : 'border-neutral-300 bg-white'
+                                        }`}
+                                    >
                                         {paymentMethod === 'instapay' && <Check className="w-4 h-4 stroke-[3]" />}
                                     </div>
                                 </div>
@@ -217,24 +246,27 @@ export default function BookingPaymentPage() {
                                     <motion.div
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
-                                        className="overflow-hidden pt-3 border-t border-white/10 flex flex-col gap-3"
+                                        className="overflow-hidden pt-3 border-t border-red-200/60 flex flex-col gap-2.5"
                                     >
-                                        <div className="bg-black/60 p-3.5 rounded-2xl flex items-center justify-between border border-white/10">
+                                        <div className="bg-white p-3 rounded-xl flex items-center justify-between border-2 border-red-200 shadow-sm">
                                             <div className="flex flex-col min-w-0">
-                                                <span className="text-xs text-neutral-400 font-body">معرف إنستاباي المعتمد (IPA):</span>
-                                                <span className="text-sm md:text-base font-bold text-red-300 font-mono tracking-wider select-all" dir="ltr">
+                                                <span className="text-xs text-neutral-500 font-semibold">معرف إنستاباي المعتمد (IPA):</span>
+                                                <span className="text-sm sm:text-base font-bold text-red-600 font-mono tracking-wider select-all" dir="ltr">
                                                     d95cairo@instapay
                                                 </span>
                                             </div>
                                             <button
                                                 type="button"
-                                                onClick={(e) => { e.stopPropagation(); handleCopy('d95cairo@instapay', 'instapay'); }}
-                                                className="shrink-0 flex items-center gap-1.5 bg-red-600/30 hover:bg-red-600/50 text-red-200 px-3.5 py-2 rounded-xl text-xs font-bold font-body transition-colors cursor-pointer border border-red-500/30 active:scale-95"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleCopy('d95cairo@instapay', 'instapay');
+                                                }}
+                                                className="shrink-0 flex items-center gap-1.5 bg-neutral-950 hover:bg-neutral-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-sm"
                                             >
                                                 {copiedKey === 'instapay' ? (
                                                     <>
                                                         <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                                                        <span className="text-emerald-400">تم النسخ</span>
+                                                        <span>تم النسخ</span>
                                                     </>
                                                 ) : (
                                                     <>
@@ -245,8 +277,8 @@ export default function BookingPaymentPage() {
                                             </button>
                                         </div>
 
-                                        <div className="bg-neutral-800/50 p-3 rounded-2xl border border-white/5 text-xs text-neutral-300 font-body space-y-1">
-                                            <p className="text-red-400 font-bold">⚡ خطوات بسيطة وسريعة:</p>
+                                        <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200 text-xs text-neutral-700 font-medium space-y-1">
+                                            <p className="text-red-600 font-bold">⚡ خطوات بسيطة وسريعة:</p>
                                             <p>١. افتح تطبيق إنستاباي ➔ تحويل إلى عنوان دفع لحظي (IPA).</p>
                                             <p>٢. الصق المعرف المنسوخ أعلاه وحوّل المبلغ المطلوب ({netTotal} ج.م).</p>
                                             <p>٣. اضغط بالأسفل لإرسال سكرين شوت الإيصال عبر واتساب لتأكيد الغرفة فوراً.</p>
@@ -258,28 +290,32 @@ export default function BookingPaymentPage() {
                             {/* METHOD 2: CASH ON ARRIVAL */}
                             <div
                                 onClick={() => setPaymentMethod('cash')}
-                                className={`w-full text-right p-5 rounded-3xl border transition-all flex flex-col gap-2 cursor-pointer shadow-lg ${
+                                className={`w-full text-right p-4 rounded-2xl border-2 transition-all flex flex-col gap-2 cursor-pointer ${
                                     paymentMethod === 'cash'
-                                        ? 'bg-gradient-to-br from-amber-950/40 via-neutral-900 to-neutral-950 border-amber-500/80 shadow-[0_0_20px_rgba(212,160,23,0.25)]'
-                                        : 'bg-neutral-900/90 border-white/5 hover:border-white/15'
+                                        ? 'bg-amber-50/80 border-amber-600 shadow-md scale-[1.01]'
+                                        : 'bg-white border-neutral-200 hover:border-neutral-300 text-neutral-800'
                                 }`}
                             >
                                 <div className="flex items-center justify-between w-full">
-                                    <div className="flex items-center gap-3.5">
-                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-600 to-amber-800 text-white flex items-center justify-center shrink-0 shadow-md">
-                                            <Banknote className="w-6 h-6" />
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-11 h-11 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                            <Banknote className="w-5 h-5" />
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-bold text-sm md:text-base text-white font-body">كاش في الصالة</span>
-                                                <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold font-body">بدون دفع مسبق</span>
+                                                <span className="font-bold text-sm text-neutral-950 font-body">كاش في الصالة</span>
+                                                <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold border border-amber-200">
+                                                    بدون دفع مسبق
+                                                </span>
                                             </div>
-                                            <span className="text-xs text-neutral-400 font-body">ادفع نقداً في فرع D95 عند الوصول وبدء وقت اللعب</span>
+                                            <span className="text-xs text-neutral-600 font-medium">ادفع نقداً في فرع D95 عند الوصول وبدء وقت اللعب</span>
                                         </div>
                                     </div>
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
-                                        paymentMethod === 'cash' ? 'bg-amber-500 text-black' : 'border border-neutral-600'
-                                    }`}>
+                                    <div
+                                        className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${
+                                            paymentMethod === 'cash' ? 'bg-amber-600 border-amber-600 text-white' : 'border-neutral-300 bg-white'
+                                        }`}
+                                    >
                                         {paymentMethod === 'cash' && <Check className="w-4 h-4 stroke-[3]" />}
                                     </div>
                                 </div>
@@ -288,9 +324,9 @@ export default function BookingPaymentPage() {
                                     <motion.div
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
-                                        className="overflow-hidden pt-2 border-t border-white/10"
+                                        className="overflow-hidden pt-2 border-t border-amber-200/60"
                                     >
-                                        <p className="text-xs text-neutral-300 font-body leading-relaxed bg-amber-950/20 p-3 rounded-2xl border border-amber-500/20">
+                                        <p className="text-xs text-amber-900 font-medium leading-relaxed bg-amber-100/60 p-2.5 rounded-xl border border-amber-200">
                                             سيتم حجز الغرفة باسمك فوراً. يرجى الحضور قبل الموعد بـ ١٠ دقائق لضمان حفظ الحجز.
                                         </p>
                                     </motion.div>
@@ -300,28 +336,32 @@ export default function BookingPaymentPage() {
                             {/* METHOD 3: MOBILE WALLET */}
                             <div
                                 onClick={() => setPaymentMethod('wallet')}
-                                className={`w-full text-right p-5 rounded-3xl border transition-all flex flex-col gap-3 cursor-pointer shadow-lg ${
+                                className={`w-full text-right p-4 rounded-2xl border-2 transition-all flex flex-col gap-3 cursor-pointer ${
                                     paymentMethod === 'wallet'
-                                        ? 'bg-gradient-to-br from-emerald-950/40 via-neutral-900 to-neutral-950 border-emerald-500/80 shadow-[0_0_20px_rgba(16,185,129,0.25)]'
-                                        : 'bg-neutral-900/90 border-white/5 hover:border-white/15'
+                                        ? 'bg-emerald-50/80 border-emerald-600 shadow-md scale-[1.01]'
+                                        : 'bg-white border-neutral-200 hover:border-neutral-300 text-neutral-800'
                                 }`}
                             >
                                 <div className="flex items-center justify-between w-full">
-                                    <div className="flex items-center gap-3.5">
-                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-white flex items-center justify-center shrink-0 shadow-md">
-                                            <Wallet className="w-6 h-6" />
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                            <Wallet className="w-5 h-5" />
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-bold text-sm md:text-base text-white font-body">فودافون كاش ومحافظ المحمول</span>
-                                                <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-bold font-body">كل المحافظ</span>
+                                                <span className="font-bold text-sm text-neutral-950 font-body">فودافون كاش ومحافظ المحمول</span>
+                                                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
+                                                    كل المحافظ
+                                                </span>
                                             </div>
-                                            <span className="text-xs text-neutral-400 font-body">تحويل كاش من فودافون كاش، أورنج، اتصالات، تيلدا أو وي</span>
+                                            <span className="text-xs text-neutral-600 font-medium">تحويل كاش من فودافون كاش، أورنج، اتصالات، تيلدا أو وي</span>
                                         </div>
                                     </div>
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
-                                        paymentMethod === 'wallet' ? 'bg-emerald-500 text-black' : 'border border-neutral-600'
-                                    }`}>
+                                    <div
+                                        className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${
+                                            paymentMethod === 'wallet' ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-neutral-300 bg-white'
+                                        }`}
+                                    >
                                         {paymentMethod === 'wallet' && <Check className="w-4 h-4 stroke-[3]" />}
                                     </div>
                                 </div>
@@ -330,24 +370,27 @@ export default function BookingPaymentPage() {
                                     <motion.div
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
-                                        className="overflow-hidden pt-3 border-t border-white/10 flex flex-col gap-2"
+                                        className="overflow-hidden pt-3 border-t border-emerald-200/60 flex flex-col gap-2"
                                     >
-                                        <div className="bg-black/60 p-3.5 rounded-2xl flex items-center justify-between border border-white/10">
+                                        <div className="bg-white p-3 rounded-xl flex items-center justify-between border-2 border-emerald-200 shadow-sm">
                                             <div className="flex flex-col min-w-0">
-                                                <span className="text-xs text-neutral-400 font-body">رقم المحفظة المعتمد للتحويل:</span>
-                                                <span className="text-sm md:text-base font-bold text-emerald-300 font-mono tracking-wider select-all" dir="ltr">
+                                                <span className="text-xs text-neutral-500 font-semibold">رقم المحفظة المعتمد للتحويل:</span>
+                                                <span className="text-sm sm:text-base font-bold text-emerald-700 font-mono tracking-wider select-all" dir="ltr">
                                                     01099238475
                                                 </span>
                                             </div>
                                             <button
                                                 type="button"
-                                                onClick={(e) => { e.stopPropagation(); handleCopy('01099238475', 'wallet'); }}
-                                                className="shrink-0 flex items-center gap-1.5 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 px-3.5 py-2 rounded-xl text-xs font-bold font-body transition-colors cursor-pointer border border-emerald-500/30 active:scale-95"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleCopy('01099238475', 'wallet');
+                                                }}
+                                                className="shrink-0 flex items-center gap-1.5 bg-neutral-950 hover:bg-neutral-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-sm"
                                             >
                                                 {copiedKey === 'wallet' ? (
                                                     <>
                                                         <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                                                        <span className="text-emerald-400">تم النسخ</span>
+                                                        <span>تم النسخ</span>
                                                     </>
                                                 ) : (
                                                     <>
@@ -363,32 +406,32 @@ export default function BookingPaymentPage() {
                         </section>
 
                         {/* PROMO CODE SECTION */}
-                        <section className="bg-neutral-900/90 rounded-3xl p-5 border border-white/5 shadow-lg">
-                            <div className="flex items-center gap-2 mb-3">
-                                <Tag className="w-4 h-4 text-red-400" />
-                                <span className="text-xs md:text-sm font-bold text-white font-body">كوبون الخصم (Promo Code)</span>
+                        <section className="bg-white border-2 border-neutral-200/90 rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+                            <div className="flex items-center gap-2 mb-2.5 text-neutral-900 font-bold text-xs sm:text-sm">
+                                <Tag className="w-4 h-4 text-red-600" />
+                                <span>كوبون الخصم (Promo Code)</span>
                             </div>
 
                             <div className="flex gap-2">
                                 <input
                                     type="text"
                                     value={promoInput}
-                                    onChange={e => setPromoInput(e.target.value)}
+                                    onChange={(e) => setPromoInput(e.target.value)}
                                     placeholder="اكتب كود الخصم (جرب: D95VIP)"
-                                    className="flex-1 bg-neutral-800/90 rounded-2xl px-4 py-2.5 text-xs md:text-sm font-body text-white uppercase placeholder:text-neutral-500 outline-none border border-white/5 focus:border-red-500"
+                                    className="flex-1 bg-neutral-50 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-body text-neutral-900 uppercase placeholder:text-neutral-400 outline-none border-2 border-neutral-200 focus:border-red-600 focus:bg-white"
                                 />
                                 <button
                                     type="button"
                                     onClick={handleApplyPromo}
-                                    className="px-5 py-2.5 rounded-2xl bg-red-600/20 hover:bg-red-600/40 text-red-300 font-bold text-xs md:text-sm font-body border border-red-500/30 cursor-pointer transition-colors active:scale-95"
+                                    className="px-4 py-2 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white font-bold text-xs sm:text-sm cursor-pointer transition-all active:scale-95 shadow-sm"
                                 >
                                     تطبيق
                                 </button>
                             </div>
 
                             {appliedPromo && (
-                                <div className="mt-2.5 text-xs text-emerald-400 font-body flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-4 h-4" />
+                                <div className="mt-2.5 text-xs text-emerald-700 font-bold flex items-center gap-1.5 bg-emerald-50 p-2 rounded-lg border border-emerald-200">
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                                     <span>تم تطبيق الكود ({appliedPromo}) - خصم 10% ({discountAmount} ج.م)</span>
                                 </div>
                             )}
@@ -401,60 +444,61 @@ export default function BookingPaymentPage() {
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="relative w-full overflow-hidden rounded-3xl bg-neutral-900/90 p-5 border border-white/10 shadow-xl"
+                            className="relative w-full overflow-hidden rounded-2xl bg-white border-2 border-neutral-200/90 p-4 sm:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)]"
                         >
                             <div className="flex items-start justify-between gap-3 relative z-10">
-                                <div className="flex flex-col gap-1.5 min-w-0">
+                                <div className="flex flex-col gap-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                                        <span className="font-body text-xs text-red-400 font-bold uppercase tracking-wider">ملخص الجلسة المحددة</span>
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                        <span className="font-body text-xs text-emerald-700 font-bold">ملخص الجلسة المحددة</span>
                                     </div>
-                                    <h2 className="font-bold text-base md:text-lg text-white font-body truncate">{room.name}</h2>
-                                    <div className="flex items-center gap-2 text-neutral-300 font-body text-xs md:text-sm mt-1">
-                                        <Clock className="w-4 h-4 text-red-400 shrink-0" />
+                                    <h2 className="font-bold text-base text-neutral-950 font-body truncate">{room.name}</h2>
+                                    <div className="flex items-center gap-1.5 text-neutral-600 font-body text-xs mt-0.5 font-medium">
+                                        <Clock className="w-3.5 h-3.5 text-red-600 shrink-0" />
                                         <span>{date} • {startTime} - {endTime} ({durationHours} س)</span>
                                     </div>
                                 </div>
 
-                                <div className="bg-gradient-to-br from-red-600 to-red-800 px-4 py-2.5 rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-md">
-                                    <span className="font-body text-[10px] text-white/80 font-bold">المطلوب</span>
-                                    <span className="font-display text-2xl font-black text-white leading-tight">{netTotal}</span>
-                                    <span className="font-body text-[11px] text-white/90 leading-none">ج.م</span>
+                                <div className="bg-red-600 px-3.5 py-2 rounded-xl flex flex-col items-center justify-center shrink-0 shadow-md text-white">
+                                    <span className="text-[10px] font-bold text-white/80">المطلوب</span>
+                                    <span className="font-brush text-2xl font-black leading-tight">{netTotal}</span>
+                                    <span className="text-[10px] font-bold">ج.م</span>
                                 </div>
                             </div>
                         </motion.div>
 
                         {/* ITEMIZED FINANCIAL BILL */}
-                        <section className="bg-neutral-900/90 rounded-3xl p-5 border border-white/10 shadow-xl space-y-3">
-                            <h3 className="font-bold text-xs md:text-sm text-neutral-400 uppercase tracking-wider pb-2 border-b border-white/5">
-                                تفاصيل الفاتورة الإلكترونية
+                        <section className="bg-white border-2 border-neutral-200/90 rounded-2xl p-4 sm:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] space-y-3">
+                            <h3 className="font-bold text-xs sm:text-sm text-neutral-950 uppercase tracking-wider pb-2 border-b border-neutral-100 flex items-center justify-between">
+                                <span>تفاصيل الفاتورة الإلكترونية</span>
+                                <span className="text-[10px] text-neutral-400 font-mono">D95 INVOICE</span>
                             </h3>
 
-                            <div className="space-y-2.5 text-xs md:text-sm font-body text-neutral-300">
+                            <div className="space-y-2 text-xs sm:text-sm font-body text-neutral-700">
                                 <div className="flex justify-between items-center">
-                                    <span className="text-neutral-400">حجز {room.name} ({durationHours} س):</span>
-                                    <span className="font-bold text-white">{roomSubtotal} ج.م</span>
+                                    <span className="text-neutral-600">حجز {room.name} ({durationHours} س):</span>
+                                    <span className="font-bold text-neutral-950">{roomSubtotal} ج.م</span>
                                 </div>
 
                                 {snacks && snacks.length > 0 && snacks.map((s: any) => (
-                                    <div key={s.id} className="flex justify-between items-center text-neutral-400">
+                                    <div key={s.id} className="flex justify-between items-center text-neutral-600">
                                         <span>{s.icon} {s.name}:</span>
-                                        <span className="text-amber-300 font-bold">+{s.price} ج.م</span>
+                                        <span className="text-red-600 font-bold">+{s.price} ج.م</span>
                                     </div>
                                 ))}
 
                                 {appliedPromo && (
-                                    <div className="flex justify-between items-center text-emerald-400">
+                                    <div className="flex justify-between items-center text-emerald-700 font-bold">
                                         <span>خصم الكوبون ({appliedPromo}):</span>
-                                        <span className="font-bold">-{discountAmount} ج.م</span>
+                                        <span>-{discountAmount} ج.م</span>
                                     </div>
                                 )}
 
-                                <div className="flex justify-between items-center pt-3 border-t border-white/10">
-                                    <span className="font-bold text-sm md:text-base text-white">المبلغ النهائي المستحق:</span>
+                                <div className="flex justify-between items-center pt-3 border-t-2 border-neutral-100">
+                                    <span className="font-bold text-sm text-neutral-950">المبلغ النهائي المستحق:</span>
                                     <div className="flex items-baseline gap-1">
-                                        <span className="font-display font-black text-2xl md:text-3xl text-red-400">{netTotal}</span>
-                                        <span className="text-xs text-neutral-400">ج.م</span>
+                                        <span className="font-brush text-2xl sm:text-3xl font-black text-red-600">{netTotal}</span>
+                                        <span className="text-xs text-neutral-500 font-bold">ج.م</span>
                                     </div>
                                 </div>
                             </div>
@@ -463,14 +507,10 @@ export default function BookingPaymentPage() {
                             <button
                                 type="button"
                                 onClick={handleConfirm}
-                                className="hidden lg:flex w-full py-4 px-6 rounded-2xl font-bold font-body text-base text-white transition-all shadow-[0_4px_25px_rgba(196,30,58,0.45)] active:scale-[0.98] cursor-pointer items-center justify-center gap-2.5 mt-4"
-                                style={{
-                                    background: 'linear-gradient(135deg, #c41e3a, #8b1020)',
-                                    border: '1px solid rgba(255, 255, 255, 0.2)'
-                                }}
+                                className="hidden lg:flex w-full py-3.5 px-6 rounded-xl font-bold font-body text-sm text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 transition-all shadow-lg shadow-red-600/25 active:scale-[0.98] cursor-pointer items-center justify-center gap-2 mt-4 border border-red-500"
                             >
                                 <span>تأكيد الحجز والحصول على التذكرة</span>
-                                <ArrowRight className="w-5 h-5 rotate-180" />
+                                <ArrowRight className="w-4 h-4 rotate-180" />
                             </button>
                         </section>
                     </div>
@@ -478,11 +518,11 @@ export default function BookingPaymentPage() {
             </main>
 
             {/* STICKY CONFIRMATION ACTION (MOBILE ONLY: lg:hidden) */}
-            <div className="fixed bottom-0 inset-x-0 z-50 pb-safe bg-[#090707]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] lg:hidden">
+            <div className="fixed bottom-0 inset-x-0 z-50 pb-safe bg-white/95 backdrop-blur-xl border-t-2 border-neutral-200 shadow-[0_-4px_30px_rgba(0,0,0,0.08)] lg:hidden">
                 <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-3" dir="rtl">
                     <div className="flex flex-col">
-                        <span className="text-[10px] text-neutral-400 font-body">طريقة الدفع:</span>
-                        <span className="text-xs font-bold text-white font-body">
+                        <span className="text-[10px] text-neutral-500 font-semibold font-body">طريقة الدفع:</span>
+                        <span className="text-xs font-bold text-neutral-950 font-body">
                             {paymentMethod === 'instapay' ? 'إنستاباي لحظي' : paymentMethod === 'cash' ? 'كاش بالصالة' : 'محفظة إلكترونية'}
                         </span>
                     </div>
@@ -490,11 +530,7 @@ export default function BookingPaymentPage() {
                     <button
                         type="button"
                         onClick={handleConfirm}
-                        className="flex-1 py-3.5 px-4 rounded-2xl font-bold font-body text-sm text-white transition-all shadow-[0_4px_25px_rgba(196,30,58,0.45)] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
-                        style={{
-                            background: 'linear-gradient(135deg, #c41e3a, #8b1020)',
-                            border: '1px solid rgba(255, 255, 255, 0.2)'
-                        }}
+                        className="flex-1 py-3 px-5 rounded-xl font-bold font-body text-sm text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 transition-all shadow-md shadow-red-600/20 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-red-500"
                     >
                         <span>تأكيد الحجز</span>
                         <ArrowRight className="w-4 h-4 rotate-180" />
