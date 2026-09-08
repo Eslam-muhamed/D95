@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Gamepad2, Coffee, ShoppingBag, Home } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/stores/cartStore';
+import { playCafeEntranceSound, playPs5StartupSound } from '@/lib/sound';
 
 export default function BottomNav() {
     const location = useLocation();
@@ -17,8 +18,8 @@ export default function BottomNav() {
 
     const navItems = [
         { path: '/', label: 'البوابة', icon: Home, isExact: true },
-        { path: '/playstation', label: 'الأجهزة', icon: Gamepad2 },
-        { path: '/menu', label: 'الكافيه', icon: Coffee },
+        { path: '/playstation', label: 'الأجهزة', icon: Gamepad2, sound: playPs5StartupSound },
+        { path: '/menu', label: 'الكافيه', icon: Coffee, sound: playCafeEntranceSound },
     ];
 
     return (
@@ -43,6 +44,11 @@ export default function BottomNav() {
                             <Link
                                 key={item.path}
                                 to={item.path}
+                                onClick={() => {
+                                    if (!isActive && item.sound) {
+                                        item.sound();
+                                    }
+                                }}
                                 className="relative flex flex-col items-center justify-center py-1.5 px-4 rounded-2xl transition-all cursor-pointer group"
                             >
                                 {isActive && (

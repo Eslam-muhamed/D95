@@ -14,6 +14,7 @@ import ContactSection from '@/components/features/ContactSection';
 import { categories } from '@/constants/menuMetadata';
 import { allItems } from '@/constants/menuData';
 import type { MenuItem } from '@/types/menu';
+import { playCafeEntranceSound } from '@/lib/sound';
 
 function ScrollToTop() {
   const [visible, setVisible] = useState(false);
@@ -46,6 +47,11 @@ export default function MenuPage() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
+
+  // Play coffee cups clink chime upon entering the menu
+  useEffect(() => {
+    playCafeEntranceSound();
+  }, []);
 
   const handleCategoryChange = (id: string) => {
     setActiveCategory(id);

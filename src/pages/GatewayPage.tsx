@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight, Gamepad2, Utensils, Clock, Sparkles } from 'lucide-react';
 import D95BrushLogo from '@/components/brand/D95BrushLogo';
-import { playPs5StartupSound } from '@/lib/sound';
+import { playPs5StartupSound, playCafeEntranceSound } from '@/lib/sound';
 
 export default function GatewayPage() {
     const navigate = useNavigate();
     const [isBootingPs5, setIsBootingPs5] = useState(false);
+    const [isEnteringMenu, setIsEnteringMenu] = useState(false);
 
     const handlePlaystationClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -17,6 +18,17 @@ export default function GatewayPage() {
         // Brief delay to allow sound ignition & button press tactile feedback before routing
         setTimeout(() => {
             navigate('/playstation');
+        }, 200);
+    };
+
+    const handleMenuClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (isEnteringMenu) return;
+        setIsEnteringMenu(true);
+        playCafeEntranceSound();
+
+        setTimeout(() => {
+            navigate('/menu');
         }, 200);
     };
 
@@ -187,7 +199,12 @@ export default function GatewayPage() {
                     {/* PORTAL 2: CAFÉ & DIGITAL MENU */}
                     <Link
                         to="/menu"
-                        className="group relative flex flex-col items-center justify-between p-3.5 sm:p-6 concrete-card rounded-2xl sm:rounded-3xl border border-white/10 hover:border-amber-500/60 transition-all duration-300 active:scale-95 cursor-pointer h-60 sm:h-76 hover:shadow-[0_0_35px_rgba(212,160,23,0.45)]"
+                        onClick={handleMenuClick}
+                        className={`group relative flex flex-col items-center justify-between p-3.5 sm:p-6 concrete-card rounded-2xl sm:rounded-3xl border transition-all duration-300 active:scale-95 cursor-pointer h-60 sm:h-76 ${
+                            isEnteringMenu
+                                ? 'border-amber-500 shadow-[0_0_35px_rgba(212,160,23,0.6)] scale-[1.02]'
+                                : 'border-white/10 hover:border-amber-500/60 hover:shadow-[0_0_35px_rgba(212,160,23,0.45)]'
+                        }`}
                     >
                         {/* Corner Industrial Marks */}
                         <div className="absolute top-2.5 left-2.5 w-2.5 h-2.5 border-t-2 border-l-2 border-amber-500" />
@@ -200,15 +217,16 @@ export default function GatewayPage() {
                             <span className="font-brush text-neutral-400 group-hover:text-amber-400 transition-colors tracking-wider">
                                 ZONE 02
                             </span>
-                            <span className="px-1.5 py-0.5 rounded bg-amber-600/30 text-amber-300 font-bold text-[9px]">
+                            <span className="px-1.5 py-0.5 rounded bg-amber-600/30 text-amber-300 font-bold text-[9px] flex items-center gap-1">
+                                {isEnteringMenu && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />}
                                 CAFÉ BAR
                             </span>
                         </div>
 
                         {/* Center Icon */}
                         <div className="my-auto flex flex-col items-center justify-center relative">
-                            <div className="absolute w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-amber-600/15 blur-xl group-hover:bg-amber-600/35 transition-all" />
-                            <Utensils className="w-12 h-12 sm:w-16 sm:h-16 text-white group-hover:text-amber-400 group-hover:scale-110 transition-all duration-300 relative z-10 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]" />
+                            <div className={`absolute w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-amber-600/15 blur-xl transition-all ${isEnteringMenu ? 'scale-125 bg-amber-600/60' : 'group-hover:bg-amber-600/35'}`} />
+                            <Utensils className={`w-12 h-12 sm:w-16 sm:h-16 text-white transition-all duration-300 relative z-10 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] ${isEnteringMenu ? 'scale-110 text-amber-400' : 'group-hover:text-amber-400 group-hover:scale-110'}`} />
                         </div>
 
                         {/* Details & Action */}
@@ -217,10 +235,10 @@ export default function GatewayPage() {
                                 CAFÉ &amp; MENU
                             </h2>
                             <div className="font-body text-[11px] sm:text-xs text-amber-300 font-bold">
-                                قائمة المشروبات والمأكولات
+                                {isEnteringMenu ? 'جاري تحضير القهوة والمنيو...' : 'قائمة المشروبات والمأكولات'}
                             </div>
-                            <div className="mt-1.5 w-full py-2 px-2 bg-gradient-to-r from-amber-700 to-amber-600 text-white font-body font-bold text-[11px] sm:text-xs rounded-xl flex items-center justify-center gap-1 group-hover:from-amber-600 group-hover:to-amber-500 transition-all shadow-md shadow-amber-900/40">
-                                <span>تصفح المنيو</span>
+                            <div className={`mt-1.5 w-full py-2 px-2 bg-gradient-to-r from-amber-700 to-amber-600 text-white font-body font-bold text-[11px] sm:text-xs rounded-xl flex items-center justify-center gap-1 transition-all shadow-md shadow-amber-900/40 ${isEnteringMenu ? 'from-amber-500 to-amber-400 shadow-amber-600/60 ring-2 ring-amber-400/50' : 'group-hover:from-amber-600 group-hover:to-amber-500'}`}>
+                                <span>{isEnteringMenu ? 'OPENING...' : 'تصفح المنيو'}</span>
                                 <ArrowRight className="w-3.5 h-3.5 rotate-180" />
                             </div>
                         </div>

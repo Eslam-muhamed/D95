@@ -136,3 +136,146 @@ export function playPs5StartupSound(): void {
     }
 }
 
+/**
+ * Plays an authentic, cozy Café entrance sound:
+ * 1. Realistic ceramic coffee cups / porcelain saucers clinking together (crisp high-frequency clinks).
+ * 2. Subtle, warm acoustic café welcoming resonance (warm jazz-café harmonic chord).
+ * 3. Soft barista steam whisper transient.
+ */
+export function playCafeEntranceSound(): void {
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0.85, now);
+        masterGain.connect(ctx.destination);
+
+        // --- 1. CERAMIC CUP CLINK 1 (Crisp porcelain tap) ---
+        const clink1Osc = ctx.createOscillator();
+        const clink1Over = ctx.createOscillator();
+        const clink1Gain = ctx.createGain();
+
+        clink1Osc.type = 'sine';
+        clink1Osc.frequency.setValueAtTime(2180, now); // Porcelain fundamental
+        clink1Osc.frequency.exponentialRampToValueAtTime(2050, now + 0.35);
+
+        clink1Over.type = 'triangle';
+        clink1Over.frequency.setValueAtTime(4720, now); // Ceramic inharmonic overtone
+
+        clink1Gain.gain.setValueAtTime(0, now);
+        clink1Gain.gain.linearRampToValueAtTime(0.35, now + 0.002); // Instant tap transient
+        clink1Gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+        clink1Osc.connect(clink1Gain);
+        clink1Over.connect(clink1Gain);
+        clink1Gain.connect(masterGain);
+
+        clink1Osc.start(now);
+        clink1Over.start(now);
+        clink1Osc.stop(now + 0.45);
+        clink1Over.stop(now + 0.45);
+
+        // --- 2. CERAMIC CUP CLINK 2 (Second cup meeting the first at +0.10s) ---
+        const t2 = now + 0.10;
+        const clink2Osc = ctx.createOscillator();
+        const clink2Over = ctx.createOscillator();
+        const clink2Gain = ctx.createGain();
+
+        clink2Osc.type = 'sine';
+        clink2Osc.frequency.setValueAtTime(2540, t2); // Higher second cup rim
+        clink2Osc.frequency.exponentialRampToValueAtTime(2420, t2 + 0.4);
+
+        clink2Over.type = 'triangle';
+        clink2Over.frequency.setValueAtTime(5380, t2);
+
+        clink2Gain.gain.setValueAtTime(0, t2);
+        clink2Gain.gain.linearRampToValueAtTime(0.38, t2 + 0.002);
+        clink2Gain.gain.exponentialRampToValueAtTime(0.001, t2 + 0.5);
+
+        clink2Osc.connect(clink2Gain);
+        clink2Over.connect(clink2Gain);
+        clink2Gain.connect(masterGain);
+
+        clink2Osc.start(t2);
+        clink2Over.start(t2);
+        clink2Osc.stop(t2 + 0.5);
+        clink2Over.stop(t2 + 0.5);
+
+        // --- 3. SAUCER SETTLE CLINK (Subtle porcelain ring at +0.22s) ---
+        const t3 = now + 0.22;
+        const saucerOsc = ctx.createOscillator();
+        const saucerGain = ctx.createGain();
+
+        saucerOsc.type = 'sine';
+        saucerOsc.frequency.setValueAtTime(1760, t3);
+        saucerOsc.frequency.exponentialRampToValueAtTime(1720, t3 + 0.6);
+
+        saucerGain.gain.setValueAtTime(0, t3);
+        saucerGain.gain.linearRampToValueAtTime(0.22, t3 + 0.003);
+        saucerGain.gain.exponentialRampToValueAtTime(0.0008, t3 + 0.65);
+
+        saucerOsc.connect(saucerGain);
+        saucerGain.connect(masterGain);
+
+        saucerOsc.start(t3);
+        saucerOsc.stop(t3 + 0.7);
+
+        // --- 4. SOFT STEAM / ESPRESSO TRANSIENT (Filtered noise puff) ---
+        const bufferSize = Math.floor(ctx.sampleRate * 0.25);
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+        const whiteNoise = ctx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+
+        const noiseFilter = ctx.createBiquadFilter();
+        noiseFilter.type = 'bandpass';
+        noiseFilter.frequency.setValueAtTime(3200, now);
+        noiseFilter.Q.setValueAtTime(3.0, now);
+
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(0, now);
+        noiseGain.gain.linearRampToValueAtTime(0.06, now + 0.03);
+        noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+
+        whiteNoise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(masterGain);
+
+        whiteNoise.start(now);
+        whiteNoise.stop(now + 0.25);
+
+        // --- 5. WARM CAFÉ WELCOME CHIME (Cozy vibraphone harmonic resonance) ---
+        const warmNotes = [
+            { freq: 523.25, time: 0.04, dur: 1.1, gain: 0.12 }, // C5
+            { freq: 659.25, time: 0.08, dur: 1.2, gain: 0.14 }, // E5
+            { freq: 783.99, time: 0.14, dur: 1.3, gain: 0.15 }, // G5
+            { freq: 987.77, time: 0.20, dur: 1.4, gain: 0.12 }, // B5
+        ];
+
+        warmNotes.forEach((n) => {
+            const osc = ctx.createOscillator();
+            const noteGain = ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(n.freq, now + n.time);
+
+            noteGain.gain.setValueAtTime(0, now + n.time);
+            noteGain.gain.linearRampToValueAtTime(n.gain, now + n.time + 0.02);
+            noteGain.gain.exponentialRampToValueAtTime(0.0001, now + n.time + n.dur);
+
+            osc.connect(noteGain);
+            noteGain.connect(masterGain);
+
+            osc.start(now + n.time);
+            osc.stop(now + n.time + n.dur);
+        });
+    } catch {
+        // Silently fail if audio not supported
+    }
+}
+
+
