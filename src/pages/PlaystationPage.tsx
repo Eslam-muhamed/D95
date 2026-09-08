@@ -8,6 +8,7 @@ import {
     Sparkles,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import D95BrushLogo from '@/components/brand/D95BrushLogo';
 import wallPricesImg from '@/assets/wall/d95-wall-prices.jpg';
 
@@ -22,6 +23,8 @@ interface PricingRow {
     bookingType: 'standard' | 'vip' | 'outside' | 'billiards';
     bookingName: string;
     topPercent: string; // for hotspot on real photo
+    onlineBooking: boolean;
+    badgeAr: string;
 }
 
 const PRICING_BOARD: PricingRow[] = [
@@ -36,6 +39,8 @@ const PRICING_BOARD: PricingRow[] = [
         bookingType: 'standard',
         bookingName: 'غرفة 01 (Play Room)',
         topPercent: '47%',
+        onlineBooking: true,
+        badgeAr: 'حجز أونلاين',
     },
     {
         id: 'room-2',
@@ -48,6 +53,8 @@ const PRICING_BOARD: PricingRow[] = [
         bookingType: 'standard',
         bookingName: 'غرفة 02 (Play Room)',
         topPercent: '59%',
+        onlineBooking: true,
+        badgeAr: 'حجز أونلاين',
     },
     {
         id: 'ps-outside',
@@ -60,6 +67,8 @@ const PRICING_BOARD: PricingRow[] = [
         bookingType: 'outside',
         bookingName: 'بلايستيشن صالة خارجية (PS Outside)',
         topPercent: '71%',
+        onlineBooking: false,
+        badgeAr: 'حجز من المحل فقط',
     },
     {
         id: 'billiards',
@@ -72,6 +81,8 @@ const PRICING_BOARD: PricingRow[] = [
         bookingType: 'billiards',
         bookingName: 'طاولة بلياردو احترافية (Billiards)',
         topPercent: '83%',
+        onlineBooking: false,
+        badgeAr: 'حجز من المحل فقط',
     },
 ];
 
@@ -80,16 +91,20 @@ export default function PlaystationPage() {
     const [viewMode, setViewMode] = useState<'mural' | 'photo'>('mural');
     const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
-    const handleBooking = (roomName: string, type: 'standard' | 'vip' | 'outside' | 'billiards', rate: number) => {
-        navigate('/playstation/booking', {
-            state: {
-                room: {
-                    name: roomName,
-                    type,
-                    rate,
+    const handleRowClick = (item: PricingRow) => {
+        if (item.onlineBooking) {
+            navigate('/playstation/booking', {
+                state: {
+                    room: {
+                        name: item.bookingName,
+                        type: item.bookingType,
+                        rate: item.price,
+                    },
                 },
-            },
-        });
+            });
+        } else {
+            toast.info(`📍 ${item.name} (${item.sub}) يتم الحجز واللعب مباشرة داخل المحل عند الحضور دون الحاجة لحجز مسبق عبر الموقع 🎱🎮`);
+        }
     };
 
     return (
@@ -218,7 +233,7 @@ export default function PlaystationPage() {
                                         key={item.id}
                                         whileHover={{ backgroundColor: 'rgba(0,0,0,0.06)' }}
                                         whileTap={{ scale: 0.99 }}
-                                        onClick={() => handleBooking(item.bookingName, item.bookingType, item.price)}
+                                        onClick={() => handleRowClick(item)}
                                         className="grid grid-cols-12 divide-x-2 divide-neutral-900 p-2.5 sm:p-4 cursor-pointer transition-colors group relative"
                                     >
                                         {/* LEFT SIDE (7 Cols): Icon + Room Name (Black) + Sub (Red) */}
@@ -256,11 +271,22 @@ export default function PlaystationPage() {
                                                 )}
                                             </div>
 
-                                            {/* Text Block: Bold Black Title + Blood Red Subtitle */}
+                                            {/* Text Block: Bold Black Title + Blood Red Subtitle + In-Store/Online Badge */}
                                             <div className="flex flex-col justify-center text-left">
-                                                <span className="font-brush text-base sm:text-2xl font-black text-neutral-950 tracking-wide leading-tight group-hover:text-red-950 transition-colors">
-                                                    {item.name}
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-brush text-base sm:text-2xl font-black text-neutral-950 tracking-wide leading-tight group-hover:text-red-950 transition-colors">
+                                                        {item.name}
+                                                    </span>
+                                                    <span
+                                                        className={`font-body text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded border whitespace-nowrap ${
+                                                            item.onlineBooking
+                                                                ? 'bg-emerald-700/15 text-emerald-800 border-emerald-800/30'
+                                                                : 'bg-neutral-900/10 text-neutral-700 border-neutral-900/20'
+                                                        }`}
+                                                    >
+                                                        {item.badgeAr}
+                                                    </span>
+                                                </div>
                                                 <span className="font-brush text-[10px] sm:text-xs font-bold text-[#8B1119] tracking-wider uppercase leading-none mt-0.5">
                                                     {item.sub}
                                                 </span>
@@ -283,9 +309,12 @@ export default function PlaystationPage() {
                                         </div>
 
                                         {/* Subtle Hover Action Pill */}
-                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none hidden sm:flex items-center gap-1 px-2 py-0.5 rounded bg-red-900/80 text-white text-[10px] font-bold">
-                                            <span>احجز</span>
-                                            <ArrowRight className="w-3 h-3 rotate-180" />
+                                        <div
+                                            className={`absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none hidden sm:flex items-center gap-1 px-2.5 py-1 rounded text-white text-[10px] font-bold shadow-md ${
+                                                item.onlineBooking ? 'bg-red-800/90' : 'bg-neutral-800/90'
+                                            }`}
+                                        >
+                                            <span>{item.onlineBooking ? 'احجز أونلاين ←' : 'حجز بالمحل 🏬'}</span>
                                         </div>
                                     </motion.div>
                                 ))}
@@ -326,15 +355,19 @@ export default function PlaystationPage() {
                                 {PRICING_BOARD.map((item) => (
                                     <div
                                         key={item.id}
-                                        onClick={() => handleBooking(item.bookingName, item.bookingType, item.price)}
+                                        onClick={() => handleRowClick(item)}
                                         onMouseEnter={() => setHoveredRow(item.id)}
                                         onMouseLeave={() => setHoveredRow(null)}
                                         className="absolute left-[18%] right-[18%] h-[9%] rounded cursor-pointer transition-all border border-transparent hover:border-red-500/80 hover:bg-red-950/20 flex items-center justify-end px-3"
                                         style={{ top: item.topPercent }}
-                                        title={`انقر لحجز ${item.bookingName}`}
+                                        title={item.onlineBooking ? `انقر لحجز ${item.bookingName}` : `${item.name}: حجز من المحل فقط`}
                                     >
-                                        <span className="opacity-0 hover:opacity-100 transition-opacity px-2 py-0.5 rounded bg-red-600 text-white font-body font-bold text-[10px] shadow-lg">
-                                            حجز فوري ←
+                                        <span
+                                            className={`opacity-0 hover:opacity-100 transition-opacity px-2.5 py-1 rounded text-white font-body font-bold text-[10px] shadow-lg border border-white/20 ${
+                                                item.onlineBooking ? 'bg-red-700' : 'bg-neutral-800'
+                                            }`}
+                                        >
+                                            {item.onlineBooking ? 'احجز أونلاين ←' : 'حجز من المحل فقط 🏬'}
                                         </span>
                                     </div>
                                 ))}
