@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { motion } from 'framer-motion';
+import { Flame } from 'lucide-react';
 import { categories } from '@/constants/menuMetadata';
 import { useScrollSpy } from '@/hooks/useScrollSpy';
 
@@ -13,7 +13,7 @@ export default function CategoryNav({ activeCategory, onCategoryChange }: Props)
   const scrollSpyId = useScrollSpy(ids);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // When 'all': scroll-spy drives the underline highlight
+  // When 'all': scroll-spy drives the highlight
   // When filtered: selected category drives it
   const highlightedId = activeCategory === 'all' ? scrollSpyId : activeCategory;
   const isAllActive = activeCategory === 'all';
@@ -26,89 +26,53 @@ export default function CategoryNav({ activeCategory, onCategoryChange }: Props)
   return (
     <div
       id="menu-nav-sticky"
-      className="sticky z-40 w-full"
-      style={{
-        top: 56,
-        borderBottom: '1px solid var(--c-border, rgba(139, 26, 42, 0.18))',
-        backdropFilter: 'blur(16px)',
-        backgroundColor: 'var(--glass-bg, rgba(15, 6, 8, 0.85))',
-      }}
+      className="sticky top-14 z-40 w-full bg-[#0c090b]/95 backdrop-blur-md border-b border-white/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.6)]"
     >
       <div
         ref={scrollRef}
-        className="flex items-center gap-1 px-3 py-2 overflow-x-auto scrollbar-hide max-w-4xl mx-auto"
+        className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 overflow-x-auto scrollbar-hide max-w-4xl mx-auto"
         style={{ direction: 'rtl', scrollSnapType: 'x mandatory' }}
       >
         {/* Offers shortcut */}
         <button
           onClick={scrollToOffers}
-          className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-white text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shadow-sm"
-          style={{
-            background: 'linear-gradient(135deg, #8B1A2A, #C45C6A)',
-            boxShadow: '0 2px 10px rgba(139,26,42,0.4)',
-            fontFamily: 'Cairo, sans-serif',
-            minHeight: 36,
-          }}
+          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-bold transition-all whitespace-nowrap cursor-pointer shadow-sm bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 border border-red-500/50"
         >
-          🏷️ عروض
+          <Flame size={14} className="text-amber-300 animate-pulse" />
+          <span>العروض</span>
         </button>
 
         {/* "الكل" — show all */}
         <button
           onClick={() => onCategoryChange('all')}
-          className="relative flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer"
-          style={{
-            fontFamily: 'Cairo, sans-serif',
-            minHeight: 36,
-            background: isAllActive
-              ? 'linear-gradient(135deg, rgba(139,26,42,0.45), rgba(196,92,106,0.3))'
-              : 'transparent',
-            color: isAllActive ? 'var(--c-on-card, #F4C2C8)' : 'var(--c-text-4, #7a5a60)',
-            border: isAllActive ? '1px solid rgba(139,26,42,0.55)' : '1px solid transparent',
-          }}
+          className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer border ${
+            isAllActive
+              ? 'bg-gradient-to-b from-[#2a1317] to-[#170d10] border-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.25)]'
+              : 'bg-white/[0.04] border-white/10 text-neutral-400 hover:text-white hover:border-white/20'
+          }`}
         >
           <span>🎮</span>
           <span>الكل</span>
-          {isAllActive && (
-            <motion.div
-              layoutId="cat-indicator"
-              className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-              style={{ background: 'linear-gradient(to left, #8B1A2A, #C45C6A)' }}
-            />
-          )}
         </button>
 
         {/* Category buttons */}
         {categories.map(cat => {
           const isActive = highlightedId === cat.id;
           const isSelected = activeCategory === cat.id;
+          const isCurrent = isSelected || (!isAllActive && isActive);
 
           return (
             <button
               key={cat.id}
               onClick={() => onCategoryChange(cat.id)}
-              className="relative flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer"
-              style={{
-                fontFamily: 'Cairo, sans-serif',
-                minHeight: 36,
-                color: isActive ? 'var(--c-on-card, #F4C2C8)' : 'var(--c-text-4, #7a5a60)',
-                background: isSelected
-                  ? 'rgba(139,26,42,0.22)'
-                  : 'transparent',
-                border: isSelected
-                  ? '1px solid rgba(139,26,42,0.5)'
-                  : '1px solid transparent',
-              }}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer border ${
+                isCurrent
+                  ? 'bg-gradient-to-b from-[#2a1317] to-[#170d10] border-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.25)]'
+                  : 'bg-white/[0.04] border-white/10 text-neutral-400 hover:text-white hover:border-white/20'
+              }`}
             >
               <span>{cat.icon}</span>
               <span>{cat.name}</span>
-              {isActive && !isAllActive && (
-                <motion.div
-                  layoutId="cat-indicator"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                  style={{ background: 'linear-gradient(to left, #8B1A2A, #C45C6A)' }}
-                />
-              )}
             </button>
           );
         })}

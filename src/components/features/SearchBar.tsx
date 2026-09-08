@@ -8,28 +8,15 @@ interface Props {
 
 export default function SearchBar({ value, onChange }: Props) {
   return (
-    <div className="px-4 pt-4 pb-2 max-w-2xl mx-auto">
-      <div
-        className="flex items-center gap-3 px-4 rounded-full"
-        style={{
-          height: 48,
-          background: 'rgba(139,26,42,0.1)',
-          border: '1px solid rgba(139,26,42,0.3)',
-          direction: 'rtl',
-        }}
-      >
-        <Search size={18} style={{ color: '#C45C6A', flexShrink: 0 }} />
+    <div className="px-4 pt-3 pb-1 max-w-2xl mx-auto">
+      <div className="flex items-center gap-2.5 px-3.5 rounded-xl bg-[#120e10] border border-white/[0.08] focus-within:border-red-600 focus-within:shadow-[0_0_15px_rgba(220,38,38,0.2)] transition-all h-11" dir="rtl">
+        <Search size={16} className="text-neutral-400 shrink-0" />
         <input
           type="text"
-          placeholder="ابحث في القائمة..."
+          placeholder="ابحث عن مشروب، قهوة، أو وجبة سريعة..."
           value={value}
           onChange={e => onChange(e.target.value)}
-          className="flex-1 bg-transparent outline-none text-sm"
-          style={{
-            color: 'var(--c-text-1, #f5ece8)',
-            fontFamily: 'Cairo, sans-serif',
-            caretColor: '#C45C6A',
-          }}
+          className="flex-1 bg-transparent outline-none text-xs sm:text-sm text-white placeholder-neutral-500 font-body"
         />
         <AnimatePresence>
           {value && (
@@ -38,10 +25,10 @@ export default function SearchBar({ value, onChange }: Props) {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
               onClick={() => onChange('')}
-              className="flex items-center justify-center rounded-full flex-shrink-0 cursor-pointer"
-              style={{ width: 24, height: 24, background: 'rgba(139,26,42,0.35)' }}
+              className="flex items-center justify-center rounded-md shrink-0 cursor-pointer w-6 h-6 bg-white/[0.08] hover:bg-white/[0.15] text-neutral-300 hover:text-white transition-colors"
+              aria-label="مسح البحث"
             >
-              <X size={14} style={{ color: '#F4C2C8' }} />
+              <X size={13} />
             </motion.button>
           )}
         </AnimatePresence>
