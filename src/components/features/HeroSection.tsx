@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { motion, useMotionValue, useSpring } from 'framer-motion';
 import heroImg from '@/assets/hero.jpg';
+import D95BrushLogo from '@/components/brand/D95BrushLogo';
 
 const shapes = [
   { kind: 'gaming', top: 12, left: 8,  size: 28, op: 0.7, depth: 0.04, fd: 3.5, fdelay: 0 },
@@ -119,37 +120,25 @@ export default function HeroSection() {
 
       {/* Hero content */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center" style={{ padding: '36px 20px 52px' }}>
-        {/* Subtitle */}
-        <motion.p
-          initial={{ opacity: 0, y: -15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.7 }}
-          className="text-xs tracking-[0.5em] uppercase mb-4"
-          style={{ color: '#F4C2C8', fontFamily: 'Cairo, sans-serif' }}
-        >
-          ✦ &nbsp; GAMING &amp; CAFÉ &nbsp; ✦
-        </motion.p>
-
-        {/* Main title */}
-        <motion.h1
+        {/* Authentic D95 Mural Logo & Motto */}
+        <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-          className="font-display font-bold brand-text-shimmer"
-          style={{ fontSize: 'clamp(3.5rem, 14vw, 8rem)', lineHeight: 1, letterSpacing: '0.05em', fontFamily: '"Playfair Display", Georgia, serif' }}
+          transition={{ delay: 0.3, duration: 0.7 }}
+          className="my-2"
         >
-          D95
-        </motion.h1>
+          <D95BrushLogo size="lg" showSubtitle={true} showMotto={true} glow={true} />
+        </motion.div>
 
         {/* Tagline */}
         <motion.p
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8, duration: 0.7 }}
-          className="mt-4 text-lg"
-          style={{ color: 'rgba(244,194,200,0.9)', fontFamily: 'Cairo, sans-serif', maxWidth: 400 }}
+          transition={{ delay: 0.7, duration: 0.6 }}
+          className="mt-3 text-base sm:text-lg font-bold"
+          style={{ color: 'rgba(244,194,200,0.95)', fontFamily: 'Cairo, sans-serif', maxWidth: 420 }}
         >
-          حيث المتعة تلتقي بالاحترافية
+          حيث يلتقي الجيمنج الاحترافي بأرقى مذاق
         </motion.p>
 
         {/* Divider */}

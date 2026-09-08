@@ -70,17 +70,38 @@ export default function TopHeader({ onCartOpen }: Props = {}) {
         {/* Center: Brand */}
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="flex flex-col items-center cursor-pointer"
+          className="flex flex-col items-center cursor-pointer group"
           style={{ background: 'transparent', border: 'none', padding: 0 }}
           aria-label="الرجوع للأعلى"
         >
+          <div className="flex items-baseline leading-none">
+            <span
+              className="font-brush font-black text-xl text-neutral-100 group-hover:text-white transition-colors"
+              style={{ transform: 'skewX(-4deg)' }}
+            >
+              D
+            </span>
+            <span
+              className="font-brush font-black text-2xl text-red-500 group-hover:text-red-400 transition-colors -ml-0.5"
+              style={{
+                transform: 'skewX(-6deg)',
+                textShadow: '0 0 10px rgba(181, 24, 36, 0.5)',
+              }}
+            >
+              95
+            </span>
+          </div>
           <span
-            className="font-display font-bold brand-text"
-            style={{ fontSize: 22, letterSpacing: '0.12em', fontFamily: '"Playfair Display", Georgia, serif' }}
+            style={{
+              fontSize: 8,
+              letterSpacing: '0.35em',
+              color: '#F4C2C8',
+              fontFamily: 'Cairo, sans-serif',
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              marginTop: -2,
+            }}
           >
-            D95
-          </span>
-          <span style={{ fontSize: 9, letterSpacing: '0.4em', color: '#C45C6A', fontFamily: 'Cairo, sans-serif', textTransform: 'uppercase' }}>
             GAMING &amp; CAFÉ
           </span>
         </button>
