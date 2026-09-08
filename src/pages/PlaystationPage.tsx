@@ -3,15 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
     ArrowRight,
     Gamepad2,
-    Tv,
-    Headphones,
-    Users,
     Flame,
     Coffee,
-    CheckCircle2,
     Sparkles,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import D95BrushLogo from '@/components/brand/D95BrushLogo';
 import wallPricesImg from '@/assets/wall/d95-wall-prices.jpg';
 
@@ -352,127 +348,6 @@ export default function PlaystationPage() {
                     </motion.section>
                 )}
 
-                {/* Full Breakdown Cards */}
-                <div className="flex items-center justify-between px-1 mb-3 mt-6">
-                    <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-6 bg-red-600 rounded-full" />
-                        <h3 className="font-bold text-base md:text-xl text-white font-body">
-                            مواصفات وتجهيزات الصالة
-                        </h3>
-                    </div>
-                    <span className="text-xs text-neutral-400 font-body">جاهزة لخدمتك</span>
-                </div>
-
-                {/* DETAILED ROOM CARDS */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* CARD 1: ROOM 1 & ROOM 2 */}
-                    <div className="rounded-2xl concrete-card p-4 sm:p-5 flex flex-col justify-between border border-white/10">
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                    <h4 className="font-brush text-lg sm:text-xl text-white">ROOM 1 &amp; ROOM 2</h4>
-                                    <span className="text-[10px] bg-red-600/30 text-red-300 font-bold px-2 py-0.5 rounded-full">
-                                        PLAY ROOMS
-                                    </span>
-                                </div>
-                                <span className="font-brush text-lg text-red-500">100 ج.م / س</span>
-                            </div>
-                            <p className="text-xs text-neutral-300 font-body leading-relaxed mb-3">
-                                غرف خاصة مغلقة مجهزة بالكامل للبطولات والتحديات الكبرى بين الأصدقاء.
-                            </p>
-
-                            <div className="grid grid-cols-2 gap-2 text-xs text-neutral-300 font-body mb-3">
-                                <div className="flex items-center gap-1.5 bg-black/40 p-2 rounded-xl">
-                                    <Tv className="w-4 h-4 text-red-400 shrink-0" />
-                                    <span className="truncate">شاشات 4K 120Hz</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 bg-black/40 p-2 rounded-xl">
-                                    <Gamepad2 className="w-4 h-4 text-red-400 shrink-0" />
-                                    <span className="truncate">٤ أذرع DualSense</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 bg-black/40 p-2 rounded-xl">
-                                    <Headphones className="w-4 h-4 text-amber-400 shrink-0" />
-                                    <span className="truncate">صوت محيطي 3D</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 bg-black/40 p-2 rounded-xl">
-                                    <Users className="w-4 h-4 text-amber-400 shrink-0" />
-                                    <span className="truncate">كنبة فندقية وتكييف</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 pt-1">
-                            <button
-                                onClick={() => handleBooking('غرفة 01 (Play Room)', 'standard', 100)}
-                                className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-red-700 to-red-600 text-white font-bold text-xs flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer shadow-md"
-                            >
-                                <span>حجز غرفة 1</span>
-                                <ArrowRight className="w-3.5 h-3.5 rotate-180" />
-                            </button>
-                            <button
-                                onClick={() => handleBooking('غرفة 02 (Play Room)', 'standard', 100)}
-                                className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-red-700 to-red-600 text-white font-bold text-xs flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer shadow-md"
-                            >
-                                <span>حجز غرفة 2</span>
-                                <ArrowRight className="w-3.5 h-3.5 rotate-180" />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* CARD 2: PS OUTSIDE & BILLIARDS */}
-                    <div className="rounded-2xl concrete-card p-4 sm:p-5 flex flex-col justify-between border border-white/10">
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                    <h4 className="font-brush text-lg sm:text-xl text-white">PS OUTSIDE &amp; BILLIARDS</h4>
-                                    <span className="text-[10px] bg-amber-600/30 text-amber-300 font-bold px-2 py-0.5 rounded-full">
-                                        OPEN ZONE
-                                    </span>
-                                </div>
-                                <span className="font-brush text-lg text-amber-400">80 / 15 ج.م</span>
-                            </div>
-                            <p className="text-xs text-neutral-300 font-body leading-relaxed mb-3">
-                                أجهزة البلايستيشن بالصالة المفتوحة وطاولات البلياردو الاحترافية للألعاب السريعة.
-                            </p>
-
-                            <div className="grid grid-cols-2 gap-2 text-xs text-neutral-300 font-body mb-3">
-                                <div className="flex items-center gap-1.5 bg-black/40 p-2 rounded-xl">
-                                    <Gamepad2 className="w-4 h-4 text-amber-400 shrink-0" />
-                                    <span className="truncate">جهازين PS5 بالصالة</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 bg-black/40 p-2 rounded-xl">
-                                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                                    <span className="truncate">طاولة بلياردو متكاملة</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 bg-black/40 p-2 rounded-xl">
-                                    <Flame className="w-4 h-4 text-red-400 shrink-0" />
-                                    <span className="truncate">تحديات حماسية</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 bg-black/40 p-2 rounded-xl">
-                                    <Coffee className="w-4 h-4 text-amber-400 shrink-0" />
-                                    <span className="truncate">خدمة المشروبات</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 pt-1">
-                            <button
-                                onClick={() => handleBooking('بلايستيشن صالة خارجية (PS Outside)', 'outside', 80)}
-                                className="py-2.5 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer border border-white/10"
-                            >
-                                <span>حجز PS خارجي</span>
-                                <ArrowRight className="w-3.5 h-3.5 rotate-180" />
-                            </button>
-                            <button
-                                onClick={() => handleBooking('طاولة بلياردو احترافية (Billiards)', 'billiards', 15)}
-                                className="py-2.5 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer border border-white/10"
-                            >
-                                <span>حجز بلياردو</span>
-                                <ArrowRight className="w-3.5 h-3.5 rotate-180" />
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </main>
         </div>
     );
