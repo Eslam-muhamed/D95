@@ -2,21 +2,16 @@ import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
     ArrowRight,
-    Gamepad2,
     Calendar,
     Clock,
-    CheckCircle2,
-    Sparkles,
     Coffee,
-    Plus,
     Check,
     Lock,
-    Zap,
     DoorClosed,
-    Info,
+    Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 interface SnackAddon {
     id: string;
@@ -29,21 +24,21 @@ interface SnackAddon {
 const SNACK_OPTIONS: SnackAddon[] = [
     {
         id: 'redbull_combo',
-        name: 'كومبو الجيمرز (ريدبول + سناك شيبس ومكسرات)',
+        name: 'كومبو الجيمرز (ريدبول + سناك)',
         price: 55,
-        description: 'طاقة وتركيز إضافي للجلسات الطويلة',
+        description: 'طاقة وتركيز للجلسات الطويلة',
         icon: '⚡',
     },
     {
         id: 'coffee_specialty',
-        name: 'قهوة سبيشالتي دبل إسبريسو / آيس لاتيه',
+        name: 'قهوة سبيشالتي دبل إسبريسو',
         price: 40,
         description: 'بُن برازيلي فاخر محمص طازجاً',
         icon: '☕',
     },
     {
         id: 'water_cold',
-        name: 'مياه معدنية مثلجة (حجم كبير)',
+        name: 'مياه معدنية مثلجة (كبير)',
         price: 15,
         description: 'انتعاش مستمر أثناء اللعب',
         icon: '💧',
@@ -150,14 +145,14 @@ export default function BookingDetailsPage() {
         const getPeriodName = (h: number) => {
             if (h >= 6 && h < 12) return 'صباحاً';
             if (h >= 12 && h < 16) return 'الظهيرة';
-            if (h >= 16 && h < 19) return 'العصر والمغرب';
-            if (h >= 19 && h < 23) return 'ذروة الجيمرز 🔥';
-            return 'سهرة الفجر 🌙';
+            if (h >= 16 && h < 19) return 'العصر';
+            if (h >= 19 && h < 23) return 'ذروة 🔥';
+            return 'سهرة 🌙';
         };
 
         const slots: DynamicSlot[] = [];
-        // Generate up to 14 slots ahead
-        const count = isToday ? 12 : 16;
+        // Generate 12 slots for a compact, fast-scanning grid
+        const count = 12;
 
         for (let i = 0; i < count; i++) {
             const startH = (baseHour + i) % 24;
@@ -214,7 +209,6 @@ export default function BookingDetailsPage() {
 
         // If slot is already selected, allow shrinking or toggling
         if (selectedSlotIndices.includes(slot.index)) {
-            // Deselect this and following
             const remaining = selectedSlotIndices.filter((idx) => idx < slot.index);
             if (remaining.length > 0) {
                 setSelectedSlotIndices(remaining);
@@ -324,76 +318,120 @@ export default function BookingDetailsPage() {
     };
 
     return (
-        <div className="bg-[#090707] text-white font-body text-sm flex flex-col min-h-screen selection:bg-red-500/30">
-            {/* Ambient Background Lights */}
+        <div className="min-h-screen w-full bg-[#121010] text-[#f2ede8] font-body text-sm flex flex-col selection:bg-red-600/40 relative select-none">
+            {/* ─────────────────────────────────────────────────────────────
+                AUTHENTIC D95 WALL ATMOSPHERE:
+                LIGHT CONCRETE TEXTURE + INDUSTRIAL CEILING SPOTLIGHT CONES
+               ───────────────────────────────────────────────────────────── */}
             <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-red-950/20 blur-[130px] rounded-full" />
-                <div className="absolute bottom-10 right-10 w-[400px] h-[300px] bg-amber-950/15 blur-[120px] rounded-full" />
+                {/* Center Overhead Track Spotlight */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[750px] h-[340px] bg-[radial-gradient(ellipse_75%_50%_at_50%_0%,rgba(255,245,235,0.22)_0%,rgba(255,240,230,0.06)_45%,transparent_75%)] blur-[40px]" />
+                {/* Left Spotlight Cone */}
+                <div className="absolute top-0 left-[12%] w-[420px] h-[320px] bg-[radial-gradient(circle_at_top,rgba(255,248,240,0.18)_0%,transparent_70%)] blur-[35px]" />
+                {/* Right Spotlight Cone */}
+                <div className="absolute top-0 right-[12%] w-[420px] h-[320px] bg-[radial-gradient(circle_at_top,rgba(255,248,240,0.18)_0%,transparent_70%)] blur-[35px]" />
+                {/* D95 Crimson Glow from below */}
+                <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[320px] bg-[#b51824]/14 blur-[120px] rounded-full" />
+                <div className="absolute bottom-10 right-10 w-[400px] h-[300px] bg-[#d4a017]/10 blur-[130px] rounded-full" />
             </div>
 
             {/* Top Navigation Bar */}
-            <header className="fixed top-0 inset-x-0 z-50 bg-[#090707]/90 backdrop-blur-xl pt-safe border-b border-white/10">
-                <div className="h-16 px-4 md:px-8 flex items-center justify-between max-w-5xl mx-auto">
+            <header className="fixed top-0 inset-x-0 z-50 bg-[#161214]/90 backdrop-blur-xl pt-safe border-b border-white/10 shadow-md">
+                <div className="h-14 px-4 md:px-8 flex items-center justify-between max-w-4xl mx-auto">
                     <div className="flex items-center gap-3">
                         <Link
                             to="/playstation"
-                            aria-label="الرجوع للأجهزة"
-                            className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:text-red-400 transition-colors active:scale-95 cursor-pointer border border-white/10"
+                            aria-label="الرجوع للغرف"
+                            className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-white hover:text-red-400 hover:border-red-500/40 transition-colors active:scale-95 cursor-pointer border border-white/10"
                         >
-                            <ArrowRight className="w-5 h-5" />
+                            <ArrowRight className="w-4 h-4" />
                         </Link>
                         <div className="flex flex-col text-right">
-                            <h1 className="font-brush text-lg text-white">حجز الغرفة ومواعيد اليوم</h1>
-                            <span className="font-body text-[10px] text-neutral-400">D95 GAMING &amp; CAFÉ</span>
+                            <h1 className="font-brush text-base text-white leading-tight">
+                                حجز الغرفة ومواعيد اليوم
+                            </h1>
+                            <div className="flex items-center gap-1.5 -mt-0.5">
+                                <span className="font-brush text-xs text-red-500">D95</span>
+                                <span className="text-[10px] text-neutral-400">GAMING &amp; CAFÉ</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-950/80 border border-red-600/40 text-red-300 text-xs font-bold">
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 border border-emerald-500/40 text-emerald-300 text-xs font-bold shadow-sm">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                         <span>مواعيد ديناميكية حية</span>
                     </div>
                 </div>
             </header>
 
-            {/* Main Content */}
-            <main className="flex-1 flex flex-col relative z-10 w-full pt-20 pb-32 px-3.5 sm:px-6 max-w-4xl mx-auto" dir="rtl">
+            {/* Ceiling Spotlight Fixtures Visual Track */}
+            <div className="relative z-10 w-full max-w-xl mx-auto flex items-center justify-between px-8 pt-16 pb-1 opacity-75">
+                <div className="flex flex-col items-center">
+                    <span className="w-2.5 h-1.5 rounded-t bg-neutral-400" />
+                    <span className="w-3.5 h-1 bg-yellow-100 rounded-full shadow-[0_0_10px_#fff]" />
+                </div>
+                <div className="h-[2px] flex-1 mx-3 bg-gradient-to-r from-neutral-600 via-neutral-400 to-neutral-600" />
+                <div className="flex flex-col items-center">
+                    <span className="w-3 h-2 rounded-t bg-neutral-300" />
+                    <span className="w-4 h-1 bg-yellow-100 rounded-full shadow-[0_0_12px_#fff]" />
+                </div>
+                <div className="h-[2px] flex-1 mx-3 bg-gradient-to-r from-neutral-600 via-neutral-400 to-neutral-600" />
+                <div className="flex flex-col items-center">
+                    <span className="w-2.5 h-1.5 rounded-t bg-neutral-400" />
+                    <span className="w-3.5 h-1 bg-yellow-100 rounded-full shadow-[0_0_10px_#fff]" />
+                </div>
+            </div>
+
+            {/* Main Content Area (Compact, Screen-Fitting Architecture) */}
+            <main className="flex-1 flex flex-col relative z-10 w-full pb-28 px-3.5 sm:px-6 max-w-4xl mx-auto space-y-3" dir="rtl">
                 {/* ─────────────────────────────────────────────────────────────
-                    SECTION 1: ROOM SELECTOR TABS (ROOM 1 vs ROOM 2)
+                    SECTION 1: COMPACT ROOM SELECTOR SWITCH (ROOM 1 vs ROOM 2)
                    ───────────────────────────────────────────────────────────── */}
-                <section className="my-3">
-                    <div className="text-xs text-neutral-400 font-bold mb-2 flex items-center justify-between px-1">
-                        <span>اختر الغرفة المراد حجزها:</span>
-                        <span className="text-red-400 font-brush">100 ج.م / ساعة</span>
+                <section className="bg-[#181315]/95 border border-red-950/80 rounded-2xl p-2.5 shadow-lg">
+                    <div className="flex items-center justify-between px-2 mb-1.5 text-xs">
+                        <span className="text-neutral-300 font-bold flex items-center gap-1.5">
+                            <DoorClosed className="w-3.5 h-3.5 text-red-500" />
+                            <span>اختر الغرفة:</span>
+                        </span>
+                        <span className="text-red-400 font-brush text-xs">
+                            100 ج.م / ساعة
+                        </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+
+                    <div className="grid grid-cols-2 gap-2">
                         {AVAILABLE_ROOMS.map((room) => {
                             const isSelected = selectedRoomId === room.id;
                             return (
                                 <button
                                     key={room.id}
                                     onClick={() => setSelectedRoomId(room.id)}
-                                    className={`relative p-3.5 sm:p-4 rounded-2xl border text-right transition-all duration-200 cursor-pointer ${
+                                    className={`relative py-2 px-3 sm:px-4 rounded-xl border flex items-center justify-between transition-all duration-200 cursor-pointer ${
                                         isSelected
-                                            ? 'bg-gradient-to-br from-red-950/80 to-neutral-900 border-red-500 shadow-[0_0_25px_rgba(181,24,36,0.35)]'
-                                            : 'bg-neutral-900/60 border-white/5 hover:border-white/20 hover:bg-neutral-900'
+                                            ? 'bg-gradient-to-r from-[#b51824] to-[#8b1119] border-red-500 text-white shadow-md shadow-red-950/70 scale-[1.01]'
+                                            : 'bg-black/50 border-white/10 text-neutral-300 hover:text-white hover:bg-black/70 hover:border-neutral-500'
                                     }`}
                                 >
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <div className="w-8 h-8 rounded-lg bg-black/40 flex items-center justify-center text-neutral-200">
-                                            <DoorClosed className={`w-4 h-4 ${isSelected ? 'text-red-400' : 'text-neutral-400'}`} />
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${isSelected ? 'bg-black/30 text-white' : 'bg-white/5 text-neutral-400'}`}>
+                                            <DoorClosed className="w-3.5 h-3.5" />
                                         </div>
-                                        {isSelected && (
-                                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                                        )}
+                                        <div className="text-right">
+                                            <div className="font-brush text-sm sm:text-base leading-tight font-bold">
+                                                {room.nameEn}
+                                            </div>
+                                            <div className="text-[10px] opacity-85 leading-none">
+                                                {room.name}
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="font-brush text-base sm:text-lg text-white">
-                                        {room.nameEn}
-                                    </div>
-                                    <div className="text-xs text-neutral-300 font-bold mt-0.5">
-                                        {room.name}
-                                    </div>
-                                    <div className="text-[10px] text-neutral-400 mt-1 truncate">
-                                        {room.specs}
+
+                                    <div className="text-left" dir="ltr">
+                                        <span className="font-brush text-sm sm:text-base font-bold">
+                                            {room.rate}
+                                        </span>
+                                        <span className="text-[10px] font-bold ml-1 opacity-90">
+                                            EGP/HR
+                                        </span>
                                     </div>
                                 </button>
                             );
@@ -402,12 +440,12 @@ export default function BookingDetailsPage() {
                 </section>
 
                 {/* ─────────────────────────────────────────────────────────────
-                    SECTION 2: 7-DAY DATE SELECTOR
+                    SECTION 2: COMPACT 7-DAY DATE SELECTOR
                    ───────────────────────────────────────────────────────────── */}
-                <section className="my-3 bg-neutral-900/60 border border-white/5 rounded-2xl p-3.5 backdrop-blur-md">
-                    <div className="flex items-center justify-between mb-3 px-1">
+                <section className="bg-[#181315]/95 border border-white/10 rounded-2xl p-2.5 sm:p-3 shadow-lg">
+                    <div className="flex items-center justify-between mb-2 px-1">
                         <div className="flex items-center gap-1.5 text-xs text-neutral-300 font-bold">
-                            <Calendar className="w-4 h-4 text-red-400" />
+                            <Calendar className="w-3.5 h-3.5 text-red-400" />
                             <span>تاريخ الحجز:</span>
                         </div>
                         {isToday && (
@@ -418,21 +456,21 @@ export default function BookingDetailsPage() {
                         )}
                     </div>
 
-                    <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
+                    <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide py-0.5">
                         {calendarDays.map((d) => {
                             const active = selectedDate === d.iso;
                             return (
                                 <button
                                     key={d.iso}
                                     onClick={() => setSelectedDate(d.iso)}
-                                    className={`shrink-0 py-2.5 px-4 rounded-xl border text-center transition-all cursor-pointer min-w-[76px] ${
+                                    className={`shrink-0 py-1.5 px-3 rounded-xl border text-center transition-all cursor-pointer min-w-[66px] ${
                                         active
-                                            ? 'bg-red-700 border-red-500 text-white shadow-lg shadow-red-900/50 scale-105'
-                                            : 'bg-black/40 border-white/5 text-neutral-400 hover:text-white hover:border-white/20'
+                                            ? 'bg-gradient-to-b from-[#b51824] to-[#8b1119] border-red-400 text-white shadow-md shadow-red-950/70 scale-105'
+                                            : 'bg-black/50 border-white/10 text-neutral-400 hover:text-white hover:border-neutral-500'
                                     }`}
                                 >
-                                    <div className="text-[11px] font-bold">{d.dayName}</div>
-                                    <div className="text-base font-black font-brush my-0.5">{d.dayNumber}</div>
+                                    <div className="text-[10px] font-bold">{d.dayName}</div>
+                                    <div className="text-sm font-black font-brush my-0.5">{d.dayNumber}</div>
                                     <div className="text-[9px] opacity-75">{d.monthName}</div>
                                 </button>
                             );
@@ -441,32 +479,33 @@ export default function BookingDetailsPage() {
                 </section>
 
                 {/* ─────────────────────────────────────────────────────────────
-                    SECTION 3: DYNAMIC 1-HOUR SLOTS GRID (HEART OF THE FEATURE)
+                    SECTION 3: COMPACT DYNAMIC TIME SLOTS GRID (HEART OF THE UI)
                    ───────────────────────────────────────────────────────────── */}
-                <section className="my-3 bg-neutral-900/60 border border-white/5 rounded-2xl p-3.5 sm:p-5 backdrop-blur-md">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-white/5">
+                <section className="bg-[#181315]/95 border border-red-950/80 rounded-2xl p-3 sm:p-4 shadow-xl">
+                    {/* Header: Title + Quick Duration Selector */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2.5 border-b border-white/10">
                         <div>
                             <div className="flex items-center gap-2">
                                 <Clock className="w-4 h-4 text-red-400" />
-                                <h2 className="font-bold text-sm sm:text-base text-white">
+                                <h2 className="font-bold text-xs sm:text-sm text-white">
                                     الأوقات المتاحة للحجز اليوم ({currentRoom.nameEn})
                                 </h2>
                             </div>
-                            <p className="text-xs text-neutral-400 mt-1">
-                                كل خانة تمثل ساعة كاملة من وقت الحجز • انقر لاختيار ساعة أو أكثر
+                            <p className="text-[11px] text-neutral-400 mt-0.5">
+                                انقر لاختيار ساعة أو أكثر متتالية • الحساب ديناميكي
                             </p>
                         </div>
 
                         {/* Quick Duration Pills */}
-                        <div className="flex items-center gap-1.5 self-start sm:self-auto bg-black/40 p-1 rounded-xl border border-white/5">
+                        <div className="flex items-center gap-1 self-start sm:self-auto bg-black/60 p-1 rounded-xl border border-white/10">
                             <span className="text-[10px] text-neutral-400 px-1 font-bold">المدة:</span>
                             {[1, 2, 3, 4].map((h) => (
                                 <button
                                     key={h}
                                     onClick={() => handleQuickDuration(h)}
-                                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                                    className={`px-2 py-0.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                                         durationHours === h
-                                            ? 'bg-red-700 text-white shadow-sm'
+                                            ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-sm'
                                             : 'text-neutral-300 hover:text-white hover:bg-white/5'
                                     }`}
                                 >
@@ -477,23 +516,23 @@ export default function BookingDetailsPage() {
                     </div>
 
                     {/* Slots Legend */}
-                    <div className="flex items-center gap-4 text-xs mb-3 px-1">
+                    <div className="flex items-center gap-3 text-[11px] mb-2.5 px-1">
                         <div className="flex items-center gap-1.5 text-neutral-300">
-                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                            <span>متاح للحجز</span>
+                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                            <span>متاح</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-neutral-300">
-                            <span className="w-2.5 h-2.5 rounded-full bg-red-600 shadow-[0_0_8px_#c41e3a]" />
+                            <span className="w-2 h-2 rounded-full bg-red-600 shadow-[0_0_8px_#c41e3a]" />
                             <span>محدد لحجزك</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-neutral-500">
-                            <span className="w-2.5 h-2.5 rounded-full bg-neutral-700" />
+                            <span className="w-2 h-2 rounded-full bg-neutral-700" />
                             <span>محجوز 🔒</span>
                         </div>
                     </div>
 
-                    {/* Dynamic Slots Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                    {/* THE COMPACT 4-COLUMN GRID (REDUCED HEIGHT & SCREEN FIT) */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                         {generatedSlots.map((slot) => {
                             const isSelected = selectedSlotIndices.includes(slot.index);
                             const isBooked = slot.isBooked;
@@ -503,31 +542,31 @@ export default function BookingDetailsPage() {
                                     key={slot.id}
                                     whileTap={!isBooked ? { scale: 0.98 } : undefined}
                                     onClick={() => handleSlotClick(slot)}
-                                    className={`relative p-3 rounded-xl border transition-all duration-200 select-none ${
+                                    className={`relative p-2 sm:p-2.5 rounded-xl border transition-all duration-200 select-none cursor-pointer flex flex-col justify-between ${
                                         isBooked
-                                            ? 'bg-black/40 border-white/5 opacity-50 cursor-not-allowed'
+                                            ? 'bg-[#120e10]/60 border-neutral-800/80 opacity-40 cursor-not-allowed'
                                             : isSelected
-                                            ? 'bg-gradient-to-r from-red-700 to-red-800 border-red-400 text-white shadow-[0_0_20px_rgba(181,24,36,0.4)] cursor-pointer scale-[1.02]'
-                                            : 'bg-black/30 border-white/5 hover:border-white/20 hover:bg-white/5 cursor-pointer'
+                                            ? 'bg-gradient-to-r from-[#b51824] to-[#8b1119] border-red-400 text-white shadow-[0_0_18px_rgba(220,38,38,0.55)] scale-[1.02]'
+                                            : 'bg-black/50 border-neutral-700/60 hover:border-red-500/60 hover:bg-neutral-900 text-neutral-200'
                                     }`}
                                 >
                                     {/* Top Line: Period Badge + Status */}
-                                    <div className="flex items-center justify-between text-[10px] mb-1.5">
-                                        <span className={isSelected ? 'text-white/80' : 'text-neutral-400'}>
+                                    <div className="flex items-center justify-between text-[10px] mb-1">
+                                        <span className={`text-[10px] font-medium ${isSelected ? 'text-white/90' : 'text-neutral-400'}`}>
                                             {slot.periodName}
                                         </span>
                                         {isBooked ? (
-                                            <span className="flex items-center gap-1 text-neutral-400 font-bold">
-                                                <Lock className="w-3 h-3" />
+                                            <span className="flex items-center gap-0.5 text-neutral-400 font-bold text-[9px]">
+                                                <Lock className="w-2.5 h-2.5" />
                                                 <span>محجوز</span>
                                             </span>
                                         ) : isSelected ? (
-                                            <span className="flex items-center gap-1 text-white font-bold bg-black/30 px-2 py-0.5 rounded-full">
-                                                <Check className="w-3 h-3" />
-                                                <span>ساعة محددة</span>
+                                            <span className="flex items-center gap-0.5 text-white font-bold text-[9px] bg-black/40 px-1.5 py-0.5 rounded-full">
+                                                <Check className="w-2.5 h-2.5 stroke-[3]" />
+                                                <span>محدد</span>
                                             </span>
                                         ) : (
-                                            <span className="flex items-center gap-1 text-emerald-400 font-bold">
+                                            <span className="flex items-center gap-1 text-emerald-400 font-bold text-[9px]">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                                 <span>متاح</span>
                                             </span>
@@ -535,9 +574,9 @@ export default function BookingDetailsPage() {
                                     </div>
 
                                     {/* Dynamic Time Range: Start to End (e.g. 04:15 م - 05:14 م) */}
-                                    <div className="text-right" dir="ltr">
+                                    <div className="text-center my-0.5" dir="ltr">
                                         <div
-                                            className={`font-brush text-base sm:text-lg tracking-wide ${
+                                            className={`font-brush text-sm sm:text-base font-bold tracking-tight ${
                                                 isBooked
                                                     ? 'text-neutral-500 line-through'
                                                     : isSelected
@@ -550,11 +589,11 @@ export default function BookingDetailsPage() {
                                     </div>
 
                                     {/* Bottom Info: 60 minutes & rate */}
-                                    <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-white/5 text-[11px]">
+                                    <div className="flex items-center justify-between mt-1 pt-1 border-t border-white/10 text-[10px]">
                                         <span className={isSelected ? 'text-white/80' : 'text-neutral-400'}>
                                             جلسة 60 دقيقة
                                         </span>
-                                        <span className={`font-bold ${isSelected ? 'text-white' : 'text-red-400 font-brush'}`}>
+                                        <span className={`font-bold font-brush ${isSelected ? 'text-white' : 'text-red-400'}`}>
                                             {currentRoom.rate} ج.م
                                         </span>
                                     </div>
@@ -565,48 +604,50 @@ export default function BookingDetailsPage() {
                 </section>
 
                 {/* ─────────────────────────────────────────────────────────────
-                    SECTION 4: GAMING SNACKS & DRINKS (OPTIONAL ADDONS)
+                    SECTION 4: COMPACT SNACKS & DRINKS (OPTIONAL ADDONS)
                    ───────────────────────────────────────────────────────────── */}
-                <section className="my-3 bg-neutral-900/60 border border-white/5 rounded-2xl p-3.5 sm:p-4 backdrop-blur-md">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Coffee className="w-4 h-4 text-amber-400" />
-                        <h3 className="font-bold text-sm text-white">سناكس ومشروبات أثناء اللعب (اختياري)</h3>
+                <section className="bg-[#181315]/95 border border-white/10 rounded-2xl p-2.5 sm:p-3 shadow-lg">
+                    <div className="flex items-center justify-between mb-2 px-1">
+                        <div className="flex items-center gap-1.5 text-xs text-neutral-300 font-bold">
+                            <Coffee className="w-3.5 h-3.5 text-amber-400" />
+                            <span>سناكس ومشروبات أثناء اللعب (اختياري)</span>
+                        </div>
+                        <span className="text-[10px] text-amber-400/90 font-bold">
+                            خدمة الضيافة حتى الغرفة
+                        </span>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {SNACK_OPTIONS.map((snack) => {
                             const isChecked = selectedSnacks.includes(snack.id);
                             return (
                                 <div
                                     key={snack.id}
                                     onClick={() => toggleSnack(snack.id)}
-                                    className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                                    className={`p-2 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
                                         isChecked
-                                            ? 'bg-red-950/40 border-red-600/50 text-white'
-                                            : 'bg-black/30 border-white/5 text-neutral-300 hover:border-white/20'
+                                            ? 'bg-red-950/60 border-red-500 text-white shadow-sm'
+                                            : 'bg-black/50 border-white/10 text-neutral-300 hover:border-neutral-500'
                                     }`}
                                 >
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2">
                                         <div
-                                            className={`w-5 h-5 rounded-md flex items-center justify-center border transition-colors ${
+                                            className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
                                                 isChecked
                                                     ? 'bg-red-600 border-red-500 text-white'
                                                     : 'border-white/20 bg-black/40'
                                             }`}
                                         >
-                                            {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                                            {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                                         </div>
                                         <div>
-                                            <div className="text-xs font-bold flex items-center gap-1.5">
+                                            <div className="text-[11px] font-bold flex items-center gap-1">
                                                 <span>{snack.icon}</span>
-                                                <span>{snack.name}</span>
-                                            </div>
-                                            <div className="text-[10px] text-neutral-400 mt-0.5">
-                                                {snack.description}
+                                                <span className="truncate max-w-[130px]">{snack.name}</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="font-brush text-sm font-bold text-amber-400 shrink-0">
+                                    <div className="font-brush text-xs font-bold text-amber-400 shrink-0">
                                         +{snack.price} ج.م
                                     </div>
                                 </div>
@@ -617,23 +658,23 @@ export default function BookingDetailsPage() {
             </main>
 
             {/* ─────────────────────────────────────────────────────────────
-                FIXED BOTTOM STICKY SUMMARY BAR (SENIOR UX)
+                FIXED BOTTOM STICKY SUMMARY BAR (COMPACT HIGH-CONTRAST)
                ───────────────────────────────────────────────────────────── */}
-            <div className="fixed bottom-0 inset-x-0 z-40 bg-[#0c090a]/95 border-t border-white/10 backdrop-blur-xl p-3 sm:p-4 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+            <div className="fixed bottom-0 inset-x-0 z-40 bg-[#161214]/95 border-t border-white/15 backdrop-blur-xl p-3 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.85)]">
                 <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
-                    {/* Left: Financial & Time Summary */}
+                    {/* Financial & Time Summary */}
                     <div className="flex flex-col text-right">
                         <div className="flex items-baseline gap-1.5">
                             <span className="font-brush text-2xl sm:text-3xl font-black text-white">
                                 {grandTotal}
                             </span>
                             <span className="text-xs text-neutral-300 font-bold">ج.م</span>
-                            <span className="text-xs text-red-400 font-bold mr-2">
+                            <span className="text-xs text-red-400 font-bold mr-1.5">
                                 ({durationHours} {durationHours === 1 ? 'ساعة' : durationHours === 2 ? 'ساعتان' : 'ساعات'})
                             </span>
                         </div>
-                        <div className="text-[11px] text-neutral-400 flex items-center gap-1 mt-0.5">
-                            <span className="font-bold text-neutral-300">{currentRoom.nameEn}</span>
+                        <div className="text-[11px] text-neutral-400 flex items-center gap-1 -mt-0.5">
+                            <span className="font-bold text-neutral-200">{currentRoom.nameEn}</span>
                             <span>•</span>
                             <span dir="ltr" className="font-bold text-white">
                                 {startDisplayTime} - {endDisplayTime}
@@ -641,10 +682,10 @@ export default function BookingDetailsPage() {
                         </div>
                     </div>
 
-                    {/* Right: Continue CTA */}
+                    {/* Continue CTA */}
                     <button
                         onClick={handleContinue}
-                        className="py-3 px-5 sm:px-8 rounded-xl bg-gradient-to-r from-red-700 to-red-600 text-white font-bold text-sm flex items-center gap-2 shadow-lg shadow-red-900/50 hover:from-red-600 hover:to-red-500 active:scale-95 transition-all cursor-pointer shrink-0"
+                        className="py-2.5 px-5 sm:px-7 rounded-xl bg-gradient-to-r from-[#b51824] via-red-600 to-[#8b1119] hover:from-red-600 hover:to-red-500 text-white font-bold text-sm flex items-center gap-2 shadow-lg shadow-red-950/70 active:scale-95 transition-all cursor-pointer shrink-0 border border-red-400/30"
                     >
                         <span>تأكيد الحجز والدفع</span>
                         <ArrowRight className="w-4 h-4 rotate-180" />
