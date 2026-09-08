@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
     ArrowRight,
@@ -10,12 +11,12 @@ import {
     Clock,
     Wifi,
     ShieldCheck,
-    CheckCircle2,
-    Users,
-    Flame,
     Disc3,
+    Flame,
+    Lock,
+    KeyRound,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
 interface RoomData {
@@ -26,7 +27,7 @@ interface RoomData {
     subtitle: string;
     rate: number;
     badge: string;
-    accentColor: 'crimson' | 'ruby';
+    accentColor: string;
     features: {
         icon: any;
         label: string;
@@ -43,8 +44,8 @@ const ROOMS: RoomData[] = [
         titleAr: 'غرفة الأبطال (Play Room 01)',
         subtitle: 'أجواء تنافسية حماسية • شاشة 65 بوصة 4K 120Hz عملاقة',
         rate: 100,
-        badge: 'متاح للحجز الفوري اليوم',
-        accentColor: 'crimson',
+        badge: 'متاح للحجز الفوري',
+        accentColor: '#c41e3a',
         features: [
             {
                 icon: Tv,
@@ -58,7 +59,7 @@ const ROOMS: RoomData[] = [
             },
             {
                 icon: Volume2,
-                label: 'صوت محيطي 3D مع عزل',
+                label: 'صوت محيطي 3D وعزل تام',
                 desc: 'نظام صوت نقي يضعك في قلب المعركة والمباريات',
             },
             {
@@ -76,8 +77,8 @@ const ROOMS: RoomData[] = [
         titleAr: 'الجناح الملكي (Play Room 02)',
         subtitle: 'فخامة وراحة قصوى • عزل صوتي متكامل وضيافة مخصصة',
         rate: 100,
-        badge: 'متاح للحجز الفوري اليوم',
-        accentColor: 'ruby',
+        badge: 'متاح للحجز الفوري',
+        accentColor: '#9b1c1c',
         features: [
             {
                 icon: Tv,
@@ -156,18 +157,86 @@ const AMENITIES = [
 
 export default function PlaystationPage() {
     const navigate = useNavigate();
+    const [openingDoorId, setOpeningDoorId] = useState<string | null>(null);
+    const [isTransitioning, setIsTransitioning] = useState(false);
+    const [activeRoomData, setActiveRoomData] = useState<RoomData | null>(null);
 
-    const handleRoomSelect = (room: RoomData) => {
-        navigate('/playstation/booking', {
-            state: {
-                room: {
-                    id: room.id,
-                    name: room.titleAr,
-                    nameEn: room.code,
-                    rate: room.rate,
+    // ─────────────────────────────────────────────────────────────
+    // SYNTHESIZED WEB AUDIO API SOUND FX (HYDRAULIC DOOR OPENING)
+    // ─────────────────────────────────────────────────────────────
+    const playDoorOpenSound = () => {
+        try {
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+
+            // 1. Electronic access beep
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.18, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.15);
+
+            // 2. Heavy pneumatic door release whoosh
+            const bufferSize = Math.floor(ctx.sampleRate * 0.45);
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            const noise = ctx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(800, ctx.currentTime + 0.05);
+            filter.frequency.linearRampToValueAtTime(120, ctx.currentTime + 0.45);
+
+            const noiseGain = ctx.createGain();
+            noiseGain.gain.setValueAtTime(0.16, ctx.currentTime + 0.05);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+
+            noise.connect(filter);
+            filter.connect(noiseGain);
+            noiseGain.connect(ctx.destination);
+            noise.start(ctx.currentTime + 0.05);
+        } catch {
+            // Audio fallback gracefully ignores
+        }
+    };
+
+    // ─────────────────────────────────────────────────────────────
+    // INTERACTIVE DOOR CLICK & CINEMATIC TRANSITION SEQUENCE
+    // ─────────────────────────────────────────────────────────────
+    const handleDoorEnter = (room: RoomData) => {
+        if (openingDoorId) return; // Prevent double click
+        setActiveRoomData(room);
+        setOpeningDoorId(room.id);
+        playDoorOpenSound();
+
+        // Trigger the cinematic fly-through warp overlay
+        setTimeout(() => {
+            setIsTransitioning(true);
+        }, 350);
+
+        // Smooth navigation handoff to booking details
+        setTimeout(() => {
+            navigate('/playstation/booking', {
+                state: {
+                    room: {
+                        id: room.id,
+                        name: room.titleAr,
+                        nameEn: room.code,
+                        rate: room.rate,
+                    },
                 },
-            },
-        });
+            });
+        }, 850);
     };
 
     const handleWalkInClick = (hint: string) => {
@@ -177,16 +246,16 @@ export default function PlaystationPage() {
     };
 
     return (
-        <div className="bg-[#090707] text-white font-body text-sm flex flex-col min-h-screen selection:bg-red-600/30">
-            {/* Ambient Background Glow & Spotlight */}
+        <div className="bg-[#100d0e] text-white font-body text-sm flex flex-col min-h-screen selection:bg-red-600/40 relative overflow-x-hidden">
+            {/* Ambient Background Glow & Track Spotlights */}
             <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[360px] bg-[radial-gradient(ellipse_at_top,rgba(196,30,58,0.22)_0%,rgba(139,17,25,0.06)_55%,transparent_75%)] blur-[90px]" />
-                <div className="absolute top-1/3 left-[-10%] w-[500px] h-[450px] bg-red-950/20 blur-[130px] rounded-full" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[850px] h-[380px] bg-[radial-gradient(ellipse_at_top,rgba(255,245,235,0.20)_0%,rgba(196,30,58,0.12)_45%,transparent_75%)] blur-[80px]" />
+                <div className="absolute top-1/3 left-[-10%] w-[500px] h-[450px] bg-red-950/25 blur-[130px] rounded-full" />
                 <div className="absolute bottom-10 right-[-10%] w-[500px] h-[450px] bg-amber-950/15 blur-[130px] rounded-full" />
             </div>
 
             {/* Top Navigation Bar */}
-            <header className="fixed top-0 inset-x-0 z-50 bg-[#090707]/90 backdrop-blur-xl pt-safe border-b border-white/10">
+            <header className="fixed top-0 inset-x-0 z-50 bg-[#140f11]/90 backdrop-blur-xl pt-safe border-b border-white/10 shadow-md">
                 <div className="h-16 px-4 md:px-8 flex items-center justify-between max-w-6xl mx-auto">
                     {/* Brand & Back Link */}
                     <div className="flex items-center gap-3">
@@ -209,7 +278,7 @@ export default function PlaystationPage() {
                                 </span>
                             </div>
                             <span className="font-body text-[10px] text-neutral-400">
-                                صالة البلايستيشن والغرف الخاصة VIP
+                                صالة البلايستيشن والأبواب الخاصة VIP
                             </span>
                         </div>
                     </div>
@@ -225,32 +294,50 @@ export default function PlaystationPage() {
                 </div>
             </header>
 
+            {/* Ceiling Industrial Rig Graphic */}
+            <div className="relative z-10 w-full max-w-xl mx-auto flex items-center justify-between px-8 pt-20 pb-1 opacity-75">
+                <div className="flex flex-col items-center">
+                    <span className="w-2.5 h-1.5 rounded-t bg-neutral-400" />
+                    <span className="w-3.5 h-1 bg-yellow-100 rounded-full shadow-[0_0_10px_#fff]" />
+                </div>
+                <div className="h-[2px] flex-1 mx-3 bg-gradient-to-r from-neutral-600 via-neutral-400 to-neutral-600" />
+                <div className="flex flex-col items-center">
+                    <span className="w-3 h-2 rounded-t bg-neutral-300" />
+                    <span className="w-4 h-1 bg-yellow-100 rounded-full shadow-[0_0_12px_#fff]" />
+                </div>
+                <div className="h-[2px] flex-1 mx-3 bg-gradient-to-r from-neutral-600 via-neutral-400 to-neutral-600" />
+                <div className="flex flex-col items-center">
+                    <span className="w-2.5 h-1.5 rounded-t bg-neutral-400" />
+                    <span className="w-3.5 h-1 bg-yellow-100 rounded-full shadow-[0_0_10px_#fff]" />
+                </div>
+            </div>
+
             {/* Main Content Container */}
-            <main className="flex-1 flex flex-col relative z-10 w-full pt-20 pb-20 px-3.5 sm:px-6 max-w-6xl mx-auto" dir="rtl">
+            <main className="flex-1 flex flex-col relative z-10 w-full pb-20 px-3.5 sm:px-6 max-w-6xl mx-auto" dir="rtl">
                 {/* Hero Header Section */}
                 <motion.section
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45 }}
-                    className="text-center my-6 space-y-3"
+                    className="text-center my-4 space-y-2"
                 >
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-950/60 border border-red-600/40 text-red-400 text-xs font-bold shadow-lg shadow-red-950/30">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-950/60 border border-red-600/40 text-red-400 text-xs font-bold shadow-lg shadow-red-950/30">
                         <Sparkles className="w-3.5 h-3.5" />
-                        <span>غرف الألعاب الخاصة الفاخرة • VIP PLAY ROOMS</span>
+                        <span>اضغط على باب الغرفة للدخول والحجز الفوري</span>
                     </div>
 
                     <div className="space-y-1">
                         <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-wide font-brush drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
-                            <span className="text-white">PRIVATE SUITES</span>
+                            <span className="text-white">VIP PORTALS</span>
                             <span className="text-red-500 mx-2">//</span>
-                            <span className="text-neutral-100">غرف الـ VIP</span>
+                            <span className="text-neutral-100">أبواب الغرف الخاصة</span>
                         </h1>
-                        <p className="font-body text-xs sm:text-sm text-neutral-300 max-w-2xl mx-auto leading-relaxed pt-1">
-                            اختر غرفتك المفضلة واستمتع بتجربة ألعاب استثنائية مع أصدقائك بخصوصية تامة، شاشات 65 بوصة 4K 120Hz، وأحدث مكتبة ألعاب PS5 لعام 2026.
+                        <p className="font-body text-xs sm:text-sm text-neutral-300 max-w-2xl mx-auto leading-relaxed">
+                            أبواب غرف الـ VIP مجهزة بأحدث تقنيات اللعب لشاشات 65 بوصة 4K 120Hz وعزل صوتي وتكييف خاص. اختر غرفتك وافتح الباب للدخول.
                         </p>
                     </div>
 
-                    <div className="flex items-center justify-center gap-2 pt-1 text-[11px] text-neutral-400">
+                    <div className="flex items-center justify-center gap-2 pt-0.5 text-[11px] text-neutral-400">
                         <span className="font-brush text-red-400 tracking-widest">
                             PLAY • COMPETE • RELAX • REPEAT
                         </span>
@@ -258,131 +345,227 @@ export default function PlaystationPage() {
                     </div>
                 </motion.section>
 
-                {/* THE HERO SHOWCASE: THE TWO VIP ROOMS (SIDE BY SIDE ON DESKTOP) */}
+                {/* ─────────────────────────────────────────────────────────────
+                    THE 3D INTERACTIVE DOORS SHOWCASE (ROOM 01 & ROOM 02)
+                   ───────────────────────────────────────────────────────────── */}
                 <section className="mt-4 mb-10">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {ROOMS.map((room, idx) => (
-                            <motion.div
-                                key={room.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5, delay: idx * 0.12 }}
-                                className="group relative rounded-3xl bg-gradient-to-b from-[#181114] to-[#100b0d] border-2 border-red-950/70 hover:border-red-600/70 transition-all duration-500 shadow-[0_12px_45px_rgba(0,0,0,0.85)] hover:shadow-[0_16px_60px_rgba(181,24,36,0.35)] overflow-hidden flex flex-col justify-between"
-                            >
-                                {/* Industrial Corner Accents */}
-                                <div className="absolute top-3 left-3 w-3 h-3 border-t-2 border-l-2 border-red-500/80 pointer-events-none group-hover:scale-110 transition-transform" />
-                                <div className="absolute top-3 right-3 w-3 h-3 border-t-2 border-r-2 border-red-500/80 pointer-events-none group-hover:scale-110 transition-transform" />
-                                <div className="absolute bottom-3 left-3 w-3 h-3 border-b-2 border-l-2 border-red-500/80 pointer-events-none group-hover:scale-110 transition-transform" />
-                                <div className="absolute bottom-3 right-3 w-3 h-3 border-b-2 border-r-2 border-red-500/80 pointer-events-none group-hover:scale-110 transition-transform" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                        {ROOMS.map((room) => {
+                            const isOpening = openingDoorId === room.id;
 
-                                {/* Ambient Lighting inside Card */}
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/10 rounded-full blur-3xl pointer-events-none group-hover:bg-red-600/20 transition-all duration-500" />
+                            return (
+                                <div
+                                    key={room.id}
+                                    style={{ perspective: '1400px' }}
+                                    className="relative flex flex-col items-center"
+                                >
+                                    {/* HEAVY REINFORCED STEEL DOORFRAME */}
+                                    <div className="w-full rounded-3xl bg-[#1a1215] border-4 border-[#332227] shadow-[0_20px_60px_rgba(0,0,0,0.95)] p-2 sm:p-2.5 relative overflow-hidden">
+                                        {/* Industrial Rivets on Frame Corners */}
+                                        <span className="absolute top-2 left-2 w-2.5 h-2.5 rounded-full bg-neutral-400 border border-black shadow-[inset_0_1px_2px_#fff]" />
+                                        <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-neutral-400 border border-black shadow-[inset_0_1px_2px_#fff]" />
+                                        <span className="absolute bottom-2 left-2 w-2.5 h-2.5 rounded-full bg-neutral-400 border border-black shadow-[inset_0_1px_2px_#fff]" />
+                                        <span className="absolute bottom-2 right-2 w-2.5 h-2.5 rounded-full bg-neutral-400 border border-black shadow-[inset_0_1px_2px_#fff]" />
 
-                                {/* Card Header & Meta */}
-                                <div className="p-5 sm:p-7 relative z-10 space-y-4">
-                                    <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-4">
-                                        <div>
+                                        {/* DOOR LINTEL / HEADER STRIP */}
+                                        <div className="w-full bg-[#120c0e] border border-white/10 rounded-2xl p-2.5 mb-2 flex items-center justify-between">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-brush text-2xl sm:text-3xl font-black text-white tracking-wider group-hover:text-red-400 transition-colors">
-                                                    {room.code}
-                                                </span>
-                                                <span className="text-neutral-500">•</span>
-                                                <span className="font-brush text-xs sm:text-sm text-red-400 uppercase tracking-wider font-bold">
-                                                    {room.titleEn}
-                                                </span>
-                                            </div>
-                                            <h2 className="text-sm sm:text-base font-bold text-neutral-200 mt-0.5">
-                                                {room.titleAr}
-                                            </h2>
-                                        </div>
-
-                                        {/* Dynamic Live Status Badge */}
-                                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-[11px] font-bold shrink-0 shadow-sm">
-                                            <span className="relative flex h-2 w-2">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                                            </span>
-                                            <span>{room.badge}</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Subtitle / Description */}
-                                    <p className="text-xs sm:text-sm text-neutral-300 font-medium">
-                                        {room.subtitle}
-                                    </p>
-
-                                    {/* Tech & Gaming Specs Grid */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                                        {room.features.map((feat, fIdx) => {
-                                            const Icon = feat.icon;
-                                            return (
-                                                <div
-                                                    key={fIdx}
-                                                    className="flex items-start gap-2.5 p-2.5 sm:p-3 rounded-2xl bg-black/40 border border-white/5 group-hover:border-red-900/30 transition-all"
-                                                >
-                                                    <div className="w-8 h-8 rounded-xl bg-red-950/50 border border-red-700/40 flex items-center justify-center shrink-0 text-red-400 mt-0.5">
-                                                        <Icon className="w-4 h-4" />
+                                                <div className="w-6 h-6 rounded-lg bg-red-950/80 border border-red-700/50 flex items-center justify-center text-red-400 font-bold text-xs">
+                                                    <KeyRound className="w-3.5 h-3.5" />
+                                                </div>
+                                                <div>
+                                                    <div className="font-brush text-sm sm:text-base text-white tracking-wide font-bold">
+                                                        {room.code} // {room.titleEn}
                                                     </div>
-                                                    <div>
-                                                        <div className="font-bold text-xs text-white">
-                                                            {feat.label}
+                                                    <div className="text-[10px] text-neutral-400">
+                                                        {room.titleAr}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Digital Status Lock Indicator */}
+                                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold">
+                                                <span className="relative flex h-2 w-2">
+                                                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isOpening ? 'bg-cyan-400' : 'bg-emerald-400'} opacity-75`} />
+                                                    <span className={`relative inline-flex rounded-full h-2 w-2 ${isOpening ? 'bg-cyan-400' : 'bg-emerald-500'}`} />
+                                                </span>
+                                                <span>{isOpening ? 'ACCESS GRANTED' : 'DOOR READY'}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* DOOR FRAME RECESSED CAVITY */}
+                                        <div className="relative w-full h-[470px] sm:h-[510px] rounded-2xl bg-[#090607] border-2 border-black overflow-hidden select-none">
+                                            {/* ─────────────────────────────────────────────────────────────
+                                                REVEALED ROOM INTERIOR (BEHIND THE DOOR WHEN IT SWINGS OPEN)
+                                               ───────────────────────────────────────────────────────────── */}
+                                            <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#1b0d12] via-[#2a0e16] to-[#0d0709] p-5 flex flex-col justify-between items-center text-center overflow-hidden">
+                                                {/* Glowing Ceiling LED Grid inside Room */}
+                                                <div className="absolute top-0 inset-x-0 h-32 bg-[radial-gradient(ellipse_at_top,rgba(255,50,80,0.45)_0%,transparent_75%)] blur-xl pointer-events-none" />
+
+                                                {/* Neon Volumetric Light Blast effect */}
+                                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(220,38,38,0.3)_0%,transparent_70%)] animate-pulse" />
+
+                                                {/* Interior Room Setup Mockup */}
+                                                <div className="w-full relative z-10 pt-4 flex flex-col items-center">
+                                                    <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-red-600/30 text-red-300 border border-red-500/40 mb-2">
+                                                        ✦ صالة الألعاب والغرفة جاهزة لك ✦
+                                                    </span>
+
+                                                    {/* Screen Mockup */}
+                                                    <div className="w-full max-w-[260px] h-32 rounded-xl bg-black border-2 border-red-500/60 shadow-[0_0_25px_rgba(220,38,38,0.5)] flex flex-col items-center justify-center relative overflow-hidden my-2">
+                                                        <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/40 via-red-900/30 to-black opacity-80" />
+                                                        <Tv className="w-8 h-8 text-white relative z-10 mb-1 drop-shadow-[0_2px_8px_#000]" />
+                                                        <span className="font-brush text-xs text-white relative z-10">
+                                                            65&quot; 4K 120Hz ACTIVE
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="text-xs text-neutral-300 font-bold mt-2">
+                                                        4 دراعات تحكم PS5 • تكييف خاص • عزل كامل
+                                                    </div>
+                                                </div>
+
+                                                {/* Welcome Message inside Door */}
+                                                <div className="relative z-10 pb-4">
+                                                    <div className="font-brush text-xl text-red-400 animate-bounce">
+                                                        WELCOME TO {room.code}!
+                                                    </div>
+                                                    <div className="text-xs text-neutral-400">
+                                                        جاري نقلك لصفحة الحجز واختيار الموعد...
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* ─────────────────────────────────────────────────────────────
+                                                THE 3D DOOR LEAF (SWINGS OPEN ON HINGE WHEN CLICKED)
+                                               ───────────────────────────────────────────────────────────── */}
+                                            <motion.div
+                                                animate={{
+                                                    rotateY: isOpening ? -86 : 0,
+                                                    boxShadow: isOpening
+                                                        ? '-25px 0 50px rgba(0,0,0,0.9)'
+                                                        : '0 0 10px rgba(0,0,0,0.5)',
+                                                }}
+                                                transition={{
+                                                    duration: 0.65,
+                                                    ease: [0.22, 1, 0.36, 1],
+                                                }}
+                                                style={{
+                                                    transformOrigin: 'right center',
+                                                    transformStyle: 'preserve-3d',
+                                                }}
+                                                onClick={() => handleDoorEnter(room)}
+                                                className="absolute inset-0 z-10 rounded-2xl bg-gradient-to-b from-[#1c1518] via-[#140e11] to-[#0d090b] border-2 border-[#3d272d] hover:border-red-600/60 p-4 sm:p-5 flex flex-col justify-between cursor-pointer transition-colors duration-300 group shadow-[inset_0_1px_3px_rgba(255,255,255,0.15)]"
+                                            >
+                                                {/* Left Edge Steel Hinges (المفصلات الفولاذية) */}
+                                                <div className="absolute right-0 top-12 w-2 h-8 rounded-l bg-neutral-400 border-l border-white/50 shadow-md" />
+                                                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-8 rounded-l bg-neutral-400 border-l border-white/50 shadow-md" />
+                                                <div className="absolute right-0 bottom-12 w-2 h-8 rounded-l bg-neutral-400 border-l border-white/50 shadow-md" />
+
+                                                {/* Door Top Section: Stenciled Number & Specs */}
+                                                <div>
+                                                    <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                                                            <span className="font-brush text-xs text-neutral-400 tracking-wider">
+                                                                VIP ENTRY
+                                                            </span>
                                                         </div>
-                                                        <div className="text-[11px] text-neutral-400 leading-snug mt-0.5">
-                                                            {feat.desc}
+                                                        <span className="text-[10px] font-bold text-red-400 font-brush">
+                                                            {room.rate} EGP / HR
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Giant Distressed Spray-Paint Room Number */}
+                                                    <div className="my-3 text-center">
+                                                        <h2 className="font-brush text-4xl sm:text-5xl font-black tracking-tight text-white group-hover:text-red-400 transition-colors drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+                                                            {room.code}
+                                                        </h2>
+                                                        <p className="font-brush text-xs text-neutral-400 tracking-widest uppercase mt-0.5">
+                                                            {room.titleEn}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Center: Observation Peek Visor (Glass Viewport into the Room) */}
+                                                <div className="my-auto w-full">
+                                                    <div className="relative w-full h-24 sm:h-28 rounded-xl bg-black/80 border-2 border-neutral-700/80 group-hover:border-red-500/70 transition-all p-2 flex items-center justify-between overflow-hidden shadow-inner">
+                                                        {/* Glass reflection beam */}
+                                                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
+
+                                                        {/* Peek Visor Inner Lighting */}
+                                                        <div className="flex items-center gap-3 relative z-10 w-full px-2">
+                                                            <div className="w-12 h-12 rounded-xl bg-red-950/60 border border-red-600/50 flex items-center justify-center text-red-400 shrink-0 shadow-lg shadow-red-900/40">
+                                                                <Tv className="w-6 h-6" />
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <div className="text-[11px] font-bold text-white flex items-center gap-1">
+                                                                    <span>شاشة 65 بوصة 4K 120Hz</span>
+                                                                    <span className="text-[9px] px-1 bg-red-600/30 text-red-300 rounded">1ms</span>
+                                                                </div>
+                                                                <div className="text-[10px] text-neutral-400 mt-0.5">
+                                                                    4 دراعات DualSense • تكييف وسماعات 3D
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Industrial Door Pull Handle & Digital Scanner */}
+                                                    <div className="flex items-center justify-between mt-3 px-1">
+                                                        {/* Heavy Vertical Steel Handle */}
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-3 h-16 rounded-full bg-gradient-to-b from-neutral-300 via-neutral-100 to-neutral-400 border border-black shadow-[0_2px_8px_rgba(0,0,0,0.8)] group-hover:shadow-[0_0_12px_rgba(255,255,255,0.6)] transition-all" />
+                                                            <div className="text-right">
+                                                                <span className="text-[10px] text-neutral-400 font-bold block">
+                                                                    مقبض الباب
+                                                                </span>
+                                                                <span className="text-[9px] text-neutral-500">
+                                                                    اسحب للدخول
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Digital Thumbprint / Access Sensor */}
+                                                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/70 border border-white/10 group-hover:border-red-500/50 transition-colors">
+                                                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                                            <span className="text-[10px] font-bold text-neutral-300 font-brush">
+                                                                TAP TO OPEN 🚪
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            );
-                                        })}
-                                    </div>
 
-                                    {/* Popular Games Ticker / Chips */}
-                                    <div className="pt-2">
-                                        <div className="text-[11px] text-neutral-400 font-bold mb-1.5 flex items-center gap-1.5">
-                                            <Flame className="w-3.5 h-3.5 text-red-500" />
-                                            <span>أبرز الألعاب المثبتة والجاهزة للتشغيل:</span>
-                                        </div>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {room.popularGames.map((game, gIdx) => (
-                                                <span
-                                                    key={gIdx}
-                                                    className="px-2.5 py-0.5 rounded-lg bg-white/5 border border-white/10 text-neutral-300 text-[10px] font-bold group-hover:border-red-600/30 transition-colors"
-                                                >
-                                                    {game}
-                                                </span>
-                                            ))}
+                                                {/* Bottom Door Action & Stencil Specs */}
+                                                <div className="pt-2 border-t border-white/10">
+                                                    <div className="flex flex-wrap gap-1 mb-2.5">
+                                                        {room.popularGames.slice(0, 3).map((g, gi) => (
+                                                            <span
+                                                                key={gi}
+                                                                className="text-[9px] font-bold px-2 py-0.5 rounded bg-black/50 text-neutral-300 border border-white/5"
+                                                            >
+                                                                {g}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* High-Impact Interactive Button on Door */}
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDoorEnter(room);
+                                                        }}
+                                                        className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#b51824] via-red-600 to-[#8b1119] hover:from-red-600 hover:to-red-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-red-950/80 active:scale-95 transition-all cursor-pointer border border-red-400/30"
+                                                    >
+                                                        <span>افتح الباب وادخل للحجز</span>
+                                                        <ArrowRight className="w-3.5 h-3.5 rotate-180 group-hover:-translate-x-1 transition-transform" />
+                                                    </button>
+                                                </div>
+                                            </motion.div>
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Pricing & High-Conversion Action Footer */}
-                                <div className="p-5 sm:p-7 pt-4 bg-[#0d090b] border-t border-white/10 relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                    {/* Price Display */}
-                                    <div className="flex items-baseline gap-2 text-right">
-                                        <div className="flex items-baseline gap-1" dir="ltr">
-                                            <span className="font-brush text-4xl sm:text-5xl font-black text-red-500 tracking-tight drop-shadow-[0_2px_8px_rgba(181,24,36,0.6)]">
-                                                {room.rate}
-                                            </span>
-                                            <span className="font-brush text-xs sm:text-sm text-neutral-300 tracking-wider">
-                                                EGP / HOUR
-                                            </span>
-                                        </div>
-                                        <div className="text-[11px] text-neutral-400 font-medium hidden sm:block">
-                                            (شامل كافة الأجهزة لـ 4 أفراد)
-                                        </div>
-                                    </div>
-
-                                    {/* Instant Booking CTA Button */}
-                                    <button
-                                        onClick={() => handleRoomSelect(room)}
-                                        className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-red-700 via-red-600 to-red-500 hover:from-red-600 hover:to-red-400 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-950/60 hover:shadow-red-700/50 active:scale-[0.98] transition-all duration-300 cursor-pointer border border-red-400/30"
-                                    >
-                                        <span>احجز الغرفة واختر الموعد</span>
-                                        <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
-                                    </button>
-                                </div>
-                            </motion.div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </section>
 
@@ -402,7 +585,7 @@ export default function PlaystationPage() {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto">
                         {WALK_IN_ITEMS.map((item) => {
                             const Icon = item.icon;
                             return (
@@ -473,7 +656,7 @@ export default function PlaystationPage() {
                 </section>
 
                 {/* VENUE AMENITIES & TRUST GUARANTEE */}
-                <section className="mb-10">
+                <section className="mb-10 max-w-5xl mx-auto w-full">
                     <div className="rounded-3xl bg-neutral-950/80 border border-white/10 p-5 sm:p-7 shadow-xl">
                         <div className="text-center mb-6">
                             <h3 className="font-brush text-lg sm:text-xl text-white">
@@ -525,6 +708,49 @@ export default function PlaystationPage() {
                     </div>
                 </footer>
             </main>
+
+            {/* ─────────────────────────────────────────────────────────────
+                FULL-SCREEN CINEMATIC FLY-THROUGH PORTAL TRANSITION OVERLAY
+               ───────────────────────────────────────────────────────────── */}
+            <AnimatePresence>
+                {isTransitioning && activeRoomData && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1.05 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                        className="fixed inset-0 z-50 pointer-events-none flex flex-col items-center justify-center bg-black/90 backdrop-blur-md"
+                    >
+                        {/* High-Intensity Light Warp Burst */}
+                        <motion.div
+                            initial={{ scale: 0.2, opacity: 0 }}
+                            animate={{ scale: [0.5, 3.5], opacity: [0.2, 1, 0.9] }}
+                            transition={{ duration: 0.7, ease: 'easeIn' }}
+                            className="absolute w-[600px] h-[600px] rounded-full bg-[radial-gradient(circle,rgba(220,38,38,0.85)_0%,rgba(181,24,36,0.4)_50%,transparent_75%)] blur-2xl"
+                        />
+
+                        {/* Stenciled Cinematic Message */}
+                        <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.15, duration: 0.35 }}
+                            className="relative z-10 text-center space-y-3 px-4"
+                        >
+                            <div className="w-16 h-16 mx-auto rounded-2xl bg-red-600/30 border border-red-500/60 flex items-center justify-center text-white shadow-[0_0_30px_#c41e3a]">
+                                <Tv className="w-8 h-8 animate-pulse" />
+                            </div>
+
+                            <h2 className="font-brush text-3xl sm:text-5xl font-black text-white tracking-wider drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
+                                ENTERING {activeRoomData.code}...
+                            </h2>
+
+                            <p className="font-body text-sm sm:text-base text-red-300 font-bold">
+                                جاري فتح باب {activeRoomData.titleAr} واختيار موعدك 🚪✨
+                            </p>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
