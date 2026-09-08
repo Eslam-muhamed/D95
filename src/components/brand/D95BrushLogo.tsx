@@ -51,9 +51,9 @@ export default function D95BrushLogo({
   }[size];
 
   return (
-    <div className={`flex flex-col items-center select-none text-center ${sizeMap.containerPy} ${className}`}>
+    <div dir="ltr" className={`flex flex-col items-center select-none text-center ${sizeMap.containerPy} ${className}`}>
       {/* Main D95 Brushed Graffiti Mark */}
-      <div className="relative inline-flex items-baseline justify-center tracking-tighter">
+      <div dir="ltr" className="relative inline-flex items-baseline justify-center tracking-tighter">
         {/* Glow behind the logo */}
         {glow && (
           <div
