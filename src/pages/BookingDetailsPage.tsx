@@ -8,9 +8,11 @@ import {
     Check,
     Lock,
     DoorClosed,
-    Gamepad2,
     Tv,
-    Sparkles,
+    Zap,
+    Droplets,
+    Radio,
+    Shield,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -23,7 +25,7 @@ interface SnackAddon {
     name: string;
     price: number;
     description: string;
-    icon: string;
+    iconType: 'zap' | 'coffee' | 'water';
 }
 
 const SNACK_OPTIONS: SnackAddon[] = [
@@ -31,22 +33,22 @@ const SNACK_OPTIONS: SnackAddon[] = [
         id: 'redbull_combo',
         name: 'كومبو الجيمرز (ريدبول + سناك)',
         price: 55,
-        description: 'طاقة وتركيز للجلسات الطويلة',
-        icon: '⚡',
+        description: 'طاقة وتركيز للجلسات التنافسية الطويلة',
+        iconType: 'zap',
     },
     {
         id: 'coffee_specialty',
         name: 'قهوة سبيشالتي دبل إسبريسو',
         price: 40,
         description: 'بُن برازيلي فاخر محمص طازجاً',
-        icon: '☕',
+        iconType: 'coffee',
     },
     {
         id: 'water_cold',
         name: 'مياه معدنية مثلجة (كبير)',
         price: 15,
-        description: 'انتعاش مستمر أثناء اللعب',
-        icon: '💧',
+        description: 'انتعاش مستمر أثناء جلسة اللعب',
+        iconType: 'water',
     },
 ];
 
@@ -56,11 +58,9 @@ const AVAILABLE_ROOMS = [
         name: 'غرفة 01 (Play Room)',
         nameEn: 'ROOM 01',
         titleAr: 'غرفة الأبطال (THE ARENA)',
+        code: 'SUITE-01',
         rate: 100,
         specs: 'شاشة 65 بوصة 4K 120Hz • 4 دراعات PS5 • ساوند بار سينمائي',
-        accentColor: '#00d2ff',
-        neonBorder: 'border-[#00d2ff]',
-        neonGlow: 'shadow-[0_0_30px_rgba(0,210,255,0.35)]',
         interiorImg: room01InteriorImg,
         bookedSlotsIndices: [2, 5], // Mock occupied slots
     },
@@ -69,11 +69,9 @@ const AVAILABLE_ROOMS = [
         name: 'غرفة 02 (Play Room)',
         nameEn: 'ROOM 02',
         titleAr: 'غرفة النجوم (VIP SUITE)',
+        code: 'SUITE-02',
         rate: 100,
-        specs: 'شاشة 65 بوصة 4K 120Hz • 4 دراعات PS5 • سقف نجوم وإضاءة نيون',
-        accentColor: '#ff007f',
-        neonBorder: 'border-[#ff007f]',
-        neonGlow: 'shadow-[0_0_30px_rgba(255,0,127,0.35)]',
+        specs: 'شاشة 65 بوصة 4K 120Hz • 4 دراعات PS5 • سقف نجوم وعزل صوتي',
         interiorImg: room02InteriorImg,
         bookedSlotsIndices: [1, 4], // Mock occupied slots
     },
@@ -157,11 +155,11 @@ export default function BookingDetailsPage() {
         };
 
         const getPeriodName = (h: number) => {
-            if (h >= 6 && h < 12) return 'صباحاً';
-            if (h >= 12 && h < 16) return 'الظهيرة';
-            if (h >= 16 && h < 19) return 'العصر';
-            if (h >= 19 && h < 23) return 'ذروة الجيمرز 🔥';
-            return 'سهرة الفجر 🌙';
+            if (h >= 6 && h < 12) return 'الفترة الصباحية';
+            if (h >= 12 && h < 16) return 'فترة الظهيرة';
+            if (h >= 16 && h < 19) return 'فترة العصر';
+            if (h >= 19 && h < 23) return 'وقت الذروة';
+            return 'سهرة الفجر';
         };
 
         const slots: DynamicSlot[] = [];
@@ -208,7 +206,7 @@ export default function BookingDetailsPage() {
     // Handle single or multi-slot selection (Contiguous 1hr chunks)
     const handleSlotClick = (clickedSlot: DynamicSlot) => {
         if (clickedSlot.isBooked) {
-            toast.error('هذا الوقت محجوز بالفعل، برجاء اختيار موعد آخر متاح');
+            toast.error('هذا الموعد محجوز مسبقاً، يرجى اختيار موعد متاح');
             return;
         }
 
@@ -251,7 +249,6 @@ export default function BookingDetailsPage() {
 
         // Click outside: Range select or restart single slot
         if (idx > maxIdx) {
-            // Check if any slot in between is booked
             let canExpand = true;
             const newRange: number[] = [];
             for (let k = minIdx; k <= idx; k++) {
@@ -263,7 +260,7 @@ export default function BookingDetailsPage() {
             }
             if (canExpand) {
                 setSelectedSlotIndices(newRange);
-                toast.success(`تم تمديد الحجز إلى ${newRange.length} ساعات متتالية 🎮`);
+                toast.success(`تم تمديد الحجز إلى ${newRange.length} ساعات متتالية`);
                 return;
             }
         }
@@ -272,7 +269,7 @@ export default function BookingDetailsPage() {
         setSelectedSlotIndices([idx]);
     };
 
-    // Quick duration handler (e.g., 1 hour, 2 hours, 3 hours)
+    // Quick duration handler (e.g., 1 hour, 2 hours, 3 hours, 4 hours)
     const handleQuickDuration = (hours: number) => {
         const start = selectedSlotIndices.length > 0 ? selectedSlotIndices[0] : 0;
         const newIndices: number[] = [];
@@ -344,111 +341,123 @@ export default function BookingDetailsPage() {
     };
 
     return (
-        <div className="min-h-screen w-full bg-[#0a0809] text-white font-body text-sm flex flex-col selection:bg-red-600 selection:text-white relative select-none">
+        <div className="min-h-screen w-full bg-[#080607] text-[#e8e4e6] font-body text-sm flex flex-col selection:bg-red-600 selection:text-white relative select-none">
             {/* ─────────────────────────────────────────────────────────────
-                AUTHENTIC D95 DARK GAMING ATMOSPHERE (YOUTHFUL, SPORTY & MASCHINE)
+                D95 RAW INDUSTRIAL TEXTURE & ATMOSPHERIC BACKDROP
                ───────────────────────────────────────────────────────────── */}
             <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-                {/* Overhead warm red spotlight glow */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[380px] bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,rgba(220,38,38,0.18)_0%,transparent_75%)] blur-[60px]" />
-                <div className="absolute bottom-10 right-[-10%] w-[450px] h-[450px] bg-red-950/20 blur-[130px] rounded-full" />
-                {/* Subtle dark texture */}
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px] opacity-40" />
+                {/* Competition Red ambient spotlight */}
+                <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[420px] bg-[radial-gradient(ellipse_75%_55%_at_50%_0%,rgba(220,38,38,0.14)_0%,transparent_70%)] blur-[70px]" />
+                <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-red-950/15 blur-[120px] rounded-full" />
+                {/* Tactical dark grid pattern */}
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[size:40px_40px] opacity-60" />
             </div>
 
             {/* Top Navigation Bar */}
-            <header className="fixed top-0 inset-x-0 z-50 bg-[#0e0a0c]/95 backdrop-blur-xl pt-safe border-b border-white/10 shadow-[0_4px_25px_rgba(0,0,0,0.7)]">
+            <header className="fixed top-0 inset-x-0 z-50 bg-[#0c090b]/95 backdrop-blur-md pt-safe border-b border-white/[0.08] shadow-[0_4px_25px_rgba(0,0,0,0.85)]">
                 <div className="h-16 px-4 md:px-8 flex items-center justify-between max-w-4xl mx-auto">
                     <div className="flex items-center gap-3">
                         <Link
                             to="/playstation"
                             aria-label="الرجوع للغرف"
-                            className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white hover:text-red-400 transition-all active:scale-95 cursor-pointer border border-white/15 shadow-sm"
+                            className="w-9 h-9 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-neutral-300 hover:text-white transition-all active:scale-95 cursor-pointer border border-white/10 shadow-sm"
                         >
-                            <ArrowRight className="w-5 h-5" />
+                            <ArrowRight className="w-4 h-4" />
                         </Link>
                         <div className="flex flex-col text-right">
-                            <h1 className="font-bold text-base text-white leading-tight font-body">
+                            <h1 className="font-bold text-sm sm:text-base text-white leading-tight font-body tracking-wide">
                                 حجز الغرفة ومواعيد اليوم
                             </h1>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="font-brush text-sm text-red-500 font-bold">D95</span>
-                                <span className="text-[11px] text-neutral-400 font-semibold tracking-wider">GAMING &amp; CAFÉ</span>
+                                <span className="font-brush text-xs sm:text-sm text-red-500 font-bold tracking-wider">D95</span>
+                                <span className="text-[10px] text-neutral-400 font-bold tracking-widest uppercase">ESPORTS LOUNGE</span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-500/50 text-emerald-300 text-xs font-bold shadow-sm">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>مواعيد حية</span>
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-white/[0.03] border border-white/10 text-neutral-300 text-xs font-mono">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                        <span className="text-[11px] font-semibold tracking-wide">LIVE DISPATCH</span>
                     </div>
                 </div>
             </header>
 
             {/* Main Content Area */}
-            <main className="flex-1 flex flex-col relative z-10 w-full pt-20 pb-32 px-3.5 sm:px-6 max-w-4xl mx-auto space-y-3.5" dir="rtl">
+            <main className="flex-1 flex flex-col relative z-10 w-full pt-20 pb-36 px-3.5 sm:px-6 max-w-4xl mx-auto space-y-4" dir="rtl">
                 {/* ─────────────────────────────────────────────────────────────
-                    ENTERED ROOM SHOWCASE BANNER (SEAMLESS IMMERSION FROM 3D DOOR)
+                    ENTERED ROOM SHOWCASE BANNER (DARK TITANIUM & CARBON FRAME)
                    ───────────────────────────────────────────────────────────── */}
-                <section
-                    className={`relative rounded-2xl sm:rounded-3xl overflow-hidden border-2 ${currentRoom.neonBorder} ${currentRoom.neonGlow} backdrop-blur-md shadow-2xl transition-all duration-500`}
-                >
-                    <div className="relative h-44 sm:h-56 w-full overflow-hidden">
+                <section className="relative rounded-xl overflow-hidden border border-white/[0.12] bg-[#120e10] shadow-[0_10px_35px_rgba(0,0,0,0.6)]">
+                    {/* Top industrial accent hairline */}
+                    <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-red-600 to-transparent z-20" />
+
+                    <div className="relative h-44 sm:h-52 w-full overflow-hidden bg-black">
                         <img
                             src={currentRoom.interiorImg}
                             alt={currentRoom.name}
-                            className="w-full h-full object-cover brightness-105"
+                            className="w-full h-full object-cover brightness-95 contrast-105"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0809] via-black/45 to-transparent" />
+                        {/* High-contrast dark gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0d090b] via-[#0d090b]/50 to-black/30" />
 
-                        {/* Status chip */}
-                        <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/85 border border-emerald-500/70 shadow-lg backdrop-blur-md">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                            <span className="text-xs font-bold text-emerald-300 font-sans">
-                                ✦ تم فتح الباب والدخول بنجاح
+                        {/* Top-Right: Tactical Room Entry Tag */}
+                        <div className="absolute top-3 right-3 z-10 flex items-center gap-2 px-2.5 py-1 rounded-md bg-black/85 border border-white/15 backdrop-blur-md shadow-lg">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)]" />
+                            <span className="text-[11px] font-bold text-neutral-200 tracking-wide font-sans">
+                                تم فتح الباب والدخول بنجاح
                             </span>
                         </div>
 
-                        {/* Room Info */}
+                        {/* Top-Left: Suite Code Tag */}
+                        <div className="absolute top-3 left-3 z-10 hidden xs:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/85 border border-white/10 backdrop-blur-md" dir="ltr">
+                            <span className="text-[10px] font-mono tracking-widest text-neutral-400 font-bold uppercase">
+                                {currentRoom.code}
+                            </span>
+                        </div>
+
+                        {/* Bottom Room Info */}
                         <div className="absolute bottom-3 inset-x-3 sm:inset-x-5 z-10 flex items-end justify-between">
                             <div className="space-y-1">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] sm:text-xs font-brush tracking-wider uppercase px-2 py-0.5 rounded bg-black/75 border border-white/20 text-white">
+                                    <span className="text-[10px] font-mono font-black tracking-widest uppercase px-2 py-0.5 rounded bg-red-950/80 border border-red-600/50 text-red-300">
                                         {currentRoom.nameEn}
                                     </span>
-                                    <span className="text-[10px] font-bold text-neutral-300">
+                                    <span className="text-[11px] font-bold text-neutral-300 font-sans">
                                         PlayStation 5 Suite
                                     </span>
                                 </div>
-                                <h2 className="font-brush text-xl sm:text-2xl text-white font-bold drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                                <h2 className="font-brush text-xl sm:text-2xl text-white font-bold tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
                                     {currentRoom.titleAr}
                                 </h2>
-                                <p className="text-[11px] sm:text-xs text-neutral-300 font-medium">
+                                <p className="text-[11px] sm:text-xs text-neutral-300 font-medium leading-relaxed max-w-xl">
                                     {currentRoom.specs}
                                 </p>
                             </div>
 
-                            <div className="text-left bg-black/85 px-3 py-1.5 rounded-xl border border-white/15 shrink-0 hidden xs:block" dir="ltr">
-                                <span className="font-sans font-black text-base sm:text-lg text-white tabular-nums">
-                                    {currentRoom.rate} EGP
-                                </span>
-                                <span className="text-[10px] text-neutral-400 font-bold ml-1">/ HR</span>
+                            <div className="text-left bg-black/90 px-3.5 py-2 rounded-lg border border-white/15 shrink-0 hidden xs:block shadow-lg" dir="ltr">
+                                <div className="text-[10px] font-mono uppercase tracking-wider text-neutral-400">HOURLY RATE</div>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="font-sans font-black text-lg sm:text-xl text-white tabular-nums">
+                                        {currentRoom.rate}
+                                    </span>
+                                    <span className="text-[11px] text-red-400 font-bold">EGP / HR</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </section>
 
                 {/* ─────────────────────────────────────────────────────────────
-                    SECTION 1: ATHLETIC ROOM SELECTOR TABS (ROOM 1 vs ROOM 2)
+                    SECTION 1: TACTICAL ROOM SELECTOR TABS (ROOM 01 vs ROOM 02)
                    ───────────────────────────────────────────────────────────── */}
-                <section className="bg-[#140e10]/95 border border-white/10 rounded-2xl p-3 shadow-xl backdrop-blur-md">
-                    <div className="flex items-center justify-between px-2 mb-2 text-xs">
-                        <span className="text-white font-bold flex items-center gap-1.5 text-xs sm:text-sm">
+                <section className="bg-[#120e10] border border-white/[0.08] rounded-xl p-3 sm:p-4 shadow-lg">
+                    <div className="flex items-center justify-between px-1 mb-2.5">
+                        <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-white">
                             <DoorClosed className="w-4 h-4 text-red-500" />
-                            <span>اختر الغرفة المراد حجزها:</span>
-                        </span>
-                        <span className="text-red-300 font-bold text-xs bg-red-950/80 px-2.5 py-0.5 rounded-full border border-red-500/40">
-                            100 ج.م / ساعة
+                            <span>تحديد الغرفة:</span>
+                        </div>
+                        <span className="text-[11px] font-mono font-bold text-neutral-400 bg-white/[0.04] px-2.5 py-0.5 rounded border border-white/10">
+                            100 EGP / HOUR
                         </span>
                     </div>
 
@@ -459,29 +468,54 @@ export default function BookingDetailsPage() {
                                 <button
                                     key={room.id}
                                     onClick={() => setSelectedRoomId(room.id)}
-                                    className={`relative p-2.5 sm:p-3.5 rounded-xl border-2 flex flex-col justify-between text-right transition-all duration-200 cursor-pointer ${
+                                    className={`relative p-3 rounded-lg border text-right transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden group ${
                                         isSelected
-                                            ? 'bg-red-600 border-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.35)] scale-[1.01]'
-                                            : 'bg-[#1c1417]/80 border-white/10 text-neutral-300 hover:border-white/20 hover:bg-[#241a1e]'
+                                            ? 'bg-gradient-to-b from-[#241216] to-[#150d0f] border-red-600 shadow-[0_0_20px_rgba(220,38,38,0.22)]'
+                                            : 'bg-[#151113] border-white/[0.08] text-neutral-300 hover:border-white/20 hover:bg-[#1b1518]'
                                     }`}
                                 >
+                                    {/* Active Top Accent Line */}
+                                    {isSelected && (
+                                        <div className="absolute top-0 inset-x-0 h-[2px] bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+                                    )}
+
                                     <div className="flex items-center justify-between w-full mb-2">
-                                        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 ${isSelected ? 'bg-white text-red-600 shadow-sm' : 'bg-white/10 text-neutral-300 border border-white/10'}`}>
-                                            <DoorClosed className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                        <div
+                                            className={`w-7 h-7 rounded flex items-center justify-center shrink-0 border transition-colors ${
+                                                isSelected
+                                                    ? 'bg-red-600 border-red-500 text-white shadow-sm'
+                                                    : 'bg-white/[0.04] border-white/10 text-neutral-400 group-hover:text-white'
+                                            }`}
+                                        >
+                                            <DoorClosed className="w-3.5 h-3.5" />
                                         </div>
+
                                         <div className="text-left" dir="ltr">
-                                            <span className={`font-sans font-bold text-xs sm:text-sm tabular-nums px-2 py-0.5 rounded-md ${isSelected ? 'bg-black/30 text-white' : 'bg-red-950/80 text-red-300 border border-red-500/30'}`}>
-                                                {room.rate} EGP/HR
+                                            <span
+                                                className={`text-[11px] font-mono font-bold tabular-nums px-2 py-0.5 rounded ${
+                                                    isSelected
+                                                        ? 'bg-red-950/90 text-red-300 border border-red-600/40'
+                                                        : 'bg-black/50 text-neutral-400 border border-white/10'
+                                                }`}
+                                            >
+                                                {room.rate} EGP
                                             </span>
                                         </div>
                                     </div>
 
                                     <div>
-                                        <div className="font-bold text-sm sm:text-base text-white tracking-wide">
-                                            {room.nameEn}
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-mono font-black text-sm sm:text-base text-white tracking-wider">
+                                                {room.nameEn}
+                                            </span>
+                                            {isSelected && (
+                                                <span className="text-[10px] font-bold text-red-400 uppercase tracking-widest font-mono">
+                                                    SELECTED
+                                                </span>
+                                            )}
                                         </div>
-                                        <div className={`text-[11px] font-medium leading-tight mt-0.5 truncate ${isSelected ? 'text-neutral-100' : 'text-neutral-400'}`}>
-                                            {room.id === 'room-1' ? 'غرفة 01 VIP' : 'غرفة 02 VIP'}
+                                        <div className="text-[11px] font-medium text-neutral-400 leading-tight mt-0.5">
+                                            {room.id === 'room-1' ? 'غرفة 01 VIP (The Arena)' : 'غرفة 02 VIP (VIP Suite)'}
                                         </div>
                                     </div>
                                 </button>
@@ -491,42 +525,47 @@ export default function BookingDetailsPage() {
                 </section>
 
                 {/* ─────────────────────────────────────────────────────────────
-                    SECTION 2: CLEAN 7-DAY CALENDAR DATE SELECTOR
+                    SECTION 2: COMPETITION FIXTURE DATE SELECTOR (7 DAYS)
                    ───────────────────────────────────────────────────────────── */}
-                <section className="bg-[#140e10]/95 border border-white/10 rounded-2xl p-3 sm:p-3.5 shadow-xl backdrop-blur-md">
-                    <div className="flex items-center justify-between mb-2.5 px-1">
+                <section className="bg-[#120e10] border border-white/[0.08] rounded-xl p-3 sm:p-4 shadow-lg">
+                    <div className="flex items-center justify-between mb-3 px-1">
                         <div className="flex items-center gap-2 text-xs sm:text-sm text-white font-bold">
                             <Calendar className="w-4 h-4 text-red-500" />
-                            <span>تاريخ الحجز:</span>
+                            <span>تاريخ الجلسة:</span>
                         </div>
                         {isToday && (
-                            <span className="text-xs font-bold text-emerald-300 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-500/40 flex items-center gap-1.5">
+                            <span className="text-[11px] font-bold text-emerald-300 bg-emerald-950/60 px-2.5 py-0.5 rounded border border-emerald-500/40 flex items-center gap-1.5 font-mono">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                يبدأ فوراً من الوقت الحالي
+                                <span>يبدأ فوراً من الوقت الحالي</span>
                             </span>
                         )}
                     </div>
 
-                    <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide py-1">
+                    <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
                         {calendarDays.map((d) => {
                             const active = selectedDate === d.iso;
                             return (
                                 <button
                                     key={d.iso}
                                     onClick={() => setSelectedDate(d.iso)}
-                                    className={`shrink-0 py-2 px-2.5 sm:px-3.5 rounded-xl border-2 text-center transition-all cursor-pointer min-w-[64px] sm:min-w-[72px] ${
+                                    className={`relative shrink-0 py-2.5 px-3 rounded-lg border text-center transition-all cursor-pointer min-w-[68px] sm:min-w-[76px] overflow-hidden ${
                                         active
-                                            ? 'bg-red-600 border-red-500 text-white shadow-[0_0_18px_rgba(220,38,38,0.4)] scale-105'
-                                            : 'bg-[#1c1417]/80 border-white/10 text-neutral-300 hover:text-white hover:border-white/20 hover:bg-[#241a1e]'
+                                            ? 'bg-gradient-to-b from-[#251216] to-[#150d0f] border-red-600 shadow-[0_0_18px_rgba(220,38,38,0.25)]'
+                                            : 'bg-[#151113] border-white/[0.08] text-neutral-300 hover:text-white hover:border-white/20 hover:bg-[#1b1518]'
                                     }`}
                                 >
-                                    <div className={`text-[11px] font-bold ${active ? 'text-white' : 'text-neutral-400'}`}>
+                                    {/* Top racing red accent */}
+                                    {active && (
+                                        <div className="absolute top-0 inset-x-0 h-[2px] bg-red-500" />
+                                    )}
+
+                                    <div className={`text-[11px] font-bold ${active ? 'text-red-300' : 'text-neutral-400'}`}>
                                         {d.dayName}
                                     </div>
-                                    <div className="text-base sm:text-lg font-extrabold font-sans tabular-nums my-0.5 text-white">
+                                    <div className="text-lg sm:text-xl font-black font-sans tabular-nums my-0.5 text-white">
                                         {d.dayNumber}
                                     </div>
-                                    <div className={`text-[10px] font-medium ${active ? 'text-white/90' : 'text-neutral-400'}`}>
+                                    <div className="text-[10px] font-semibold text-neutral-400">
                                         {d.monthName}
                                     </div>
                                 </button>
@@ -536,60 +575,60 @@ export default function BookingDetailsPage() {
                 </section>
 
                 {/* ─────────────────────────────────────────────────────────────
-                    SECTION 3: COMPACT 4-COLUMN SLOTS GRID (CLEAN DARK ATHLETIC)
+                    SECTION 3: TACTICAL 4-COLUMN TIME SLOTS DISPATCH BOARD
                    ───────────────────────────────────────────────────────────── */}
-                <section className="bg-[#140e10]/95 border border-white/10 rounded-2xl p-3.5 sm:p-5 shadow-xl backdrop-blur-md">
-                    {/* Header: Title + Quick Duration Selector */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3.5 pb-3 border-b border-white/10">
+                <section className="bg-[#120e10] border border-white/[0.08] rounded-xl p-3.5 sm:p-5 shadow-lg">
+                    {/* Header: Title + Tactical Duration Pills */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-white/[0.08]">
                         <div>
                             <div className="flex items-center gap-2">
                                 <Clock className="w-4 h-4 text-red-500" />
                                 <h2 className="font-bold text-sm sm:text-base text-white font-body">
-                                    الأوقات المتاحة للحجز اليوم ({currentRoom.nameEn})
+                                    الأوقات المتاحة للحجز ({currentRoom.nameEn})
                                 </h2>
                             </div>
                             <p className="text-xs text-neutral-400 mt-0.5 font-medium">
-                                انقر لاختيار ساعة أو أكثر متتالية • الحساب ديناميكي يبدأ من الوقت الحالي
+                                انقر لاختيار ساعة أو أكثر متتالية • الحساب ديناميكي يبدأ من التوقيت الفعلي
                             </p>
                         </div>
 
-                        {/* Quick Duration Pills */}
-                        <div className="flex items-center gap-1.5 self-start sm:self-auto bg-black/50 p-1 rounded-xl border border-white/10">
-                            <span className="text-[11px] text-neutral-400 px-1 font-bold">المدة:</span>
+                        {/* Tactical Duration Switcher */}
+                        <div className="flex items-center gap-1 self-start sm:self-auto bg-black/60 p-1 rounded-lg border border-white/10">
+                            <span className="text-[11px] font-mono uppercase text-neutral-400 px-1.5 font-bold">المدة:</span>
                             {[1, 2, 3, 4].map((h) => (
                                 <button
                                     key={h}
                                     onClick={() => handleQuickDuration(h)}
-                                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                    className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-all cursor-pointer ${
                                         durationHours === h
-                                            ? 'bg-red-600 text-white shadow-sm'
-                                            : 'text-neutral-300 hover:text-white hover:bg-white/10'
+                                            ? 'bg-red-600 text-white shadow-[0_0_10px_rgba(220,38,38,0.4)]'
+                                            : 'text-neutral-400 hover:text-white hover:bg-white/[0.06]'
                                     }`}
                                 >
-                                    {h} س
+                                    {h}H
                                 </button>
                             ))}
                         </div>
                     </div>
 
-                    {/* Slots Legend */}
-                    <div className="flex items-center gap-4 text-xs mb-3 px-1 font-medium">
-                        <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                            <span>متاح للحجز</span>
+                    {/* Technical Status Legend */}
+                    <div className="flex items-center gap-4 text-xs mb-3 px-1 font-mono">
+                        <div className="flex items-center gap-1.5 text-neutral-300">
+                            <span className="w-2 h-2 rounded-sm bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.7)]" />
+                            <span className="text-[11px]">متاح للحجز</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-red-400 font-bold">
-                            <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                            <span>محدد لحجزك</span>
+                            <span className="w-2 h-2 rounded-sm bg-red-600 shadow-[0_0_6px_rgba(220,38,38,0.8)]" />
+                            <span className="text-[11px]">محدد لجلستك</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-neutral-500">
-                            <span className="w-2.5 h-2.5 rounded-full bg-neutral-600" />
-                            <span>محجوز 🔒</span>
+                            <span className="w-2 h-2 rounded-sm bg-neutral-700" />
+                            <span className="text-[11px]">محجوز مسبقاً</span>
                         </div>
                     </div>
 
-                    {/* THE COMPACT 4-COLUMN GRID */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+                    {/* 4-COLUMN DISPATCH GRID */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-2.5">
                         {generatedSlots.map((slot) => {
                             const isSelected = selectedSlotIndices.includes(slot.index);
                             const isBooked = slot.isBooked;
@@ -599,61 +638,66 @@ export default function BookingDetailsPage() {
                                     key={slot.id}
                                     whileTap={!isBooked ? { scale: 0.98 } : undefined}
                                     onClick={() => handleSlotClick(slot)}
-                                    className={`relative p-2.5 rounded-xl border-2 transition-all duration-200 select-none cursor-pointer flex flex-col justify-between ${
+                                    className={`relative p-2.5 rounded-lg border transition-all duration-150 select-none cursor-pointer flex flex-col justify-between overflow-hidden ${
                                         isBooked
-                                            ? 'bg-black/30 border-white/5 text-neutral-600 opacity-40 cursor-not-allowed'
+                                            ? 'bg-black/30 border-white/[0.04] text-neutral-600 opacity-40 cursor-not-allowed'
                                             : isSelected
-                                            ? 'bg-red-600 border-red-500 text-white shadow-[0_0_25px_rgba(220,38,38,0.5)] scale-[1.03]'
-                                            : 'bg-[#1c1417]/90 border-white/10 hover:border-red-500/60 hover:bg-[#261a1f] text-white shadow-sm'
+                                            ? 'bg-gradient-to-b from-[#2a1317] to-[#170d10] border-red-600 shadow-[0_0_20px_rgba(220,38,38,0.28)]'
+                                            : 'bg-[#151113] border-white/[0.08] hover:border-red-600/60 hover:bg-[#1b1518] text-white'
                                     }`}
                                 >
-                                    {/* Top Line: Period Badge + Status */}
+                                    {/* Active Top Red Accent */}
+                                    {isSelected && (
+                                        <div className="absolute top-0 inset-x-0 h-[2px] bg-red-500" />
+                                    )}
+
+                                    {/* Top Line: Period Name + Status Tag */}
                                     <div className="flex items-center justify-between text-[11px] mb-1.5">
-                                        <span className={`font-semibold ${isSelected ? 'text-white' : 'text-neutral-400'}`}>
+                                        <span className={`font-semibold text-[10px] sm:text-[11px] ${isSelected ? 'text-red-300 font-bold' : 'text-neutral-400'}`}>
                                             {slot.periodName}
                                         </span>
                                         {isBooked ? (
-                                            <span className="flex items-center gap-1 text-neutral-500 font-bold text-[10px]">
-                                                <Lock className="w-3 h-3" />
-                                                <span>محجوز</span>
+                                            <span className="flex items-center gap-1 text-neutral-500 font-mono text-[10px]">
+                                                <Lock className="w-2.5 h-2.5" />
+                                                <span>BOOKED</span>
                                             </span>
                                         ) : isSelected ? (
-                                            <span className="flex items-center gap-1 text-white font-bold text-[10px] bg-white/20 px-2 py-0.5 rounded-full border border-white/30">
-                                                <Check className="w-3 h-3 stroke-[3]" />
+                                            <span className="flex items-center gap-1 text-red-200 font-bold text-[10px] bg-red-950/80 px-1.5 py-0.2 rounded border border-red-600/50">
+                                                <Check className="w-2.5 h-2.5 stroke-[3] text-red-400" />
                                                 <span>محدد</span>
                                             </span>
                                         ) : (
-                                            <span className="flex items-center gap-1 text-emerald-300 font-bold text-[10px] bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/40">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                                <span>متاح</span>
+                                            <span className="flex items-center gap-1 text-emerald-400 text-[10px] font-mono">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                                <span>OPEN</span>
                                             </span>
                                         )}
                                     </div>
 
-                                    {/* Center: Crystal-Clear Time Range with Arrow */}
+                                    {/* Center: Sharp Digital Time Readout */}
                                     <div className="text-center my-1">
                                         <div
                                             dir="rtl"
-                                            className={`font-body font-bold text-xs sm:text-sm tracking-normal flex items-center justify-center gap-1.5 ${
+                                            className={`font-mono text-xs sm:text-sm flex items-center justify-center gap-1.5 ${
                                                 isBooked
                                                     ? 'text-neutral-600 line-through'
                                                     : isSelected
-                                                    ? 'text-white'
-                                                    : 'text-white'
+                                                    ? 'text-white font-black'
+                                                    : 'text-neutral-200 font-bold'
                                             }`}
                                         >
-                                            <span className="tabular-nums font-extrabold">{slot.startDisplay}</span>
-                                            <span className={`text-xs font-bold ${isSelected ? 'text-white/90' : 'text-red-500'}`}>←</span>
-                                            <span className="tabular-nums font-extrabold">{slot.endDisplay}</span>
+                                            <span className="tabular-nums">{slot.startDisplay}</span>
+                                            <span className={`text-[11px] ${isSelected ? 'text-red-400 font-black' : 'text-neutral-500'}`}>➔</span>
+                                            <span className="tabular-nums">{slot.endDisplay}</span>
                                         </div>
                                     </div>
 
-                                    {/* Bottom Info: 60 minutes & rate */}
-                                    <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-white/10 text-[11px]">
-                                        <span className={isSelected ? 'text-white/90' : 'text-neutral-400 font-medium'}>
+                                    {/* Bottom Line: Duration & Rate */}
+                                    <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-white/[0.06] text-[10px] sm:text-[11px]">
+                                        <span className={isSelected ? 'text-neutral-300 font-medium' : 'text-neutral-400 font-medium'}>
                                             جلسة 60 دقيقة
                                         </span>
-                                        <span className={`font-bold ${isSelected ? 'text-white font-black' : 'text-red-400'}`}>
+                                        <span className={`font-mono font-bold ${isSelected ? 'text-red-400 font-black' : 'text-neutral-300'}`}>
                                             {currentRoom.rate} ج.م
                                         </span>
                                     </div>
@@ -664,16 +708,16 @@ export default function BookingDetailsPage() {
                 </section>
 
                 {/* ─────────────────────────────────────────────────────────────
-                    SECTION 4: SNACKS & DRINKS (OPTIONAL ADDONS)
+                    SECTION 4: GAMING FUEL & ENERGY (RECHARGE ADDONS)
                    ───────────────────────────────────────────────────────────── */}
-                <section className="bg-[#140e10]/95 border border-white/10 rounded-2xl p-3 shadow-xl backdrop-blur-md">
-                    <div className="flex items-center justify-between mb-2.5 px-1">
+                <section className="bg-[#120e10] border border-white/[0.08] rounded-xl p-3 sm:p-4 shadow-lg">
+                    <div className="flex items-center justify-between mb-3 px-1">
                         <div className="flex items-center gap-2 text-xs sm:text-sm text-white font-bold">
-                            <Coffee className="w-4 h-4 text-amber-500" />
-                            <span>سناكس ومشروبات أثناء اللعب (اختياري)</span>
+                            <Zap className="w-4 h-4 text-red-500" />
+                            <span>سناكس ومشروبات الطاقة والتركيز (اختياري)</span>
                         </div>
-                        <span className="text-xs text-amber-300 font-bold bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-500/40">
-                            خدمة الضيافة للغرفة
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 bg-white/[0.04] px-2.5 py-0.5 rounded border border-white/10">
+                            IN-SUITE SERVICE
                         </span>
                     </div>
 
@@ -684,31 +728,40 @@ export default function BookingDetailsPage() {
                                 <div
                                     key={snack.id}
                                     onClick={() => toggleSnack(snack.id)}
-                                    className={`p-2.5 rounded-xl border-2 flex items-center justify-between cursor-pointer transition-all ${
+                                    className={`p-3 rounded-lg border flex items-center justify-between cursor-pointer transition-all duration-150 ${
                                         isChecked
-                                            ? 'bg-red-950/50 border-red-500 text-white shadow-sm'
-                                            : 'bg-[#1c1417]/80 border-white/10 text-neutral-300 hover:text-white hover:border-white/20'
+                                            ? 'bg-gradient-to-b from-[#241216] to-[#150d0f] border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.2)]'
+                                            : 'bg-[#151113] border-white/[0.08] text-neutral-300 hover:text-white hover:border-white/20'
                                     }`}
                                 >
                                     <div className="flex items-center gap-2.5">
                                         <div
-                                            className={`w-5 h-5 rounded-md flex items-center justify-center border-2 transition-colors ${
+                                            className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
                                                 isChecked
-                                                    ? 'bg-red-600 border-red-500 text-white shadow-sm'
-                                                    : 'border-white/20 bg-black/40'
+                                                    ? 'bg-red-600 border-red-500 text-white'
+                                                    : 'border-white/20 bg-black/50'
                                             }`}
                                         >
-                                            {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                                            {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                                         </div>
-                                        <div>
-                                            <div className="text-xs font-bold flex items-center gap-1 text-white">
-                                                <span>{snack.icon}</span>
-                                                <span className="truncate max-w-[130px]">{snack.name}</span>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 rounded bg-white/[0.04] border border-white/10 flex items-center justify-center text-neutral-300">
+                                                {snack.iconType === 'zap' && <Zap className="w-3.5 h-3.5 text-amber-400" />}
+                                                {snack.iconType === 'coffee' && <Coffee className="w-3.5 h-3.5 text-amber-600" />}
+                                                {snack.iconType === 'water' && <Droplets className="w-3.5 h-3.5 text-blue-400" />}
+                                            </div>
+                                            <div>
+                                                <div className="text-xs font-bold text-white leading-tight">
+                                                    {snack.name}
+                                                </div>
+                                                <div className="text-[10px] text-neutral-400 font-medium">
+                                                    {snack.description}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="font-bold text-xs text-red-400 shrink-0 font-body">
-                                        +{snack.price} ج.م
+                                    <div className="font-mono font-bold text-xs text-red-400 shrink-0 ml-2" dir="ltr">
+                                        +{snack.price} EGP
                                     </div>
                                 </div>
                             );
@@ -718,36 +771,36 @@ export default function BookingDetailsPage() {
             </main>
 
             {/* ─────────────────────────────────────────────────────────────
-                FIXED BOTTOM STICKY SUMMARY BAR (SLEEK DARK ATHLETIC)
+                FIXED BOTTOM ATHLETIC SUMMARY BAR (HIGH-CONTRAST CHISELED)
                ───────────────────────────────────────────────────────────── */}
-            <div className="fixed bottom-0 inset-x-0 z-40 bg-[#0e0a0c]/98 border-t border-white/10 backdrop-blur-2xl p-3 sm:p-4 pb-safe shadow-[0_-10px_35px_rgba(0,0,0,0.9)]">
+            <div className="fixed bottom-0 inset-x-0 z-40 bg-[#0c090b]/98 border-t border-white/[0.12] backdrop-blur-xl p-3 sm:p-4 pb-safe shadow-[0_-10px_35px_rgba(0,0,0,0.95)]">
                 <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
                     {/* Financial & Time Summary */}
                     <div className="flex flex-col text-right">
                         <div className="flex items-baseline gap-1.5">
-                            <span className="font-sans font-extrabold text-2xl sm:text-3xl tabular-nums text-white tracking-tight">
+                            <span className="font-sans font-black text-2xl sm:text-3xl tabular-nums text-white tracking-tight">
                                 {grandTotal}
                             </span>
                             <span className="text-xs text-neutral-300 font-bold">ج.م</span>
-                            <span className="text-[11px] text-red-300 font-bold mr-1 bg-red-950/80 px-2 py-0.5 rounded-full border border-red-500/40 whitespace-nowrap">
-                                ({durationHours} {durationHours === 1 ? 'ساعة' : durationHours === 2 ? 'ساعتان' : 'ساعات'})
+                            <span className="text-[10px] font-mono font-bold text-red-300 mr-1 bg-red-950/80 px-2 py-0.5 rounded border border-red-600/40 whitespace-nowrap">
+                                {durationHours} {durationHours === 1 ? 'HOUR' : 'HOURS'}
                             </span>
                         </div>
                         <div className="text-xs text-neutral-400 flex items-center gap-1.5 mt-0.5 font-medium">
-                            <span className="font-bold text-white">{currentRoom.nameEn}</span>
+                            <span className="font-mono font-bold text-white uppercase">{currentRoom.nameEn}</span>
                             <span>•</span>
-                            <div dir="rtl" className="flex items-center gap-1 text-red-400 font-bold tabular-nums">
+                            <div dir="rtl" className="flex items-center gap-1 text-red-400 font-mono font-bold tabular-nums text-[11px]">
                                 <span>{startDisplayTime}</span>
-                                <span>←</span>
+                                <span>➔</span>
                                 <span>{endDisplayTime}</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* Continue CTA */}
+                    {/* High-Performance Checkout CTA */}
                     <button
                         onClick={handleContinue}
-                        className="py-3 px-5 sm:px-8 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 shadow-[0_0_25px_rgba(220,38,38,0.4)] active:scale-95 transition-all cursor-pointer shrink-0 border border-red-500/50"
+                        className="py-3 px-6 sm:px-8 rounded-lg bg-gradient-to-r from-red-600 via-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-[0_0_25px_rgba(220,38,38,0.4)] active:scale-95 transition-all cursor-pointer shrink-0 border border-red-500/60 uppercase tracking-wide font-sans"
                     >
                         <span>تأكيد الحجز والدفع</span>
                         <ArrowRight className="w-4 h-4 rotate-180" />
