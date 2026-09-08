@@ -7,7 +7,6 @@ import {
     Volume2,
     Wind,
     Coffee,
-    Sparkles,
     Clock,
     Wifi,
     ShieldCheck,
@@ -314,56 +313,8 @@ export default function PlaystationPage() {
                 </div>
             </header>
 
-            {/* Ceiling Industrial Rig Graphic */}
-            <div className="relative z-10 w-full max-w-xl mx-auto flex items-center justify-between px-8 pt-20 pb-1 opacity-75">
-                <div className="flex flex-col items-center">
-                    <span className="w-2.5 h-1.5 rounded-t bg-neutral-400" />
-                    <span className="w-3.5 h-1 bg-yellow-100 rounded-full shadow-[0_0_10px_#fff]" />
-                </div>
-                <div className="h-[2px] flex-1 mx-3 bg-gradient-to-r from-neutral-600 via-neutral-400 to-neutral-600" />
-                <div className="flex flex-col items-center">
-                    <span className="w-3 h-2 rounded-t bg-neutral-300" />
-                    <span className="w-4 h-1 bg-yellow-100 rounded-full shadow-[0_0_12px_#fff]" />
-                </div>
-                <div className="h-[2px] flex-1 mx-3 bg-gradient-to-r from-neutral-600 via-neutral-400 to-neutral-600" />
-                <div className="flex flex-col items-center">
-                    <span className="w-2.5 h-1.5 rounded-t bg-neutral-400" />
-                    <span className="w-3.5 h-1 bg-yellow-100 rounded-full shadow-[0_0_10px_#fff]" />
-                </div>
-            </div>
-
             {/* Main Content Container */}
-            <main className="flex-1 flex flex-col relative z-10 w-full pb-20 px-2 sm:px-6 max-w-6xl mx-auto" dir="rtl">
-                {/* Hero Header Section */}
-                <motion.section
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45 }}
-                    className="text-center my-3 sm:my-4 space-y-1.5"
-                >
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-950/70 border border-red-500/50 text-red-300 text-xs font-bold shadow-lg shadow-red-950/50">
-                        <Sparkles className="w-3.5 h-3.5 text-red-400" />
-                        <span>أبواب غرف الـ VIP الحقيقية • انقر على المقبض لفتح الباب والدخول</span>
-                    </div>
-
-                    <div className="space-y-1">
-                        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-wide font-brush drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
-                            <span className="text-white">VIP PORTALS</span>
-                            <span className="text-red-500 mx-2">//</span>
-                            <span className="text-neutral-100">أبواب الغرف الخاصة</span>
-                        </h1>
-                        <p className="font-body text-xs sm:text-sm text-neutral-300 max-w-2xl mx-auto leading-relaxed px-2">
-                            الباب هو مدخل الغرفة الحقيقي. كافة التفاصيل والمواصفات منقوشة على الباب من الخارج. انقر لفتح الباب والدخول إلى الصالة وحجز موعدك.
-                        </p>
-                    </div>
-
-                    <div className="flex items-center justify-center gap-2 pt-0.5 text-[11px] text-neutral-400">
-                        <span className="font-brush text-red-400 tracking-widest">
-                            PLAY • COMPETE • RELAX • REPEAT
-                        </span>
-                        <span className="text-red-600 font-bold">✕</span>
-                    </div>
-                </motion.section>
+            <main className="flex-1 flex flex-col relative z-10 w-full pt-20 sm:pt-24 pb-20 px-2 sm:px-6 max-w-6xl mx-auto" dir="rtl">
 
                 {/* ─────────────────────────────────────────────────────────────
                     AUTHENTIC 3D DOORS: ALWAYS SIDE-BY-SIDE (GRID-COLS-2)
