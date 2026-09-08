@@ -8,7 +8,6 @@ import {
     Check,
     Lock,
     DoorClosed,
-    Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -150,101 +149,125 @@ export default function BookingDetailsPage() {
         };
 
         const slots: DynamicSlot[] = [];
-        const count = 12;
+        const bookedIndices = currentRoom.bookedSlotsIndices || [];
 
-        for (let i = 0; i < count; i++) {
+        // Generate next 12 consecutive 1-hour slots
+        for (let i = 0; i < 12; i++) {
             const startH = (baseHour + i) % 24;
+            const startM = baseMinute;
+
             const endH = (baseHour + i + 1) % 24;
-            const endM = (baseMinute - 1 + 60) % 60;
+            const endM = (baseMinute + 59) % 60;
 
-            const startDisplay = formatArabicTime(startH, baseMinute);
-            const endDisplay = formatArabicTime(endH, endM);
-
-            const isBooked = currentRoom.bookedSlotsIndices.includes(i);
+            const startStr = formatArabicTime(startH, startM);
+            const endStr = formatArabicTime(endH, endM);
 
             slots.push({
-                id: `${currentRoom.id}-${selectedDate}-slot-${i}`,
+                id: `slot-${i}-${startH}-${startM}`,
                 index: i,
-                startDisplay,
-                endDisplay,
+                startDisplay: startStr,
+                endDisplay: endStr,
                 periodName: getPeriodName(startH),
-                isBooked,
+                isBooked: bookedIndices.includes(i),
                 startHour: startH,
-                startMinute: baseMinute,
+                startMinute: startM,
                 endHour: endH,
                 endMinute: endM,
             });
         }
 
         return slots;
-    }, [isToday, selectedDate, currentRoom]);
+    }, [isToday, currentRoom]);
 
-    // Selected Slot Indices (Array of numbers for multi-hour selection)
+    // Track selected slot indices
     const [selectedSlotIndices, setSelectedSlotIndices] = useState<number[]>([0]);
     const [selectedSnacks, setSelectedSnacks] = useState<string[]>([]);
 
+    // Reset selection when room or date changes
     useEffect(() => {
-        const firstAvailable = generatedSlots.find((s) => !s.isBooked);
-        if (firstAvailable && (!selectedSlotIndices.length || selectedSlotIndices.some((idx) => generatedSlots[idx]?.isBooked))) {
-            setSelectedSlotIndices([firstAvailable.index]);
-        }
-    }, [generatedSlots]);
+        const firstAvailable = generatedSlots.findIndex((s) => !s.isBooked);
+        setSelectedSlotIndices(firstAvailable !== -1 ? [firstAvailable] : []);
+    }, [selectedRoomId, selectedDate]);
 
-    const handleSlotClick = (slot: DynamicSlot) => {
-        if (slot.isBooked) {
-            toast.error('هذا الوقت محجوز مسبقاً، يرجى اختيار وقت آخر متاح 🔒');
+    // Handle single or multi-slot selection (Contiguous 1hr chunks)
+    const handleSlotClick = (clickedSlot: DynamicSlot) => {
+        if (clickedSlot.isBooked) {
+            toast.error('هذا الوقت محجوز بالفعل، برجاء اختيار موعد آخر متاح');
             return;
         }
 
-        if (selectedSlotIndices.length === 1 && selectedSlotIndices[0] === slot.index) {
+        const idx = clickedSlot.index;
+
+        if (selectedSlotIndices.length === 0) {
+            setSelectedSlotIndices([idx]);
             return;
         }
 
-        if (selectedSlotIndices.includes(slot.index)) {
-            const remaining = selectedSlotIndices.filter((idx) => idx < slot.index);
-            if (remaining.length > 0) {
-                setSelectedSlotIndices(remaining);
-            } else {
-                setSelectedSlotIndices([slot.index]);
-            }
-            return;
+        // Toggle if only 1 slot is currently selected
+        if (selectedSlotIndices.length === 1 && selectedSlotIndices[0] === idx) {
+            return; // keep at least 1 slot
         }
 
         const minIdx = Math.min(...selectedSlotIndices);
         const maxIdx = Math.max(...selectedSlotIndices);
 
-        if (slot.index > maxIdx) {
+        // Click adjacent next slot
+        if (idx === maxIdx + 1) {
+            setSelectedSlotIndices((prev) => [...prev, idx].sort((a, b) => a - b));
+            return;
+        }
+
+        // Click adjacent previous slot
+        if (idx === minIdx - 1) {
+            setSelectedSlotIndices((prev) => [idx, ...prev].sort((a, b) => a - b));
+            return;
+        }
+
+        // Click within the selected range (shrink)
+        if (idx === maxIdx && selectedSlotIndices.length > 1) {
+            setSelectedSlotIndices((prev) => prev.filter((i) => i !== idx));
+            return;
+        }
+        if (idx === minIdx && selectedSlotIndices.length > 1) {
+            setSelectedSlotIndices((prev) => prev.filter((i) => i !== idx));
+            return;
+        }
+
+        // Click outside: Range select or restart single slot
+        if (idx > maxIdx) {
+            // Check if any slot in between is booked
+            let canExpand = true;
             const newRange: number[] = [];
-            let hasBlocked = false;
-            for (let i = minIdx; i <= slot.index; i++) {
-                if (generatedSlots[i]?.isBooked) {
-                    hasBlocked = true;
+            for (let k = minIdx; k <= idx; k++) {
+                if (generatedSlots[k]?.isBooked) {
+                    canExpand = false;
                     break;
                 }
-                newRange.push(i);
+                newRange.push(k);
             }
-            if (hasBlocked) {
-                toast.warning('لا يمكن اختيار أوقات يتخللها وقت محجوز');
-                setSelectedSlotIndices([slot.index]);
-            } else {
+            if (canExpand) {
                 setSelectedSlotIndices(newRange);
+                toast.success(`تم تمديد الحجز إلى ${newRange.length} ساعات متتالية 🎮`);
+                return;
             }
-        } else {
-            setSelectedSlotIndices([slot.index]);
         }
+
+        // Reset to this slot
+        setSelectedSlotIndices([idx]);
     };
 
+    // Quick duration handler (e.g., 1 hour, 2 hours, 3 hours)
     const handleQuickDuration = (hours: number) => {
-        const startIdx = selectedSlotIndices.length ? Math.min(...selectedSlotIndices) : 0;
+        const start = selectedSlotIndices.length > 0 ? selectedSlotIndices[0] : 0;
         const newIndices: number[] = [];
 
         for (let i = 0; i < hours; i++) {
-            const targetIdx = startIdx + i;
-            if (targetIdx >= generatedSlots.length || generatedSlots[targetIdx]?.isBooked) {
-                toast.warning(`متاح فقط ${newIndices.length} ساعة متتالية بدون تعارض`);
+            const candidateIdx = start + i;
+            if (candidateIdx < generatedSlots.length && !generatedSlots[candidateIdx].isBooked) {
+                newIndices.push(candidateIdx);
+            } else {
                 break;
             }
-            newIndices.push(targetIdx);
         }
 
         if (newIndices.length > 0) {
@@ -305,58 +328,59 @@ export default function BookingDetailsPage() {
     };
 
     return (
-        <div className="min-h-screen w-full bg-[#F4F1EA] text-neutral-900 font-body text-sm flex flex-col selection:bg-red-600 selection:text-white relative select-none">
+        <div className="min-h-screen w-full bg-[#0a0809] text-white font-body text-sm flex flex-col selection:bg-red-600 selection:text-white relative select-none">
             {/* ─────────────────────────────────────────────────────────────
-                AUTHENTIC D95 LIGHT CONCRETE ATMOSPHERE (YOUTHFUL & SPORTY)
+                AUTHENTIC D95 DARK GAMING ATMOSPHERE (YOUTHFUL, SPORTY & MASCHINE)
                ───────────────────────────────────────────────────────────── */}
             <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-                {/* Overhead warm spotlight gradient */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[350px] bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,rgba(255,255,255,0.85)_0%,rgba(220,38,38,0.06)_50%,transparent_80%)] blur-[40px]" />
-                {/* Subtle light concrete grid texture */}
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:32px_32px] opacity-60" />
+                {/* Overhead warm red spotlight glow */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[380px] bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,rgba(220,38,38,0.18)_0%,transparent_75%)] blur-[60px]" />
+                <div className="absolute bottom-10 right-[-10%] w-[450px] h-[450px] bg-red-950/20 blur-[130px] rounded-full" />
+                {/* Subtle dark texture */}
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px] opacity-40" />
             </div>
 
             {/* Top Navigation Bar */}
-            <header className="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur-xl pt-safe border-b border-neutral-200/80 shadow-[0_2px_15px_rgba(0,0,0,0.05)]">
+            <header className="fixed top-0 inset-x-0 z-50 bg-[#0e0a0c]/95 backdrop-blur-xl pt-safe border-b border-white/10 shadow-[0_4px_25px_rgba(0,0,0,0.7)]">
                 <div className="h-16 px-4 md:px-8 flex items-center justify-between max-w-4xl mx-auto">
                     <div className="flex items-center gap-3">
                         <Link
                             to="/playstation"
                             aria-label="الرجوع للغرف"
-                            className="w-10 h-10 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center text-neutral-900 hover:text-red-600 transition-all active:scale-95 cursor-pointer border border-neutral-200 shadow-sm"
+                            className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white hover:text-red-400 transition-all active:scale-95 cursor-pointer border border-white/15 shadow-sm"
                         >
                             <ArrowRight className="w-5 h-5" />
                         </Link>
                         <div className="flex flex-col text-right">
-                            <h1 className="font-bold text-base text-neutral-950 leading-tight font-body">
+                            <h1 className="font-bold text-base text-white leading-tight font-body">
                                 حجز الغرفة ومواعيد اليوم
                             </h1>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="font-brush text-sm text-red-600 font-bold">D95</span>
-                                <span className="text-[11px] text-neutral-500 font-semibold tracking-wider">GAMING &amp; CAFÉ</span>
+                                <span className="font-brush text-sm text-red-500 font-bold">D95</span>
+                                <span className="text-[11px] text-neutral-400 font-semibold tracking-wider">GAMING &amp; CAFÉ</span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold shadow-sm">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                        <span>مواعيد ديناميكية حية</span>
+                    <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-500/50 text-emerald-300 text-xs font-bold shadow-sm">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>مواعيد حية</span>
                     </div>
                 </div>
             </header>
 
-            {/* Main Content Area (Clean, Athletic, High-Contrast Light Mode) */}
+            {/* Main Content Area */}
             <main className="flex-1 flex flex-col relative z-10 w-full pt-20 pb-32 px-3.5 sm:px-6 max-w-4xl mx-auto space-y-3.5" dir="rtl">
                 {/* ─────────────────────────────────────────────────────────────
                     SECTION 1: ATHLETIC ROOM SELECTOR TABS (ROOM 1 vs ROOM 2)
                    ───────────────────────────────────────────────────────────── */}
-                <section className="bg-white border-2 border-neutral-200/90 rounded-2xl p-3 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+                <section className="bg-[#140e10]/95 border border-white/10 rounded-2xl p-3 shadow-xl backdrop-blur-md">
                     <div className="flex items-center justify-between px-2 mb-2 text-xs">
-                        <span className="text-neutral-900 font-bold flex items-center gap-1.5 text-xs sm:text-sm">
-                            <DoorClosed className="w-4 h-4 text-red-600" />
+                        <span className="text-white font-bold flex items-center gap-1.5 text-xs sm:text-sm">
+                            <DoorClosed className="w-4 h-4 text-red-500" />
                             <span>اختر الغرفة المراد حجزها:</span>
                         </span>
-                        <span className="text-red-600 font-bold text-xs bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
+                        <span className="text-red-300 font-bold text-xs bg-red-950/80 px-2.5 py-0.5 rounded-full border border-red-500/40">
                             100 ج.م / ساعة
                         </span>
                     </div>
@@ -370,29 +394,29 @@ export default function BookingDetailsPage() {
                                     onClick={() => setSelectedRoomId(room.id)}
                                     className={`relative py-2.5 px-3.5 sm:px-4 rounded-xl border-2 flex items-center justify-between transition-all duration-200 cursor-pointer ${
                                         isSelected
-                                            ? 'bg-neutral-950 border-neutral-950 text-white shadow-md scale-[1.01]'
-                                            : 'bg-neutral-50 border-neutral-200 text-neutral-800 hover:bg-white hover:border-neutral-300'
+                                            ? 'bg-red-600 border-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.35)] scale-[1.01]'
+                                            : 'bg-[#1c1417]/80 border-white/10 text-neutral-300 hover:border-white/20 hover:bg-[#241a1e]'
                                     }`}
                                 >
                                     <div className="flex items-center gap-2.5">
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isSelected ? 'bg-red-600 text-white shadow-sm' : 'bg-white text-neutral-700 border border-neutral-200'}`}>
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isSelected ? 'bg-white text-red-600 shadow-sm' : 'bg-white/10 text-neutral-300 border border-white/10'}`}>
                                             <DoorClosed className="w-4 h-4" />
                                         </div>
                                         <div className="text-right">
-                                            <div className="font-brush text-sm sm:text-base leading-tight font-bold">
+                                            <div className="font-brush text-sm sm:text-base leading-tight font-bold text-white">
                                                 {room.nameEn}
                                             </div>
-                                            <div className={`text-[11px] font-semibold leading-tight mt-0.5 ${isSelected ? 'text-neutral-300' : 'text-neutral-600'}`}>
+                                            <div className={`text-[11px] font-semibold leading-tight mt-0.5 ${isSelected ? 'text-neutral-100' : 'text-neutral-400'}`}>
                                                 {room.name}
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="text-left" dir="ltr">
-                                        <span className={`font-brush text-base sm:text-lg font-bold ${isSelected ? 'text-white' : 'text-red-600'}`}>
+                                        <span className={`font-brush text-base sm:text-lg font-bold ${isSelected ? 'text-white' : 'text-red-400'}`}>
                                             {room.rate}
                                         </span>
-                                        <span className={`text-[10px] font-bold ml-1 ${isSelected ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                                        <span className={`text-[10px] font-bold ml-1 ${isSelected ? 'text-neutral-200' : 'text-neutral-400'}`}>
                                             EGP/HR
                                         </span>
                                     </div>
@@ -405,15 +429,15 @@ export default function BookingDetailsPage() {
                 {/* ─────────────────────────────────────────────────────────────
                     SECTION 2: CLEAN 7-DAY CALENDAR DATE SELECTOR
                    ───────────────────────────────────────────────────────────── */}
-                <section className="bg-white border-2 border-neutral-200/90 rounded-2xl p-3 sm:p-3.5 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+                <section className="bg-[#140e10]/95 border border-white/10 rounded-2xl p-3 sm:p-3.5 shadow-xl backdrop-blur-md">
                     <div className="flex items-center justify-between mb-2.5 px-1">
-                        <div className="flex items-center gap-2 text-xs sm:text-sm text-neutral-900 font-bold">
-                            <Calendar className="w-4 h-4 text-red-600" />
+                        <div className="flex items-center gap-2 text-xs sm:text-sm text-white font-bold">
+                            <Calendar className="w-4 h-4 text-red-500" />
                             <span>تاريخ الحجز:</span>
                         </div>
                         {isToday && (
-                            <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-xs font-bold text-emerald-300 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-500/40 flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                 يبدأ فوراً من الوقت الحالي
                             </span>
                         )}
@@ -428,17 +452,17 @@ export default function BookingDetailsPage() {
                                     onClick={() => setSelectedDate(d.iso)}
                                     className={`shrink-0 py-2 px-3.5 rounded-xl border-2 text-center transition-all cursor-pointer min-w-[72px] ${
                                         active
-                                            ? 'bg-red-600 border-red-600 text-white shadow-md shadow-red-600/30 scale-105'
-                                            : 'bg-neutral-50 border-neutral-200 text-neutral-700 hover:bg-white hover:border-neutral-300'
+                                            ? 'bg-red-600 border-red-500 text-white shadow-[0_0_18px_rgba(220,38,38,0.4)] scale-105'
+                                            : 'bg-[#1c1417]/80 border-white/10 text-neutral-300 hover:text-white hover:border-white/20 hover:bg-[#241a1e]'
                                     }`}
                                 >
-                                    <div className={`text-[11px] font-bold ${active ? 'text-white' : 'text-neutral-600'}`}>
+                                    <div className={`text-[11px] font-bold ${active ? 'text-white' : 'text-neutral-400'}`}>
                                         {d.dayName}
                                     </div>
-                                    <div className="text-lg font-black font-brush my-0.5">
+                                    <div className="text-lg font-black font-brush my-0.5 text-white">
                                         {d.dayNumber}
                                     </div>
-                                    <div className={`text-[10px] font-medium ${active ? 'text-white/90' : 'text-neutral-500'}`}>
+                                    <div className={`text-[10px] font-medium ${active ? 'text-white/90' : 'text-neutral-400'}`}>
                                         {d.monthName}
                                     </div>
                                 </button>
@@ -448,34 +472,34 @@ export default function BookingDetailsPage() {
                 </section>
 
                 {/* ─────────────────────────────────────────────────────────────
-                    SECTION 3: CLEAN 4-COLUMN SLOTS GRID (CRISP LIGHT MODE)
+                    SECTION 3: COMPACT 4-COLUMN SLOTS GRID (CLEAN DARK ATHLETIC)
                    ───────────────────────────────────────────────────────────── */}
-                <section className="bg-white border-2 border-neutral-200/90 rounded-2xl p-3.5 sm:p-5 shadow-[0_6px_25px_rgba(0,0,0,0.05)]">
+                <section className="bg-[#140e10]/95 border border-white/10 rounded-2xl p-3.5 sm:p-5 shadow-xl backdrop-blur-md">
                     {/* Header: Title + Quick Duration Selector */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3.5 pb-3 border-b border-neutral-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3.5 pb-3 border-b border-white/10">
                         <div>
                             <div className="flex items-center gap-2">
-                                <Clock className="w-4 h-4 text-red-600" />
-                                <h2 className="font-bold text-sm sm:text-base text-neutral-950 font-body">
+                                <Clock className="w-4 h-4 text-red-500" />
+                                <h2 className="font-bold text-sm sm:text-base text-white font-body">
                                     الأوقات المتاحة للحجز اليوم ({currentRoom.nameEn})
                                 </h2>
                             </div>
-                            <p className="text-xs text-neutral-500 mt-0.5 font-medium">
+                            <p className="text-xs text-neutral-400 mt-0.5 font-medium">
                                 انقر لاختيار ساعة أو أكثر متتالية • الحساب ديناميكي يبدأ من الوقت الحالي
                             </p>
                         </div>
 
                         {/* Quick Duration Pills */}
-                        <div className="flex items-center gap-1.5 self-start sm:self-auto bg-neutral-100 p-1 rounded-xl border border-neutral-200">
-                            <span className="text-[11px] text-neutral-600 px-1 font-bold">المدة:</span>
+                        <div className="flex items-center gap-1.5 self-start sm:self-auto bg-black/50 p-1 rounded-xl border border-white/10">
+                            <span className="text-[11px] text-neutral-400 px-1 font-bold">المدة:</span>
                             {[1, 2, 3, 4].map((h) => (
                                 <button
                                     key={h}
                                     onClick={() => handleQuickDuration(h)}
                                     className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                                         durationHours === h
-                                            ? 'bg-neutral-950 text-white shadow-sm'
-                                            : 'text-neutral-700 hover:text-neutral-950 hover:bg-white'
+                                            ? 'bg-red-600 text-white shadow-sm'
+                                            : 'text-neutral-300 hover:text-white hover:bg-white/10'
                                     }`}
                                 >
                                     {h} س
@@ -486,16 +510,16 @@ export default function BookingDetailsPage() {
 
                     {/* Slots Legend */}
                     <div className="flex items-center gap-4 text-xs mb-3 px-1 font-medium">
-                        <div className="flex items-center gap-1.5 text-emerald-700 font-bold">
-                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                        <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                             <span>متاح للحجز</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-red-700 font-bold">
-                            <span className="w-2.5 h-2.5 rounded-full bg-red-600" />
+                        <div className="flex items-center gap-1.5 text-red-400 font-bold">
+                            <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
                             <span>محدد لحجزك</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-neutral-400">
-                            <span className="w-2.5 h-2.5 rounded-full bg-neutral-300" />
+                        <div className="flex items-center gap-1.5 text-neutral-500">
+                            <span className="w-2.5 h-2.5 rounded-full bg-neutral-600" />
                             <span>محجوز 🔒</span>
                         </div>
                     </div>
@@ -513,19 +537,19 @@ export default function BookingDetailsPage() {
                                     onClick={() => handleSlotClick(slot)}
                                     className={`relative p-2.5 rounded-xl border-2 transition-all duration-200 select-none cursor-pointer flex flex-col justify-between ${
                                         isBooked
-                                            ? 'bg-neutral-100 border-neutral-200 text-neutral-400 opacity-60 cursor-not-allowed'
+                                            ? 'bg-black/30 border-white/5 text-neutral-600 opacity-40 cursor-not-allowed'
                                             : isSelected
-                                            ? 'bg-red-600 border-red-700 text-white shadow-lg shadow-red-600/30 scale-[1.03]'
-                                            : 'bg-neutral-50 border-neutral-200 hover:border-red-500 hover:bg-white text-neutral-900 shadow-sm'
+                                            ? 'bg-red-600 border-red-500 text-white shadow-[0_0_25px_rgba(220,38,38,0.5)] scale-[1.03]'
+                                            : 'bg-[#1c1417]/90 border-white/10 hover:border-red-500/60 hover:bg-[#261a1f] text-white shadow-sm'
                                     }`}
                                 >
                                     {/* Top Line: Period Badge + Status */}
                                     <div className="flex items-center justify-between text-[11px] mb-1.5">
-                                        <span className={`font-semibold ${isSelected ? 'text-white' : 'text-neutral-500'}`}>
+                                        <span className={`font-semibold ${isSelected ? 'text-white' : 'text-neutral-400'}`}>
                                             {slot.periodName}
                                         </span>
                                         {isBooked ? (
-                                            <span className="flex items-center gap-1 text-neutral-400 font-bold text-[10px]">
+                                            <span className="flex items-center gap-1 text-neutral-500 font-bold text-[10px]">
                                                 <Lock className="w-3 h-3" />
                                                 <span>محجوز</span>
                                             </span>
@@ -535,8 +559,8 @@ export default function BookingDetailsPage() {
                                                 <span>محدد</span>
                                             </span>
                                         ) : (
-                                            <span className="flex items-center gap-1 text-emerald-700 font-bold text-[10px] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-300">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                            <span className="flex items-center gap-1 text-emerald-300 font-bold text-[10px] bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/40">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                                 <span>متاح</span>
                                             </span>
                                         )}
@@ -548,24 +572,24 @@ export default function BookingDetailsPage() {
                                             dir="rtl"
                                             className={`font-body font-bold text-xs sm:text-sm tracking-normal flex items-center justify-center gap-1.5 ${
                                                 isBooked
-                                                    ? 'text-neutral-400 line-through'
+                                                    ? 'text-neutral-600 line-through'
                                                     : isSelected
                                                     ? 'text-white'
-                                                    : 'text-neutral-950'
+                                                    : 'text-white'
                                             }`}
                                         >
                                             <span className="tabular-nums font-extrabold">{slot.startDisplay}</span>
-                                            <span className={`text-xs font-bold ${isSelected ? 'text-white/80' : 'text-red-600'}`}>←</span>
+                                            <span className={`text-xs font-bold ${isSelected ? 'text-white/90' : 'text-red-500'}`}>←</span>
                                             <span className="tabular-nums font-extrabold">{slot.endDisplay}</span>
                                         </div>
                                     </div>
 
                                     {/* Bottom Info: 60 minutes & rate */}
-                                    <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-black/5 text-[11px]">
-                                        <span className={isSelected ? 'text-white/90' : 'text-neutral-500 font-medium'}>
+                                    <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-white/10 text-[11px]">
+                                        <span className={isSelected ? 'text-white/90' : 'text-neutral-400 font-medium'}>
                                             جلسة 60 دقيقة
                                         </span>
-                                        <span className={`font-bold ${isSelected ? 'text-white font-black' : 'text-red-600'}`}>
+                                        <span className={`font-bold ${isSelected ? 'text-white font-black' : 'text-red-400'}`}>
                                             {currentRoom.rate} ج.م
                                         </span>
                                     </div>
@@ -578,13 +602,13 @@ export default function BookingDetailsPage() {
                 {/* ─────────────────────────────────────────────────────────────
                     SECTION 4: SNACKS & DRINKS (OPTIONAL ADDONS)
                    ───────────────────────────────────────────────────────────── */}
-                <section className="bg-white border-2 border-neutral-200/90 rounded-2xl p-3 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+                <section className="bg-[#140e10]/95 border border-white/10 rounded-2xl p-3 shadow-xl backdrop-blur-md">
                     <div className="flex items-center justify-between mb-2.5 px-1">
-                        <div className="flex items-center gap-2 text-xs sm:text-sm text-neutral-900 font-bold">
-                            <Coffee className="w-4 h-4 text-amber-600" />
+                        <div className="flex items-center gap-2 text-xs sm:text-sm text-white font-bold">
+                            <Coffee className="w-4 h-4 text-amber-500" />
                             <span>سناكس ومشروبات أثناء اللعب (اختياري)</span>
                         </div>
-                        <span className="text-xs text-amber-800 font-bold bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                        <span className="text-xs text-amber-300 font-bold bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-500/40">
                             خدمة الضيافة للغرفة
                         </span>
                     </div>
@@ -598,28 +622,28 @@ export default function BookingDetailsPage() {
                                     onClick={() => toggleSnack(snack.id)}
                                     className={`p-2.5 rounded-xl border-2 flex items-center justify-between cursor-pointer transition-all ${
                                         isChecked
-                                            ? 'bg-red-50 border-red-500 text-neutral-950 shadow-sm'
-                                            : 'bg-neutral-50 border-neutral-200 text-neutral-800 hover:bg-white hover:border-neutral-300'
+                                            ? 'bg-red-950/50 border-red-500 text-white shadow-sm'
+                                            : 'bg-[#1c1417]/80 border-white/10 text-neutral-300 hover:text-white hover:border-white/20'
                                     }`}
                                 >
                                     <div className="flex items-center gap-2.5">
                                         <div
                                             className={`w-5 h-5 rounded-md flex items-center justify-center border-2 transition-colors ${
                                                 isChecked
-                                                    ? 'bg-red-600 border-red-600 text-white shadow-sm'
-                                                    : 'border-neutral-300 bg-white'
+                                                    ? 'bg-red-600 border-red-500 text-white shadow-sm'
+                                                    : 'border-white/20 bg-black/40'
                                             }`}
                                         >
                                             {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                                         </div>
                                         <div>
-                                            <div className="text-xs font-bold flex items-center gap-1 text-neutral-900">
+                                            <div className="text-xs font-bold flex items-center gap-1 text-white">
                                                 <span>{snack.icon}</span>
                                                 <span className="truncate max-w-[130px]">{snack.name}</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="font-bold text-xs text-red-600 shrink-0 font-body">
+                                    <div className="font-bold text-xs text-red-400 shrink-0 font-body">
                                         +{snack.price} ج.م
                                     </div>
                                 </div>
@@ -630,25 +654,25 @@ export default function BookingDetailsPage() {
             </main>
 
             {/* ─────────────────────────────────────────────────────────────
-                FIXED BOTTOM STICKY SUMMARY BAR (CLEAN LIGHT MODE)
+                FIXED BOTTOM STICKY SUMMARY BAR (SLEEK DARK ATHLETIC)
                ───────────────────────────────────────────────────────────── */}
-            <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 border-t-2 border-neutral-200 backdrop-blur-2xl p-3 sm:p-4 pb-safe shadow-[0_-4px_30px_rgba(0,0,0,0.08)]">
+            <div className="fixed bottom-0 inset-x-0 z-40 bg-[#0e0a0c]/98 border-t border-white/10 backdrop-blur-2xl p-3 sm:p-4 pb-safe shadow-[0_-10px_35px_rgba(0,0,0,0.9)]">
                 <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
                     {/* Financial & Time Summary */}
                     <div className="flex flex-col text-right">
                         <div className="flex items-baseline gap-2">
-                            <span className="font-brush text-3xl sm:text-4xl font-black text-neutral-950">
+                            <span className="font-brush text-3xl sm:text-4xl font-black text-white">
                                 {grandTotal}
                             </span>
-                            <span className="text-xs text-neutral-600 font-bold">ج.م</span>
-                            <span className="text-xs text-red-700 font-bold mr-1.5 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
+                            <span className="text-xs text-neutral-300 font-bold">ج.م</span>
+                            <span className="text-xs text-red-300 font-bold mr-1.5 bg-red-950/80 px-2 py-0.5 rounded-full border border-red-500/40">
                                 ({durationHours} {durationHours === 1 ? 'ساعة' : durationHours === 2 ? 'ساعتان' : 'ساعات'})
                             </span>
                         </div>
-                        <div className="text-xs text-neutral-600 flex items-center gap-1.5 mt-0.5 font-medium">
-                            <span className="font-bold text-neutral-900">{currentRoom.nameEn}</span>
+                        <div className="text-xs text-neutral-400 flex items-center gap-1.5 mt-0.5 font-medium">
+                            <span className="font-bold text-white">{currentRoom.nameEn}</span>
                             <span>•</span>
-                            <div dir="rtl" className="flex items-center gap-1 text-red-600 font-bold">
+                            <div dir="rtl" className="flex items-center gap-1 text-red-400 font-bold">
                                 <span>{startDisplayTime}</span>
                                 <span>←</span>
                                 <span>{endDisplayTime}</span>
@@ -659,7 +683,7 @@ export default function BookingDetailsPage() {
                     {/* Continue CTA */}
                     <button
                         onClick={handleContinue}
-                        className="py-3 px-6 sm:px-8 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold text-sm flex items-center gap-2 shadow-lg shadow-red-600/25 active:scale-95 transition-all cursor-pointer shrink-0 border border-red-500"
+                        className="py-3 px-6 sm:px-8 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-sm flex items-center gap-2 shadow-[0_0_25px_rgba(220,38,38,0.4)] active:scale-95 transition-all cursor-pointer shrink-0 border border-red-500/50"
                     >
                         <span>تأكيد الحجز والدفع</span>
                         <ArrowRight className="w-4 h-4 rotate-180" />
