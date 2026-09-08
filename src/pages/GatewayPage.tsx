@@ -1,32 +1,16 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Gamepad2, Utensils, Clock, Sparkles, Image as ImageIcon, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Gamepad2, Utensils, Clock, Sparkles } from 'lucide-react';
 import D95BrushLogo from '@/components/brand/D95BrushLogo';
-import wallOpenImg from '@/assets/wall/d95-wall-open.jpg';
-import wallPricesImg from '@/assets/wall/d95-wall-prices.jpg';
 
 export default function GatewayPage() {
-    const [activeModal, setActiveModal] = useState<'none' | 'wall-open' | 'wall-prices'>('none');
-
     return (
         <main className="min-h-[100dvh] w-full bg-[#0d0c0c] text-white overflow-y-auto relative flex flex-col justify-between p-3.5 sm:p-6 pb-20 md:pb-10 select-none bg-concrete-wall">
-            {/* Ambient Wall Lighting & Spotlight Effect */}
+            {/* Ambient Lighting Cones */}
             <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-                {/* Overhead Stage Lights - 3 Spotlights shining down onto concrete */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-48 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(255,245,235,0.18)_0%,rgba(255,245,235,0.03)_50%,transparent_80%)]" />
                 <div className="absolute top-0 left-[18%] w-56 h-64 bg-[radial-gradient(ellipse_60%_70%_at_50%_0%,rgba(255,250,240,0.14)_0%,transparent_70%)] blur-md" />
                 <div className="absolute top-0 right-[18%] w-56 h-64 bg-[radial-gradient(ellipse_60%_70%_at_50%_0%,rgba(255,250,240,0.14)_0%,transparent_70%)] blur-md" />
-
-                {/* Subtle Real Mural Backdrop Texture */}
-                <img
-                    src={wallOpenImg}
-                    alt="D95 Graffiti Wall Mural"
-                    className="absolute inset-0 w-full h-full object-cover opacity-15 mix-blend-luminosity filter contrast-125 scale-105 pointer-events-none"
-                />
-
-                {/* Crimson Ambient Floor Glow */}
-                <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-80 md:w-[700px] h-72 bg-red-950/30 rounded-full blur-[110px]" />
+                <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-80 md:w-[700px] h-72 bg-red-950/25 rounded-full blur-[110px]" />
             </div>
 
             {/* Ceiling Industrial Rig Graphic */}
@@ -38,10 +22,10 @@ export default function GatewayPage() {
                 <span className="w-2.5 h-2.5 rounded-full bg-neutral-300 shadow-[0_0_8px_#fff]" />
             </div>
 
-            {/* Header: Authentic D95 Mural Logo */}
+            {/* Header: D95 Brand & Working Hours */}
             <header className="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center text-center pt-2 shrink-0">
-                {/* Venue Status Pill */}
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-black/60 rounded-full border border-neutral-700/60 mb-2 shadow-lg backdrop-blur-sm">
+                {/* Status Badge */}
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-black/60 rounded-full border border-neutral-700/60 mb-2 shadow-lg backdrop-blur-sm">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="font-brush text-xs text-neutral-200 tracking-wider">OFFICIAL PORTAL</span>
                     <span className="text-neutral-500 text-xs">•</span>
@@ -51,9 +35,8 @@ export default function GatewayPage() {
                 {/* Branded Brush Logo */}
                 <D95BrushLogo size="lg" showSubtitle={true} showMotto={false} glow={true} />
 
-                {/* Graffiti "WE ARE OPEN" Section from the Physical Wall */}
+                {/* Styled WE ARE OPEN Title */}
                 <div className="relative my-2 w-full flex items-center justify-center">
-                    {/* Left Distressed Cross */}
                     <span
                         className="hidden sm:inline-block font-brush text-3xl md:text-5xl text-neutral-400 select-none mr-4 opacity-70 -rotate-12"
                         style={{ WebkitTextStroke: '1px #000' }}
@@ -71,11 +54,9 @@ export default function GatewayPage() {
                         >
                             WE ARE OPEN
                         </h1>
-                        {/* Drip line under text */}
                         <div className="w-28 sm:w-36 h-[2px] bg-neutral-300 mx-auto mt-1 rounded-full opacity-60" />
                     </div>
 
-                    {/* Right Distressed Cross */}
                     <span
                         className="hidden sm:inline-block font-brush text-3xl md:text-5xl text-neutral-400 select-none ml-4 opacity-70 rotate-12"
                         style={{ WebkitTextStroke: '1px #000' }}
@@ -84,10 +65,9 @@ export default function GatewayPage() {
                     </span>
                 </div>
 
-                {/* Authentic Framed Working Hours Box from the Physical Wall */}
+                {/* Framed Working Hours Box */}
                 <div className="w-full max-w-sm sm:max-w-md mx-auto my-1.5 px-2">
                     <div className="relative border-2 border-neutral-300/40 bg-black/65 backdrop-blur-md rounded-xl p-2.5 sm:p-3 shadow-[0_8px_25px_rgba(0,0,0,0.9)] grunge-frame">
-                        {/* Corner Accents */}
                         <span className="absolute -top-1.5 -left-1.5 text-xs text-neutral-400 font-brush">✕</span>
                         <span className="absolute -top-1.5 -right-1.5 text-xs text-neutral-400 font-brush">✕</span>
                         <span className="absolute -bottom-1.5 -left-1.5 text-xs text-neutral-400 font-brush">✕</span>
@@ -127,7 +107,7 @@ export default function GatewayPage() {
                     </div>
                 </div>
 
-                {/* Wall Motto & Centered Red Cross */}
+                {/* Motto */}
                 <div className="flex flex-col items-center mt-1">
                     <p className="font-body text-[10px] sm:text-xs text-neutral-400 uppercase tracking-[0.28em] font-semibold">
                         PLAY • COMPETE • RELAX • REPEAT
@@ -136,7 +116,7 @@ export default function GatewayPage() {
                 </div>
             </header>
 
-            {/* Core Interactive Center: Dual Industrial Portals */}
+            {/* Core Interactive Center: Dual Portals */}
             <section className="relative z-10 w-full max-w-4xl mx-auto my-auto py-3 sm:py-5 shrink-0">
                 <div className="grid grid-cols-2 gap-3 sm:gap-6 w-full mx-auto">
                     {/* PORTAL 1: PLAYSTATION & ROOMS */}
@@ -223,27 +203,9 @@ export default function GatewayPage() {
                         </div>
                     </Link>
                 </div>
-
-                {/* View Real Mural Photos Trigger */}
-                <div className="mt-3 flex items-center justify-center gap-2">
-                    <button
-                        onClick={() => setActiveModal('wall-open')}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-neutral-300 text-xs font-body transition-colors cursor-pointer"
-                    >
-                        <ImageIcon className="w-3.5 h-3.5 text-red-400" />
-                        <span>شاهد جدارية D95 الحقيقية</span>
-                    </button>
-                    <button
-                        onClick={() => setActiveModal('wall-prices')}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-neutral-300 text-xs font-body transition-colors cursor-pointer"
-                    >
-                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                        <span>لوحة أسعار الصالة</span>
-                    </button>
-                </div>
             </section>
 
-            {/* Bottom Signoff: Authentic Wall Banner */}
+            {/* Bottom Signoff */}
             <footer className="relative z-10 w-full max-w-xl mx-auto flex flex-col items-center text-center space-y-1.5 shrink-0">
                 <div className="px-4 py-1.5 rounded-lg bg-red-950/70 border border-red-700/50 shadow-lg">
                     <p className="font-brush text-xs sm:text-sm text-red-200 tracking-wider">
@@ -254,51 +216,6 @@ export default function GatewayPage() {
                     D95 GAMING &amp; CAFÉ • CAIRO, EGYPT
                 </p>
             </footer>
-
-            {/* Modal for Authentic Real Mural Photo */}
-            <AnimatePresence>
-                {activeModal !== 'none' && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={() => setActiveModal('none')}
-                        className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="relative max-w-2xl w-full bg-neutral-900 border border-white/20 rounded-2xl overflow-hidden shadow-2xl p-2 cursor-default"
-                        >
-                            <button
-                                onClick={() => setActiveModal('none')}
-                                className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/80 border border-white/20 flex items-center justify-center text-white hover:text-red-400 transition-colors"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-
-                            <img
-                                src={activeModal === 'wall-open' ? wallOpenImg : wallPricesImg}
-                                alt="جدارية D95 الأصلية"
-                                className="w-full h-auto rounded-xl object-contain max-h-[75vh]"
-                            />
-
-                            <div className="p-3 text-center">
-                                <h3 className="font-brush text-base sm:text-lg text-white">
-                                    {activeModal === 'wall-open'
-                                        ? 'جدارية D95 الأصلية — WE ARE OPEN'
-                                        : 'لوحة الأسعار الرسمية على الجدار — ROOM PRICES'}
-                                </h3>
-                                <p className="font-body text-xs text-neutral-400 mt-0.5">
-                                    الصورة الواقعية المعتمدة من داخل فرع D95 Gaming &amp; Café
-                                </p>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
         </main>
     );
 }
