@@ -374,7 +374,11 @@ export default function BookingDetailsPage() {
                                 حجز الغرفة ومواعيد اليوم
                             </h1>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="font-brush text-xs sm:text-sm text-red-600 dark:text-red-500 font-bold tracking-wider">D95</span>
+                                <img
+                                    src={theme === 'dark' ? '/brand/d95-mark-dark.png' : '/brand/d95-mark-light.png'}
+                                    alt="D95"
+                                    className="h-4 sm:h-5 w-auto object-contain"
+                                />
                                 <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-bold tracking-widest uppercase">ESPORTS LOUNGE</span>
                             </div>
                         </div>

@@ -89,44 +89,19 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                             style={{ background: 'radial-gradient(circle, #9B1C1C 0%, transparent 70%)', transform: 'scale(2)' }}
                         />
 
-                        {/* Brand name */}
-                        <div className="relative text-center mb-2">
-                            <h1
-                                className="font-display brand-text-shimmer"
-                                style={{ fontSize: 'clamp(8rem, 25vw, 14rem)', lineHeight: 1, letterSpacing: '0.02em' }}
-                            >
-                                D95
-                            </h1>
-                            {/* Drip decoration */}
-                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3/4 flex justify-center gap-4">
-                                {[0, 1, 2, 3].map(i => (
-                                    <motion.div
-                                        key={i}
-                                        initial={{ scaleY: 0, opacity: 0 }}
-                                        animate={{ scaleY: 1, opacity: 1 }}
-                                        transition={{ delay: 0.8 + i * 0.1, duration: 0.5 }}
-                                        className="origin-top"
-                                        style={{
-                                            width: 2,
-                                            height: 8 + i * 3,
-                                            background: 'var(--brand-primary)',
-                                            borderRadius: '0 0 2px 2px',
-                                        }}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Subtitle */}
-                        <motion.p
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5 }}
-                            className="font-display text-lg tracking-widest mt-6"
-                            style={{ color: 'var(--text-3)', letterSpacing: '0.3em' }}
+                        {/* Official Brand Logo */}
+                        <motion.div
+                            initial={{ scale: 0.85, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.6, ease: 'easeOut' }}
+                            className="relative text-center my-4"
                         >
-                            GAMING & CAFÉ
-                        </motion.p>
+                            <img
+                                src="/brand/d95-logo-full-dark.png"
+                                alt="D95 Gaming & Café"
+                                className="w-64 sm:w-84 max-w-[85vw] h-auto object-contain drop-shadow-[0_4px_30px_rgba(180,24,36,0.6)]"
+                            />
+                        </motion.div>
 
                         {/* Tagline */}
                         <motion.p

@@ -57,35 +57,19 @@ export default function TopHeader({ onCartOpen }: Props = {}) {
           </Link>
         </div>
 
-        {/* Center: Brand */}
+        {/* Center: Official Brand Logo */}
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="flex flex-col items-center cursor-pointer group"
+          className="flex items-center justify-center cursor-pointer group py-1 transition-transform active:scale-95"
           style={{ background: 'transparent', border: 'none', padding: 0 }}
           aria-label="الرجوع للأعلى"
         >
-          <div className="flex items-baseline leading-none">
-            <span
-              className="font-brush font-black text-xl text-neutral-900 dark:text-neutral-100 group-hover:text-black dark:group-hover:text-white transition-colors"
-              style={{ transform: 'skewX(-4deg)' }}
-            >
-              D
-            </span>
-            <span
-              className="font-brush font-black text-2xl text-red-600 dark:text-red-500 group-hover:text-red-500 transition-colors -ml-0.5"
-              style={{
-                transform: 'skewX(-6deg)',
-                textShadow: theme === 'dark' ? '0 0 10px rgba(220, 38, 38, 0.6)' : 'none',
-              }}
-            >
-              95
-            </span>
-          </div>
-          <span
-            className="text-[8px] font-black tracking-[0.3em] text-neutral-500 dark:text-neutral-400 font-sans uppercase mt-0.5 group-hover:text-neutral-800 dark:group-hover:text-neutral-200 transition-colors"
-          >
-            GAMING &amp; CAFÉ
-          </span>
+          <img
+            src={theme === 'dark' ? '/brand/d95-mark-dark.png' : '/brand/d95-mark-light.png'}
+            alt="D95 Gaming & Café"
+            className="h-8 sm:h-9 w-auto object-contain transition-transform group-hover:scale-105"
+            draggable={false}
+          />
         </button>
 
         {/* Left side (RTL): Cart button */}

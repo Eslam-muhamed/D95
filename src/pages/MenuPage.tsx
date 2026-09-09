@@ -14,6 +14,7 @@ import { categories } from '@/constants/menuMetadata';
 import { allItems } from '@/constants/menuData';
 import type { MenuItem } from '@/types/menu';
 import { playCafeEntranceSound } from '@/lib/sound';
+import { useTheme } from '@/stores/themeStore';
 
 function ScrollToTop() {
   const [visible, setVisible] = useState(false);
@@ -42,6 +43,7 @@ function ScrollToTop() {
 }
 
 export default function MenuPage() {
+  const { theme } = useTheme();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
@@ -86,8 +88,13 @@ export default function MenuPage() {
       <div className="pt-20 px-4 max-w-4xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-200 dark:border-white/[0.08]">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-red-600 dark:text-red-500 font-brush font-bold text-xl tracking-wider">D95</span>
+            <div className="flex items-center gap-2.5">
+              <img
+                src={theme === 'dark' ? '/brand/d95-mark-dark.png' : '/brand/d95-mark-light.png'}
+                alt="D95"
+                className="h-6 sm:h-7 w-auto object-contain"
+                draggable={false}
+              />
               <h1 className="text-lg sm:text-2xl font-bold text-neutral-900 dark:text-white font-body tracking-wide">
                 قائمة المشروبات والمأكولات
               </h1>

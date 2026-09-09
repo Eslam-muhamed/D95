@@ -47,7 +47,11 @@ export default function GatewayPage() {
             {/* Ceiling Industrial Rig Graphic & Theme Switcher */}
             <div className="relative z-20 w-full max-w-xl mx-auto flex items-center justify-between px-2 sm:px-6 pt-1">
                 <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-neutral-400 dark:bg-neutral-300 shadow-[0_0_8px_#dc2626]" />
+                    <img
+                        src={theme === 'dark' ? '/brand/d95-mark-dark.png' : '/brand/d95-mark-light.png'}
+                        alt="D95"
+                        className="h-4 sm:h-5 w-auto object-contain"
+                    />
                     <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-500 dark:text-neutral-400 font-bold">D95 GATEWAY</span>
                 </div>
 
