@@ -1,4 +1,3 @@
-import { useState, useTransition, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Gamepad2, Coffee, ShoppingBag, Home } from 'lucide-react';
 import { useCart } from '@/stores/cartStore';
@@ -7,22 +6,17 @@ import { preloadMenuData } from '@/services/menuService';
 export default function BottomNav() {
     const location = useLocation();
     const navigate = useNavigate();
-    const [, startTransition] = useTransition();
     const { itemCount, openCart } = useCart();
-    const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
-
-    // Sync optimistic path whenever true route changes
-    useEffect(() => {
-        setOptimisticPath(null);
-    }, [location.pathname]);
 
     const isCheckoutFlow =
         location.pathname.startsWith('/playstation/booking') ||
         location.pathname.startsWith('/playstation/payment') ||
         location.pathname.startsWith('/playstation/success');
 
-    // Hide bottom nav only during booking details, final payment checkout & success pages
-    if (isCheckoutFlow) return null;
+    const isGateway = location.pathname === '/';
+
+    // Hide bottom nav on Gateway (hub/launcher) and during checkout flows
+    if (isGateway || isCheckoutFlow) return null;
 
     const navItems = [
         { path: '/', label: 'البوابة', icon: Home, isExact: true },
@@ -30,26 +24,22 @@ export default function BottomNav() {
         { path: '/menu', label: 'الكافيه', icon: Coffee },
     ];
 
-    const currentPath = optimisticPath ?? location.pathname;
+    const handleTabSelect = (path: string, isExact?: boolean) => {
+        const isCurrentActive = isExact
+            ? location.pathname === path
+            : location.pathname.startsWith(path);
 
-    const handleTabSelect = (path: string, isActive: boolean) => {
-        if (isActive) {
+        if (isCurrentActive) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
 
-        // Instant visual feedback (0ms)
-        setOptimisticPath(path);
-
-        // Preload menu data if switching to menu
+        // Preload menu data if navigating to menu
         if (path === '/menu') {
             preloadMenuData();
         }
 
-        // Non-blocking navigation
-        startTransition(() => {
-            navigate(path);
-        });
+        navigate(path);
     };
 
     return (
@@ -67,20 +57,14 @@ export default function BottomNav() {
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = item.isExact
-                            ? currentPath === item.path
-                            : currentPath.startsWith(item.path);
+                            ? location.pathname === item.path
+                            : location.pathname.startsWith(item.path);
 
                         return (
                             <button
                                 key={item.path}
                                 type="button"
-                                onClick={() => handleTabSelect(item.path, isActive)}
-                                onPointerDown={() => {
-                                    if (!isActive) {
-                                        setOptimisticPath(item.path);
-                                        if (item.path === '/menu') preloadMenuData();
-                                    }
-                                }}
+                                onClick={() => handleTabSelect(item.path, item.isExact)}
                                 onMouseEnter={() => {
                                     if (item.path === '/menu') preloadMenuData();
                                 }}

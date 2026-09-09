@@ -14,6 +14,7 @@ import {
     Sun,
     Moon,
     Sparkles,
+    ShoppingBag,
     type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -21,6 +22,7 @@ import { toast } from 'sonner';
 import room01InteriorImg from '@/assets/doors/room-01-interior.jpg';
 import room02InteriorImg from '@/assets/doors/room-02-interior.jpg';
 import { useTheme } from '@/stores/themeStore';
+import { useCart } from '@/stores/cartStore';
 
 interface RoomData {
     id: string;
@@ -173,6 +175,7 @@ const AMENITIES = [
 export default function PlaystationPage() {
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
+    const { itemCount, openCart } = useCart();
 
     // ─────────────────────────────────────────────────────────────
     // FAST & INSTANT ROOM ENTER (ZERO LAG • 60FPS SMOOTH)
@@ -207,13 +210,14 @@ export default function PlaystationPage() {
 
             {/* Top Navigation Bar */}
             <header className="fixed top-0 inset-x-0 z-40 bg-white/95 dark:bg-[#14080b]/95 backdrop-blur-xl pt-safe border-b border-neutral-200 dark:border-red-900/30 shadow-md dark:shadow-[0_4px_25px_rgba(0,0,0,0.7)] transition-colors duration-200">
-                <div className="h-16 px-4 md:px-8 flex items-center justify-between max-w-6xl mx-auto">
+                <div className="h-16 px-4 md:px-8 flex items-center justify-between max-w-6xl mx-auto" dir="rtl">
                     {/* Brand & Back Link */}
                     <div className="flex items-center gap-3">
                         <Link
                             to="/"
-                            aria-label="الرجوع للرئيسية"
-                            className="w-10 h-10 rounded-full bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/20 flex items-center justify-center text-neutral-800 dark:text-white hover:text-red-600 dark:hover:text-red-400 transition-all active:scale-95 cursor-pointer border border-neutral-200 dark:border-white/15 shadow-sm"
+                            aria-label="الرجوع للبوابة الرئيسية"
+                            title="الرجوع للبوابة الرئيسية"
+                            className="w-10 h-10 rounded-full bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/20 flex items-center justify-center text-neutral-800 dark:text-white hover:text-red-600 dark:hover:text-red-400 transition-all active:scale-95 cursor-pointer border border-neutral-200 dark:border-white/15 shadow-sm shrink-0"
                         >
                             <ArrowRight className="w-5 h-5" />
                         </Link>
@@ -234,28 +238,51 @@ export default function PlaystationPage() {
                         </div>
                     </div>
 
-                    {/* Actions: Theme Toggle & Café Menu Link */}
+                    {/* Center: Desktop Navigation Tabs (Visible on md: and above) */}
+                    <div className="hidden md:flex items-center gap-1.5 p-1 rounded-full bg-neutral-100/80 dark:bg-white/[0.05] border border-neutral-200/80 dark:border-white/10 text-xs font-body font-semibold">
+                        <Link
+                            to="/"
+                            className="px-3.5 py-1.5 rounded-full text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-white dark:hover:bg-white/10 transition-all"
+                        >
+                            البوابة
+                        </Link>
+                        <span className="px-3.5 py-1.5 rounded-full bg-red-600 text-white shadow-xs font-bold">
+                            صالة الألعاب
+                        </span>
+                        <Link
+                            to="/menu"
+                            className="px-3.5 py-1.5 rounded-full text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-white dark:hover:bg-white/10 transition-all"
+                        >
+                            منيو الكافيه
+                        </Link>
+                    </div>
+
+                    {/* Actions: Theme Toggle & Cart */}
                     <div className="flex items-center gap-2">
                         <button
                             onClick={toggleTheme}
-                            className="w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/20 border border-neutral-200 dark:border-white/15 text-neutral-800 dark:text-neutral-200 shadow-sm active:scale-95"
+                            className="w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/20 border border-neutral-200 dark:border-white/15 text-neutral-800 dark:text-neutral-200 shadow-sm active:scale-95"
                             aria-label="تبديل المظهر"
                         >
                             {theme === 'dark' ? (
-                                <Sun size={16} className="text-amber-400" />
+                                <Sun size={17} className="text-amber-400" />
                             ) : (
-                                <Moon size={16} className="text-neutral-800" />
+                                <Moon size={17} className="text-neutral-800" />
                             )}
                         </button>
 
-                        <Link
-                            to="/menu"
-                            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-50 hover:bg-amber-100 dark:bg-amber-600/20 dark:hover:bg-amber-600/30 border border-amber-300 dark:border-amber-500/50 text-xs font-body font-bold text-amber-800 dark:text-amber-200 transition-all cursor-pointer shadow-sm hover:border-amber-400"
+                        <button
+                            onClick={openCart}
+                            className="relative w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/20 border border-neutral-200 dark:border-white/15 text-neutral-800 dark:text-neutral-200 hover:text-red-600 dark:hover:text-white shadow-sm active:scale-95"
+                            aria-label="سلة التسوق"
                         >
-                            <Coffee className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                            <span className="hidden sm:inline">منيو الكافيه</span>
-                            <span className="sm:hidden">المنيو</span>
-                        </Link>
+                            <ShoppingBag size={18} />
+                            {itemCount > 0 && (
+                                <span className="absolute -top-1 -right-1 flex items-center justify-center text-white font-mono font-bold rounded-full bg-red-600 border-2 border-white dark:border-[#14080b] shadow-xs text-[9px] w-5 h-5">
+                                    {itemCount > 99 ? '99+' : itemCount}
+                                </span>
+                            )}
+                        </button>
                     </div>
                 </div>
             </header>
