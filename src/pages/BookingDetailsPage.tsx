@@ -301,6 +301,7 @@ export default function BookingDetailsPage() {
             return {
                 isAvailable: false,
                 reason: 'NOT_SELECTED',
+                conflictingInterval: undefined as BookingInterval | undefined,
                 startDateTime: null,
                 endDateTime: null,
                 formattedStart: '--:--',

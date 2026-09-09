@@ -24,7 +24,8 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         } catch {
             // Silently ignore storage quota or privacy mode errors
         }
-        const t = setTimeout(() => setVisible(false), 1200);
+        // Snappy splash duration for mobile fluidity (350ms instead of 1200ms freeze)
+        const t = setTimeout(() => setVisible(false), 350);
         return () => clearTimeout(t);
     }, [visible, onComplete]);
 
@@ -45,7 +46,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                     key="splash"
                     initial={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.4 }}
+                    transition={{ duration: 0.2 }}
                     onClick={() => setVisible(false)}
                     className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden cursor-pointer select-none"
                     style={{ background: '#090707' }}

@@ -1,25 +1,25 @@
 import { useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeProvider } from '@/stores/themeStore';
 import { CartProvider } from '@/stores/cartStore';
 import CartSheet from '@/components/features/CartSheet';
 import BottomNav from '@/components/layout/BottomNav';
 import SplashScreen from '@/components/features/SplashScreen';
-import MenuPage from '@/pages/MenuPage';
-import GatewayPage from '@/pages/GatewayPage';
-import PlaystationPage from '@/pages/PlaystationPage';
-import BookingDetailsPage from '@/pages/BookingDetailsPage';
-import BookingPaymentPage from '@/pages/BookingPaymentPage';
-import BookingSuccessPage from '@/pages/BookingSuccessPage';
 
+// Route-level Code Splitting for optimal mobile load times and minimal initial bundle
+const GatewayPage = lazy(() => import('@/pages/GatewayPage'));
+const PlaystationPage = lazy(() => import('@/pages/PlaystationPage'));
+const BookingDetailsPage = lazy(() => import('@/pages/BookingDetailsPage'));
+const BookingPaymentPage = lazy(() => import('@/pages/BookingPaymentPage'));
+const BookingSuccessPage = lazy(() => import('@/pages/BookingSuccessPage'));
+const MenuPage = lazy(() => import('@/pages/MenuPage'));
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'));
 const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage'));
 
-function AdminLoadingFallback() {
+function PageLoadingFallback() {
     return (
-        <div className="min-h-screen bg-[#0a0809] flex items-center justify-center text-red-500">
+        <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center text-red-500">
             <div className="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
         </div>
     );
@@ -42,20 +42,6 @@ function AppContent() {
     );
 }
 
-function PageWrapper({ children }: { children: React.ReactNode }) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className="w-full min-h-screen flex flex-col"
-        >
-            {children}
-        </motion.div>
-    );
-}
-
 function AppRoutes() {
     const location = useLocation();
     const isAdminRoute = location.pathname.startsWith('/admin');
@@ -63,27 +49,19 @@ function AppRoutes() {
     return (
         <div className="w-full min-h-screen bg-[var(--bg-main)] flex flex-col selection:bg-red-500/30">
             {!isAdminRoute && <CartSheet />}
-            <AnimatePresence mode="wait">
+            <Suspense fallback={<PageLoadingFallback />}>
                 <Routes location={location} key={location.pathname}>
-                    <Route path="/" element={<PageWrapper><GatewayPage /></PageWrapper>} />
-                    <Route path="/playstation" element={<PageWrapper><PlaystationPage /></PageWrapper>} />
-                    <Route path="/playstation/booking" element={<PageWrapper><BookingDetailsPage /></PageWrapper>} />
-                    <Route path="/playstation/payment" element={<PageWrapper><BookingPaymentPage /></PageWrapper>} />
-                    <Route path="/playstation/success" element={<PageWrapper><BookingSuccessPage /></PageWrapper>} />
-                    <Route path="/menu" element={<PageWrapper><MenuPage /></PageWrapper>} />
-                    <Route path="/admin" element={
-                        <Suspense fallback={<AdminLoadingFallback />}>
-                            <AdminDashboardPage />
-                        </Suspense>
-                    } />
-                    <Route path="/admin/login" element={
-                        <Suspense fallback={<AdminLoadingFallback />}>
-                            <AdminLoginPage />
-                        </Suspense>
-                    } />
-                    <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
+                    <Route path="/" element={<GatewayPage />} />
+                    <Route path="/playstation" element={<PlaystationPage />} />
+                    <Route path="/playstation/booking" element={<BookingDetailsPage />} />
+                    <Route path="/playstation/payment" element={<BookingPaymentPage />} />
+                    <Route path="/playstation/success" element={<BookingSuccessPage />} />
+                    <Route path="/menu" element={<MenuPage />} />
+                    <Route path="/admin" element={<AdminDashboardPage />} />
+                    <Route path="/admin/login" element={<AdminLoginPage />} />
+                    <Route path="*" element={<NotFound />} />
                 </Routes>
-            </AnimatePresence>
+            </Suspense>
             {!isAdminRoute && <BottomNav />}
             <Toaster position="top-center" richColors />
         </div>
@@ -91,7 +69,14 @@ function AppRoutes() {
 }
 
 export default function App() {
-    const [splashDone, setSplashDone] = useState(false);
+    // Check sessionStorage immediately to avoid any splash delay for returning or navigating users
+    const [splashDone, setSplashDone] = useState(() => {
+        try {
+            return !!sessionStorage.getItem('d95_splash_shown');
+        } catch {
+            return true;
+        }
+    });
 
     return (
         <ThemeProvider>

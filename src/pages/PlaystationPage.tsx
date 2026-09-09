@@ -177,32 +177,19 @@ export default function PlaystationPage() {
     const { theme, toggleTheme } = useTheme();
     const [openingDoorId, setOpeningDoorId] = useState<string | null>(null);
     const [handleTurningDoorId, setHandleTurningDoorId] = useState<string | null>(null);
-    const [isWalkingThrough, setIsWalkingThrough] = useState(false);
-    const [activeRoomData, setActiveRoomData] = useState<RoomData | null>(null);
 
     // ─────────────────────────────────────────────────────────────
-    // INTERACTIVE REALISTIC 3D DOOR OPENING & CAMERA WALK-IN
+    // FAST & FLUID DOOR ENTER INTERACTION (OPTIMIZED FOR MOBILE)
     // ─────────────────────────────────────────────────────────────
     const handleDoorEnter = (room: RoomData) => {
         if (openingDoorId) return; // Prevent double trigger
-        setActiveRoomData(room);
         setOpeningDoorId(room.id);
         setHandleTurningDoorId(room.id);
 
-        // 1. Trigger authentic PS5 startup chime immediately on physical handle touch
+        // Authentic PS5 chime immediately on touch
         playPs5StartupSound();
 
-        // 2. Mechanical handle returns after latch release (180ms)
-        setTimeout(() => {
-            setHandleTurningDoorId(null);
-        }, 180);
-
-        // 3. Cinematic camera dollies forward through the open doorway into the room
-        setTimeout(() => {
-            setIsWalkingThrough(true);
-        }, 460);
-
-        // 4. Smooth handoff into the room booking page with pre-selected room
+        // Ultra-snappy route transition (120ms) for high-framerate mobile responsiveness
         setTimeout(() => {
             navigate('/playstation/booking', {
                 state: {
@@ -214,7 +201,7 @@ export default function PlaystationPage() {
                     },
                 },
             });
-        }, 1280);
+        }, 120);
     };
 
     const handleWalkInClick = (hint: string) => {
@@ -225,11 +212,11 @@ export default function PlaystationPage() {
 
     return (
         <div className="bg-[#F6F5F2] dark:bg-[#0c0608] text-neutral-900 dark:text-white font-body text-sm flex flex-col min-h-screen selection:bg-red-600/40 relative overflow-x-hidden transition-colors duration-200">
-            {/* Ambient Background Glow & Track Spotlights */}
+            {/* Ambient Background Glow (Optimized CSS radial gradients with zero GPU filter bottleneck) */}
             <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[850px] h-[380px] bg-[radial-gradient(ellipse_at_top,rgba(225,29,72,0.18)_0%,rgba(139,17,25,0.05)_45%,transparent_75%)] blur-[80px]" />
-                <div className="absolute top-1/3 left-[-10%] w-[500px] h-[450px] bg-red-950/15 blur-[130px] rounded-full" />
-                <div className="absolute bottom-10 right-[-10%] w-[500px] h-[450px] bg-amber-950/10 blur-[130px] rounded-full" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[850px] h-[380px] bg-[radial-gradient(ellipse_at_top,rgba(225,29,72,0.15)_0%,rgba(139,17,25,0.04)_45%,transparent_75%)]" />
+                <div className="absolute top-1/3 -left-32 w-[500px] h-[450px] bg-[radial-gradient(circle,rgba(155,28,28,0.10)_0%,transparent_70%)]" />
+                <div className="absolute bottom-10 -right-32 w-[500px] h-[450px] bg-[radial-gradient(circle,rgba(212,160,23,0.08)_0%,transparent_70%)]" />
             </div>
 
             {/* Top Navigation Bar */}
@@ -338,55 +325,45 @@ export default function PlaystationPage() {
                                                 <img
                                                     src={room.interiorImg}
                                                     alt={room.titleAr}
-                                                    className="w-full h-full object-cover brightness-110 group-hover:scale-105 transition-transform duration-700"
+                                                    loading="lazy"
+                                                    decoding="async"
+                                                    className="w-full h-full object-cover brightness-110 group-hover:scale-105 transition-transform duration-500"
                                                 />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/50" />
 
                                                 {/* Available Badge Inside Door Top */}
-                                                <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/75 border border-emerald-500/70 shadow-[0_0_12px_rgba(16,185,129,0.35)] backdrop-blur-md">
+                                                <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/75 border border-emerald-500/70 shadow-[0_0_12px_rgba(16,185,129,0.35)]">
                                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                                     <span className="text-[9px] sm:text-[11px] font-bold text-emerald-300 font-sans tracking-wide">
                                                         Available
                                                     </span>
                                                 </div>
 
-                                                {/* VOLUMETRIC LIGHT SPILL CONE (BURSTS THROUGH AS DOOR OPENS) */}
-                                                <motion.div
-                                                    animate={
-                                                        isOpening
-                                                            ? {
-                                                                  opacity: [0, 1, 0.75],
-                                                                  scale: [0.8, 1.4, 1.7],
-                                                                  x: [0, -25, -45],
-                                                              }
-                                                            : { opacity: 0, scale: 0.8, x: 0 }
-                                                    }
-                                                    transition={{ duration: 0.75, ease: 'easeOut' }}
-                                                    className={`absolute inset-0 pointer-events-none z-10 ${
-                                                        room.id === 'room-1'
-                                                            ? 'bg-[radial-gradient(ellipse_at_right,rgba(6,182,212,0.95)_0%,rgba(14,165,233,0.4)_45%,transparent_75%)]'
-                                                            : 'bg-[radial-gradient(ellipse_at_right,rgba(244,63,94,0.95)_0%,rgba(168,85,247,0.4)_45%,transparent_75%)]'
-                                                    } mix-blend-screen blur-xl`}
-                                                />
+                                                {/* Light burst on click (snappy CSS gradient) */}
+                                                {isOpening && (
+                                                    <div
+                                                        className={`absolute inset-0 pointer-events-none z-10 ${
+                                                            room.id === 'room-1'
+                                                                ? 'bg-[radial-gradient(ellipse_at_center,rgba(6,182,212,0.6)_0%,transparent_70%)]'
+                                                                : 'bg-[radial-gradient(ellipse_at_center,rgba(244,63,94,0.6)_0%,transparent_70%)]'
+                                                        }`}
+                                                    />
+                                                )}
                                             </div>
 
-                                            {/* REALISTIC 3D MECHANICAL ROTATING DOOR LEAF */}
+                                            {/* RESPONSIVE MECHANICAL DOOR LEAF */}
                                             <motion.div
                                                 animate={
                                                     isOpening
                                                         ? {
-                                                              rotateY: -96,
-                                                              translateZ: -30,
+                                                              scale: 0.97,
+                                                              opacity: 0.85,
                                                           }
-                                                        : { rotateY: 0, translateZ: 0 }
+                                                        : { scale: 1, opacity: 1 }
                                                 }
                                                 transition={{
-                                                    duration: 0.95,
-                                                    ease: [0.22, 1, 0.36, 1],
-                                                }}
-                                                style={{
-                                                    transformOrigin: 'left center',
-                                                    transformStyle: 'preserve-3d',
+                                                    duration: 0.12,
+                                                    ease: 'easeOut',
                                                 }}
                                                 className="absolute inset-0 z-20 w-full h-full rounded-xl sm:rounded-2xl overflow-hidden border-2 border-neutral-700 bg-neutral-900 shadow-[10px_0_35px_rgba(0,0,0,0.9)]"
                                             >
@@ -394,6 +371,8 @@ export default function PlaystationPage() {
                                                 <img
                                                     src={room.interiorImg}
                                                     alt={room.titleAr}
+                                                    loading="lazy"
+                                                    decoding="async"
                                                     className="w-full h-full object-cover brightness-[0.72] contrast-125"
                                                 />
 
@@ -653,90 +632,6 @@ export default function PlaystationPage() {
                     </div>
                 </footer>
             </main>
-
-            {/* ─────────────────────────────────────────────────────────────
-                CINEMATIC FIRST-PERSON CAMERA WALK-IN OVERLAY
-                DOORWAY FRAME RUSHES PAST • ROOM ILLUMINATES • MOTION BLUR
-               ───────────────────────────────────────────────────────────── */}
-            <AnimatePresence>
-                {isWalkingThrough && activeRoomData && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.25 }}
-                        className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center overflow-hidden bg-black select-none"
-                    >
-                        {/* The Room Interior - First Person Camera Dolly Forward */}
-                        <motion.div
-                            initial={{
-                                scale: 1.05,
-                                filter: 'blur(0px)',
-                            }}
-                            animate={{
-                                scale: 1.75,
-                                filter: ['blur(0px)', 'blur(3.5px)', 'blur(0px)'],
-                            }}
-                            transition={{
-                                duration: 0.82,
-                                ease: [0.22, 1, 0.36, 1],
-                            }}
-                            className="absolute inset-0 w-full h-full"
-                        >
-                            <img
-                                src={activeRoomData.interiorImg}
-                                alt={activeRoomData.titleAr}
-                                className="w-full h-full object-cover brightness-110"
-                            />
-                        </motion.div>
-
-                        {/* Threshold Doorway Frame Passing Past Camera Viewport */}
-                        <motion.div
-                            initial={{ scale: 1, opacity: 1 }}
-                            animate={{ scale: 3.2, opacity: 0 }}
-                            transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
-                            className={`absolute inset-0 border-[32px] sm:border-[48px] pointer-events-none shadow-[inset_0_0_80px_#000] ${
-                                activeRoomData.id === 'room-1'
-                                    ? 'border-cyan-900/80 shadow-[0_0_60px_rgba(6,182,212,0.8)]'
-                                    : 'border-rose-900/80 shadow-[0_0_60px_rgba(244,63,94,0.8)]'
-                            }`}
-                        />
-
-                        {/* Radiant Ambient Light Flare Spilling into Hallway / Viewport */}
-                        <motion.div
-                            initial={{ opacity: 0.4, scale: 0.8 }}
-                            animate={{ opacity: [0.4, 0.95, 0.25], scale: [0.8, 1.8, 2.5] }}
-                            transition={{ duration: 0.8, ease: 'easeOut' }}
-                            className={`absolute inset-0 pointer-events-none ${
-                                activeRoomData.id === 'room-1'
-                                    ? 'bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.7)_0%,rgba(14,165,233,0.3)_40%,transparent_75%)]'
-                                    : 'bg-[radial-gradient(circle_at_center,rgba(244,63,94,0.7)_0%,rgba(168,85,247,0.3)_40%,transparent_75%)]'
-                            } mix-blend-screen blur-2xl`}
-                        />
-
-                        {/* First-person Cinematic HUD Status */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 15 }}
-                            animate={{ opacity: [0, 1, 0], y: [15, 0, -8] }}
-                            transition={{ duration: 0.8, times: [0, 0.4, 1] }}
-                            className="relative z-10 flex flex-col items-center gap-2 text-center"
-                        >
-                            <div
-                                className={`px-4 py-1.5 rounded-full backdrop-blur-xl border flex items-center gap-2 shadow-2xl ${
-                                    activeRoomData.id === 'room-1'
-                                        ? 'bg-cyan-950/85 border-cyan-400/60 text-cyan-200 shadow-cyan-500/40'
-                                        : 'bg-rose-950/85 border-rose-400/60 text-rose-200 shadow-rose-500/40'
-                                }`}
-                            >
-                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                                <span className="font-brush text-sm tracking-widest uppercase text-white">
-                                    ENTERING {activeRoomData.code}...
-                                </span>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
         </div>
     );
 }

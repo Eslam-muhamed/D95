@@ -36,12 +36,12 @@ export default function GatewayPage() {
 
     return (
         <main className="min-h-[100dvh] w-full bg-[#F6F5F2] dark:bg-[#0d0c0c] text-neutral-900 dark:text-white overflow-y-auto relative flex flex-col justify-between p-3.5 sm:p-6 pb-20 md:pb-10 select-none bg-concrete-wall transition-colors duration-200">
-            {/* Ambient Lighting Cones */}
+            {/* Ambient Lighting Cones (Optimized hardware-accelerated CSS) */}
             <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-48 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(220,38,38,0.12)_0%,rgba(220,38,38,0.02)_50%,transparent_80%)]" />
-                <div className="absolute top-0 left-[18%] w-56 h-64 bg-[radial-gradient(ellipse_60%_70%_at_50%_0%,rgba(255,255,255,0.08)_0%,transparent_70%)] blur-md" />
-                <div className="absolute top-0 right-[18%] w-56 h-64 bg-[radial-gradient(ellipse_60%_70%_at_50%_0%,rgba(255,255,255,0.08)_0%,transparent_70%)] blur-md" />
-                <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-80 md:w-[700px] h-72 bg-red-950/15 rounded-full blur-[110px]" />
+                <div className="absolute top-0 left-[18%] w-56 h-64 bg-[radial-gradient(ellipse_60%_70%_at_50%_0%,rgba(255,255,255,0.06)_0%,transparent_70%)]" />
+                <div className="absolute top-0 right-[18%] w-56 h-64 bg-[radial-gradient(ellipse_60%_70%_at_50%_0%,rgba(255,255,255,0.06)_0%,transparent_70%)]" />
+                <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-80 md:w-[700px] h-72 bg-[radial-gradient(circle,rgba(155,28,28,0.12)_0%,transparent_70%)]" />
             </div>
 
             {/* Ceiling Industrial Rig Graphic & Theme Switcher */}
