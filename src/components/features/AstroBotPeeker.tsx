@@ -28,7 +28,7 @@ export default function AstroBotPeeker() {
 
     return (
         <div
-            className="absolute -top-12 -right-3 xs:-top-16 xs:-right-4 sm:-top-20 sm:-right-6 z-0 pointer-events-auto select-none"
+            className="absolute -top-14 right-1 xs:-top-18 xs:right-2 sm:-top-24 sm:right-3 z-0 pointer-events-auto select-none"
             dir="ltr"
         >
             {/* Speech Bubble when clicked */}
@@ -52,26 +52,26 @@ export default function AstroBotPeeker() {
             {/* Astro Bot Interactive Character */}
             <motion.div
                 onClick={handleClick}
-                initial={{ y: 20, opacity: 0 }}
+                initial={{ opacity: 1, y: 0 }}
                 animate={{
-                    y: [0, -7, 0],
-                    rotate: [-1.5, 3.5, -2, 2.5, -1.5],
+                    y: [0, -10, 0],
+                    rotate: [-2, 4, -3, 3, -2],
                 }}
                 transition={{
-                    duration: 3.6,
+                    duration: 3.2,
                     repeat: Infinity,
                     ease: 'easeInOut',
                 }}
                 whileHover={{
-                    scale: 1.12,
-                    y: -14,
+                    scale: 1.15,
+                    y: -16,
                     transition: { duration: 0.2 },
                 }}
                 whileTap={{
-                    scale: 0.95,
+                    scale: 0.92,
                     y: -4,
                 }}
-                style={{ transformOrigin: 'bottom right' }}
+                style={{ transformOrigin: 'bottom center' }}
                 className="relative cursor-pointer group"
                 title="Astro Bot بيشاورلك! اضغط عليه 🤖"
             >
@@ -82,7 +82,7 @@ export default function AstroBotPeeker() {
                 <img
                     src={astroBotImg}
                     alt="Astro Bot PlayStation Mascot"
-                    className="w-16 h-auto xs:w-20 sm:w-24 md:w-28 drop-shadow-[0_4px_16px_rgba(0,210,255,0.45)] transition-all duration-300 group-hover:drop-shadow-[0_6px_22px_rgba(0,210,255,0.7)]"
+                    className="w-18 h-auto xs:w-22 sm:w-28 md:w-32 drop-shadow-[0_4px_18px_rgba(0,210,255,0.5)] transition-all duration-300 group-hover:drop-shadow-[0_6px_24px_rgba(0,210,255,0.75)]"
                 />
 
                 {/* Cute "Wave" Micro-Motion indicator on hover */}
