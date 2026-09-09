@@ -10,10 +10,6 @@ import {
     AlertCircle,
     CheckCircle2,
     Sparkles,
-    ChevronLeft,
-    ChevronRight,
-    Plus,
-    Minus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -25,7 +21,6 @@ import {
     BookingInterval,
     createDateTimeFromBusinessDate,
     calculateEndDateTime,
-    formatArabicTimeFromDate,
     getBusinessOperatingWindow,
     checkAvailability,
     OPERATING_HOURS,
@@ -112,34 +107,29 @@ export default function BookingDetailsPage() {
     }, []);
 
     const [selectedDate, setSelectedDate] = useState(calendarDays[0].iso);
-    const [durationHours, setDurationHours] = useState<number>(1);
 
-    // Smart default time: next upcoming slot if today, or 6:00 PM
-    const [selectedHour, setSelectedHour] = useState<number>(() => {
-        const now = new Date();
-        let h = now.getHours();
-        if (now.getMinutes() > 30) h += 1;
-        if (h < 8 && h >= 4) return 8; // opening
-        const h12 = h % 12 === 0 ? 12 : h % 12;
-        return h12;
-    });
-    const [selectedMinute, setSelectedMinute] = useState<number>(0);
-    const [selectedPeriod, setSelectedPeriod] = useState<'AM' | 'PM'>(() => {
-        const now = new Date();
-        const h = now.getHours();
-        return h >= 12 && h < 24 ? 'PM' : 'AM';
-    });
+    // =========================================================================
+    // USER FREEDOM: No forced pre-selections! Starts unselected (null)
+    // =========================================================================
+    const [durationHours, setDurationHours] = useState<number | null>(null);
+    const [selectedHour, setSelectedHour] = useState<number | null>(null);
+    const [selectedMinute, setSelectedMinute] = useState<number | null>(null);
+    const [selectedPeriod, setSelectedPeriod] = useState<'AM' | 'PM' | null>(null);
 
     const [occupiedIntervals, setOccupiedIntervals] = useState<BookingInterval[]>([]);
     const [loadingIntervals, setLoadingIntervals] = useState<boolean>(false);
 
+    const hasSelectedTime = selectedHour !== null && selectedMinute !== null && selectedPeriod !== null;
+    const hasSelectedDuration = durationHours !== null;
+
     // Convert picker selection into 24-hour time string
     const time24 = useMemo(() => {
+        if (!hasSelectedTime) return null;
         let h24 = selectedHour;
         if (selectedPeriod === 'PM' && selectedHour < 12) h24 += 12;
         if (selectedPeriod === 'AM' && selectedHour === 12) h24 = 0;
         return `${String(h24).padStart(2, '0')}:${String(selectedMinute).padStart(2, '0')}`;
-    }, [selectedHour, selectedMinute, selectedPeriod]);
+    }, [hasSelectedTime, selectedHour, selectedMinute, selectedPeriod]);
 
     // Handle HTML5 native time picker input
     const handleNativeTimeChange = (val: string) => {
@@ -157,16 +147,22 @@ export default function BookingDetailsPage() {
         setSelectedHour(h);
         setSelectedMinute(m);
         setSelectedPeriod(period);
+        if (durationHours === null) {
+            setDurationHours(1);
+        }
+        playPs5SelectSound();
     };
 
     // Quick time adjustments
     const addMinutesToTime = (minsToAdd: number) => {
         playPs5NavigateSound();
-        let h24 = selectedHour;
-        if (selectedPeriod === 'PM' && selectedHour < 12) h24 += 12;
-        if (selectedPeriod === 'AM' && selectedHour === 12) h24 = 0;
+        let h24 = selectedHour ?? 18; // fallback to 6 PM if unselected
+        let curMin = selectedMinute ?? 0;
 
-        let totalMins = h24 * 60 + selectedMinute + minsToAdd;
+        if (selectedPeriod === 'PM' && h24 < 12) h24 += 12;
+        if (selectedPeriod === 'AM' && h24 === 12) h24 = 0;
+
+        let totalMins = h24 * 60 + curMin + minsToAdd;
         totalMins = (totalMins + 1440) % 1440;
 
         const newH24 = Math.floor(totalMins / 60);
@@ -177,10 +173,14 @@ export default function BookingDetailsPage() {
         setSelectedHour(newH12);
         setSelectedMinute(newMin);
         setSelectedPeriod(newPeriod);
+        if (durationHours === null) {
+            setDurationHours(1);
+        }
     };
 
     // Construct start datetime
     const startDateTime = useMemo(() => {
+        if (!time24) return null;
         return createDateTimeFromBusinessDate(selectedDate, time24);
     }, [selectedDate, time24]);
 
@@ -209,6 +209,17 @@ export default function BookingDetailsPage() {
 
     // Real-time availability evaluation
     const currentAvailability = useMemo(() => {
+        if (!startDateTime || durationHours === null) {
+            return {
+                isAvailable: false,
+                reason: 'NOT_SELECTED',
+                startDateTime: null,
+                endDateTime: null,
+                formattedStart: '--:--',
+                formattedEnd: '--:--',
+            };
+        }
+
         const endDateTime = calculateEndDateTime(startDateTime, durationHours);
         const result = checkAvailability(
             startDateTime,
@@ -235,8 +246,9 @@ export default function BookingDetailsPage() {
         return Math.max(0, Math.min(100, (diffMins / 1200) * 100));
     }, [selectedDate]);
 
-    // Proposed session segment on timeline
+    // Proposed session segment on timeline (only rendered when user picks time & duration)
     const proposedTimeline = useMemo(() => {
+        if (!startDateTime || durationHours === null) return null;
         const left = getTimelinePercent(startDateTime);
         const end = calculateEndDateTime(startDateTime, durationHours);
         const right = getTimelinePercent(end);
@@ -244,10 +256,37 @@ export default function BookingDetailsPage() {
         return { left, width };
     }, [startDateTime, durationHours, getTimelinePercent]);
 
-    const roomSubtotal = Math.round(durationHours * currentRoom.rate);
-    const isReadyToContinue = currentAvailability.isAvailable;
+    // Click on timeline to select time directly
+    const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const percent = Math.max(0, Math.min(1, clickX / rect.width));
+
+        const totalMinsFrom8AM = Math.round(percent * 1200);
+        const roundedMins = Math.round(totalMinsFrom8AM / 15) * 15;
+        const absoluteHour24 = (OPERATING_HOURS.START_HOUR + Math.floor(roundedMins / 60)) % 24;
+        const minute = roundedMins % 60;
+        const period: 'AM' | 'PM' = absoluteHour24 >= 12 && absoluteHour24 < 24 ? 'PM' : 'AM';
+        const h12 = absoluteHour24 % 12 === 0 ? 12 : absoluteHour24 % 12;
+
+        setSelectedHour(h12);
+        setSelectedMinute(minute);
+        setSelectedPeriod(period);
+        if (durationHours === null) {
+            setDurationHours(1);
+        }
+        playPs5NavigateSound();
+    };
+
+    const roomSubtotal = hasSelectedDuration ? Math.round((durationHours || 0) * currentRoom.rate) : 0;
+    const isReadyToContinue = hasSelectedTime && hasSelectedDuration && currentAvailability.isAvailable;
 
     const handleContinue = () => {
+        if (!hasSelectedTime || !hasSelectedDuration) {
+            toast.info('يرجى تحديد وقت البدء ومدة الجلسة أولاً 🎮');
+            return;
+        }
+
         if (!isReadyToContinue) {
             if (currentAvailability.reason === 'PAST_TIME') {
                 toast.error('هذا الوقت قد مضى، يرجى اختيار موعد قادم ⏳');
@@ -277,9 +316,9 @@ export default function BookingDetailsPage() {
                 date: selectedDate,
                 startTime: currentAvailability.formattedStart,
                 endTime: currentAvailability.formattedEnd,
-                startDateTime: currentAvailability.startDateTime.toISOString(),
-                endDateTime: currentAvailability.endDateTime.toISOString(),
-                durationHours,
+                startDateTime: currentAvailability.startDateTime?.toISOString(),
+                endDateTime: currentAvailability.endDateTime?.toISOString(),
+                durationHours: durationHours || 1,
                 roomSubtotal,
                 snacks: [],
                 snacksTotal: 0,
@@ -393,9 +432,7 @@ export default function BookingDetailsPage() {
                     </div>
                 </div>
 
-                {/* ========================================================= */}
-                {/* 3. NEW & ENHANCED: INTERACTIVE DAY SCHEDULE & TIMELINE    */}
-                {/* ========================================================= */}
+                {/* 3. INTERACTIVE DAY SCHEDULE & TIMELINE */}
                 <div className="bg-white dark:bg-[#120e10] border border-neutral-200/80 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -409,9 +446,13 @@ export default function BookingDetailsPage() {
                         </span>
                     </div>
 
-                    {/* Visual 24h Timeline Bar */}
+                    {/* Interactive 24h Timeline Bar */}
                     <div className="space-y-2 pt-1">
-                        <div className="relative w-full h-8 bg-neutral-100 dark:bg-[#060810] border border-neutral-200 dark:border-white/15 rounded-xl overflow-hidden shadow-inner">
+                        <div
+                            onClick={handleTimelineClick}
+                            className="relative w-full h-8 bg-neutral-100 dark:bg-[#060810] border border-neutral-200 dark:border-white/15 rounded-xl overflow-hidden shadow-inner cursor-pointer"
+                            title="اضغط على أي وقت على الشريط لاختياره مباشرة"
+                        >
                             {/* Hour Grid Markers */}
                             <div className="absolute inset-0 flex justify-between px-2 pointer-events-none opacity-25">
                                 {[0, 20, 40, 60, 80, 100].map((pos) => (
@@ -428,7 +469,7 @@ export default function BookingDetailsPage() {
                                     <div
                                         key={idx}
                                         style={{ left: `${left}%`, width: `${width}%` }}
-                                        className="absolute top-0 bottom-0 bg-red-600/70 border-x border-red-500 flex items-center justify-center text-[10px] text-white font-mono font-bold overflow-hidden shadow-sm"
+                                        className="absolute top-0 bottom-0 bg-red-600/70 border-x border-red-500 flex items-center justify-center text-[10px] text-white font-mono font-bold overflow-hidden shadow-sm pointer-events-none"
                                         title={`محجوز من ${formatArabicTimeDetailed(b.start)} إلى ${formatArabicTimeDetailed(b.end)}`}
                                     >
                                         <Lock className="w-3 h-3 text-white shrink-0 drop-shadow-sm" />
@@ -436,19 +477,21 @@ export default function BookingDetailsPage() {
                                 );
                             })}
 
-                            {/* Customer's Proposed Selection (Green/Cyan or Warning Red) */}
-                            <div
-                                style={{ left: `${proposedTimeline.left}%`, width: `${proposedTimeline.width}%` }}
-                                className={`absolute top-0 bottom-0 transition-all border-2 flex items-center justify-center text-[10px] font-bold shadow-md z-10 ${
-                                    currentAvailability.isAvailable
-                                        ? 'bg-emerald-500/80 border-emerald-400 text-white shadow-[0_0_12px_rgba(16,185,129,0.5)]'
-                                        : 'bg-red-500/80 border-amber-300 text-white animate-pulse'
-                                }`}
-                            >
-                                <span className="truncate px-1 font-mono text-[10px]">
-                                    {currentAvailability.isAvailable ? 'جلستك' : 'تعارض'}
-                                </span>
-                            </div>
+                            {/* Customer's Proposed Selection (ONLY rendered if user actually selected time & duration) */}
+                            {proposedTimeline && (
+                                <div
+                                    style={{ left: `${proposedTimeline.left}%`, width: `${proposedTimeline.width}%` }}
+                                    className={`absolute top-0 bottom-0 transition-all border-2 flex items-center justify-center text-[10px] font-bold shadow-md z-10 pointer-events-none ${
+                                        currentAvailability.isAvailable
+                                            ? 'bg-emerald-500/80 border-emerald-400 text-white shadow-[0_0_12px_rgba(16,185,129,0.5)]'
+                                            : 'bg-red-500/80 border-amber-300 text-white animate-pulse'
+                                    }`}
+                                >
+                                    <span className="truncate px-1 font-mono text-[10px]">
+                                        {currentAvailability.isAvailable ? 'جلستك' : 'تعارض'}
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Timeline Labels */}
@@ -462,19 +505,25 @@ export default function BookingDetailsPage() {
                         </div>
 
                         {/* Legend */}
-                        <div className="flex items-center justify-center gap-4 text-[11px] pt-1 text-neutral-500 dark:text-neutral-400 font-medium">
+                        <div className="flex items-center justify-center gap-4 text-[11px] pt-1 text-neutral-500 dark:text-neutral-400 font-medium flex-wrap">
                             <div className="flex items-center gap-1.5">
                                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                                <span>متاح للحجز</span>
+                                <span>أوقات متاحة</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <span className="w-2.5 h-2.5 rounded-full bg-red-600" />
-                                <span>محجوز مسبقاً (غير متاح)</span>
+                                <span>محجوز مسبقاً</span>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 border border-white" />
-                                <span>جلستك المقترحة</span>
-                            </div>
+                            {proposedTimeline ? (
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 border border-white" />
+                                    <span>جلستك المحددة</span>
+                                </div>
+                            ) : (
+                                <span className="text-[10px] text-neutral-400 font-mono">
+                                    (اضغط على الشريط أو اختر وقتاً لتحديد الجلسة)
+                                </span>
+                            )}
                         </div>
                     </div>
 
@@ -535,7 +584,7 @@ export default function BookingDetailsPage() {
                     </div>
                 </div>
 
-                {/* 4. TIME & DURATION SELECTOR (SMOOTH & BEAUTIFUL) */}
+                {/* 4. TIME & DURATION SELECTOR (CLEAN & NON-FORCED) */}
                 <div className="bg-white dark:bg-[#120e10] border border-neutral-200/80 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -550,7 +599,7 @@ export default function BookingDetailsPage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
-                        {/* Elegant Digital Time Picker */}
+                        {/* Digital Time Picker */}
                         <div className="bg-neutral-50 dark:bg-[#151113] border border-neutral-200/80 dark:border-white/10 rounded-xl p-3.5 flex flex-col justify-between space-y-3">
                             <div className="flex items-center justify-between text-xs">
                                 <span className="font-bold text-neutral-700 dark:text-neutral-300">وقت البدء:</span>
@@ -559,7 +608,7 @@ export default function BookingDetailsPage() {
                                     <span>ساعة النظام</span>
                                     <input
                                         type="time"
-                                        value={time24}
+                                        value={time24 || ''}
                                         onChange={(e) => handleNativeTimeChange(e.target.value)}
                                         className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                                     />
@@ -574,10 +623,18 @@ export default function BookingDetailsPage() {
                                         type="number"
                                         min="1"
                                         max="12"
-                                        value={String(selectedHour).padStart(2, '0')}
+                                        placeholder="--"
+                                        value={selectedHour !== null ? String(selectedHour).padStart(2, '0') : ''}
                                         onChange={(e) => {
-                                            const val = parseInt(e.target.value, 10);
-                                            setSelectedHour(isNaN(val) ? 1 : Math.max(1, Math.min(12, val)));
+                                            const val = e.target.value;
+                                            if (val === '') {
+                                                setSelectedHour(null);
+                                                return;
+                                            }
+                                            const num = parseInt(val, 10);
+                                            if (!isNaN(num)) {
+                                                setSelectedHour(Math.max(1, Math.min(12, num)));
+                                            }
                                         }}
                                         className="w-16 h-12 text-center font-mono font-black text-2xl rounded-xl bg-white dark:bg-black/70 border border-neutral-300 dark:border-white/20 focus:border-red-600 outline-none text-neutral-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-xs"
                                     />
@@ -586,16 +643,24 @@ export default function BookingDetailsPage() {
 
                                 <span className="font-mono font-black text-2xl text-neutral-400 mb-4">:</span>
 
-                                {/* Minute Picker (Padded two-digits e.g. 00, 15, 30) */}
+                                {/* Minute Picker */}
                                 <div className="flex flex-col items-center">
                                     <input
                                         type="number"
                                         min="0"
                                         max="59"
-                                        value={String(selectedMinute).padStart(2, '0')}
+                                        placeholder="--"
+                                        value={selectedMinute !== null ? String(selectedMinute).padStart(2, '0') : ''}
                                         onChange={(e) => {
-                                            const val = parseInt(e.target.value, 10);
-                                            setSelectedMinute(isNaN(val) ? 0 : Math.max(0, Math.min(59, val)));
+                                            const val = e.target.value;
+                                            if (val === '') {
+                                                setSelectedMinute(null);
+                                                return;
+                                            }
+                                            const num = parseInt(val, 10);
+                                            if (!isNaN(num)) {
+                                                setSelectedMinute(Math.max(0, Math.min(59, num)));
+                                            }
                                         }}
                                         className="w-16 h-12 text-center font-mono font-black text-2xl rounded-xl bg-white dark:bg-black/70 border border-neutral-300 dark:border-white/20 focus:border-red-600 outline-none text-neutral-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-xs"
                                     />
@@ -606,7 +671,10 @@ export default function BookingDetailsPage() {
                                 <div className="flex flex-col gap-1.5 ml-1 mb-4">
                                     <button
                                         type="button"
-                                        onClick={() => setSelectedPeriod('PM')}
+                                        onClick={() => {
+                                            setSelectedPeriod('PM');
+                                            playPs5NavigateSound();
+                                        }}
                                         className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
                                             selectedPeriod === 'PM'
                                                 ? 'bg-red-600 text-white shadow-xs'
@@ -617,7 +685,10 @@ export default function BookingDetailsPage() {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setSelectedPeriod('AM')}
+                                        onClick={() => {
+                                            setSelectedPeriod('AM');
+                                            playPs5NavigateSound();
+                                        }}
                                         className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
                                             selectedPeriod === 'AM'
                                                 ? 'bg-red-600 text-white shadow-xs'
@@ -662,67 +733,85 @@ export default function BookingDetailsPage() {
                             </span>
 
                             <div className="grid grid-cols-3 gap-1.5">
-                                {DURATION_PRESETS.map((hrs) => (
-                                    <button
-                                        key={hrs}
-                                        type="button"
-                                        onClick={() => setDurationHours(hrs)}
-                                        className={`py-2 px-1 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer border ${
-                                            durationHours === hrs
-                                                ? 'bg-red-600 border-red-600 text-white shadow-xs'
-                                                : 'bg-white dark:bg-black/50 border-neutral-300/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300 hover:border-neutral-400'
-                                        }`}
-                                    >
-                                        {hrs} {hrs === 1 ? 'ساعة' : 'ساعات'}
-                                    </button>
-                                ))}
+                                {DURATION_PRESETS.map((hrs) => {
+                                    const isSelected = durationHours === hrs;
+                                    return (
+                                        <button
+                                            key={hrs}
+                                            type="button"
+                                            onClick={() => {
+                                                setDurationHours(hrs);
+                                                playPs5NavigateSound();
+                                            }}
+                                            className={`py-2 px-1 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer border ${
+                                                isSelected
+                                                    ? 'bg-red-600 border-red-600 text-white shadow-xs'
+                                                    : 'bg-white dark:bg-black/50 border-neutral-300/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300 hover:border-neutral-400'
+                                            }`}
+                                        >
+                                            {hrs} {hrs === 1 ? 'ساعة' : 'ساعات'}
+                                        </button>
+                                    );
+                                })}
                             </div>
 
                             <div className="text-[11px] text-neutral-500 dark:text-neutral-400 flex items-center justify-between pt-1 border-t border-neutral-200/60 dark:border-white/[0.05]">
                                 <span>ينتهي في:</span>
                                 <span className="font-bold text-neutral-900 dark:text-white">
-                                    {currentAvailability.formattedEnd}
+                                    {hasSelectedTime && hasSelectedDuration ? currentAvailability.formattedEnd : '--:--'}
                                 </span>
                             </div>
                         </div>
                     </div>
 
                     {/* Real-Time Availability Inline Feedback */}
-                    <div
-                        className={`p-3.5 rounded-xl border flex items-center justify-between gap-2 text-xs transition-all ${
-                            currentAvailability.isAvailable
-                                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-600/40 text-emerald-950 dark:text-emerald-200'
-                                : 'bg-red-50 dark:bg-red-950/40 border-red-300 dark:border-red-600/40 text-red-950 dark:text-red-200'
-                        }`}
-                    >
-                        <div className="flex items-center gap-2.5">
-                            {currentAvailability.isAvailable ? (
-                                <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            ) : (
-                                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" />
-                            )}
-                            <div className="text-right">
-                                <div className="font-bold text-xs sm:text-sm">
-                                    {currentAvailability.isAvailable
-                                        ? `الموعد متاح للحجز مؤكداً`
-                                        : currentAvailability.reason === 'PAST_TIME'
-                                        ? 'هذا الوقت قد مضى بالفعل، يرجى اختيار موعد قادم'
-                                        : currentAvailability.reason === 'EXCEEDS_CLOSING'
-                                        ? 'يتجاوز موعد إغلاق الصالة (04:00 ص فجراً)'
-                                        : currentAvailability.conflictingInterval
-                                        ? `يتعارض مع حجز قائم من ${formatArabicTimeDetailed(currentAvailability.conflictingInterval.start)} إلى ${formatArabicTimeDetailed(currentAvailability.conflictingInterval.end)}`
-                                        : 'هذا الوقت غير متاح'}
-                                </div>
-                                <div className="text-[11px] opacity-80 mt-0.5">
-                                    من {currentAvailability.formattedStart} إلى {currentAvailability.formattedEnd} ({durationHours} {durationHours === 1 ? 'ساعة' : 'ساعات'})
+                    {hasSelectedTime && hasSelectedDuration ? (
+                        <div
+                            className={`p-3.5 rounded-xl border flex items-center justify-between gap-2 text-xs transition-all ${
+                                currentAvailability.isAvailable
+                                    ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-600/40 text-emerald-950 dark:text-emerald-200'
+                                    : 'bg-red-50 dark:bg-red-950/40 border-red-300 dark:border-red-600/40 text-red-950 dark:text-red-200'
+                            }`}
+                        >
+                            <div className="flex items-center gap-2.5">
+                                {currentAvailability.isAvailable ? (
+                                    <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                ) : (
+                                    <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" />
+                                )}
+                                <div className="text-right">
+                                    <div className="font-bold text-xs sm:text-sm">
+                                        {currentAvailability.isAvailable
+                                            ? `الموعد متاح للحجز مؤكداً`
+                                            : currentAvailability.reason === 'PAST_TIME'
+                                            ? 'هذا الوقت قد مضى بالفعل، يرجى اختيار موعد قادم'
+                                            : currentAvailability.reason === 'EXCEEDS_CLOSING'
+                                            ? 'يتجاوز موعد إغلاق الصالة (04:00 ص فجراً)'
+                                            : currentAvailability.conflictingInterval
+                                            ? `يتعارض مع حجز قائم من ${formatArabicTimeDetailed(currentAvailability.conflictingInterval.start)} إلى ${formatArabicTimeDetailed(currentAvailability.conflictingInterval.end)}`
+                                            : 'هذا الوقت غير متاح'}
+                                    </div>
+                                    <div className="text-[11px] opacity-80 mt-0.5">
+                                        من {currentAvailability.formattedStart} إلى {currentAvailability.formattedEnd} ({durationHours} {durationHours === 1 ? 'ساعة' : 'ساعات'})
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <span className="font-mono font-bold text-xs sm:text-sm shrink-0" dir="ltr">
-                            {roomSubtotal} ج.م
-                        </span>
-                    </div>
+                            <span className="font-mono font-bold text-xs sm:text-sm shrink-0" dir="ltr">
+                                {roomSubtotal} ج.م
+                            </span>
+                        </div>
+                    ) : (
+                        <div className="p-3 rounded-xl bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200/80 dark:border-white/10 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
+                            <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-neutral-400 shrink-0" />
+                                <span>يرجى اختيار وقت بدء الجلسة ومدتها لتأكيد الحجز</span>
+                            </div>
+                            <span className="font-mono text-[11px]">
+                                {currentRoom.rate} ج.م/س
+                            </span>
+                        </div>
+                    )}
                 </div>
 
             </main>
@@ -734,15 +823,19 @@ export default function BookingDetailsPage() {
                     <div className="flex flex-col text-right">
                         <div className="flex items-baseline gap-1">
                             <span className="font-mono font-black text-2xl tabular-nums text-neutral-900 dark:text-white">
-                                {roomSubtotal}
+                                {roomSubtotal > 0 ? roomSubtotal : currentRoom.rate}
                             </span>
-                            <span className="text-xs text-neutral-500 font-bold">ج.م</span>
+                            <span className="text-xs text-neutral-500 font-bold">
+                                {roomSubtotal > 0 ? 'ج.م' : 'ج.م / س'}
+                            </span>
                         </div>
                         <div className="text-[11px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5 font-medium">
                             <span>{currentRoom.titleAr.split('•')[0].trim()}</span>
                             <span>•</span>
                             <span>
-                                {currentAvailability.formattedStart}
+                                {hasSelectedTime && hasSelectedDuration
+                                    ? `${currentAvailability.formattedStart} - ${currentAvailability.formattedEnd}`
+                                    : 'لم تحدد الموعد بعد'}
                             </span>
                         </div>
                     </div>
@@ -757,7 +850,13 @@ export default function BookingDetailsPage() {
                                 : 'bg-neutral-200 dark:bg-white/[0.05] text-neutral-400 dark:text-neutral-500 border-transparent cursor-not-allowed'
                         }`}
                     >
-                        <span>{isReadyToContinue ? 'متابعة الحجز' : 'الموعد غير متاح'}</span>
+                        <span>
+                            {!hasSelectedTime || !hasSelectedDuration
+                                ? 'اختر الوقت والمدة'
+                                : isReadyToContinue
+                                ? 'متابعة الحجز'
+                                : 'الموعد غير متاح'}
+                        </span>
                         <ArrowRight className="w-4 h-4 rotate-180" />
                     </button>
                 </div>
