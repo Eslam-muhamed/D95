@@ -197,19 +197,16 @@ export default function BookingDetailsPage() {
         return slots;
     }, [isToday, currentRoom]);
 
-    // Track selected slot indices
-    const [selectedSlotIndices, setSelectedSlotIndices] = useState<number[]>([0]);
+    // Track selected slot indices (start empty, no forced selection)
+    const [selectedSlotIndices, setSelectedSlotIndices] = useState<number[]>([]);
     const [selectedSnacks, setSelectedSnacks] = useState<string[]>([]);
 
     // Reset selection when room or date changes
     useEffect(() => {
-        const firstAvailable = generatedSlots.find((s) => !s.isBooked);
-        if (firstAvailable) {
-            setSelectedSlotIndices([firstAvailable.index]);
-        }
-    }, [generatedSlots]);
+        setSelectedSlotIndices([]);
+    }, [selectedRoomId, selectedDate]);
 
-    // Handle single or multi-slot selection (Contiguous 1hr chunks)
+    // Handle single or multi-slot selection (Contiguous 1hr chunks, can be completely deselected)
     const handleSlotClick = (slot: DynamicSlot) => {
         if (slot.isBooked) {
             toast.error('هذا الوقت محجوز مسبقاً 🔒');
@@ -219,6 +216,34 @@ export default function BookingDetailsPage() {
         // Play authentic PS5 UI game browsing sound mapped to slot pitch
         playPs5NavigateSound(slot.index);
 
+        // If clicking an already selected slot: allow unselecting!
+        if (selectedSlotIndices.includes(slot.index)) {
+            // If only 1 slot was selected, clicking it unselects it completely
+            if (selectedSlotIndices.length === 1) {
+                setSelectedSlotIndices([]);
+                return;
+            }
+
+            const minIdx = Math.min(...selectedSlotIndices);
+            const maxIdx = Math.max(...selectedSlotIndices);
+
+            // If clicking min edge, trim it
+            if (slot.index === minIdx) {
+                setSelectedSlotIndices(selectedSlotIndices.filter((i) => i !== slot.index));
+                return;
+            }
+            // If clicking max edge, trim it
+            if (slot.index === maxIdx) {
+                setSelectedSlotIndices(selectedSlotIndices.filter((i) => i !== slot.index));
+                return;
+            }
+
+            // If clicking in the middle of a range, clear selection
+            setSelectedSlotIndices([]);
+            return;
+        }
+
+        // If nothing is selected, select this slot
         if (selectedSlotIndices.length === 0) {
             setSelectedSlotIndices([slot.index]);
             return;
@@ -227,35 +252,29 @@ export default function BookingDetailsPage() {
         const minIdx = Math.min(...selectedSlotIndices);
         const maxIdx = Math.max(...selectedSlotIndices);
 
+        // Contiguous expansion before start
         if (slot.index === minIdx - 1) {
             setSelectedSlotIndices([slot.index, ...selectedSlotIndices].sort((a, b) => a - b));
             return;
         }
 
+        // Contiguous expansion after end
         if (slot.index === maxIdx + 1) {
             setSelectedSlotIndices([...selectedSlotIndices, slot.index].sort((a, b) => a - b));
             return;
         }
 
-        if (selectedSlotIndices.includes(slot.index)) {
-            if (selectedSlotIndices.length === 1) return;
-            if (slot.index === minIdx) {
-                setSelectedSlotIndices(selectedSlotIndices.filter((i) => i !== slot.index));
-                return;
-            }
-            if (slot.index === maxIdx) {
-                setSelectedSlotIndices(selectedSlotIndices.filter((i) => i !== slot.index));
-                return;
-            }
-        }
-
+        // Otherwise jump selection to the clicked slot
         setSelectedSlotIndices([slot.index]);
     };
 
     // Quick duration handler
     const handleQuickDuration = (hours: number) => {
         playPs5SelectSound();
-        const firstIdx = selectedSlotIndices[0] ?? 0;
+        const firstIdx = selectedSlotIndices.length > 0
+            ? selectedSlotIndices[0]
+            : (generatedSlots.find((s) => !s.isBooked)?.index ?? 0);
+
         const newIndices: number[] = [];
         for (let i = 0; i < hours; i++) {
             const targetIdx = firstIdx + i;
@@ -290,14 +309,19 @@ export default function BookingDetailsPage() {
 
     const grandTotal = roomSubtotal + snacksTotal;
 
-    const startSlot = generatedSlots.find((s) => s.index === Math.min(...selectedSlotIndices));
-    const endSlot = generatedSlots.find((s) => s.index === Math.max(...selectedSlotIndices));
-    const startDisplayTime = startSlot?.startDisplay || '00:00';
-    const endDisplayTime = endSlot?.endDisplay || '00:00';
+    const hasSelectedSlot = selectedSlotIndices.length > 0;
+    const startSlot = hasSelectedSlot
+        ? generatedSlots.find((s) => s.index === Math.min(...selectedSlotIndices))
+        : null;
+    const endSlot = hasSelectedSlot
+        ? generatedSlots.find((s) => s.index === Math.max(...selectedSlotIndices))
+        : null;
+    const startDisplayTime = startSlot?.startDisplay || '';
+    const endDisplayTime = endSlot?.endDisplay || '';
 
     const handleContinue = () => {
-        if (selectedSlotIndices.length === 0) {
-            toast.error('برجاء اختيار وقت الجلسة');
+        if (!hasSelectedSlot) {
+            toast.error('برجاء اختيار وقت الجلسة أولاً 🎮');
             return;
         }
 
@@ -769,27 +793,44 @@ export default function BookingDetailsPage() {
                                 {grandTotal}
                             </span>
                             <span className="text-xs text-neutral-700 dark:text-neutral-300 font-bold">ج.م</span>
-                            <span className="text-[10px] font-mono font-bold text-red-700 dark:text-red-300 mr-1 bg-red-100 dark:bg-red-950/80 px-2 py-0.5 rounded border border-red-300 dark:border-red-600/40 whitespace-nowrap">
-                                {durationHours} {durationHours === 1 ? 'HOUR' : 'HOURS'}
-                            </span>
+                            {hasSelectedSlot ? (
+                                <span className="text-[10px] font-mono font-bold text-red-700 dark:text-red-300 mr-1 bg-red-100 dark:bg-red-950/80 px-2 py-0.5 rounded border border-red-300 dark:border-red-600/40 whitespace-nowrap">
+                                    {durationHours} {durationHours === 1 ? 'HOUR' : 'HOURS'}
+                                </span>
+                            ) : (
+                                <span className="text-[10px] font-mono font-semibold text-neutral-500 dark:text-neutral-400 mr-1 bg-neutral-100 dark:bg-white/[0.04] px-2 py-0.5 rounded border border-neutral-200 dark:border-white/10 whitespace-nowrap">
+                                    لم يتم التحديد
+                                </span>
+                            )}
                         </div>
                         <div className="text-xs text-neutral-600 dark:text-neutral-400 flex items-center gap-1.5 mt-0.5 font-medium">
                             <span className="font-mono font-bold text-neutral-900 dark:text-white uppercase">{currentRoom.nameEn}</span>
                             <span>•</span>
-                            <div dir="rtl" className="flex items-center gap-1 text-red-600 dark:text-red-400 font-mono font-bold tabular-nums text-[11px]">
-                                <span>{startDisplayTime}</span>
-                                <span>➔</span>
-                                <span>{endDisplayTime}</span>
-                            </div>
+                            {hasSelectedSlot ? (
+                                <div dir="rtl" className="flex items-center gap-1 text-red-600 dark:text-red-400 font-mono font-bold tabular-nums text-[11px]">
+                                    <span>{startDisplayTime}</span>
+                                    <span>➔</span>
+                                    <span>{endDisplayTime}</span>
+                                </div>
+                            ) : (
+                                <span className="text-neutral-500 dark:text-neutral-400 text-[11px]">
+                                    اضغط على أي ميعاد متاح لتحديده
+                                </span>
+                            )}
                         </div>
                     </div>
 
                     {/* High-Performance Checkout CTA */}
                     <button
                         onClick={handleContinue}
-                        className="py-3 px-6 sm:px-8 rounded-lg bg-gradient-to-r from-red-600 via-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-red-600/30 active:scale-95 transition-all cursor-pointer shrink-0 border border-red-500/60 uppercase tracking-wide font-sans"
+                        disabled={!hasSelectedSlot}
+                        className={`py-3 px-6 sm:px-8 rounded-lg font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md transition-all uppercase tracking-wide font-sans shrink-0 border ${
+                            hasSelectedSlot
+                                ? 'bg-gradient-to-r from-red-600 via-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white shadow-red-600/30 active:scale-95 cursor-pointer border-red-500/60'
+                                : 'bg-neutral-200 dark:bg-neutral-800/80 text-neutral-400 dark:text-neutral-500 border-neutral-300 dark:border-white/5 cursor-not-allowed opacity-75'
+                        }`}
                     >
-                        <span>تأكيد الحجز والدفع</span>
+                        <span>{hasSelectedSlot ? 'تأكيد الحجز والدفع' : 'حدد موعد الجلسة'}</span>
                         <ArrowRight className="w-4 h-4 rotate-180" />
                     </button>
                 </div>
