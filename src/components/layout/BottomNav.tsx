@@ -17,10 +17,11 @@ export default function BottomNav() {
     }, [location.pathname]);
 
     const isCheckoutFlow =
+        location.pathname.startsWith('/playstation/booking') ||
         location.pathname.startsWith('/playstation/payment') ||
         location.pathname.startsWith('/playstation/success');
 
-    // Hide bottom nav only during final payment checkout & success pages
+    // Hide bottom nav only during booking details, final payment checkout & success pages
     if (isCheckoutFlow) return null;
 
     const navItems = [

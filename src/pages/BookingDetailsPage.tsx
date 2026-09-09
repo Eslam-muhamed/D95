@@ -1056,6 +1056,34 @@ export default function BookingDetailsPage() {
                         </Link>
                     </div>
                 )}
+
+                {/* Inline Confirmation CTA at page bottom */}
+                <div className="bg-white dark:bg-[#120e10] border border-neutral-200/80 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <div className="font-bold text-sm sm:text-base text-neutral-900 dark:text-white flex items-center gap-2">
+                            <span>جاهز لتثبيت الحجز؟</span>
+                            <span className="text-xs font-mono font-bold text-red-600 dark:text-red-400">
+                                {hasSelectedTime && hasSelectedDuration ? `${currentAvailability.formattedStart} - ${currentAvailability.formattedEnd}` : 'يرجى تحديد الموعد أعلاه'}
+                            </span>
+                        </div>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                            اضغط لمتابعة إدخال بياناتك واختيار طريقة الدفع (كاش / انستاباي / محفظة) لتأكيد حجز مكانك فوراً.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={handleContinue}
+                        className={`py-3 px-6 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer border shrink-0 ${
+                            isReadyToContinue
+                                ? 'bg-red-600 hover:bg-red-500 border-red-500 text-white shadow-lg shadow-red-600/30 active:scale-95'
+                                : 'bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.08] dark:hover:bg-white/10 text-neutral-600 dark:text-neutral-300 border-neutral-300 dark:border-white/10'
+                        }`}
+                    >
+                        <span>{isReadyToContinue ? 'تأكيد ومتابعة الحجز' : 'حدد الوقت والمدة للمتابعة'}</span>
+                        <ArrowRight className="w-4 h-4 rotate-180" />
+                    </button>
+                </div>
             </main>
 
             {/* Sticky Mobile-First Bottom Bar */}
@@ -1108,18 +1136,17 @@ export default function BookingDetailsPage() {
                         <button
                             type="button"
                             onClick={handleContinue}
-                            disabled={!isReadyToContinue}
                             className={`py-3 px-4 sm:px-6 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border ${
                                 isReadyToContinue
                                     ? 'bg-red-600 hover:bg-red-500 border-red-500 text-white shadow-md shadow-red-600/25 active:scale-95'
-                                    : 'bg-neutral-200 dark:bg-white/[0.05] text-neutral-400 dark:text-neutral-500 border-transparent cursor-not-allowed'
+                                    : 'bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.08] dark:hover:bg-white/10 text-neutral-600 dark:text-neutral-300 border-neutral-300 dark:border-white/10'
                             }`}
                         >
                             <span>
                                 {!hasSelectedTime || !hasSelectedDuration
-                                    ? 'اختر الوقت والمدة'
+                                    ? 'حدد الوقت والمدة للمتابعة'
                                     : isReadyToContinue
-                                    ? 'متابعة الحجز'
+                                    ? 'تأكيد ومتابعة الحجز'
                                     : 'الموعد غير متاح'}
                             </span>
                             <ArrowRight className="w-4 h-4 rotate-180" />
