@@ -1,3 +1,5 @@
+import { CONTACT_INFO } from '@/constants/contactInfo';
+
 export default function Footer() {
   return (
     <footer className="text-center py-10 px-4" style={{ borderTop: '1px solid rgba(139,26,42,0.18)' }}>
@@ -18,7 +20,7 @@ export default function Footer() {
       <p className="text-xs mt-4" style={{ color: 'var(--c-text-5)', fontFamily: 'Cairo, sans-serif', letterSpacing: '0.02em' }}>
         designed &amp; developed by{' '}
         <a
-          href="https://wa.me/201000000000"
+          href={`https://wa.me/${CONTACT_INFO.whatsappNumber}`}
           target="_blank"
           rel="noopener noreferrer"
           className="transition-opacity hover:opacity-70"

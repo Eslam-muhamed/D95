@@ -11,8 +11,6 @@ import {
     Tv,
     Zap,
     Droplets,
-    Radio,
-    Shield,
     Sun,
     Moon,
 } from 'lucide-react';

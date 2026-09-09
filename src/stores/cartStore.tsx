@@ -49,6 +49,8 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     }
 }
 
+import { getItemUnitPrice } from '@/lib/cartUtils';
+
 interface CartContextValue {
     items: CartItem[];
     isOpen: boolean;
@@ -66,10 +68,6 @@ interface CartContextValue {
 }
 
 const CartContext = createContext<CartContextValue>({} as CartContextValue);
-
-export function getItemUnitPrice(item: Pick<CartItem, 'price' | 'customization'>): number {
-    return item.price + (item.customization.extraShot ? 15 : 0);
-}
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
     const [state, dispatch] = useReducer(cartReducer, { items: [], isOpen: false });
@@ -119,23 +117,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useCart() {
     return useContext(CartContext);
-}
-
-export function customizationToTags(c: ItemCustomization): string[] {
-    const tags: string[] = [];
-    if (c.sugar !== undefined) {
-        const labels = ['بدون سكر', 'معلقة', 'معلقتين', '3 معالق', '4 معالق', '5 معالق'];
-        tags.push(labels[c.sugar] ?? '');
-    }
-    if (c.ice) {
-        const iceMap = { none: 'بدون ثلج', little: 'ثلج خفيف', normal: 'ثلج عادي', extra: 'ثلج زيادة' };
-        tags.push(iceMap[c.ice]);
-    }
-    if (c.extraShot) tags.push('شوت إضافي');
-    if (c.cream) tags.push('كريمة');
-    if (c.honey) tags.push('عسل');
-    if (c.toppings?.length) tags.push(...c.toppings);
-    return tags.filter(Boolean);
 }

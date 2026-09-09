@@ -25,6 +25,14 @@ import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 
 type PaymentMethod = 'instapay' | 'wallet' | 'cash';
 
+interface SnackItem {
+    id: string;
+    name: string;
+    price: number;
+    icon?: string;
+    description?: string;
+}
+
 export default function BookingPaymentPage() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -510,7 +518,7 @@ export default function BookingPaymentPage() {
                                     <span className="font-bold text-neutral-900 dark:text-white">{roomSubtotal} ج.م</span>
                                 </div>
 
-                                {snacks && snacks.length > 0 && snacks.map((s: any) => (
+                                {snacks && snacks.length > 0 && snacks.map((s: SnackItem) => (
                                     <div key={s.id} className="flex justify-between items-center text-neutral-600 dark:text-neutral-400">
                                         <span>{s.icon} {s.name}:</span>
                                         <span className="text-red-600 dark:text-red-400 font-bold">+{s.price} ج.م</span>

@@ -68,8 +68,8 @@ export default function BookingSuccessPage() {
         paymentMethod === 'cash'
             ? 'كاش في الصالة عند الوصول'
             : paymentMethod === 'instapay'
-            ? 'إنستاباي (InstaPay - d95cairo@instapay)'
-            : 'محفظة إلكترونية (01099238475)';
+            ? `إنستاباي (InstaPay - ${CONTACT_INFO.instapayHandle})`
+            : `محفظة إلكترونية (${CONTACT_INFO.walletNumber})`;
 
     const handleSendWhatsApp = () => {
         let snacksListText = '';

@@ -12,7 +12,6 @@ import {
     ShieldCheck,
     Disc3,
     Flame,
-    KeyRound,
     Sun,
     Moon,
     type LucideIcon,

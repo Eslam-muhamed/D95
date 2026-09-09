@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Sun, Moon, Gamepad2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,17 +9,10 @@ interface Props {
 }
 
 export default function TopHeader({ onCartOpen }: Props = {}) {
-  const [scrolled, setScrolled] = useState(false);
   const { totalItems, openCart } = useCart();
   const { theme, toggleTheme } = useTheme();
 
   const handleCartClick = onCartOpen || openCart;
-
-  useEffect(() => {
-    const handle = () => setScrolled(window.scrollY > 30);
-    window.addEventListener('scroll', handle, { passive: true });
-    return () => window.removeEventListener('scroll', handle);
-  }, []);
 
   return (
     <header

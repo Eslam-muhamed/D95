@@ -1,17 +1,18 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useState } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeProvider } from '@/stores/themeStore';
 import { CartProvider } from '@/stores/cartStore';
 import CartSheet from '@/components/features/CartSheet';
 import BottomNav from '@/components/layout/BottomNav';
+import SplashScreen from '@/components/features/SplashScreen';
 import MenuPage from '@/pages/MenuPage';
 import GatewayPage from '@/pages/GatewayPage';
 import PlaystationPage from '@/pages/PlaystationPage';
 import BookingDetailsPage from '@/pages/BookingDetailsPage';
 import BookingPaymentPage from '@/pages/BookingPaymentPage';
 import BookingSuccessPage from '@/pages/BookingSuccessPage';
-import { useLocation } from 'react-router-dom';
 
 function NotFound() {
     return (
@@ -68,9 +69,12 @@ function AppRoutes() {
 }
 
 export default function App() {
+    const [splashDone, setSplashDone] = useState(false);
+
     return (
         <ThemeProvider>
             <CartProvider>
+                {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
                 <AppContent />
             </CartProvider>
         </ThemeProvider>

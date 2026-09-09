@@ -21,7 +21,9 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         }
         try {
             sessionStorage.setItem('d95_splash_shown', '1');
-        } catch {}
+        } catch {
+            // Silently ignore storage quota or privacy mode errors
+        }
         const t = setTimeout(() => setVisible(false), 1200);
         return () => clearTimeout(t);
     }, [visible, onComplete]);

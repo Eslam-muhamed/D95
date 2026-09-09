@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronUp, Search, Coffee, Utensils, Sparkles } from 'lucide-react';
+import { ChevronUp, Search } from 'lucide-react';
 import TopHeader from '@/components/features/TopHeader';
 import CategoryNav from '@/components/features/CategoryNav';
 import SearchBar from '@/components/features/SearchBar';

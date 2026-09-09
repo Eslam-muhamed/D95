@@ -2,7 +2,8 @@ import { createPortal } from 'react-dom';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Plus, Trash2, ChevronDown, ChevronUp, Send } from 'lucide-react';
-import { useCart, getItemUnitPrice } from '@/stores/cartStore';
+import { useCart } from '@/stores/cartStore';
+import { getItemUnitPrice } from '@/lib/cartUtils';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 
 const CAFE_NAME = CONTACT_INFO.fullName;

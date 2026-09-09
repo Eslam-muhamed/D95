@@ -87,7 +87,7 @@ export default function ItemCustomizerModal({ item, onClose }: Props) {
       setToppings([]);
       setNotes('');
     }
-  }, [item?.id]);
+  }, [item]);
 
   const toggleTopping = (t: string) =>
     setToppings(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
