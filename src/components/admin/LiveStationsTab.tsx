@@ -1338,7 +1338,7 @@ export default function LiveStationsTab() {
                                     <label className="text-xs font-bold text-neutral-300 block mb-1">القسم</label>
                                     <select
                                         value={newStationCategory}
-                                        onChange={(e) => setNewStationCategory(e.target.value as any)}
+                                        onChange={(e) => setNewStationCategory(e.target.value as 'console' | 'recreation')}
                                         className="w-full py-2 px-3 rounded-xl bg-[#090d18] border border-white/10 text-xs text-white focus:border-blue-500 outline-none cursor-pointer"
                                     >
                                         <option value="console">أجهزة الكونسول</option>

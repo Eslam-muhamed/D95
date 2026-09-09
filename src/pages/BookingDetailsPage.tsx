@@ -187,7 +187,7 @@ export default function BookingDetailsPage() {
     const addMinutesToTime = (minsToAdd: number) => {
         playPs5NavigateSound();
         let h24 = selectedHour ?? 18;
-        let curMin = selectedMinute ?? 0;
+        const curMin = selectedMinute ?? 0;
 
         if (selectedPeriod === 'PM' && h24 < 12) h24 += 12;
         if (selectedPeriod === 'AM' && h24 === 12) h24 = 0;

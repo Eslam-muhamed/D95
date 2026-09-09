@@ -1,48 +1,48 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, Lock, ArrowLeft, Gamepad2, Eye, EyeOff } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ShieldCheck, Lock, ArrowLeft, Gamepad2, Eye, EyeOff, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
 import { supabase } from '@/lib/supabase';
 
 export default function AdminLoginPage() {
-    const [pin, setPin] = useState('');
-    const [showPin, setShowPin] = useState(false);
+    const [email, setEmail] = useState('admin@d95.com');
+    const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
 
-    // Default master PIN is 9595, or check stored custom PIN
+    const from = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/admin';
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
-        const customPin = localStorage.getItem('d95_admin_custom_pin') || '9595';
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email.trim(),
+                password: password,
+            });
 
-        if (pin === customPin || pin === '9595') {
-            try {
-                // Authenticate with Supabase to get an authenticated JWT for RLS policies
-                const { error: authError } = await supabase.auth.signInWithPassword({
-                    email: 'admin@d95.com',
-                    password: 'D95GamingAdmin2026!'
-                });
-
-                if (authError) {
-                    console.warn('Supabase Auth note:', authError.message);
-                }
-
-                localStorage.setItem('d95_admin_auth', 'authenticated');
-                localStorage.setItem('d95_admin_auth_time', Date.now().toString());
-                toast.success('تم تسجيل الدخول بنجاح! أهلاً بك في لوحة تحكم D95');
-                navigate('/admin');
-            } catch (err: unknown) {
-                console.error('Auth error:', err);
-                toast.error('حدث خطأ أثناء الاتصال بالخادم');
-            } finally {
+            if (error || !data?.session) {
+                console.warn('Login attempt failed:', error?.message);
+                toast.error(error?.message === 'Invalid login credentials' 
+                    ? 'بيانات الدخول غير صحيحة! تأكد من كلمة المرور والبريد' 
+                    : error?.message || 'فشل تسجيل الدخول');
                 setLoading(false);
+                return;
             }
-        } else {
-            toast.error('رمز المرور غير صحيح! حاول مرة أخرى');
+
+            localStorage.setItem('d95_admin_auth', 'authenticated');
+            localStorage.setItem('d95_admin_auth_time', Date.now().toString());
+            toast.success('تم تسجيل الدخول بنجاح! أهلاً بك في لوحة تحكم D95');
+            navigate(from, { replace: true });
+        } catch (err: unknown) {
+            console.error('Auth exception:', err);
+            toast.error('حدث خطأ أثناء الاتصال بالخادم');
+        } finally {
             setLoading(false);
         }
     };
@@ -72,49 +72,66 @@ export default function AdminLoginPage() {
                         </span>
                     </div>
                     <h1 className="text-lg font-bold text-white mt-2">لوحة تحكم إدارة الصالة والكافيه</h1>
-                    <p className="text-xs text-neutral-400 mt-1">الرجاء إدخال رمز الدخول السري لمتابعة العمل</p>
+                    <p className="text-xs text-neutral-400 mt-1">الرجاء إدخال بيانات الدخول المعتمدة لمتابعة العمل</p>
                 </div>
 
-                <form onSubmit={handleLogin} className="space-y-5">
+                <form onSubmit={handleLogin} className="space-y-4">
                     <div>
-                        <label className="block text-xs font-semibold text-neutral-300 mb-2">
-                            رمز الدخول السري (PIN / Passcode)
+                        <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                            البريد الإلكتروني للإدارة
+                        </label>
+                        <div className="relative flex items-center">
+                            <Mail className="w-5 h-5 text-neutral-500 absolute right-3.5 pointer-events-none" />
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="admin@d95.com"
+                                required
+                                className="w-full bg-[#1c1417] border border-white/10 rounded-xl pr-11 pl-4 py-3 text-white text-xs sm:text-sm font-mono placeholder:text-neutral-600 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all text-left"
+                                dir="ltr"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                            كلمة المرور المشفرة
                         </label>
                         <div className="relative flex items-center">
                             <Lock className="w-5 h-5 text-neutral-500 absolute right-3.5 pointer-events-none" />
                             <input
-                                type={showPin ? 'text' : 'password'}
-                                value={pin}
-                                onChange={(e) => setPin(e.target.value)}
-                                placeholder="أدخل الرمز (الافتراضي: 9595)"
+                                type={showPassword ? 'text' : 'password'}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••••••"
                                 required
                                 autoFocus
-                                className="w-full bg-[#1c1417] border border-white/10 rounded-xl pr-11 pl-11 py-3 text-white text-center tracking-widest text-lg font-mono placeholder:text-neutral-600 placeholder:text-sm placeholder:tracking-normal focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
+                                className="w-full bg-[#1c1417] border border-white/10 rounded-xl pr-11 pl-11 py-3 text-white text-xs sm:text-sm font-mono placeholder:text-neutral-600 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all text-left"
+                                dir="ltr"
                             />
                             <button
                                 type="button"
-                                onClick={() => setShowPin(!showPin)}
+                                onClick={() => setShowPassword(!showPassword)}
                                 className="absolute left-3.5 text-neutral-500 hover:text-neutral-300 transition-colors cursor-pointer"
+                                aria-label="إظهار/إخفاء كلمة المرور"
                             >
-                                {showPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                             </button>
                         </div>
-                        <p className="text-[11px] text-neutral-500 mt-2 text-center">
-                            الرمز الافتراضي المبدئي هو: <span className="font-mono text-red-400 font-bold">9595</span>
-                        </p>
                     </div>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3.5 px-6 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 transition-all shadow-[0_0_25px_rgba(220,38,38,0.4)] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-red-500/50 disabled:opacity-50"
+                        className="w-full mt-2 py-3.5 px-6 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 transition-all shadow-[0_0_25px_rgba(220,38,38,0.4)] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-red-500/50 disabled:opacity-50"
                     >
                         {loading ? (
                             <span className="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         ) : (
                             <>
                                 <ShieldCheck className="w-5 h-5" />
-                                <span>دخول للوحة التحكم</span>
+                                <span>دخول آمن للوحة التحكم</span>
                             </>
                         )}
                     </button>

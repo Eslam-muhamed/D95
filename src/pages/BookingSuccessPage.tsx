@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
     ArrowRight,
@@ -30,23 +31,36 @@ export default function BookingSuccessPage() {
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
 
-    const bookingData = location.state || {
-        reservationId: 'D95-PS-8821',
-        room: { name: 'غرفة 01 (Play Room)', type: 'standard' },
-        date: new Date().toISOString().split('T')[0],
-        startTime: '06:00 م',
-        endTime: '08:00 م',
-        durationHours: 2,
-        roomSubtotal: 200,
-        snacks: [],
-        snacksTotal: 0,
-        discountAmount: 0,
-        netTotal: 200,
-        paymentMethod: 'instapay',
-        name: 'ضيف D95',
-        phone: '01012345678',
-        notes: '',
-    };
+    const [bookingData] = useState(() => {
+        if (location.state && location.state.reservationId) {
+            try {
+                sessionStorage.setItem('d95_last_confirmed_booking', JSON.stringify(location.state));
+            } catch (e) {
+                console.warn('Could not cache booking:', e);
+            }
+            return location.state;
+        }
+
+        try {
+            const cached = sessionStorage.getItem('d95_last_confirmed_booking');
+            if (cached) return JSON.parse(cached);
+        } catch (e) {
+            console.warn('Could not read cached booking:', e);
+        }
+
+        return null;
+    });
+
+    useEffect(() => {
+        if (!bookingData) {
+            toast.info('لا يوجد حجز نشط لعرضه، يمكنك حجز جلستك الآن 🎮');
+            navigate('/playstation', { replace: true });
+        }
+    }, [bookingData, navigate]);
+
+    if (!bookingData) {
+        return null;
+    }
 
     const {
         reservationId,

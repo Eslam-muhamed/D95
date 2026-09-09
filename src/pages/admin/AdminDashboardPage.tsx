@@ -31,22 +31,11 @@ export default function AdminDashboardPage() {
     const [activeTab, setActiveTab] = useState<TabType>('pos');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-    // Auth verification & session restoration
+    // Auth verification: ensure active Supabase session
     useEffect(() => {
-        const isAuth = localStorage.getItem('d95_admin_auth');
-        if (!isAuth) {
-            navigate('/admin/login');
-            return;
-        }
-
-        // Ensure Supabase Auth session is active
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (!session) {
-                // Silently re-authenticate with credentials
-                supabase.auth.signInWithPassword({
-                    email: 'admin@d95.com',
-                    password: 'D95GamingAdmin2026!'
-                }).catch(console.error);
+                navigate('/admin/login');
             }
         });
     }, [navigate]);
@@ -188,7 +177,7 @@ export default function AdminDashboardPage() {
             {/* Main Content Area */}
             <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
                 {activeTab === 'pos' && <LiveStationsTab />}
-                {activeTab === 'overview' && <OverviewTab onSwitchTab={(t: any) => setActiveTab(t)} />}
+                {activeTab === 'overview' && <OverviewTab onSwitchTab={(t: TabType) => setActiveTab(t)} />}
                 {activeTab === 'bookings' && <BookingsTab />}
                 {activeTab === 'products' && <ProductsTab />}
                 {activeTab === 'categories' && <CategoriesTab />}

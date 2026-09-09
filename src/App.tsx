@@ -6,6 +6,8 @@ import { CartProvider } from '@/stores/cartStore';
 import CartSheet from '@/components/features/CartSheet';
 import BottomNav from '@/components/layout/BottomNav';
 import SplashScreen from '@/components/features/SplashScreen';
+import ErrorBoundary from '@/components/features/ErrorBoundary';
+import AdminProtectedRoute from '@/components/admin/AdminProtectedRoute';
 
 // Route-level Code Splitting for optimal mobile load times and minimal initial bundle
 const GatewayPage = lazy(() => import('@/pages/GatewayPage'));
@@ -57,7 +59,14 @@ function AppRoutes() {
                     <Route path="/playstation/payment" element={<BookingPaymentPage />} />
                     <Route path="/playstation/success" element={<BookingSuccessPage />} />
                     <Route path="/menu" element={<MenuPage />} />
-                    <Route path="/admin" element={<AdminDashboardPage />} />
+                    <Route
+                        path="/admin"
+                        element={
+                            <AdminProtectedRoute>
+                                <AdminDashboardPage />
+                            </AdminProtectedRoute>
+                        }
+                    />
                     <Route path="/admin/login" element={<AdminLoginPage />} />
                     <Route path="*" element={<NotFound />} />
                 </Routes>
@@ -79,11 +88,13 @@ export default function App() {
     });
 
     return (
-        <ThemeProvider>
-            <CartProvider>
-                {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
-                <AppContent />
-            </CartProvider>
-        </ThemeProvider>
+        <ErrorBoundary>
+            <ThemeProvider>
+                <CartProvider>
+                    {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
+                    <AppContent />
+                </CartProvider>
+            </ThemeProvider>
+        </ErrorBoundary>
     );
 }

@@ -13,7 +13,6 @@ import ContactSection from '@/components/features/ContactSection';
 import { categories as defaultCategories } from '@/constants/menuMetadata';
 import { allItems as defaultItems } from '@/constants/menuData';
 import type { MenuItem, MenuCategory } from '@/types/menu';
-import { playCafeEntranceSound } from '@/lib/sound';
 import { fetchCategories, fetchProducts, fetchOffers } from '@/services/menuService';
 import type { DBOffer } from '@/types/database';
 
@@ -88,11 +87,6 @@ export default function MenuPage() {
     }).catch(err => {
       console.warn('Using local fallback menu data:', err);
     });
-  }, []);
-
-  // Play coffee cups clink chime upon entering the menu
-  useEffect(() => {
-    playCafeEntranceSound();
   }, []);
 
   const handleCategoryChange = (id: string) => {
