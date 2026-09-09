@@ -8,9 +8,10 @@ interface Props {
   onCategoryChange: (id: string) => void;
 }
 
+const CATEGORY_IDS = categories.map(c => c.id);
+
 export default function CategoryNav({ activeCategory, onCategoryChange }: Props) {
-  const ids = categories.map(c => c.id);
-  const scrollSpyId = useScrollSpy(ids);
+  const scrollSpyId = useScrollSpy(CATEGORY_IDS);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // When 'all': scroll-spy drives the highlight

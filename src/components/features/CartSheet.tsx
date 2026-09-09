@@ -1,11 +1,12 @@
-import ReactDOM from 'react-dom';
+import { createPortal } from 'react-dom';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Plus, Trash2, ChevronDown, ChevronUp, Send } from 'lucide-react';
-import { useCart } from '@/stores/cartStore';
+import { useCart, getItemUnitPrice } from '@/stores/cartStore';
+import { CONTACT_INFO } from '@/constants/contactInfo';
 
-const CAFE_NAME = 'D95 Gaming & Café';
-const WHATSAPP_PHONE = '201000000000';
+const CAFE_NAME = CONTACT_INFO.fullName;
+const WHATSAPP_PHONE = CONTACT_INFO.whatsappNumber;
 
 interface Props {
   open?: boolean;
@@ -14,12 +15,9 @@ interface Props {
 
 type PaymentMethod = 'wallet' | 'instapay';
 
-const WALLET_NUMBER = '01000000000';
-const INSTAPAY_NUMBER = '01000000000';
-
 const PAYMENT_OPTIONS: { value: PaymentMethod; emoji: string; label: string; fullLabel: string; account: string; accountLabel: string }[] = [
-  { value: 'wallet', emoji: '📱', label: 'محفظة إلكترونية', fullLabel: '📱 محفظة إلكترونية (فودافون كاش)', account: WALLET_NUMBER, accountLabel: 'رقم المحفظة' },
-  { value: 'instapay', emoji: '⚡', label: 'إنستاباي', fullLabel: '⚡ إنستاباي', account: INSTAPAY_NUMBER, accountLabel: 'معرف إنستاباي' },
+  { value: 'wallet', emoji: '📱', label: 'محفظة إلكترونية', fullLabel: '📱 محفظة إلكترونية (فودافون كاش)', account: CONTACT_INFO.walletNumber, accountLabel: 'رقم المحفظة' },
+  { value: 'instapay', emoji: '⚡', label: 'إنستاباي', fullLabel: '⚡ إنستاباي', account: CONTACT_INFO.instapayHandle, accountLabel: 'معرف إنستاباي' },
 ];
 
 function formatCustomization(c: import('@/types/cart').ItemCustomization): string {
@@ -62,7 +60,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
 
   const personTotals = Array.from({ length: people }, (_, pi) => {
     const personItems = items.filter(i => assignments[i.cartId] === pi + 1);
-    return personItems.reduce((sum, i) => sum + i.price * i.customization.quantity, 0);
+    return personItems.reduce((sum, i) => sum + getItemUnitPrice(i) * i.customization.quantity, 0);
   });
 
   const unassigned = items.filter(i => !assignments[i.cartId]);
@@ -72,7 +70,8 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
     const itemLines = items
       .map(i => {
         const custom = formatCustomization(i.customization);
-        return `▪️ ${i.name} × ${i.customization.quantity} = ${i.price * i.customization.quantity} ج.م${custom ? `\n   (${custom})` : ''}`;
+        const itemTotal = getItemUnitPrice(i) * i.customization.quantity;
+        return `▪️ ${i.name} × ${i.customization.quantity} = ${itemTotal} ج.م${custom ? `\n   (${custom})` : ''}`;
       })
       .join('\n');
 
@@ -201,7 +200,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-sm" style={{ color: 'var(--c-brand-l)', fontFamily: '"Playfair Display", serif' }}>
-                              {item.price * item.customization.quantity} ج.م
+                              {getItemUnitPrice(item) * item.customization.quantity} ج.م
                             </span>
                             <button
                               onClick={() => removeItem(item.cartId)}
@@ -474,7 +473,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
                       {item.name} × {item.customization.quantity}
                     </span>
                     <span style={{ color: 'var(--c-brand-l)', fontFamily: '"Playfair Display", serif' }}>
-                      {item.price * item.customization.quantity} ج.م
+                      {getItemUnitPrice(item) * item.customization.quantity} ج.م
                     </span>
                   </div>
                 ))}
@@ -507,8 +506,8 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
 
   return (
     <>
-      {ReactDOM.createPortal(sheet, document.body)}
-      {ReactDOM.createPortal(waiterView, document.body)}
+      {createPortal(sheet, document.body)}
+      {createPortal(waiterView, document.body)}
     </>
   );
 }

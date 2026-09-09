@@ -1,16 +1,17 @@
 import { MapPin, Phone, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useInView } from '@/hooks/useInView';
+import { CONTACT_INFO } from '@/constants/contactInfo';
 
-const CAFE_PHONE = '201000000000';
-const CAFE_PHONE_DISPLAY = '01000000000';
-const GOOGLE_MAPS_LINK = 'https://maps.app.goo.gl/KPRktJNQoYwYvpCT7';
-const MAPS_EMBED_SRC = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3622.4127481777755!2d31.487317599999997!3d30.589288600000003!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14f7f10072ed4367%3A0xd5ea1c9c23c64826!2sG%C3%9CZEL%20CAFE!5e1!3m2!1sen!2seg!4v1786179399270!5m2!1sen!2seg";
+const CAFE_PHONE = CONTACT_INFO.phoneInternational;
+const CAFE_PHONE_DISPLAY = CONTACT_INFO.phoneDisplay;
+const GOOGLE_MAPS_LINK = CONTACT_INFO.googleMapsLink;
+const MAPS_EMBED_SRC = CONTACT_INFO.mapsEmbedSrc;
 
 const INFO_ROWS = [
-  { Icon: MapPin, label: 'العنوان', value: 'القاهرة - مصر', href: GOOGLE_MAPS_LINK },
+  { Icon: MapPin, label: 'العنوان', value: CONTACT_INFO.address, href: GOOGLE_MAPS_LINK },
   { Icon: Phone, label: 'التليفون', value: CAFE_PHONE_DISPLAY, href: `tel:+${CAFE_PHONE}` },
-  { Icon: Clock, label: 'مواعيد العمل', value: 'يومياً من 8 ص حتى 4 ص', href: null },
+  { Icon: Clock, label: 'مواعيد العمل', value: CONTACT_INFO.workingHours, href: null },
 ];
 
 export default function ContactSection() {

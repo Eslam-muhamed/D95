@@ -3,7 +3,6 @@ import { Toaster } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeProvider } from '@/stores/themeStore';
 import { CartProvider } from '@/stores/cartStore';
-import TopHeader from '@/components/features/TopHeader';
 import CartSheet from '@/components/features/CartSheet';
 import BottomNav from '@/components/layout/BottomNav';
 import MenuPage from '@/pages/MenuPage';
@@ -47,13 +46,10 @@ function PageWrapper({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
     const location = useLocation();
-    const isMenuPage = location.pathname === '/menu';
-    const isStandalonePage = location.pathname === '/' || location.pathname.startsWith('/playstation') || isMenuPage;
 
     return (
         <div className="w-full min-h-screen bg-[var(--bg-main)] flex flex-col selection:bg-red-500/30">
-            {!isStandalonePage && <TopHeader />}
-            {!isMenuPage && <CartSheet />}
+            <CartSheet />
             <AnimatePresence mode="wait">
                 <Routes location={location} key={location.pathname}>
                     <Route path="/" element={<PageWrapper><GatewayPage /></PageWrapper>} />

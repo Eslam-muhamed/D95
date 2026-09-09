@@ -22,6 +22,7 @@ import { motion } from 'framer-motion';
 import room01InteriorImg from '@/assets/doors/room-01-interior.jpg';
 import room02InteriorImg from '@/assets/doors/room-02-interior.jpg';
 import { useTheme } from '@/stores/themeStore';
+import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 
 interface SnackAddon {
     id: string;
@@ -125,8 +126,8 @@ export default function BookingDetailsPage() {
 
         const now = new Date();
         for (let i = 0; i < 7; i++) {
-            const d = new Date(now.getTime() + i * 86400000);
-            const iso = d.toISOString().split('T')[0];
+            const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+            const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             const dayName = i === 0 ? 'اليوم' : i === 1 ? 'غداً' : arabicDayNames[d.getDay()];
             const dayNumber = d.getDate();
             const monthName = arabicMonths[d.getMonth()];
@@ -215,6 +216,9 @@ export default function BookingDetailsPage() {
             return;
         }
 
+        // Play authentic PS5 UI game browsing sound mapped to slot pitch
+        playPs5NavigateSound(slot.index);
+
         if (selectedSlotIndices.length === 0) {
             setSelectedSlotIndices([slot.index]);
             return;
@@ -250,6 +254,7 @@ export default function BookingDetailsPage() {
 
     // Quick duration handler
     const handleQuickDuration = (hours: number) => {
+        playPs5SelectSound();
         const firstIdx = selectedSlotIndices[0] ?? 0;
         const newIndices: number[] = [];
         for (let i = 0; i < hours; i++) {
@@ -267,6 +272,7 @@ export default function BookingDetailsPage() {
     };
 
     const toggleSnack = (id: string) => {
+        playPs5NavigateSound();
         setSelectedSnacks((prev) =>
             prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
         );
@@ -294,6 +300,8 @@ export default function BookingDetailsPage() {
             toast.error('برجاء اختيار وقت الجلسة');
             return;
         }
+
+        playPs5SelectSound();
 
         navigate('/playstation/payment', {
             state: {
@@ -439,7 +447,10 @@ export default function BookingDetailsPage() {
                             return (
                                 <button
                                     key={room.id}
-                                    onClick={() => setSelectedRoomId(room.id)}
+                                    onClick={() => {
+                                        setSelectedRoomId(room.id);
+                                        playPs5NavigateSound();
+                                    }}
                                     className={`relative p-3 rounded-lg border text-right transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden group ${
                                         isSelected
                                             ? 'bg-gradient-to-b from-red-50 to-red-100/60 dark:from-[#241216] dark:to-[#150d0f] border-red-600 shadow-[0_0_20px_rgba(220,38,38,0.18)]'
@@ -519,7 +530,10 @@ export default function BookingDetailsPage() {
                             return (
                                 <button
                                     key={d.iso}
-                                    onClick={() => setSelectedDate(d.iso)}
+                                    onClick={() => {
+                                        setSelectedDate(d.iso);
+                                        playPs5NavigateSound();
+                                    }}
                                     className={`relative shrink-0 py-2.5 px-3 rounded-lg border text-center transition-all cursor-pointer min-w-[68px] sm:min-w-[76px] overflow-hidden ${
                                         active
                                             ? 'bg-gradient-to-b from-red-50 to-red-100/60 dark:from-[#251216] dark:to-[#150d0f] border-red-600 shadow-[0_0_18px_rgba(220,38,38,0.2)]'

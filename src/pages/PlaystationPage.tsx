@@ -15,6 +15,7 @@ import {
     KeyRound,
     Sun,
     Moon,
+    type LucideIcon,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -38,7 +39,7 @@ interface RoomData {
     neonShadow: string;
     interiorImg: string;
     features: {
-        icon: any;
+        icon: LucideIcon;
         label: string;
         desc: string;
     }[];

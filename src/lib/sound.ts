@@ -278,4 +278,155 @@ export function playCafeEntranceSound(): void {
     }
 }
 
+let lastNavTime = 0;
+let consecutiveNavIndex = 0;
+
+/**
+ * Plays the authentic, tactile PlayStation 5 UI game navigation sound
+ * (the crisp, glassy shimmer-tick when browsing game cards on the PS5 dashboard).
+ * Features:
+ * 1. Ultra-fast high-frequency glassy transient (mechanical haptic click)
+ * 2. Signature Sony PS5 melodic acoustic harmonic body note with fluid pentatonic pitch shift
+ * 3. Warm acoustic sub-tick giving DualSense controller tactile punch
+ */
+export function playPs5NavigateSound(slotIndex?: number): void {
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        // Reset or step consecutive counter for dynamic musical browsing across slots
+        if (now - lastNavTime < 0.7) {
+            consecutiveNavIndex = (consecutiveNavIndex + 1) % 7;
+        } else {
+            consecutiveNavIndex = 0;
+        }
+        lastNavTime = now;
+
+        // PS5 signature crystalline navigation scale (Pentatonic A-Major: A5, B5, C#6, E6, F#6, A6, B6)
+        const scale = [880.0, 987.77, 1108.73, 1318.51, 1479.98, 1760.0, 1975.53];
+        const baseFreq = slotIndex !== undefined
+            ? scale[Math.abs(slotIndex) % scale.length]
+            : scale[consecutiveNavIndex];
+
+        // Master gain
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0.55, now);
+        masterGain.connect(ctx.destination);
+
+        // 1. HIGH-FREQUENCY HAPTIC GLASS CLICK (Instant controller tick)
+        const clickOsc = ctx.createOscillator();
+        const clickGain = ctx.createGain();
+        clickOsc.type = 'triangle';
+        clickOsc.frequency.setValueAtTime(3200, now);
+        clickOsc.frequency.exponentialRampToValueAtTime(1200, now + 0.016);
+
+        clickGain.gain.setValueAtTime(0, now);
+        clickGain.gain.linearRampToValueAtTime(0.4, now + 0.001);
+        clickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.026);
+
+        clickOsc.connect(clickGain);
+        clickGain.connect(masterGain);
+        clickOsc.start(now);
+        clickOsc.stop(now + 0.03);
+
+        // 2. SIGNATURE PS5 MELODIC BODY CHIME (Glassy resonant harmonic)
+        const bodyOsc = ctx.createOscillator();
+        const bodyGain = ctx.createGain();
+        bodyOsc.type = 'sine';
+        bodyOsc.frequency.setValueAtTime(baseFreq, now);
+
+        bodyGain.gain.setValueAtTime(0, now);
+        bodyGain.gain.linearRampToValueAtTime(0.32, now + 0.003);
+        bodyGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.095);
+
+        bodyOsc.connect(bodyGain);
+        bodyGain.connect(masterGain);
+        bodyOsc.start(now);
+        bodyOsc.stop(now + 0.1);
+
+        // 3. WARM ACOUSTIC SUB-TICK (DualSense haptic actuator punch)
+        const subOsc = ctx.createOscillator();
+        const subGain = ctx.createGain();
+        subOsc.type = 'sine';
+        subOsc.frequency.setValueAtTime(220, now);
+        subOsc.frequency.exponentialRampToValueAtTime(75, now + 0.032);
+
+        subGain.gain.setValueAtTime(0, now);
+        subGain.gain.linearRampToValueAtTime(0.24, now + 0.002);
+        subGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.036);
+
+        subOsc.connect(subGain);
+        subGain.connect(masterGain);
+        subOsc.start(now);
+        subOsc.stop(now + 0.04);
+
+        // 4. MICRO AIR-SWIPE TRANSIENT (Flicking through game tiles on PS5 ribbon)
+        const bufferSize = Math.floor(ctx.sampleRate * 0.032);
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+        const swipeNoise = ctx.createBufferSource();
+        swipeNoise.buffer = noiseBuffer;
+
+        const swipeFilter = ctx.createBiquadFilter();
+        swipeFilter.type = 'bandpass';
+        swipeFilter.frequency.setValueAtTime(5200, now);
+        swipeFilter.frequency.exponentialRampToValueAtTime(1600, now + 0.028);
+        swipeFilter.Q.setValueAtTime(2.2, now);
+
+        const swipeGain = ctx.createGain();
+        swipeGain.gain.setValueAtTime(0, now);
+        swipeGain.gain.linearRampToValueAtTime(0.14, now + 0.002);
+        swipeGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.03);
+
+        swipeNoise.connect(swipeFilter);
+        swipeFilter.connect(swipeGain);
+        swipeGain.connect(masterGain);
+
+        swipeNoise.start(now);
+        swipeNoise.stop(now + 0.032);
+    } catch {
+        // Silently fail if audio not supported
+    }
+}
+
+/**
+ * Plays the signature PS5 "Confirm / Select (X)" chime
+ * Ascending crisp dual-tone confirmation chime.
+ */
+export function playPs5SelectSound(): void {
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0.55, now);
+        masterGain.connect(ctx.destination);
+
+        const playChime = (freq: number, startDelay: number, dur: number, vol: number) => {
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + startDelay);
+
+            g.gain.setValueAtTime(0, now + startDelay);
+            g.gain.linearRampToValueAtTime(vol, now + startDelay + 0.002);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + startDelay + dur);
+
+            osc.connect(g);
+            g.connect(masterGain);
+            osc.start(now + startDelay);
+            osc.stop(now + startDelay + dur);
+        };
+
+        // Note 1: E6 (1318.51 Hz) -> Note 2: A6 (1760.00 Hz)
+        playChime(1318.51, 0.00, 0.08, 0.28);
+        playChime(1760.00, 0.032, 0.16, 0.35);
+    } catch {
+        // Silently fail if audio not supported
+    }
+}
+
 

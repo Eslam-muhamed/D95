@@ -1,5 +1,5 @@
-import ReactDOM from 'react-dom';
-import { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Plus } from 'lucide-react';
 import type { MenuItem } from '@/types/menu';
@@ -75,6 +75,20 @@ export default function ItemCustomizerModal({ item, onClose }: Props) {
   const [toppings, setToppings] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
 
+  // Reset all customization state when item changes or opens
+  useEffect(() => {
+    if (item) {
+      setQuantity(1);
+      setSugar(undefined);
+      setIce('normal');
+      setExtraShot(false);
+      setCream(false);
+      setHoney(false);
+      setToppings([]);
+      setNotes('');
+    }
+  }, [item?.id]);
+
   const toggleTopping = (t: string) =>
     setToppings(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
 
@@ -86,7 +100,8 @@ export default function ItemCustomizerModal({ item, onClose }: Props) {
     onClose();
   };
 
-  const totalPrice = item ? item.price * quantity + (extraShot ? 15 : 0) : 0;
+  const unitPrice = item ? item.price + (extraShot ? 15 : 0) : 0;
+  const totalPrice = unitPrice * quantity;
 
   const modal = (
     <AnimatePresence>
@@ -251,5 +266,5 @@ export default function ItemCustomizerModal({ item, onClose }: Props) {
     </AnimatePresence>
   );
 
-  return ReactDOM.createPortal(modal, document.body);
+  return createPortal(modal, document.body);
 }

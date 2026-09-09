@@ -20,6 +20,8 @@ import {
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/stores/themeStore';
+import { CONTACT_INFO } from '@/constants/contactInfo';
+import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 
 type PaymentMethod = 'instapay' | 'wallet' | 'cash';
 
@@ -67,6 +69,7 @@ export default function BookingPaymentPage() {
             return;
         }
         if (cleaned === 'D95VIP' || cleaned === 'GAMER10' || cleaned === 'D95') {
+            playPs5SelectSound();
             setAppliedPromo(cleaned);
             toast.success('🎉 تم تفعيل خصم 10% بنجاح!');
         } else {
@@ -91,6 +94,8 @@ export default function BookingPaymentPage() {
             toast.error('برجاء إدخال رقم هاتف صحيح للتواصل وتأكيد الحجز');
             return;
         }
+
+        playPs5SelectSound();
 
         // Generate a VIP Reservation ID
         const reservationId = `D95-PS-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -227,7 +232,10 @@ export default function BookingPaymentPage() {
 
                             {/* METHOD 1: INSTAPAY */}
                             <div
-                                onClick={() => setPaymentMethod('instapay')}
+                                onClick={() => {
+                                    setPaymentMethod('instapay');
+                                    playPs5NavigateSound();
+                                }}
                                 className={`w-full text-right p-4 rounded-2xl border-2 transition-all flex flex-col gap-3 cursor-pointer ${
                                     paymentMethod === 'instapay'
                                         ? 'bg-red-50 dark:bg-red-950/40 border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.15)] dark:shadow-[0_0_20px_rgba(220,38,38,0.25)] scale-[1.01]'
@@ -268,14 +276,14 @@ export default function BookingPaymentPage() {
                                             <div className="flex flex-col min-w-0">
                                                 <span className="text-xs text-neutral-600 dark:text-neutral-400 font-semibold">معرف إنستاباي المعتمد (IPA):</span>
                                                 <span className="text-sm sm:text-base font-bold text-red-600 dark:text-red-400 font-mono tracking-wider select-all" dir="ltr">
-                                                    d95cairo@instapay
+                                                    {CONTACT_INFO.instapayHandle}
                                                 </span>
                                             </div>
                                             <button
                                                 type="button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleCopy('d95cairo@instapay', 'instapay');
+                                                    handleCopy(CONTACT_INFO.instapayHandle, 'instapay');
                                                 }}
                                                 className="shrink-0 flex items-center gap-1.5 bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-sm"
                                             >
@@ -305,7 +313,10 @@ export default function BookingPaymentPage() {
 
                             {/* METHOD 2: CASH ON ARRIVAL */}
                             <div
-                                onClick={() => setPaymentMethod('cash')}
+                                onClick={() => {
+                                    setPaymentMethod('cash');
+                                    playPs5NavigateSound();
+                                }}
                                 className={`w-full text-right p-4 rounded-2xl border-2 transition-all flex flex-col gap-2 cursor-pointer ${
                                     paymentMethod === 'cash'
                                         ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-500 shadow-[0_0_20px_rgba(212,160,23,0.15)] dark:shadow-[0_0_20px_rgba(212,160,23,0.25)] scale-[1.01]'
@@ -351,7 +362,10 @@ export default function BookingPaymentPage() {
 
                             {/* METHOD 3: MOBILE WALLET */}
                             <div
-                                onClick={() => setPaymentMethod('wallet')}
+                                onClick={() => {
+                                    setPaymentMethod('wallet');
+                                    playPs5NavigateSound();
+                                }}
                                 className={`w-full text-right p-4 rounded-2xl border-2 transition-all flex flex-col gap-3 cursor-pointer ${
                                     paymentMethod === 'wallet'
                                         ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.15)] dark:shadow-[0_0_20px_rgba(16,185,129,0.25)] scale-[1.01]'
@@ -392,14 +406,14 @@ export default function BookingPaymentPage() {
                                             <div className="flex flex-col min-w-0">
                                                 <span className="text-xs text-neutral-600 dark:text-neutral-400 font-semibold">رقم المحفظة المعتمد للتحويل:</span>
                                                 <span className="text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400 font-mono tracking-wider select-all" dir="ltr">
-                                                    01099238475
+                                                    {CONTACT_INFO.walletNumber}
                                                 </span>
                                             </div>
                                             <button
                                                 type="button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleCopy('01099238475', 'wallet');
+                                                    handleCopy(CONTACT_INFO.walletNumber, 'wallet');
                                                 }}
                                                 className="shrink-0 flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-sm"
                                             >

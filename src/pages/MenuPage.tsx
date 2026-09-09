@@ -7,7 +7,6 @@ import SearchBar from '@/components/features/SearchBar';
 import OffersSection from '@/components/features/OffersSection';
 import MenuSection from '@/components/features/MenuSection';
 import ItemCustomizerModal from '@/components/features/ItemCustomizerModal';
-import CartSheet from '@/components/features/CartSheet';
 import Footer from '@/components/layout/Footer';
 import ReviewsSection from '@/components/features/ReviewsSection';
 import ContactSection from '@/components/features/ContactSection';
@@ -46,7 +45,6 @@ export default function MenuPage() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
-  const [cartOpen, setCartOpen] = useState(false);
 
   // Play coffee cups clink chime upon entering the menu
   useEffect(() => {
@@ -80,7 +78,7 @@ export default function MenuPage() {
   return (
     <div className="min-h-screen bg-[#F6F5F2] dark:bg-[#080607] text-neutral-900 dark:text-[#e8e4e6] font-body text-sm selection:bg-red-600 selection:text-white select-none transition-colors duration-200" dir="rtl">
       {/* Top Header */}
-      <TopHeader onCartOpen={() => setCartOpen(true)} />
+      <TopHeader />
 
       {/* ─────────────────────────────────────────────────────────────
           COMPACT ATHLETIC MENU HEADER (HERO REMOVED FOR MAXIMUM SPEED)
@@ -251,8 +249,13 @@ export default function MenuPage() {
       {/* Scroll to Top */}
       <ScrollToTop />
       {/* ── Modals ── */}
-      <ItemCustomizerModal item={selectedItem} onClose={() => setSelectedItem(null)} />
-      <CartSheet open={cartOpen} onClose={() => setCartOpen(false)} />
+      {selectedItem && (
+        <ItemCustomizerModal
+          key={selectedItem.id}
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
+        />
+      )}
     </div>
   );
 }

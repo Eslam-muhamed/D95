@@ -67,11 +67,15 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue>({} as CartContextValue);
 
+export function getItemUnitPrice(item: Pick<CartItem, 'price' | 'customization'>): number {
+    return item.price + (item.customization.extraShot ? 15 : 0);
+}
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
     const [state, dispatch] = useReducer(cartReducer, { items: [], isOpen: false });
 
     const total = state.items.reduce(
-        (sum, item) => sum + item.price * item.customization.quantity,
+        (sum, item) => sum + getItemUnitPrice(item) * item.customization.quantity,
         0
     );
     const itemCount = state.items.reduce((sum, item) => sum + item.customization.quantity, 0);

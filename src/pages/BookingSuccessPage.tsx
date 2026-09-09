@@ -14,8 +14,16 @@ import {
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useTheme } from '@/stores/themeStore';
+import { CONTACT_INFO } from '@/constants/contactInfo';
 
-const WHATSAPP_NUMBER = '201000000000';
+interface SnackAddon {
+    id: string;
+    name: string;
+    price: number;
+    icon?: string;
+}
+
+const WHATSAPP_NUMBER = CONTACT_INFO.whatsappNumber;
 
 export default function BookingSuccessPage() {
     const navigate = useNavigate();
@@ -68,7 +76,7 @@ export default function BookingSuccessPage() {
         if (snacks && snacks.length > 0) {
             snacksListText =
                 `🍿 *المشروبات والسناكس:* \n` +
-                snacks.map((s: any) => `  - ${s.name} (+${s.price} ج.م)`).join('\n') +
+                snacks.map((s: SnackAddon) => `  - ${s.name} (+${s.price} ج.م)`).join('\n') +
                 `\n\n`;
         }
 
@@ -255,7 +263,7 @@ export default function BookingSuccessPage() {
                                         المشروبات والسناكس الإضافية:
                                     </span>
                                     <div className="flex flex-wrap gap-1">
-                                        {snacks.map((s: any) => (
+                                        {snacks.map((s: SnackAddon) => (
                                             <span
                                                 key={s.id}
                                                 className="text-[11px] bg-neutral-100 dark:bg-[#1c1417] text-neutral-800 dark:text-white px-2 py-0.5 rounded-md border border-neutral-200 dark:border-white/10 font-semibold"

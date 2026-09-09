@@ -1,61 +1,51 @@
-# Welcome to your OnSpace project
+# D95 — Gaming Lounge & Specialty Café
 
-## How can I edit this code?
+منصة حجز صالات ألعاب البلايستيشن الفاخرة ومنيو الكافيه المتخصص لعلامة **D95**.
 
-There are several ways of editing your application.
+---
 
-**Use OnSpace**
+## 🎮 مميزات المشروع
 
-Simply visit the [OnSpace Project]() and start prompting.
+- **بوابة دخول سينمائية**: تجربة بصرية تفاعلية بين عالم الجيمنج (PlayStation 5) وعالم الكافيه.
+- **صالة الألعاب (PlayStation Rooms)**:
+  - استعراض الغرف مع تفاصيل الشاشات والأجهزة والأنظمة الصوتية.
+  - تجربة فتح الأبواب ثلاثية الأبعاد (3D Door Opening Transition) مع مؤثر صوتي حقيقي لتشغيل الـ PS5 (مبني بـ Web Audio API).
+  - حجز فوري للمواعيد بالساعة، اختيار إضافات وسناكس، وحساب تلقائي للتكلفة.
+  - خيارات دفع مرنة (إنستاباي فوري، كاش بالصالة، محفظة إلكترونية).
+  - إصدار تذكرة صعود إلكترونية (VIP Boarding Pass) ومشاركتها مباشرة عبر واتساب.
+- **منيو الكافيه المتخصص**:
+  - تصنيف المشروبات الساخنة والباردة والإضافات.
+  - تخصيص كامل للطلب (مستوى السكر، الثلج، شوت إضافي، كريمة، إضافات خاصة).
+  - سلة مشتريات تفاعلية مع شريط تنقل سفلي سريع.
+  - مؤثر صوتي ترحيبي لأكواب الكافيه عند دخول المنيو.
+- **نظام المظهر المزدوج (Dark / Light Mode)**:
+  - دعم كامل للـ Dark Mode المظلم والـ Light Mode الرياضي المستوحى من الخرسانة المضيئة والهوية الجريئة للمكان.
+  - زر تبديل سلس مع حفظ التفضيل في `localStorage`.
+- **تصميم متجاوب بالكامل**: متوافق 100% مع الهواتف الذكية والأجهزة اللوحية وشاشات الحواسب.
 
-Changes made via OnSpace will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## 🛠️ التقنيات المستخدمة
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in OnSpace.
+- **Framework**: React 18 + Vite (SWC)
+- **Styling**: Tailwind CSS + Vanilla CSS Tokens
+- **Animations**: Framer Motion
+- **Icons**: Lucide React
+- **Notifications**: Sonner
+- **Routing**: React Router DOM v6
+- **Audio Engine**: Synthesized Web Audio API (No heavy external mp3 assets)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+---
 
-Follow these steps:
+## 🚀 التشغيل محلياً
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+```bash
+# تثبيت الحزم
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# تشغيل السيرفر المحلي
 npm run dev
+
+# بناء النسخة الإنتاجية
+npm run build
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [OnSpace]() and click on Share -> Publish.
