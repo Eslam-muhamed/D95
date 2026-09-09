@@ -21,3 +21,18 @@ export interface CartItem {
     category: string;
     customization: ItemCustomization;
 }
+
+export interface CartBooking {
+    roomId: string;
+    roomName: string;
+    roomNameEn: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    startDateTime?: string;
+    endDateTime?: string;
+    durationHours: number;
+    rate: number;
+    subtotal: number;
+}
+

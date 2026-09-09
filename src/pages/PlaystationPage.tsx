@@ -314,42 +314,21 @@ export default function PlaystationPage() {
                                     <div
                                         className={`w-full rounded-2xl sm:rounded-3xl bg-white dark:bg-[#0d0a10] border-2 ${room.neonBorder} ${room.neonShadow} p-1.5 sm:p-3 relative overflow-hidden backdrop-blur-md transition-all duration-500 shadow-lg`}
                                     >
-                                        {/* 2. DOORWAY CAVITY (3D PERSPECTIVE ENVIRONMENT) */}
+                                        {/* 2. DOORWAY CARD */}
                                         <div
                                             className="relative w-full h-[280px] xs:h-[320px] sm:h-[400px] md:h-[460px] rounded-xl sm:rounded-2xl overflow-hidden select-none border border-black/80 bg-black cursor-pointer group"
-                                            style={{ perspective: '1100px' }}
                                             onClick={() => handleDoorEnter(room)}
                                         >
-                                            {/* REVEALED 3D ROOM INTERIOR BEHIND THE DOOR */}
-                                            <div className="absolute inset-0 z-0 overflow-hidden">
-                                                <img
-                                                    src={room.interiorImg}
-                                                    alt={room.titleAr}
-                                                    loading="lazy"
-                                                    decoding="async"
-                                                    className="w-full h-full object-cover brightness-110 group-hover:scale-105 transition-transform duration-500"
+                                            {/* Light burst on click (snappy CSS gradient) */}
+                                            {isOpening && (
+                                                <div
+                                                    className={`absolute inset-0 pointer-events-none z-30 ${
+                                                        room.id === 'room-1'
+                                                            ? 'bg-[radial-gradient(ellipse_at_center,rgba(6,182,212,0.5)_0%,transparent_70%)]'
+                                                            : 'bg-[radial-gradient(ellipse_at_center,rgba(244,63,94,0.5)_0%,transparent_70%)]'
+                                                    }`}
                                                 />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/50" />
-
-                                                {/* Available Badge Inside Door Top */}
-                                                <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/75 border border-emerald-500/70 shadow-[0_0_12px_rgba(16,185,129,0.35)]">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                                    <span className="text-[9px] sm:text-[11px] font-bold text-emerald-300 font-sans tracking-wide">
-                                                        Available
-                                                    </span>
-                                                </div>
-
-                                                {/* Light burst on click (snappy CSS gradient) */}
-                                                {isOpening && (
-                                                    <div
-                                                        className={`absolute inset-0 pointer-events-none z-10 ${
-                                                            room.id === 'room-1'
-                                                                ? 'bg-[radial-gradient(ellipse_at_center,rgba(6,182,212,0.6)_0%,transparent_70%)]'
-                                                                : 'bg-[radial-gradient(ellipse_at_center,rgba(244,63,94,0.6)_0%,transparent_70%)]'
-                                                        }`}
-                                                    />
-                                                )}
-                                            </div>
+                                            )}
 
                                             {/* RESPONSIVE MECHANICAL DOOR LEAF */}
                                             <motion.div
@@ -375,6 +354,14 @@ export default function PlaystationPage() {
                                                     decoding="async"
                                                     className="w-full h-full object-cover brightness-[0.72] contrast-125"
                                                 />
+
+                                                {/* Available Badge Inside Door Top */}
+                                                <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/75 border border-emerald-500/70 shadow-[0_0_12px_rgba(16,185,129,0.35)]">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                                    <span className="text-[9px] sm:text-[11px] font-bold text-emerald-300 font-sans tracking-wide">
+                                                        Available
+                                                    </span>
+                                                </div>
 
                                                 {/* Brushed Titanium & Shadow Overlays */}
                                                 <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/40 to-black/75" />

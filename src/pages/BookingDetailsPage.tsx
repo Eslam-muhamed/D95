@@ -12,12 +12,16 @@ import {
     Sparkles,
     Check,
     Smartphone,
+    ShoppingBag,
+    Coffee,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import room01InteriorImg from '@/assets/doors/room-01-interior.jpg';
 import room02InteriorImg from '@/assets/doors/room-02-interior.jpg';
 import { useTheme } from '@/stores/themeStore';
+import { useCart } from '@/stores/cartStore';
+import { getItemUnitPrice } from '@/lib/cartUtils';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 import {
     BookingInterval,
@@ -82,6 +86,7 @@ export default function BookingDetailsPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
+    const { items: cartItems, cafeTotal, setBooking, openCart, itemCount } = useCart();
 
     // Initial room fallback from navigation state
     const initialRoom = location.state?.room || { name: 'غرفة 01 (Play Room)' };
@@ -370,6 +375,52 @@ export default function BookingDetailsPage() {
     const roomSubtotal = hasSelectedDuration ? Math.round((durationHours || 0) * currentRoom.rate) : 0;
     const isReadyToContinue = hasSelectedTime && hasSelectedDuration && currentAvailability.isAvailable;
 
+    const handleAddToCart = () => {
+        if (!hasSelectedTime || !hasSelectedDuration) {
+            toast.info('يرجى تحديد وقت البدء ومدة الجلسة أولاً 🎮');
+            return;
+        }
+
+        if (!isReadyToContinue) {
+            if (currentAvailability.reason === 'PAST_TIME') {
+                toast.error('هذا الوقت قد مضى، يرجى اختيار موعد قادم ⏳');
+            } else if (currentAvailability.reason === 'EXCEEDS_CLOSING') {
+                toast.error('الموعد مع المدة المحددة يتجاوز موعد إغلاق الصالة (04:00 ص) ⚠️');
+            } else if (currentAvailability.reason === 'OVERLAP_CONFLICT') {
+                const conf = 'conflictingInterval' in currentAvailability ? currentAvailability.conflictingInterval : undefined;
+                const confMsg = conf
+                    ? `يتعارض مع حجز قائم من ${formatArabicTimeDetailed(conf.start)} إلى ${formatArabicTimeDetailed(conf.end)} 🔒`
+                    : 'هذا التوقيت يتعارض مع حجز قائم للغرفة 🔒';
+                toast.error(confMsg);
+            } else {
+                toast.error('يرجى تحديد موعد متاح للجلسة 🎮');
+            }
+            return;
+        }
+
+        setBooking({
+            roomId: currentRoom.id,
+            roomName: currentRoom.name,
+            roomNameEn: currentRoom.nameEn,
+            date: selectedDate,
+            startTime: currentAvailability.formattedStart,
+            endTime: currentAvailability.formattedEnd,
+            startDateTime: currentAvailability.startDateTime?.toISOString(),
+            endDateTime: currentAvailability.endDateTime?.toISOString(),
+            durationHours: durationHours || 1,
+            rate: currentRoom.rate,
+            subtotal: roomSubtotal,
+        });
+
+        playPs5SelectSound();
+        toast.success(`تمت إضافة ${currentRoom.name} إلى السلة بنجاح! 🎮🛒`, {
+            action: {
+                label: 'عرض السلة',
+                onClick: () => openCart(),
+            },
+        });
+    };
+
     const handleContinue = () => {
         if (!hasSelectedTime || !hasSelectedDuration) {
             toast.info('يرجى تحديد وقت البدء ومدة الجلسة أولاً 🎮');
@@ -409,9 +460,14 @@ export default function BookingDetailsPage() {
                 endDateTime: currentAvailability.endDateTime?.toISOString(),
                 durationHours: durationHours || 1,
                 roomSubtotal,
-                snacks: [],
-                snacksTotal: 0,
-                total: roomSubtotal,
+                snacks: cartItems.map(item => ({
+                    id: item.id,
+                    name: `${item.name}${item.customization.quantity > 1 ? ` × ${item.customization.quantity}` : ''}`,
+                    price: getItemUnitPrice(item) * item.customization.quantity,
+                    quantity: item.customization.quantity,
+                })),
+                snacksTotal: cafeTotal,
+                total: roomSubtotal + cafeTotal,
             },
         });
     };
@@ -439,13 +495,29 @@ export default function BookingDetailsPage() {
                         </div>
                     </div>
 
-                    <button
-                        onClick={toggleTheme}
-                        className="w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] border border-neutral-200/80 dark:border-white/10 text-neutral-800 dark:text-neutral-200"
-                        aria-label="تبديل المظهر"
-                    >
-                        {theme === 'dark' ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-neutral-800" />}
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={openCart}
+                            className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] border border-neutral-200/80 dark:border-white/10 text-neutral-800 dark:text-neutral-200"
+                            aria-label="السلة"
+                            title="عرض السلة"
+                        >
+                            <ShoppingBag size={16} />
+                            {itemCount > 0 && (
+                                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-600 text-white text-[9px] font-bold flex items-center justify-center shadow-xs">
+                                    {itemCount}
+                                </span>
+                            )}
+                        </button>
+
+                        <button
+                            onClick={toggleTheme}
+                            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] border border-neutral-200/80 dark:border-white/10 text-neutral-800 dark:text-neutral-200"
+                            aria-label="تبديل المظهر"
+                        >
+                            {theme === 'dark' ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-neutral-800" />}
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -934,51 +1006,125 @@ export default function BookingDetailsPage() {
                     )}
                 </div>
 
+                {/* Cafe Cross-sell / Live Cart Status Banner */}
+                {cartItems.length > 0 ? (
+                    <div className="bg-amber-500/10 dark:bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                                <Coffee className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <div className="font-bold text-xs sm:text-sm text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5">
+                                    <span>سلة الكافيه مدمجة ({cartItems.length} {cartItems.length === 1 ? 'صنف' : 'أصناف'})</span>
+                                    <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold">
+                                        +{cafeTotal} ج.م
+                                    </span>
+                                </div>
+                                <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+                                    سيتم إرسال طلب المشروبات والسناكس مع حجز الغرفة كفاتورة موحدة
+                                </div>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => openCart()}
+                            className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shrink-0 transition-all cursor-pointer shadow-xs"
+                        >
+                            تعديل السلة
+                        </button>
+                    </div>
+                ) : (
+                    <div className="bg-neutral-100/80 dark:bg-white/[0.03] border border-neutral-200/80 dark:border-white/10 rounded-2xl p-4 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-neutral-200 dark:bg-white/10 text-neutral-600 dark:text-neutral-300 flex items-center justify-center shrink-0">
+                                <Coffee className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <div className="font-bold text-xs sm:text-sm text-neutral-900 dark:text-neutral-200">
+                                    تريد مشروبات وسناكس مع اللعب؟
+                                </div>
+                                <div className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                                    اختر من المنيو وستُضاف لسلتك مع حجز الجلسة في فاتورة موحدة
+                                </div>
+                            </div>
+                        </div>
+                        <Link
+                            to="/menu"
+                            className="px-3 py-1.5 rounded-lg bg-neutral-200 dark:bg-white/10 hover:bg-neutral-300 dark:hover:bg-white/15 text-neutral-800 dark:text-neutral-200 text-xs font-bold shrink-0 transition-all"
+                        >
+                            تصفح المنيو
+                        </Link>
+                    </div>
+                )}
             </main>
 
             {/* Sticky Mobile-First Bottom Bar */}
-            <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-[#0c090a]/95 border-t border-neutral-200 dark:border-white/10 backdrop-blur-xl p-3.5 pb-safe shadow-lg">
-                <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+            <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-[#0c090a]/95 border-t border-neutral-200 dark:border-white/10 backdrop-blur-xl p-3 sm:p-4 pb-safe shadow-xl">
+                <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
                     {/* Price & Summary */}
-                    <div className="flex flex-col text-right">
-                        <div className="flex items-baseline gap-1">
-                            <span className="font-mono font-black text-2xl tabular-nums text-neutral-900 dark:text-white">
-                                {roomSubtotal > 0 ? roomSubtotal : currentRoom.rate}
+                    <div className="flex flex-col text-right min-w-0">
+                        <div className="flex items-baseline gap-1.5">
+                            <span className="font-mono font-black text-xl sm:text-2xl tabular-nums text-neutral-900 dark:text-white">
+                                {roomSubtotal > 0 ? (roomSubtotal + cafeTotal) : currentRoom.rate}
                             </span>
                             <span className="text-xs text-neutral-500 font-bold">
-                                {roomSubtotal > 0 ? 'ج.م' : 'ج.م / س'}
+                                {roomSubtotal > 0 ? 'ج.م إجمالي' : 'ج.م / س'}
                             </span>
                         </div>
-                        <div className="text-[11px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5 font-medium">
-                            <span>{currentRoom.titleAr.split('•')[0].trim()}</span>
-                            <span>•</span>
-                            <span>
-                                {hasSelectedTime && hasSelectedDuration
-                                    ? `${currentAvailability.formattedStart} - ${currentAvailability.formattedEnd}`
-                                    : 'لم تحدد الموعد بعد'}
-                            </span>
+                        <div className="text-[11px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5 font-medium truncate">
+                            {cafeTotal > 0 && roomSubtotal > 0 ? (
+                                <span>جلسة {roomSubtotal} + كافيه {cafeTotal} ج.م</span>
+                            ) : (
+                                <>
+                                    <span className="truncate">{currentRoom.titleAr.split('•')[0].trim()}</span>
+                                    <span>•</span>
+                                    <span>
+                                        {hasSelectedTime && hasSelectedDuration
+                                            ? `${currentAvailability.formattedStart} - ${currentAvailability.formattedEnd}`
+                                            : 'لم تحدد الموعد بعد'}
+                                    </span>
+                                </>
+                            )}
                         </div>
                     </div>
 
-                    {/* Action Button */}
-                    <button
-                        onClick={handleContinue}
-                        disabled={!isReadyToContinue}
-                        className={`py-3.5 px-6 sm:px-8 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border ${
-                            isReadyToContinue
-                                ? 'bg-red-600 hover:bg-red-500 border-red-500 text-white shadow-md shadow-red-600/25 active:scale-98'
-                                : 'bg-neutral-200 dark:bg-white/[0.05] text-neutral-400 dark:text-neutral-500 border-transparent cursor-not-allowed'
-                        }`}
-                    >
-                        <span>
-                            {!hasSelectedTime || !hasSelectedDuration
-                                ? 'اختر الوقت والمدة'
-                                : isReadyToContinue
-                                ? 'متابعة الحجز'
-                                : 'الموعد غير متاح'}
-                        </span>
-                        <ArrowRight className="w-4 h-4 rotate-180" />
-                    </button>
+                    {/* Action Buttons: Add to Cart & Direct Checkout */}
+                    <div className="flex items-center gap-2 shrink-0">
+                        <button
+                            type="button"
+                            onClick={handleAddToCart}
+                            disabled={!isReadyToContinue}
+                            title="أضف الجلسة إلى السلة وتابع التصفح"
+                            className={`px-3 sm:px-4 py-3 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer border ${
+                                isReadyToContinue
+                                    ? 'bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/15 text-neutral-900 dark:text-white border-neutral-300 dark:border-white/10 active:scale-95'
+                                    : 'bg-neutral-100/50 dark:bg-white/[0.02] text-neutral-400 dark:text-neutral-600 border-transparent cursor-not-allowed opacity-60'
+                            }`}
+                        >
+                            <ShoppingBag className="w-4 h-4" />
+                            <span className="hidden sm:inline">أضف للسلة</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handleContinue}
+                            disabled={!isReadyToContinue}
+                            className={`py-3 px-4 sm:px-6 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border ${
+                                isReadyToContinue
+                                    ? 'bg-red-600 hover:bg-red-500 border-red-500 text-white shadow-md shadow-red-600/25 active:scale-95'
+                                    : 'bg-neutral-200 dark:bg-white/[0.05] text-neutral-400 dark:text-neutral-500 border-transparent cursor-not-allowed'
+                            }`}
+                        >
+                            <span>
+                                {!hasSelectedTime || !hasSelectedDuration
+                                    ? 'اختر الوقت والمدة'
+                                    : isReadyToContinue
+                                    ? 'متابعة الحجز'
+                                    : 'الموعد غير متاح'}
+                            </span>
+                            <ArrowRight className="w-4 h-4 rotate-180" />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

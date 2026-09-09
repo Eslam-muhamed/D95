@@ -8,13 +8,12 @@ export default function BottomNav() {
     const location = useLocation();
     const { itemCount, openCart } = useCart();
 
-    const isBookingFlow =
-        location.pathname.startsWith('/playstation/booking') ||
+    const isCheckoutFlow =
         location.pathname.startsWith('/playstation/payment') ||
         location.pathname.startsWith('/playstation/success');
 
-    // Don't show bottom nav inside active payment/checkout pages to keep focus
-    if (isBookingFlow) return null;
+    // Hide bottom nav only during final payment checkout & success pages
+    if (isCheckoutFlow) return null;
 
     const navItems = [
         { path: '/', label: 'البوابة', icon: Home, isExact: true },

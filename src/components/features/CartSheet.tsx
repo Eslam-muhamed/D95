@@ -1,7 +1,8 @@
 import { createPortal } from 'react-dom';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Minus, Plus, Trash2, ChevronDown, ChevronUp, Send } from 'lucide-react';
+import { X, Minus, Plus, Trash2, ChevronDown, ChevronUp, Send, Gamepad2, Calendar, Clock, Edit2 } from 'lucide-react';
 import { useCart } from '@/stores/cartStore';
 import { getItemUnitPrice } from '@/lib/cartUtils';
 import { CONTACT_INFO } from '@/constants/contactInfo';
@@ -40,7 +41,21 @@ function formatCustomization(c: import('@/types/cart').ItemCustomization): strin
 }
 
 export default function CartSheet({ open: propOpen, onClose: propOnClose }: Props) {
-  const { items, totalItems, totalPrice, removeItem, updateQty, clearCart, isOpen, closeCart } = useCart();
+  const navigate = useNavigate();
+  const {
+    items,
+    booking,
+    totalItems,
+    totalPrice,
+    cafeTotal,
+    bookingTotal,
+    removeItem,
+    updateQty,
+    removeBooking,
+    clearCart,
+    isOpen,
+    closeCart
+  } = useCart();
 
   const isCartOpen = propOpen !== undefined ? propOpen : isOpen;
   const handleClose = propOnClose !== undefined ? propOnClose : closeCart;
@@ -75,6 +90,23 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
         return `▪️ ${i.name} × ${i.customization.quantity} = ${itemTotal} ج.م${custom ? `\n   (${custom})` : ''}`;
       })
       .join('\n');
+
+    // Unified PlayStation Booking + Cafe Order
+    if (booking) {
+      const psSection =
+        `🎮 --- حجز بلايستيشن وطلبات كافيه ---\n🏠 ${CAFE_NAME}\n\n` +
+        `🎮 تفاصيل الغرفة والجلسة:\n` +
+        `• الغرفة: ${booking.roomName}\n` +
+        `• التاريخ: ${booking.date}\n` +
+        `• الموعد: من ${booking.startTime} إلى ${booking.endTime} (${booking.durationHours} ${booking.durationHours === 1 ? 'ساعة' : 'ساعات'})\n` +
+        `• سعر الجلسة: ${booking.subtotal} ج.م\n\n`;
+
+      const cafeSection = items.length > 0
+        ? `☕ طلبات الكافيه المرافقة للجلسة:\n${itemLines}\n💵 إجمالي الكافيه: ${cafeTotal} ج.م\n\n`
+        : '';
+
+      return encodeURIComponent(`${psSection}${cafeSection}💰 الإجمالي الكلي: ${totalPrice} ج.م\n💳 طريقة الدفع المفضلة: ${payFull}`);
+    }
 
     if (orderType === 'dine') {
       const header = `🪑 --- طلبية داخل الصالة ---\n🎮 ${CAFE_NAME}\n🪑 رقم الطاولة / الغرفة: ${tableNo || 'غير محدد'}\n\n`;
@@ -153,13 +185,109 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
               </div>
             </div>
 
-            {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <span className="text-5xl">🎮</span>
-                <p style={{ color: 'var(--c-text-4)', fontFamily: 'Cairo, sans-serif' }}>السلة فارغة</p>
+            {!booking && items.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-3 text-center px-4">
+                <span className="text-5xl">🛒</span>
+                <p className="font-bold text-base" style={{ color: 'var(--c-text-1)', fontFamily: 'Cairo, sans-serif' }}>السلة فارغة حالياً</p>
+                <p className="text-xs text-neutral-400 max-w-xs leading-relaxed" style={{ fontFamily: 'Cairo, sans-serif' }}>
+                  يمكنك حجز غرفة بلايستيشن أو طلب مشروبات وسناكس من الكافيه لتظهر جميعها هنا معاً!
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    onClick={() => {
+                      handleClose();
+                      navigate('/playstation');
+                    }}
+                    className="px-4 py-2 rounded-xl bg-red-600/15 border border-red-500/40 text-red-500 font-bold text-xs cursor-pointer active:scale-95 transition-all"
+                  >
+                    🎮 حجز بلايستيشن
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleClose();
+                      navigate('/menu');
+                    }}
+                    className="px-4 py-2 rounded-xl bg-white/10 border border-white/10 text-white font-bold text-xs cursor-pointer active:scale-95 transition-all"
+                  >
+                    ☕ تصفح المنيو
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="px-4 py-4 space-y-3">
+                {/* 🎮 PLAYSTATION BOOKING CARD IN UNIFIED CART */}
+                {booking && (
+                  <div
+                    className="rounded-2xl p-3.5 border relative shadow-md"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(139,26,42,0.25) 0%, rgba(20,10,14,0.95) 100%)',
+                      borderColor: 'rgba(220,38,38,0.4)',
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-xl bg-red-600/25 border border-red-500/40 text-red-400 flex items-center justify-center shrink-0 shadow-sm">
+                          <Gamepad2 size={22} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm text-white" style={{ fontFamily: 'Cairo, sans-serif' }}>
+                              {booking.roomName}
+                            </span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30">
+                              جلسة بلايستيشن
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-neutral-300 mt-1 font-sans">
+                            <span className="flex items-center gap-1">
+                              <Calendar size={12} className="text-red-400" />
+                              {booking.date}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock size={12} className="text-red-400" />
+                              {booking.startTime} - {booking.endTime} ({booking.durationHours} {booking.durationHours === 1 ? 'ساعة' : 'ساعات'})
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-1.5">
+                        <span className="font-mono font-bold text-sm text-red-400" dir="ltr">
+                          {booking.subtotal} ج.م
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => {
+                              handleClose();
+                              navigate('/playstation/booking', {
+                                state: {
+                                  room: {
+                                    id: booking.roomId,
+                                    name: booking.roomName,
+                                    nameEn: booking.roomNameEn,
+                                    rate: booking.rate,
+                                  },
+                                },
+                              });
+                            }}
+                            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white transition-colors cursor-pointer"
+                            title="تعديل الموعد"
+                          >
+                            <Edit2 size={13} />
+                          </button>
+                          <button
+                            onClick={removeBooking}
+                            className="p-1.5 rounded-lg bg-red-500/15 hover:bg-red-500/30 text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                            title="إزالة الحجز"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Items */}
                 {items.map(item => {
                   const custom = formatCustomization(item.customization);
@@ -468,6 +596,18 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
 
               {/* Order summary */}
               <div className="rounded-xl p-3 space-y-2" style={{ background: 'rgba(139,26,42,0.07)', border: '1px solid rgba(139,26,42,0.15)' }}>
+                {booking && (
+                  <div className="flex justify-between text-sm font-semibold pb-1.5 border-b border-white/10">
+                    <span className="flex items-center gap-1.5" style={{ color: 'var(--c-text-1)', fontFamily: 'Cairo, sans-serif' }}>
+                      <Gamepad2 size={15} className="text-red-500" />
+                      <span>{booking.roomName} ({booking.durationHours} {booking.durationHours === 1 ? 'ساعة' : 'ساعات'})</span>
+                    </span>
+                    <span style={{ color: 'var(--c-brand-l)', fontFamily: '"Playfair Display", serif' }}>
+                      {booking.subtotal} ج.م
+                    </span>
+                  </div>
+                )}
+
                 {items.map(item => (
                   <div key={item.cartId} className="flex justify-between text-sm">
                     <span style={{ color: 'var(--c-text-2)', fontFamily: 'Cairo, sans-serif' }}>
@@ -478,26 +618,74 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
                     </span>
                   </div>
                 ))}
+
                 <div className="flex justify-between font-bold pt-2" style={{ borderTop: '1px solid rgba(139,26,42,0.2)' }}>
-                  <span style={{ color: 'var(--c-on-card)', fontFamily: 'Cairo, sans-serif' }}>💰 الإجمالي</span>
-                  <span style={{ color: 'var(--c-brand-l)', fontFamily: '"Playfair Display", serif' }}>{totalPrice} ج.م</span>
+                  <span style={{ color: 'var(--c-on-card)', fontFamily: 'Cairo, sans-serif' }}>💰 الإجمالي الكلي</span>
+                  <span style={{ color: 'var(--c-brand-l)', fontFamily: '"Playfair Display", serif', fontSize: '1.05rem' }}>{totalPrice} ج.م</span>
                 </div>
               </div>
 
-              {/* Send via WhatsApp */}
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={sendOrder}
-                className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2 cursor-pointer"
-                style={{
-                  background: 'linear-gradient(135deg, #128C7E, #25D366)',
-                  boxShadow: '0 4px 20px rgba(37,211,102,0.3)',
-                  fontFamily: 'Cairo, sans-serif',
-                }}
-              >
-                <Send size={18} />
-                إرسال عبر واتساب
-              </motion.button>
+              {/* Checkout / Send Order Buttons */}
+              {booking ? (
+                <div className="space-y-2 pt-1">
+                  <button
+                    onClick={() => {
+                      handleClose();
+                      navigate('/playstation/payment', {
+                        state: {
+                          room: {
+                            id: booking.roomId,
+                            name: booking.roomName,
+                            nameEn: booking.roomNameEn,
+                            rate: booking.rate,
+                          },
+                          date: booking.date,
+                          startTime: booking.startTime,
+                          endTime: booking.endTime,
+                          startDateTime: booking.startDateTime,
+                          endDateTime: booking.endDateTime,
+                          durationHours: booking.durationHours,
+                          roomSubtotal: booking.subtotal,
+                          snacks: items.map(i => ({
+                            id: i.id,
+                            name: `${i.name}${i.customization.quantity > 1 ? ` × ${i.customization.quantity}` : ''}`,
+                            price: getItemUnitPrice(i) * i.customization.quantity,
+                            quantity: i.customization.quantity,
+                          })),
+                          snacksTotal: cafeTotal,
+                          total: totalPrice,
+                        },
+                      });
+                    }}
+                    className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-red-600/30 active:scale-[0.98] transition-all cursor-pointer border border-red-500/50"
+                  >
+                    <Gamepad2 size={18} />
+                    <span>متابعة حجز البلايستيشن والكافيه ({totalPrice} ج.م)</span>
+                  </button>
+
+                  <button
+                    onClick={sendOrder}
+                    className="w-full py-2.5 px-4 rounded-xl text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer bg-[#25D366]/90 hover:bg-[#25D366] transition-all active:scale-[0.98] shadow-sm"
+                  >
+                    <Send size={15} />
+                    <span>أو إرسال تفاصيل الحجز والطلبات عبر واتساب</span>
+                  </button>
+                </div>
+              ) : (
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={sendOrder}
+                  className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2 cursor-pointer"
+                  style={{
+                    background: 'linear-gradient(135deg, #128C7E, #25D366)',
+                    boxShadow: '0 4px 20px rgba(37,211,102,0.3)',
+                    fontFamily: 'Cairo, sans-serif',
+                  }}
+                >
+                  <Send size={18} />
+                  إرسال عبر واتساب
+                </motion.button>
+              )}
             </div>
           </motion.div>
         </motion.div>

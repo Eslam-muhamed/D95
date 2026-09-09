@@ -20,6 +20,8 @@ import {
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/stores/themeStore';
+import { useCart } from '@/stores/cartStore';
+import { getItemUnitPrice } from '@/lib/cartUtils';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 import { createBooking } from '@/services/bookingService';
@@ -39,6 +41,7 @@ export default function BookingPaymentPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
+    const { items: cartItems, cafeTotal, clearCart } = useCart();
 
     // Booking context from state with rock-solid defaults
     const bookingState = location.state || {
@@ -67,6 +70,22 @@ export default function BookingPaymentPage() {
         snacks,
         snacksTotal
     } = bookingState;
+
+    // Harmonize snacks: use state snacks if provided, otherwise integrate live cart cafe items
+    const effectiveSnacks: SnackItem[] = (snacks && snacks.length > 0)
+        ? snacks
+        : cartItems.map(item => ({
+            id: item.id,
+            name: `${item.name}${item.customization.quantity > 1 ? ` × ${item.customization.quantity}` : ''}`,
+            price: getItemUnitPrice(item) * item.customization.quantity,
+            icon: '☕',
+        }));
+
+    const effectiveSnacksTotal = (snacksTotal && snacksTotal > 0)
+        ? snacksTotal
+        : (snacks && snacks.length > 0)
+        ? snacks.reduce((sum: number, s: SnackItem) => sum + (s.price || 0), 0)
+        : cafeTotal;
 
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('instapay');
     const [name, setName] = useState('');
@@ -101,7 +120,7 @@ export default function BookingPaymentPage() {
     };
 
     // Calculate discount and net total
-    const rawTotal = (roomSubtotal || 200) + (snacksTotal || 0);
+    const rawTotal = (roomSubtotal || 200) + (effectiveSnacksTotal || 0);
     const discountAmount = appliedPromo ? Math.round(rawTotal * 0.1) : 0;
     const netTotal = Math.max(0, rawTotal - discountAmount);
     const [submitting, setSubmitting] = useState(false);
@@ -160,14 +179,17 @@ export default function BookingPaymentPage() {
                 end_datetime: finalEndDateTime,
                 duration_hours: Number(durationHours) || 1,
                 subtotal: Number(roomSubtotal) || 0,
-                snacks_total: Number(snacksTotal) || 0,
+                snacks_total: Number(effectiveSnacksTotal) || 0,
                 discount_amount: Number(discountAmount) || 0,
                 total_amount: Number(netTotal) || 0,
                 payment_method: paymentMethod,
                 status: 'pending',
-                snacks: snacks || [],
+                snacks: effectiveSnacks || [],
                 notes: notes.trim() || null,
             });
+
+            // Booking successfully recorded - clear cart
+            clearCart();
         } catch (err: unknown) {
             console.error('Failed to save booking to Supabase:', err);
             const msg = err instanceof Error ? err.message : 'عذراً، تعذر إتمام الحجز لوجود تعارض في الموعد أو مشكلة في الاتصال';
@@ -187,8 +209,8 @@ export default function BookingPaymentPage() {
                 endTime,
                 durationHours,
                 roomSubtotal,
-                snacks,
-                snacksTotal,
+                snacks: effectiveSnacks,
+                snacksTotal: effectiveSnacksTotal,
                 discountAmount,
                 netTotal,
                 paymentMethod,
@@ -582,9 +604,9 @@ export default function BookingPaymentPage() {
                                     <span className="font-bold text-neutral-900 dark:text-white">{roomSubtotal} ج.م</span>
                                 </div>
 
-                                {snacks && snacks.length > 0 && snacks.map((s: SnackItem) => (
+                                {effectiveSnacks && effectiveSnacks.length > 0 && effectiveSnacks.map((s: SnackItem) => (
                                     <div key={s.id} className="flex justify-between items-center text-neutral-600 dark:text-neutral-400">
-                                        <span>{s.icon} {s.name}:</span>
+                                        <span>{s.icon || '☕'} {s.name}:</span>
                                         <span className="text-red-600 dark:text-red-400 font-bold">+{s.price} ج.م</span>
                                     </div>
                                 ))}
