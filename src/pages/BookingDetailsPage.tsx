@@ -10,6 +10,8 @@ import {
     AlertCircle,
     CheckCircle2,
     Sparkles,
+    Check,
+    Smartphone,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -37,6 +39,13 @@ interface Room {
     interiorImg: string;
 }
 
+interface DaySegment {
+    type: 'available' | 'occupied';
+    start: Date;
+    end: Date;
+    durationHours: number;
+}
+
 const AVAILABLE_ROOMS: Room[] = [
     {
         id: 'room-1',
@@ -60,7 +69,7 @@ const AVAILABLE_ROOMS: Room[] = [
 
 const DURATION_PRESETS = [1, 1.5, 2, 3, 4];
 
-// Helper: Format Arabic time with full clarity (e.g. "06:00 مساءً")
+// Helper: Format Arabic time clearly (e.g. "06:00 مساءً" or "01:30 صباحاً")
 function formatArabicTimeDetailed(date: Date): string {
     const hour = date.getHours();
     const minute = date.getMinutes();
@@ -109,7 +118,7 @@ export default function BookingDetailsPage() {
     const [selectedDate, setSelectedDate] = useState(calendarDays[0].iso);
 
     // =========================================================================
-    // USER FREEDOM: No forced pre-selections! Starts unselected (null)
+    // MOBILE-FIRST STATE: Free, non-forced initial selection
     // =========================================================================
     const [durationHours, setDurationHours] = useState<number | null>(null);
     const [selectedHour, setSelectedHour] = useState<number | null>(null);
@@ -130,6 +139,22 @@ export default function BookingDetailsPage() {
         if (selectedPeriod === 'AM' && selectedHour === 12) h24 = 0;
         return `${String(h24).padStart(2, '0')}:${String(selectedMinute).padStart(2, '0')}`;
     }, [hasSelectedTime, selectedHour, selectedMinute, selectedPeriod]);
+
+    // Handle setting time from Date object (e.g. when tapping an available gap)
+    const setTimeFromDate = useCallback((date: Date) => {
+        const hour = date.getHours();
+        const min = date.getMinutes();
+        const p: 'AM' | 'PM' = hour >= 12 && hour < 24 ? 'PM' : 'AM';
+        const h12 = hour % 12 === 0 ? 12 : hour % 12;
+
+        setSelectedHour(h12);
+        setSelectedMinute(min);
+        setSelectedPeriod(p);
+        if (durationHours === null) {
+            setDurationHours(1);
+        }
+        playPs5SelectSound();
+    }, [durationHours]);
 
     // Handle HTML5 native time picker input
     const handleNativeTimeChange = (val: string) => {
@@ -156,7 +181,7 @@ export default function BookingDetailsPage() {
     // Quick time adjustments
     const addMinutesToTime = (minsToAdd: number) => {
         playPs5NavigateSound();
-        let h24 = selectedHour ?? 18; // fallback to 6 PM if unselected
+        let h24 = selectedHour ?? 18;
         let curMin = selectedMinute ?? 0;
 
         if (selectedPeriod === 'PM' && h24 < 12) h24 += 12;
@@ -207,6 +232,69 @@ export default function BookingDetailsPage() {
         return [...occupiedIntervals].sort((a, b) => a.start.getTime() - b.start.getTime());
     }, [occupiedIntervals]);
 
+    // =========================================================================
+    // MOBILE EXPERIENCE: Dynamic calculation of all Free vs Occupied segments
+    // =========================================================================
+    const dayScheduleSegments = useMemo<DaySegment[]>(() => {
+        const { opening, closing } = getBusinessOperatingWindow(selectedDate);
+        if (sortedBookings.length === 0) {
+            const diffHours = (closing.getTime() - opening.getTime()) / (3600 * 1000);
+            return [{ type: 'available', start: opening, end: closing, durationHours: diffHours }];
+        }
+
+        const segments: DaySegment[] = [];
+        let currentPointer = opening.getTime();
+
+        for (const b of sortedBookings) {
+            const bStart = Math.max(opening.getTime(), b.start.getTime());
+            const bEnd = Math.min(closing.getTime(), b.end.getTime());
+
+            // Free gap before this booking
+            if (bStart > currentPointer) {
+                const gapHours = Math.round(((bStart - currentPointer) / (3600 * 1000)) * 10) / 10;
+                if (gapHours > 0) {
+                    segments.push({
+                        type: 'available',
+                        start: new Date(currentPointer),
+                        end: new Date(bStart),
+                        durationHours: gapHours,
+                    });
+                }
+            }
+
+            // The occupied booking
+            const occHours = Math.round(((bEnd - bStart) / (3600 * 1000)) * 10) / 10;
+            segments.push({
+                type: 'occupied',
+                start: new Date(bStart),
+                end: new Date(bEnd),
+                durationHours: occHours,
+            });
+
+            currentPointer = Math.max(currentPointer, bEnd);
+        }
+
+        // Free gap after last booking until closing
+        if (currentPointer < closing.getTime()) {
+            const remainingHours = Math.round(((closing.getTime() - currentPointer) / (3600 * 1000)) * 10) / 10;
+            if (remainingHours > 0) {
+                segments.push({
+                    type: 'available',
+                    start: new Date(currentPointer),
+                    end: closing,
+                    durationHours: remainingHours,
+                });
+            }
+        }
+
+        return segments;
+    }, [selectedDate, sortedBookings]);
+
+    // Filter available gaps only for quick touch selection
+    const availableGaps = useMemo(() => {
+        return dayScheduleSegments.filter((s) => s.type === 'available');
+    }, [dayScheduleSegments]);
+
     // Real-time availability evaluation
     const currentAvailability = useMemo(() => {
         if (!startDateTime || durationHours === null) {
@@ -246,7 +334,7 @@ export default function BookingDetailsPage() {
         return Math.max(0, Math.min(100, (diffMins / 1200) * 100));
     }, [selectedDate]);
 
-    // Proposed session segment on timeline (only rendered when user picks time & duration)
+    // Proposed session segment on timeline
     const proposedTimeline = useMemo(() => {
         if (!startDateTime || durationHours === null) return null;
         const left = getTimelinePercent(startDateTime);
@@ -256,7 +344,7 @@ export default function BookingDetailsPage() {
         return { left, width };
     }, [startDateTime, durationHours, getTimelinePercent]);
 
-    // Click on timeline to select time directly
+    // Tap on timeline to select time directly
     const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
         const rect = e.currentTarget.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
@@ -432,29 +520,43 @@ export default function BookingDetailsPage() {
                     </div>
                 </div>
 
-                {/* 3. INTERACTIVE DAY SCHEDULE & TIMELINE */}
+                {/* ========================================================= */}
+                {/* 3. MOBILE-PRIORITY: ULTRA-CLEAR SCHEDULE & AVAILABILITY   */}
+                {/* ========================================================= */}
                 <div className="bg-white dark:bg-[#120e10] border border-neutral-200/80 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
-                    <div className="flex items-center justify-between">
+                    {/* Header & Status Summary */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-neutral-100 dark:border-white/[0.06]">
                         <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4 text-red-600 dark:text-red-500" />
-                            <h2 className="font-bold text-xs sm:text-sm text-neutral-900 dark:text-white">
+                            <h2 className="font-bold text-sm text-neutral-900 dark:text-white">
                                 جدول مواعيد اليوم ({currentRoom.nameEn})
                             </h2>
                         </div>
-                        <span className="text-[11px] font-mono text-neutral-500">
-                            {sortedBookings.length} {sortedBookings.length === 1 ? 'حجز مسجل' : 'حجوزات مسجلة'}
-                        </span>
+
+                        <div className="flex items-center gap-2">
+                            {sortedBookings.length > 0 ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400">
+                                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                                    <span>يوجد {sortedBookings.length} موعد محجوز</span>
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/50 text-emerald-600 dark:text-emerald-400">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                    <span>الغرفة متاحة طوال اليوم</span>
+                                </span>
+                            )}
+                        </div>
                     </div>
 
                     {/* Interactive 24h Timeline Bar */}
-                    <div className="space-y-2 pt-1">
+                    <div className="space-y-2">
                         <div
                             onClick={handleTimelineClick}
-                            className="relative w-full h-8 bg-neutral-100 dark:bg-[#060810] border border-neutral-200 dark:border-white/15 rounded-xl overflow-hidden shadow-inner cursor-pointer"
-                            title="اضغط على أي وقت على الشريط لاختياره مباشرة"
+                            className="relative w-full h-9 sm:h-10 bg-neutral-100 dark:bg-[#060810] border border-neutral-200 dark:border-white/15 rounded-xl overflow-hidden shadow-inner cursor-pointer active:scale-[0.99] transition-transform"
+                            title="المس أو اضغط على أي وقت على الشريط لاختياره مباشرة"
                         >
                             {/* Hour Grid Markers */}
-                            <div className="absolute inset-0 flex justify-between px-2 pointer-events-none opacity-25">
+                            <div className="absolute inset-0 flex justify-between px-2 pointer-events-none opacity-20">
                                 {[0, 20, 40, 60, 80, 100].map((pos) => (
                                     <div key={pos} className="w-[1px] h-full bg-neutral-400 dark:bg-white" />
                                 ))}
@@ -464,27 +566,27 @@ export default function BookingDetailsPage() {
                             {sortedBookings.map((b, idx) => {
                                 const left = getTimelinePercent(b.start);
                                 const right = getTimelinePercent(b.end);
-                                const width = Math.max(1.5, right - left);
+                                const width = Math.max(2, right - left);
                                 return (
                                     <div
                                         key={idx}
                                         style={{ left: `${left}%`, width: `${width}%` }}
-                                        className="absolute top-0 bottom-0 bg-red-600/70 border-x border-red-500 flex items-center justify-center text-[10px] text-white font-mono font-bold overflow-hidden shadow-sm pointer-events-none"
+                                        className="absolute top-0 bottom-0 bg-red-600/80 border-x border-red-400 flex items-center justify-center text-[10px] text-white font-mono font-bold overflow-hidden shadow-sm pointer-events-none"
                                         title={`محجوز من ${formatArabicTimeDetailed(b.start)} إلى ${formatArabicTimeDetailed(b.end)}`}
                                     >
-                                        <Lock className="w-3 h-3 text-white shrink-0 drop-shadow-sm" />
+                                        <Lock className="w-3.5 h-3.5 text-white shrink-0 drop-shadow-sm" />
                                     </div>
                                 );
                             })}
 
-                            {/* Customer's Proposed Selection (ONLY rendered if user actually selected time & duration) */}
+                            {/* Customer's Proposed Selection (Green/Cyan or Warning Red) */}
                             {proposedTimeline && (
                                 <div
                                     style={{ left: `${proposedTimeline.left}%`, width: `${proposedTimeline.width}%` }}
                                     className={`absolute top-0 bottom-0 transition-all border-2 flex items-center justify-center text-[10px] font-bold shadow-md z-10 pointer-events-none ${
                                         currentAvailability.isAvailable
-                                            ? 'bg-emerald-500/80 border-emerald-400 text-white shadow-[0_0_12px_rgba(16,185,129,0.5)]'
-                                            : 'bg-red-500/80 border-amber-300 text-white animate-pulse'
+                                            ? 'bg-emerald-500/85 border-emerald-400 text-white shadow-[0_0_12px_rgba(16,185,129,0.6)]'
+                                            : 'bg-red-500/85 border-amber-300 text-white animate-pulse'
                                     }`}
                                 >
                                     <span className="truncate px-1 font-mono text-[10px]">
@@ -503,88 +605,105 @@ export default function BookingDetailsPage() {
                             <span>12:00 ص</span>
                             <span>04:00 ص</span>
                         </div>
-
-                        {/* Legend */}
-                        <div className="flex items-center justify-center gap-4 text-[11px] pt-1 text-neutral-500 dark:text-neutral-400 font-medium flex-wrap">
-                            <div className="flex items-center gap-1.5">
-                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                                <span>أوقات متاحة</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <span className="w-2.5 h-2.5 rounded-full bg-red-600" />
-                                <span>محجوز مسبقاً</span>
-                            </div>
-                            {proposedTimeline ? (
-                                <div className="flex items-center gap-1.5">
-                                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 border border-white" />
-                                    <span>جلستك المحددة</span>
-                                </div>
-                            ) : (
-                                <span className="text-[10px] text-neutral-400 font-mono">
-                                    (اضغط على الشريط أو اختر وقتاً لتحديد الجلسة)
-                                </span>
-                            )}
-                        </div>
                     </div>
 
-                    {/* Booked Slots List or Free Room Banner */}
-                    <div className="space-y-2 pt-2 border-t border-neutral-100 dark:border-white/[0.06]">
-                        {sortedBookings.length > 0 ? (
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className="font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5">
-                                        <Lock className="w-3.5 h-3.5" />
-                                        <span>الأوقات المحجوزة مسبقاً في هذه الغرفة (مغلقة):</span>
-                                    </span>
-                                    <span className="text-[10px] text-neutral-400">
-                                        اختر أي موعد قبلها أو بعدها
-                                    </span>
-                                </div>
+                    {/* SECTION A: OCCUPIED SLOTS (High-Contrast & Unmistakable) */}
+                    {sortedBookings.length > 0 ? (
+                        <div className="space-y-2.5 pt-2">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                                    <Lock className="w-4 h-4" />
+                                    <span>المواعيد المحجوزة مسبقاً (غير متاحة):</span>
+                                </span>
+                                <span className="text-[11px] text-neutral-500">
+                                    مغلقة بالكامل لعملاء آخرين
+                                </span>
+                            </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    {sortedBookings.map((b, idx) => (
-                                        <div
-                                            key={idx}
-                                            className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 flex items-center justify-between transition-all"
-                                        >
-                                            <div className="flex items-center gap-2.5">
-                                                <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-900/60 border border-red-300 dark:border-red-500/40 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
-                                                    <Lock className="w-3.5 h-3.5" />
+                            <div className="space-y-2">
+                                {sortedBookings.map((b, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 flex items-center justify-between shadow-xs"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-900/70 border border-red-300 dark:border-red-500/40 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
+                                                <Lock className="w-4 h-4" />
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="font-black text-sm text-neutral-900 dark:text-white">
+                                                    من {formatArabicTimeDetailed(b.start)} إلى {formatArabicTimeDetailed(b.end)}
                                                 </div>
-                                                <div className="text-right">
-                                                    <div className="font-bold text-xs text-neutral-900 dark:text-white">
-                                                        من {formatArabicTimeDetailed(b.start)}
-                                                    </div>
-                                                    <div className="font-bold text-xs text-neutral-900 dark:text-white">
-                                                        إلى {formatArabicTimeDetailed(b.end)}
-                                                    </div>
+                                                <div className="text-xs text-red-600/90 dark:text-red-400 font-medium mt-0.5">
+                                                    محجوز مسبقاً • غير متاح للحجز
                                                 </div>
                                             </div>
-
-                                            <span className="px-2 py-1 rounded-md bg-red-600/10 dark:bg-red-950 border border-red-400/40 text-red-600 dark:text-red-400 font-bold text-[10px] shrink-0">
-                                                محجوز بالكامل ✕
-                                            </span>
                                         </div>
-                                    ))}
+
+                                        <span className="px-2.5 py-1 rounded-md bg-red-600/10 dark:bg-red-950 border border-red-300 dark:border-red-500/40 text-red-600 dark:text-red-400 font-bold text-xs shrink-0 font-mono">
+                                            محجوز ✕
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-600/40 flex items-center gap-3 text-emerald-900 dark:text-emerald-300 text-xs">
+                            <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            <div>
+                                <div className="font-bold text-sm text-emerald-950 dark:text-emerald-200">
+                                    الغرفة متاحة بالكامل طوال اليوم!
+                                </div>
+                                <div className="text-xs text-emerald-700 dark:text-emerald-400/90 mt-0.5">
+                                    لا يوجد أي حجز مسبق. يمكنك اختيار أي موعد تريده بحرية تامة من 08:00 ص حتى 04:00 ص.
                                 </div>
                             </div>
-                        ) : (
-                            <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/25 border border-emerald-200 dark:border-emerald-600/30 flex items-center gap-3 text-emerald-900 dark:text-emerald-300 text-xs">
-                                <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                                <div>
-                                    <div className="font-bold text-sm text-emerald-950 dark:text-emerald-200">
-                                        الغرفة متاحة بالكامل طوال اليوم!
-                                    </div>
-                                    <div className="text-[11px] text-emerald-700 dark:text-emerald-400/90 mt-0.5">
-                                        لا توجد أي حجوزات مسبقة اليوم، يمكنك اختيار أي وقت تريده بحرية تامة.
-                                    </div>
-                                </div>
+                        </div>
+                    )}
+
+                    {/* SECTION B: OPEN AVAILABLE INTERVALS (Touch-friendly quick select for mobile) */}
+                    {sortedBookings.length > 0 && availableGaps.length > 0 && (
+                        <div className="space-y-2 pt-2 border-t border-neutral-100 dark:border-white/[0.06]">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    <span>الفترات المتاحة للعب اليوم (اضغط لاختيار الموعد):</span>
+                                </span>
                             </div>
-                        )}
-                    </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {availableGaps.map((gap, gIdx) => (
+                                    <button
+                                        key={gIdx}
+                                        type="button"
+                                        onClick={() => setTimeFromDate(gap.start)}
+                                        className="p-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100/60 dark:hover:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-600/30 flex items-center justify-between text-right transition-all cursor-pointer active:scale-[0.98]"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                                            <div>
+                                                <div className="font-bold text-xs text-neutral-900 dark:text-white">
+                                                    من {formatArabicTimeDetailed(gap.start)}
+                                                </div>
+                                                <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                                                    إلى {formatArabicTimeDetailed(gap.end)} ({gap.durationHours} س)
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <span className="px-2 py-1 rounded bg-emerald-600 text-white font-bold text-[10px] shrink-0">
+                                            احجز هنا
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                {/* 4. TIME & DURATION SELECTOR (CLEAN & NON-FORCED) */}
+                {/* ========================================================= */}
+                {/* 4. TIME & DURATION SELECTOR (MOBILE-FIRST CONTROLS)       */}
+                {/* ========================================================= */}
                 <div className="bg-white dark:bg-[#120e10] border border-neutral-200/80 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -594,18 +713,18 @@ export default function BookingDetailsPage() {
                             </span>
                         </div>
                         <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                            حدد أي وقت ودقيقة تناسبك
+                            اكتب أو حدد أي دقيقة تناسبك
                         </span>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
-                        {/* Digital Time Picker */}
+                        {/* Digital Time Picker Card */}
                         <div className="bg-neutral-50 dark:bg-[#151113] border border-neutral-200/80 dark:border-white/10 rounded-xl p-3.5 flex flex-col justify-between space-y-3">
                             <div className="flex items-center justify-between text-xs">
                                 <span className="font-bold text-neutral-700 dark:text-neutral-300">وقت البدء:</span>
-                                <label className="relative cursor-pointer text-[11px] text-red-600 dark:text-red-400 hover:underline flex items-center gap-1 font-medium">
-                                    <Clock size={12} />
-                                    <span>ساعة النظام</span>
+                                <label className="relative cursor-pointer text-xs font-bold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1.5 py-1 px-2.5 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/40">
+                                    <Smartphone size={13} />
+                                    <span>ساعة الهاتف</span>
                                     <input
                                         type="time"
                                         value={time24 || ''}
@@ -615,8 +734,8 @@ export default function BookingDetailsPage() {
                                 </label>
                             </div>
 
-                            {/* Digital Display & Steppers */}
-                            <div className="flex items-center justify-center gap-2 py-1" dir="ltr">
+                            {/* Digital Display & Large Touch Inputs */}
+                            <div className="flex items-center justify-center gap-2.5 py-2" dir="ltr">
                                 {/* Hour Picker */}
                                 <div className="flex flex-col items-center">
                                     <input
@@ -636,12 +755,12 @@ export default function BookingDetailsPage() {
                                                 setSelectedHour(Math.max(1, Math.min(12, num)));
                                             }
                                         }}
-                                        className="w-16 h-12 text-center font-mono font-black text-2xl rounded-xl bg-white dark:bg-black/70 border border-neutral-300 dark:border-white/20 focus:border-red-600 outline-none text-neutral-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-xs"
+                                        className="w-16 h-13 text-center font-mono font-black text-2xl sm:text-3xl rounded-xl bg-white dark:bg-black/80 border border-neutral-300 dark:border-white/20 focus:border-red-600 outline-none text-neutral-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-xs"
                                     />
-                                    <span className="text-[10px] text-neutral-400 font-medium mt-1">ساعة</span>
+                                    <span className="text-[11px] text-neutral-500 font-bold mt-1">ساعة</span>
                                 </div>
 
-                                <span className="font-mono font-black text-2xl text-neutral-400 mb-4">:</span>
+                                <span className="font-mono font-black text-2xl sm:text-3xl text-neutral-400 mb-5">:</span>
 
                                 {/* Minute Picker */}
                                 <div className="flex flex-col items-center">
@@ -662,20 +781,20 @@ export default function BookingDetailsPage() {
                                                 setSelectedMinute(Math.max(0, Math.min(59, num)));
                                             }
                                         }}
-                                        className="w-16 h-12 text-center font-mono font-black text-2xl rounded-xl bg-white dark:bg-black/70 border border-neutral-300 dark:border-white/20 focus:border-red-600 outline-none text-neutral-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-xs"
+                                        className="w-16 h-13 text-center font-mono font-black text-2xl sm:text-3xl rounded-xl bg-white dark:bg-black/80 border border-neutral-300 dark:border-white/20 focus:border-red-600 outline-none text-neutral-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-xs"
                                     />
-                                    <span className="text-[10px] text-neutral-400 font-medium mt-1">دقيقة</span>
+                                    <span className="text-[11px] text-neutral-500 font-bold mt-1">دقيقة</span>
                                 </div>
 
-                                {/* AM / PM Switcher */}
-                                <div className="flex flex-col gap-1.5 ml-1 mb-4">
+                                {/* AM / PM Switcher (Touch-friendly height) */}
+                                <div className="flex flex-col gap-1.5 ml-1 mb-5">
                                     <button
                                         type="button"
                                         onClick={() => {
                                             setSelectedPeriod('PM');
                                             playPs5NavigateSound();
                                         }}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
                                             selectedPeriod === 'PM'
                                                 ? 'bg-red-600 text-white shadow-xs'
                                                 : 'bg-white dark:bg-black/50 border border-neutral-300 dark:border-white/10 text-neutral-600 dark:text-neutral-400'
@@ -689,7 +808,7 @@ export default function BookingDetailsPage() {
                                             setSelectedPeriod('AM');
                                             playPs5NavigateSound();
                                         }}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
                                             selectedPeriod === 'AM'
                                                 ? 'bg-red-600 text-white shadow-xs'
                                                 : 'bg-white dark:bg-black/50 border border-neutral-300 dark:border-white/10 text-neutral-600 dark:text-neutral-400'
@@ -726,7 +845,7 @@ export default function BookingDetailsPage() {
                             </div>
                         </div>
 
-                        {/* Duration Selector */}
+                        {/* Duration Selector Card */}
                         <div className="bg-neutral-50 dark:bg-[#151113] border border-neutral-200/80 dark:border-white/10 rounded-xl p-3.5 flex flex-col justify-between space-y-3">
                             <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300">
                                 مدة الجلسة:
@@ -743,7 +862,7 @@ export default function BookingDetailsPage() {
                                                 setDurationHours(hrs);
                                                 playPs5NavigateSound();
                                             }}
-                                            className={`py-2 px-1 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer border ${
+                                            className={`py-2.5 px-1 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer border ${
                                                 isSelected
                                                     ? 'bg-red-600 border-red-600 text-white shadow-xs'
                                                     : 'bg-white dark:bg-black/50 border-neutral-300/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300 hover:border-neutral-400'
@@ -755,7 +874,7 @@ export default function BookingDetailsPage() {
                                 })}
                             </div>
 
-                            <div className="text-[11px] text-neutral-500 dark:text-neutral-400 flex items-center justify-between pt-1 border-t border-neutral-200/60 dark:border-white/[0.05]">
+                            <div className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center justify-between pt-1 border-t border-neutral-200/60 dark:border-white/[0.05]">
                                 <span>ينتهي في:</span>
                                 <span className="font-bold text-neutral-900 dark:text-white">
                                     {hasSelectedTime && hasSelectedDuration ? currentAvailability.formattedEnd : '--:--'}
@@ -816,7 +935,7 @@ export default function BookingDetailsPage() {
 
             </main>
 
-            {/* Sticky Professional Bottom Bar */}
+            {/* Sticky Mobile-First Bottom Bar */}
             <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-[#0c090a]/95 border-t border-neutral-200 dark:border-white/10 backdrop-blur-xl p-3.5 pb-safe shadow-lg">
                 <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
                     {/* Price & Summary */}
@@ -844,7 +963,7 @@ export default function BookingDetailsPage() {
                     <button
                         onClick={handleContinue}
                         disabled={!isReadyToContinue}
-                        className={`py-3 px-6 sm:px-8 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border ${
+                        className={`py-3.5 px-6 sm:px-8 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border ${
                             isReadyToContinue
                                 ? 'bg-red-600 hover:bg-red-500 border-red-500 text-white shadow-md shadow-red-600/25 active:scale-98'
                                 : 'bg-neutral-200 dark:bg-white/[0.05] text-neutral-400 dark:text-neutral-500 border-transparent cursor-not-allowed'
