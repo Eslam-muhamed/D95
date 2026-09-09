@@ -24,6 +24,7 @@ import room01InteriorImg from '@/assets/doors/room-01-interior.jpg';
 import room02InteriorImg from '@/assets/doors/room-02-interior.jpg';
 import { playPs5StartupSound } from '@/lib/sound';
 import { useTheme } from '@/stores/themeStore';
+import AstroBotPeeker from '@/components/features/AstroBotPeeker';
 
 interface RoomData {
     id: string;
@@ -324,9 +325,12 @@ export default function PlaystationPage() {
                                     key={room.id}
                                     className="relative flex flex-col items-center w-full"
                                 >
+                                    {/* Astro Bot PlayStation Easter Egg peeking from behind Room 01 corner */}
+                                    {room.id === 'room-1' && <AstroBotPeeker />}
+
                                     {/* 1. OUTER NEON-GLOWING FRAME (MATCHING USER REFERENCE) */}
                                     <div
-                                        className={`w-full rounded-2xl sm:rounded-3xl bg-white dark:bg-[#0d0a10] border-2 ${room.neonBorder} ${room.neonShadow} p-1.5 sm:p-3 relative overflow-hidden backdrop-blur-md transition-all duration-500 shadow-lg`}
+                                        className={`w-full rounded-2xl sm:rounded-3xl bg-white dark:bg-[#0d0a10] border-2 ${room.neonBorder} ${room.neonShadow} p-1.5 sm:p-3 relative z-10 overflow-hidden backdrop-blur-md transition-all duration-500 shadow-lg`}
                                     >
                                         {/* 2. DOORWAY CAVITY (3D PERSPECTIVE ENVIRONMENT) */}
                                         <div
