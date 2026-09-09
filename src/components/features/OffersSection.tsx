@@ -90,16 +90,17 @@ export default function OffersSection({ liveOffers }: OffersSectionProps) {
         <div className="flex-1 h-[1px] bg-gradient-to-l from-transparent to-red-600/40" />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+      {/* Offers container: Swipeable carousel on mobile, 2-col grid on desktop */}
+      <div className="flex sm:grid sm:grid-cols-2 gap-3 overflow-x-auto sm:overflow-x-visible scrollbar-hide snap-x snap-mandatory pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
         {displayOffers.map((offer, i) => (
           <motion.div
             key={offer.title}
             initial={{ opacity: 0, y: 16 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: i * 0.08, duration: 0.4 }}
-            className={`relative rounded-xl p-4 sm:p-5 overflow-hidden select-none border transition-all duration-200 bg-white dark:bg-transparent ${
+            className={`min-w-[270px] max-w-[310px] sm:min-w-0 sm:max-w-none flex-1 shrink-0 snap-center relative rounded-2xl p-4 overflow-hidden select-none border transition-all duration-200 bg-white dark:bg-[#130b0e] ${
               offer.highlight
-                ? 'border-red-600/60 shadow-[0_4px_20px_rgba(220,38,38,0.12)] dark:shadow-[0_0_20px_rgba(220,38,38,0.18)]'
+                ? 'border-red-600/60 shadow-[0_4px_20px_rgba(220,38,38,0.12)] dark:shadow-[0_0_20px_rgba(220,38,38,0.22)]'
                 : 'border-neutral-200 dark:border-white/[0.08] hover:border-neutral-300 dark:hover:border-white/20 shadow-sm dark:shadow-none'
             }`}
             style={theme === 'dark' ? { background: offer.gradient } : undefined}
@@ -107,38 +108,40 @@ export default function OffersSection({ liveOffers }: OffersSectionProps) {
             {/* Top red accent line */}
             <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-red-600 to-transparent" />
 
-            {/* Badge */}
-            {offer.badge && (
-              <span className="absolute top-3 left-3 text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-red-100 dark:bg-red-950/90 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-600/50">
-                {offer.badge}
-              </span>
-            )}
-
-            <div className="flex items-start justify-between mt-2">
-              <div className="flex-1 text-right pl-3">
-                <span className="text-2xl mb-1.5 block">{offer.icon}</span>
-                <h3 className="font-bold text-neutral-900 dark:text-white text-base sm:text-lg mb-1 font-body">
+            {/* Header: Icon, Badge, and Title */}
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xl shrink-0 p-1.5 rounded-lg bg-neutral-100 dark:bg-white/[0.05] border border-neutral-200/60 dark:border-white/10">{offer.icon}</span>
+                <h3 className="font-bold text-neutral-900 dark:text-white text-sm sm:text-base font-body leading-tight">
                   {offer.title}
                 </h3>
-                <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 mb-1 leading-relaxed font-body">
-                  {offer.description}
-                </p>
-                {offer.detail && (
-                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium">
-                    {offer.detail}
-                  </p>
-                )}
               </div>
+              {offer.badge && (
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-950/90 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-600/50 shrink-0">
+                  {offer.badge}
+                </span>
+              )}
+            </div>
 
-              <div className="text-left shrink-0 self-end" dir="ltr">
-                <div className="font-sans font-black text-lg sm:text-xl text-red-600 dark:text-white tabular-nums">
-                  {offer.price}
-                </div>
+            {/* Description */}
+            <p className="text-xs text-neutral-600 dark:text-neutral-300 line-clamp-2 leading-relaxed font-body mb-2.5">
+              {offer.description}
+            </p>
+
+            {/* Price footer */}
+            <div className="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-white/[0.06]">
+              <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-medium truncate">
+                {offer.detail || 'عرض حصري لفترة محدودة'}
+              </span>
+              <div className="flex items-baseline gap-1.5 shrink-0" dir="ltr">
                 {offer.originalPrice && (
-                  <div className="text-xs text-neutral-400 dark:text-neutral-500 line-through font-sans tabular-nums text-left">
+                  <span className="text-xs text-neutral-400 line-through font-sans tabular-nums">
                     {offer.originalPrice}
-                  </div>
+                  </span>
                 )}
+                <span className="font-sans font-black text-base sm:text-lg text-red-600 dark:text-red-400 tabular-nums">
+                  {offer.price}
+                </span>
               </div>
             </div>
           </motion.div>

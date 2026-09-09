@@ -54,9 +54,9 @@ export default function BottomNav() {
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none pb-safe md:hidden transform-gpu">
-            <div className="max-w-[440px] mx-auto px-3 pb-3">
+            <div className="max-w-[420px] mx-auto px-4 pb-3">
                 <nav
-                    className="pointer-events-auto rounded-3xl p-1.5 flex items-center justify-around shadow-[0_10px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.85)] border border-neutral-200/90 dark:border-white/10 bg-white/98 dark:bg-[#0f080a]/98 transition-colors duration-150"
+                    className="pointer-events-auto rounded-2xl p-1.5 flex items-center justify-between shadow-[0_12px_36px_rgba(0,0,0,0.25)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.9)] border border-neutral-200/90 dark:border-white/10 bg-white/95 dark:bg-[#120a0d]/95 backdrop-blur-xl transition-colors duration-200"
                     style={{
                         transform: 'translateZ(0)',
                         contain: 'layout style',
@@ -84,25 +84,27 @@ export default function BottomNav() {
                                 onMouseEnter={() => {
                                     if (item.path === '/menu') preloadMenuData();
                                 }}
-                                className="relative flex-1 flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-transform duration-75 active:scale-95 cursor-pointer group touch-manipulation select-none"
+                                className="relative flex-1 flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-150 active:scale-95 cursor-pointer group touch-manipulation select-none"
                             >
                                 <div
-                                    className={`absolute inset-0 rounded-2xl border transition-all duration-150 pointer-events-none ${
+                                    className={`absolute inset-0 rounded-xl transition-all duration-150 pointer-events-none ${
                                         isActive
-                                            ? 'bg-red-50 dark:bg-gradient-to-r dark:from-red-600/30 dark:to-red-800/30 border-red-200 dark:border-red-500/40 shadow-inner opacity-100 scale-100'
-                                            : 'opacity-0 scale-95 border-transparent'
+                                            ? 'bg-red-500/10 dark:bg-red-600/15 border border-red-500/30 dark:border-red-500/30 shadow-[0_0_12px_rgba(239,68,68,0.15)] opacity-100 scale-100'
+                                            : 'opacity-0 scale-90 border-transparent'
                                     }`}
                                 />
                                 <Icon
-                                    className={`w-5 h-5 transition-transform duration-150 relative z-10 ${
+                                    className={`w-5 h-5 transition-all duration-150 relative z-10 ${
                                         isActive
-                                            ? 'text-red-600 dark:text-red-400 scale-110 drop-shadow-[0_0_8px_rgba(255,80,100,0.3)] dark:drop-shadow-[0_0_8px_rgba(255,80,100,0.6)]'
+                                            ? 'text-red-600 dark:text-red-400 scale-110 drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]'
                                             : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white'
                                     }`}
                                 />
                                 <span
                                     className={`text-[10px] font-body tracking-tight mt-1 transition-colors relative z-10 ${
-                                        isActive ? 'text-neutral-900 dark:text-white font-bold' : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-neutral-200'
+                                        isActive
+                                            ? 'text-red-600 dark:text-red-400 font-bold'
+                                            : 'text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-neutral-200'
                                     }`}
                                 >
                                     {item.label}
@@ -115,7 +117,7 @@ export default function BottomNav() {
                     <button
                         type="button"
                         onClick={openCart}
-                        className="relative flex-1 flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-transform duration-75 active:scale-95 cursor-pointer group touch-manipulation select-none"
+                        className="relative flex-1 flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-150 active:scale-95 cursor-pointer group touch-manipulation select-none"
                     >
                         <div className="relative">
                             <ShoppingBag className="w-5 h-5 text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white transition-colors" />

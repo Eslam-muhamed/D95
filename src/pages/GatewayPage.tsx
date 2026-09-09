@@ -35,7 +35,7 @@ export default function GatewayPage() {
     };
 
     return (
-        <main className="min-h-[100dvh] w-full bg-[#F6F5F2] dark:bg-[#0d0c0c] text-neutral-900 dark:text-white overflow-y-auto relative flex flex-col justify-between p-3.5 sm:p-6 pb-20 md:pb-10 select-none bg-concrete-wall transition-colors duration-200">
+        <main className="min-h-[100dvh] w-full bg-[#F6F5F2] dark:bg-[#0d0c0c] text-neutral-900 dark:text-white overflow-y-auto relative flex flex-col justify-between p-3.5 sm:p-6 pb-28 sm:pb-8 select-none bg-concrete-wall transition-colors duration-200">
             {/* Ambient Lighting Cones (Optimized hardware-accelerated CSS) */}
             <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-48 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(220,38,38,0.12)_0%,rgba(220,38,38,0.02)_50%,transparent_80%)]" />

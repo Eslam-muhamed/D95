@@ -33,7 +33,7 @@ function ScrollToTop() {
           whileTap={{ scale: 0.9 }}
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           aria-label="عودة للأعلى"
-          className="cursor-pointer fixed bottom-20 left-1/2 -translate-x-1/2 z-30 w-10 h-10 rounded-full bg-white dark:bg-[#160d10] border border-red-500/50 shadow-md flex items-center justify-center text-red-600 dark:text-red-400 hover:text-white hover:bg-red-600 transition-all"
+          className="cursor-pointer fixed bottom-22 left-4 sm:bottom-8 sm:left-8 z-30 w-10 h-10 rounded-full bg-white/95 dark:bg-[#160d10]/95 border border-red-500/40 shadow-lg flex items-center justify-center text-red-600 dark:text-red-400 hover:text-white hover:bg-red-600 transition-all backdrop-blur-sm"
         >
           <ChevronUp size={18} />
         </motion.button>
@@ -148,7 +148,7 @@ export default function MenuPage() {
   const filteredItems = isFiltered ? allItems.filter(i => i.category === activeCategory) : [];
 
   return (
-    <div className="min-h-screen bg-[#F6F5F2] dark:bg-[#080607] text-neutral-900 dark:text-[#e8e4e6] font-body text-sm selection:bg-red-600 selection:text-white select-none transition-colors duration-200" dir="rtl">
+    <div className="min-h-screen pb-32 sm:pb-16 bg-[#F6F5F2] dark:bg-[#080607] text-neutral-900 dark:text-[#e8e4e6] font-body text-sm selection:bg-red-600 selection:text-white select-none transition-colors duration-200" dir="rtl">
       {/* Top Header */}
       <TopHeader />
 

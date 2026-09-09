@@ -56,7 +56,7 @@ export default function TopHeader({ onCartOpen }: Props = {}) {
           style={{ background: 'transparent', border: 'none', padding: 0 }}
           aria-label="الرجوع للأعلى"
         >
-          <div className="flex items-baseline leading-none">
+          <div className="flex flex-row items-baseline leading-none" dir="ltr">
             <span
               className="font-brush font-black text-xl text-neutral-900 dark:text-neutral-100 group-hover:text-black dark:group-hover:text-white transition-colors"
               style={{ transform: 'skewX(-4deg)' }}
@@ -64,7 +64,7 @@ export default function TopHeader({ onCartOpen }: Props = {}) {
               D
             </span>
             <span
-              className="font-brush font-black text-2xl text-red-600 dark:text-red-500 group-hover:text-red-500 transition-colors -ml-0.5"
+              className="font-brush font-black text-2xl text-red-600 dark:text-red-500 group-hover:text-red-500 transition-colors ml-0.5"
               style={{
                 transform: 'skewX(-6deg)',
                 textShadow: theme === 'dark' ? '0 0 10px rgba(220, 38, 38, 0.6)' : 'none',
