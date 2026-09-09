@@ -37,15 +37,23 @@ export default function BottomNav() {
                             <Link
                                 key={item.path}
                                 to={item.path}
-                                className="relative flex flex-col items-center justify-center py-1.5 px-4 rounded-2xl transition-all cursor-pointer group"
+                                onTouchStart={() => {
+                                    if (item.path === '/menu') import('@/pages/MenuPage');
+                                    if (item.path === '/playstation') import('@/pages/PlaystationPage');
+                                }}
+                                onMouseEnter={() => {
+                                    if (item.path === '/menu') import('@/pages/MenuPage');
+                                    if (item.path === '/playstation') import('@/pages/PlaystationPage');
+                                }}
+                                className="relative flex flex-col items-center justify-center py-1.5 px-4 rounded-2xl transition-transform duration-100 active:scale-90 cursor-pointer group"
                             >
-                                {isActive && (
-                                    <motion.div
-                                        layoutId="bottomNavHighlight"
-                                        className="absolute inset-0 rounded-2xl bg-red-50 dark:bg-gradient-to-r dark:from-red-600/30 dark:to-red-800/30 border border-red-200 dark:border-red-500/40 shadow-inner"
-                                        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                                    />
-                                )}
+                                <div
+                                    className={`absolute inset-0 rounded-2xl border transition-all duration-150 pointer-events-none ${
+                                        isActive
+                                            ? 'bg-red-50 dark:bg-gradient-to-r dark:from-red-600/30 dark:to-red-800/30 border-red-200 dark:border-red-500/40 shadow-inner opacity-100 scale-100'
+                                            : 'opacity-0 scale-95 border-transparent'
+                                    }`}
+                                />
                                 <Icon
                                     className={`w-5 h-5 transition-transform duration-200 relative z-10 ${
                                         isActive

@@ -1,7 +1,5 @@
-import { motion } from 'framer-motion';
 import type { MenuCategory, MenuItem } from '@/types/menu';
 import MenuCard from './MenuCard';
-import { useInView } from '@/hooks/useInView';
 
 interface Props {
   category: MenuCategory;
@@ -10,12 +8,10 @@ interface Props {
 }
 
 export default function MenuSection({ category, items, onAdd }: Props) {
-  const [ref, inView] = useInView<HTMLElement>(0.1);
-
   if (!items.length) return null;
 
   return (
-    <section id={`section-${category.id}`} className="px-4 py-5 max-w-4xl mx-auto scroll-mt-28" ref={ref} dir="rtl">
+    <section id={`section-${category.id}`} className="px-4 py-5 max-w-4xl mx-auto scroll-mt-28" dir="rtl">
       {/* Section heading */}
       <div className="flex items-center gap-3 mb-3.5">
         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-neutral-300 dark:via-white/10 to-red-600/30" />
@@ -33,15 +29,8 @@ export default function MenuSection({ category, items, onAdd }: Props) {
 
       {/* Items grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {items.map((item, i) => (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0, y: 14 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: i * 0.04, duration: 0.35 }}
-          >
-            <MenuCard item={item} onAdd={onAdd} />
-          </motion.div>
+        {items.map((item) => (
+          <MenuCard key={item.id} item={item} onAdd={onAdd} />
         ))}
       </div>
     </section>

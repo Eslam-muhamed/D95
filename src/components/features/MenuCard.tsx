@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import type { MenuItem } from '@/types/menu';
 
@@ -17,9 +16,8 @@ export default function MenuCard({ item, onAdd }: Props) {
   const badgeStyle = item.badge ? BADGE_STYLES[item.badge] : null;
 
   return (
-    <motion.div
-      whileTap={{ scale: 0.98 }}
-      className="flex items-center gap-3 rounded-xl p-3 bg-white dark:bg-[#130f11] border border-neutral-200 dark:border-white/[0.08] hover:border-red-600/40 hover:bg-neutral-50 dark:hover:bg-[#181215] transition-all cursor-pointer shadow-sm group"
+    <div
+      className="flex items-center gap-3 rounded-xl p-3 bg-white dark:bg-[#130f11] border border-neutral-200 dark:border-white/[0.08] hover:border-red-600/40 hover:bg-neutral-50 dark:hover:bg-[#181215] active:scale-[0.99] transition-all cursor-pointer shadow-sm group"
       dir="rtl"
       onClick={() => onAdd(item)}
     >
@@ -59,20 +57,19 @@ export default function MenuCard({ item, onAdd }: Props) {
             </span>
           </div>
 
-          <motion.button
-            whileTap={{ scale: 0.92 }}
-            whileHover={{ scale: 1.05 }}
+          <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onAdd(item);
             }}
-            className="flex items-center gap-1 px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all shadow-sm cursor-pointer border border-red-500/60 font-body"
+            className="flex items-center gap-1 px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 active:scale-95 text-white text-xs font-bold transition-all shadow-sm cursor-pointer border border-red-500/60 font-body"
           >
             <Plus size={13} className="stroke-[3]" />
             <span>أضف</span>
-          </motion.button>
+          </button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

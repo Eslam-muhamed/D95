@@ -19,6 +19,19 @@ const MenuPage = lazy(() => import('@/pages/MenuPage'));
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'));
 const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage'));
 
+// Preload critical public tabs on idle so clicking the bar is 100% instant
+if (typeof window !== 'undefined') {
+    const idlePreload = () => {
+        import('@/pages/MenuPage');
+        import('@/pages/PlaystationPage');
+    };
+    if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(idlePreload);
+    } else {
+        setTimeout(idlePreload, 150);
+    }
+}
+
 function PageLoadingFallback() {
     return (
         <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center text-red-500">
@@ -52,7 +65,7 @@ function AppRoutes() {
         <div className="w-full min-h-screen bg-[var(--bg-main)] flex flex-col selection:bg-red-500/30">
             {!isAdminRoute && <CartSheet />}
             <Suspense fallback={<PageLoadingFallback />}>
-                <Routes location={location} key={location.pathname}>
+                <Routes>
                     <Route path="/" element={<GatewayPage />} />
                     <Route path="/playstation" element={<PlaystationPage />} />
                     <Route path="/playstation/booking" element={<BookingDetailsPage />} />
