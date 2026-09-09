@@ -525,14 +525,15 @@ export default function BookingDetailsPage() {
                     </div>
 
                     <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
-                        {calendarDays.map((d) => {
+                        {calendarDays.map((d, dIdx) => {
                             const active = selectedDate === d.iso;
                             return (
-                                <button
+                                <motion.button
                                     key={d.iso}
+                                    whileTap={{ scale: 0.94 }}
                                     onClick={() => {
                                         setSelectedDate(d.iso);
-                                        playPs5NavigateSound();
+                                        playPs5NavigateSound(dIdx);
                                     }}
                                     className={`relative shrink-0 py-2.5 px-3 rounded-lg border text-center transition-all cursor-pointer min-w-[68px] sm:min-w-[76px] overflow-hidden ${
                                         active
@@ -554,7 +555,7 @@ export default function BookingDetailsPage() {
                                     <div className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400">
                                         {d.monthName}
                                     </div>
-                                </button>
+                                </motion.button>
                             );
                         })}
                     </div>
