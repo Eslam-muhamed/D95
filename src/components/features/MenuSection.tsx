@@ -11,7 +11,12 @@ export default function MenuSection({ category, items, onAdd }: Props) {
   if (!items.length) return null;
 
   return (
-    <section id={`section-${category.id}`} className="px-4 py-5 max-w-4xl mx-auto scroll-mt-28" dir="rtl">
+    <section
+      id={`section-${category.id}`}
+      className="px-4 py-5 max-w-4xl mx-auto scroll-mt-28"
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 320px' }}
+      dir="rtl"
+    >
       {/* Section heading */}
       <div className="flex items-center gap-3 mb-3.5">
         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-neutral-300 dark:via-white/10 to-red-600/30" />

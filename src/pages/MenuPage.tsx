@@ -13,7 +13,7 @@ import ContactSection from '@/components/features/ContactSection';
 import { categories as defaultCategories } from '@/constants/menuMetadata';
 import { allItems as defaultItems } from '@/constants/menuData';
 import type { MenuItem, MenuCategory } from '@/types/menu';
-import { fetchCategories, fetchProducts, fetchOffers } from '@/services/menuService';
+import { fetchCategories, fetchProducts, fetchOffers, getCachedCategories, getCachedProducts, getCachedOffers } from '@/services/menuService';
 import type { DBOffer } from '@/types/database';
 
 function ScrollToTop() {
@@ -47,11 +47,45 @@ export default function MenuPage() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
 
-  const [categories, setCategories] = useState<MenuCategory[]>(defaultCategories);
-  const [allItems, setAllItems] = useState<MenuItem[]>(defaultItems);
-  const [liveOffers, setLiveOffers] = useState<DBOffer[]>([]);
+  // Synchronous cache initialization for instant 0ms rendering
+  const [categories, setCategories] = useState<MenuCategory[]>(() => {
+    const cached = getCachedCategories();
+    if (cached && cached.length > 0) {
+      return cached.map(c => ({
+        id: c.id,
+        name: c.name,
+        icon: c.icon || '☕',
+        description: c.description || undefined
+      }));
+    }
+    return defaultCategories;
+  });
 
-  // Load live menu items, categories, and offers from Supabase
+  const [allItems, setAllItems] = useState<MenuItem[]>(() => {
+    const cached = getCachedProducts();
+    if (cached && cached.length > 0) {
+      return cached.filter(p => p.is_available).map(p => ({
+        id: p.slug || p.id,
+        name: p.name,
+        description: p.description || '',
+        price: Number(p.price),
+        currency: p.currency || 'ج.م',
+        category: p.category_id || '',
+        image: p.image_url || '',
+        badge: (p.badge as MenuItem['badge']) || undefined,
+        tags: p.tags || [],
+        isHot: p.is_hot,
+        isCold: p.is_cold
+      }));
+    }
+    return defaultItems;
+  });
+
+  const [liveOffers, setLiveOffers] = useState<DBOffer[]>(() => {
+    return getCachedOffers() || [];
+  });
+
+  // Load live menu items, categories, and offers from Supabase (SWR: Stale-While-Revalidate)
   useEffect(() => {
     Promise.all([
       fetchCategories(),

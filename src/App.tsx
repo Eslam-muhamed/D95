@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/stores/themeStore';
@@ -8,29 +8,19 @@ import BottomNav from '@/components/layout/BottomNav';
 import SplashScreen from '@/components/features/SplashScreen';
 import ErrorBoundary from '@/components/features/ErrorBoundary';
 import AdminProtectedRoute from '@/components/admin/AdminProtectedRoute';
+import { preloadMenuData } from '@/services/menuService';
 
-// Route-level Code Splitting for optimal mobile load times and minimal initial bundle
-const GatewayPage = lazy(() => import('@/pages/GatewayPage'));
-const PlaystationPage = lazy(() => import('@/pages/PlaystationPage'));
+// Statically import primary public tabs for 0ms instantaneous bottom bar navigation
+import GatewayPage from '@/pages/GatewayPage';
+import PlaystationPage from '@/pages/PlaystationPage';
+import MenuPage from '@/pages/MenuPage';
+
+// Route-level Code Splitting for secondary checkout & admin routes
 const BookingDetailsPage = lazy(() => import('@/pages/BookingDetailsPage'));
 const BookingPaymentPage = lazy(() => import('@/pages/BookingPaymentPage'));
 const BookingSuccessPage = lazy(() => import('@/pages/BookingSuccessPage'));
-const MenuPage = lazy(() => import('@/pages/MenuPage'));
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'));
 const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage'));
-
-// Preload critical public tabs on idle so clicking the bar is 100% instant
-if (typeof window !== 'undefined') {
-    const idlePreload = () => {
-        import('@/pages/MenuPage');
-        import('@/pages/PlaystationPage');
-    };
-    if ('requestIdleCallback' in window) {
-        window.requestIdleCallback(idlePreload);
-    } else {
-        setTimeout(idlePreload, 150);
-    }
-}
 
 function PageLoadingFallback() {
     return (
@@ -99,6 +89,14 @@ export default function App() {
             return true;
         }
     });
+
+    useEffect(() => {
+        // Warm up menu cache during idle time so first menu visit is instant 0ms
+        const timer = setTimeout(() => {
+            preloadMenuData();
+        }, 500);
+        return () => clearTimeout(timer);
+    }, []);
 
     return (
         <ErrorBoundary>

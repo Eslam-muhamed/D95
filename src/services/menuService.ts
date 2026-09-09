@@ -3,9 +3,67 @@ import type { DBCategory, DBProduct, DBOffer } from '@/types/database';
 import { categories as fallbackCategories } from '@/constants/menuMetadata';
 import { allItems as fallbackItems } from '@/constants/menuData';
 
+// ================= IN-MEMORY CACHE (INSTANT 0MS TAB SWITCHING) =================
+let cachedCategories: DBCategory[] | null = null;
+let cachedCategoriesTime = 0;
+
+let cachedProducts: DBProduct[] | null = null;
+let cachedProductsTime = 0;
+
+let cachedOffers: DBOffer[] | null = null;
+let cachedOffersTime = 0;
+
+const CACHE_TTL_MS = 1000 * 60 * 3; // 3 minutes cache for blazing fast switching
+
+export function getCachedCategories(): DBCategory[] | null {
+    if (cachedCategories && (Date.now() - cachedCategoriesTime < CACHE_TTL_MS)) {
+        return cachedCategories;
+    }
+    return null;
+}
+
+export function getCachedProducts(): DBProduct[] | null {
+    if (cachedProducts && (Date.now() - cachedProductsTime < CACHE_TTL_MS)) {
+        return cachedProducts;
+    }
+    return null;
+}
+
+export function getCachedOffers(): DBOffer[] | null {
+    if (cachedOffers && (Date.now() - cachedOffersTime < CACHE_TTL_MS)) {
+        return cachedOffers;
+    }
+    return null;
+}
+
+export function clearMenuCache(): void {
+    cachedCategories = null;
+    cachedCategoriesTime = 0;
+    cachedProducts = null;
+    cachedProductsTime = 0;
+    cachedOffers = null;
+    cachedOffersTime = 0;
+}
+
+export async function preloadMenuData(): Promise<void> {
+    try {
+        await Promise.all([
+            fetchCategories(),
+            fetchProducts('all'),
+            fetchOffers()
+        ]);
+    } catch {
+        // Silent catch for preloading
+    }
+}
+
 // ================= CATEGORIES =================
 
-export async function fetchCategories(): Promise<DBCategory[]> {
+export async function fetchCategories(forceRefresh = false): Promise<DBCategory[]> {
+    if (!forceRefresh && cachedCategories && (Date.now() - cachedCategoriesTime < CACHE_TTL_MS)) {
+        return cachedCategories;
+    }
+
     try {
         const { data, error } = await supabase
             .from('categories')
@@ -14,29 +72,38 @@ export async function fetchCategories(): Promise<DBCategory[]> {
 
         if (error || !data || data.length === 0) {
             console.warn('Fallback to local categories:', error?.message);
-            return fallbackCategories.map((c, i) => ({
+            const fallback = fallbackCategories.map((c, i) => ({
                 id: c.id,
                 name: c.name,
                 icon: c.icon || '☕',
                 description: c.description || null,
                 display_order: i + 1,
             }));
+            cachedCategories = fallback;
+            cachedCategoriesTime = Date.now();
+            return fallback;
         }
 
+        cachedCategories = data as DBCategory[];
+        cachedCategoriesTime = Date.now();
         return data as DBCategory[];
     } catch (err) {
         console.error('Error fetching categories:', err);
-        return fallbackCategories.map((c, i) => ({
+        const fallback = fallbackCategories.map((c, i) => ({
             id: c.id,
             name: c.name,
             icon: c.icon || '☕',
             description: c.description || null,
             display_order: i + 1,
         }));
+        cachedCategories = fallback;
+        cachedCategoriesTime = Date.now();
+        return fallback;
     }
 }
 
 export async function createCategory(cat: Omit<DBCategory, 'created_at'>): Promise<DBCategory> {
+    clearMenuCache();
     const { data, error } = await supabase
         .from('categories')
         .insert([cat])
@@ -48,6 +115,7 @@ export async function createCategory(cat: Omit<DBCategory, 'created_at'>): Promi
 }
 
 export async function updateCategory(id: string, updates: Partial<DBCategory>): Promise<DBCategory> {
+    clearMenuCache();
     const { data, error } = await supabase
         .from('categories')
         .update(updates)
@@ -60,6 +128,7 @@ export async function updateCategory(id: string, updates: Partial<DBCategory>): 
 }
 
 export async function deleteCategory(id: string): Promise<void> {
+    clearMenuCache();
     const { error } = await supabase
         .from('categories')
         .delete()
@@ -70,14 +139,24 @@ export async function deleteCategory(id: string): Promise<void> {
 
 // ================= PRODUCTS =================
 
-export async function fetchProducts(categoryId?: string): Promise<DBProduct[]> {
+export async function fetchProducts(categoryId?: string, forceRefresh = false): Promise<DBProduct[]> {
+    const isAll = !categoryId || categoryId === 'all';
+
+    // Fast path: if all products are cached in memory, return immediately or filter in-memory (0ms)
+    if (!forceRefresh && cachedProducts && (Date.now() - cachedProductsTime < CACHE_TTL_MS)) {
+        if (!isAll) {
+            return cachedProducts.filter(p => p.category_id === categoryId);
+        }
+        return cachedProducts;
+    }
+
     try {
         let query = supabase
             .from('products')
             .select('*')
             .order('display_order', { ascending: true });
 
-        if (categoryId && categoryId !== 'all') {
+        if (!isAll) {
             query = query.eq('category_id', categoryId);
         }
 
@@ -85,11 +164,11 @@ export async function fetchProducts(categoryId?: string): Promise<DBProduct[]> {
 
         if (error || !data || data.length === 0) {
             console.warn('Fallback to local items:', error?.message);
-            const items = categoryId && categoryId !== 'all'
+            const items = !isAll
                 ? fallbackItems.filter(i => i.category === categoryId)
                 : fallbackItems;
 
-            return items.map((it, i) => ({
+            const mapped = items.map((it, i) => ({
                 id: it.id || `local-${i}`,
                 slug: it.id,
                 category_id: it.category,
@@ -106,9 +185,20 @@ export async function fetchProducts(categoryId?: string): Promise<DBProduct[]> {
                 tags: it.tags || [],
                 display_order: i + 1,
             }));
+
+            if (isAll) {
+                cachedProducts = mapped;
+                cachedProductsTime = Date.now();
+            }
+            return mapped;
         }
 
-        return data as DBProduct[];
+        const products = data as DBProduct[];
+        if (isAll) {
+            cachedProducts = products;
+            cachedProductsTime = Date.now();
+        }
+        return products;
     } catch (err) {
         console.error('Error fetching products:', err);
         return [];
@@ -116,6 +206,7 @@ export async function fetchProducts(categoryId?: string): Promise<DBProduct[]> {
 }
 
 export async function createProduct(product: Omit<DBProduct, 'id' | 'created_at'>): Promise<DBProduct> {
+    clearMenuCache();
     const { data, error } = await supabase
         .from('products')
         .insert([product])
@@ -127,6 +218,7 @@ export async function createProduct(product: Omit<DBProduct, 'id' | 'created_at'
 }
 
 export async function updateProduct(id: string, updates: Partial<DBProduct>): Promise<DBProduct> {
+    clearMenuCache();
     const { data, error } = await supabase
         .from('products')
         .update(updates)
@@ -139,6 +231,7 @@ export async function updateProduct(id: string, updates: Partial<DBProduct>): Pr
 }
 
 export async function deleteProduct(id: string): Promise<void> {
+    clearMenuCache();
     const { error } = await supabase
         .from('products')
         .delete()
@@ -179,7 +272,11 @@ export async function uploadProductImage(file: File): Promise<string> {
 
 // ================= OFFERS =================
 
-export async function fetchOffers(): Promise<DBOffer[]> {
+export async function fetchOffers(forceRefresh = false): Promise<DBOffer[]> {
+    if (!forceRefresh && cachedOffers && (Date.now() - cachedOffersTime < CACHE_TTL_MS)) {
+        return cachedOffers;
+    }
+
     try {
         const { data, error } = await supabase
             .from('offers')
@@ -187,9 +284,13 @@ export async function fetchOffers(): Promise<DBOffer[]> {
             .order('display_order', { ascending: true });
 
         if (error || !data || data.length === 0) {
+            cachedOffers = [];
+            cachedOffersTime = Date.now();
             return [];
         }
 
+        cachedOffers = data as DBOffer[];
+        cachedOffersTime = Date.now();
         return data as DBOffer[];
     } catch (err) {
         console.error('Error fetching offers:', err);
@@ -198,6 +299,7 @@ export async function fetchOffers(): Promise<DBOffer[]> {
 }
 
 export async function createOffer(offer: Omit<DBOffer, 'id' | 'created_at'>): Promise<DBOffer> {
+    clearMenuCache();
     const { data, error } = await supabase
         .from('offers')
         .insert([offer])
@@ -209,6 +311,7 @@ export async function createOffer(offer: Omit<DBOffer, 'id' | 'created_at'>): Pr
 }
 
 export async function updateOffer(id: string, updates: Partial<DBOffer>): Promise<DBOffer> {
+    clearMenuCache();
     const { data, error } = await supabase
         .from('offers')
         .update(updates)
@@ -221,6 +324,7 @@ export async function updateOffer(id: string, updates: Partial<DBOffer>): Promis
 }
 
 export async function deleteOffer(id: string): Promise<void> {
+    clearMenuCache();
     const { error } = await supabase
         .from('offers')
         .delete()
