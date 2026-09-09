@@ -11,7 +11,8 @@ import {
     Database,
     Shield,
     Menu,
-    X
+    X,
+    Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import OverviewTab from '@/components/admin/OverviewTab';
@@ -19,14 +20,15 @@ import BookingsTab from '@/components/admin/BookingsTab';
 import ProductsTab from '@/components/admin/ProductsTab';
 import CategoriesTab from '@/components/admin/CategoriesTab';
 import OffersTab from '@/components/admin/OffersTab';
+import LiveStationsTab from '@/components/admin/LiveStationsTab';
 
 import { supabase } from '@/lib/supabase';
 
-type TabType = 'overview' | 'bookings' | 'products' | 'categories' | 'offers';
+type TabType = 'pos' | 'overview' | 'bookings' | 'products' | 'categories' | 'offers';
 
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<TabType>('overview');
+    const [activeTab, setActiveTab] = useState<TabType>('pos');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     // Auth verification & session restoration
@@ -62,8 +64,9 @@ export default function AdminDashboardPage() {
     };
 
     const navItems: { id: TabType; label: string; icon: React.ReactNode; badge?: string }[] = [
+        { id: 'pos', label: 'التحكم بالأجهزة (Gaming POS)', icon: <Gamepad2 className="w-4 h-4 text-red-500" /> },
         { id: 'overview', label: 'نظرة عامة', icon: <LayoutDashboard className="w-4 h-4" /> },
-        { id: 'bookings', label: 'حجوزات البلايستيشن', icon: <Gamepad2 className="w-4 h-4" /> },
+        { id: 'bookings', label: 'حجوزات البلايستيشن', icon: <Calendar className="w-4 h-4" /> },
         { id: 'products', label: 'المنتجات والأسعار', icon: <UtensilsCrossed className="w-4 h-4" /> },
         { id: 'categories', label: 'أقسام المنيو', icon: <FolderTree className="w-4 h-4" /> },
         { id: 'offers', label: 'العروض الترويجية', icon: <Flame className="w-4 h-4" /> },
@@ -184,7 +187,8 @@ export default function AdminDashboardPage() {
 
             {/* Main Content Area */}
             <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
-                {activeTab === 'overview' && <OverviewTab onSwitchTab={(t) => setActiveTab(t)} />}
+                {activeTab === 'pos' && <LiveStationsTab />}
+                {activeTab === 'overview' && <OverviewTab onSwitchTab={(t: any) => setActiveTab(t)} />}
                 {activeTab === 'bookings' && <BookingsTab />}
                 {activeTab === 'products' && <ProductsTab />}
                 {activeTab === 'categories' && <CategoriesTab />}
