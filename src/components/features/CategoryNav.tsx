@@ -3,15 +3,19 @@ import { Flame } from 'lucide-react';
 import { categories } from '@/constants/menuMetadata';
 import { useScrollSpy } from '@/hooks/useScrollSpy';
 
+import type { MenuCategory } from '@/types/menu';
+import type { DBCategory } from '@/types/database';
+
 interface Props {
   activeCategory: string;
   onCategoryChange: (id: string) => void;
+  categoriesList?: (MenuCategory | DBCategory)[];
 }
 
-const CATEGORY_IDS = categories.map(c => c.id);
-
-export default function CategoryNav({ activeCategory, onCategoryChange }: Props) {
-  const scrollSpyId = useScrollSpy(CATEGORY_IDS);
+export default function CategoryNav({ activeCategory, onCategoryChange, categoriesList }: Props) {
+  const list = categoriesList && categoriesList.length > 0 ? categoriesList : categories;
+  const categoryIds = list.map(c => c.id);
+  const scrollSpyId = useScrollSpy(categoryIds);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // When 'all': scroll-spy drives the highlight
@@ -57,7 +61,7 @@ export default function CategoryNav({ activeCategory, onCategoryChange }: Props)
         </button>
 
         {/* Category buttons */}
-        {categories.map(cat => {
+        {list.map(cat => {
           const isActive = highlightedId === cat.id;
           const isSelected = activeCategory === cat.id;
           const isCurrent = isSelected || (!isAllActive && isActive);

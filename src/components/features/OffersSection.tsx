@@ -50,9 +50,31 @@ const offers = [
   },
 ];
 
-export default function OffersSection() {
+import type { DBOffer } from '@/types/database';
+
+interface OffersSectionProps {
+  liveOffers?: DBOffer[];
+}
+
+export default function OffersSection({ liveOffers }: OffersSectionProps) {
   const [ref, inView] = useInView<HTMLElement>(0.1);
   const { theme } = useTheme();
+
+  const displayOffers = (liveOffers && liveOffers.length > 0)
+    ? liveOffers.filter(o => o.is_active).map(o => ({
+        title: o.title,
+        description: o.description || '',
+        detail: o.detail || '',
+        badge: o.badge || '',
+        price: o.price,
+        originalPrice: o.original_price || '',
+        gradient: o.highlight 
+          ? 'linear-gradient(135deg, #1e0d11 0%, #140b0e 100%)' 
+          : 'linear-gradient(135deg, #180e12 0%, #120a0d 100%)',
+        icon: o.icon || '🎮',
+        highlight: o.highlight
+      }))
+    : offers;
 
   return (
     <section id="offers-section" className="px-4 py-8 max-w-4xl mx-auto" ref={ref} dir="rtl">
@@ -69,7 +91,7 @@ export default function OffersSection() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {offers.map((offer, i) => (
+        {displayOffers.map((offer, i) => (
           <motion.div
             key={offer.title}
             initial={{ opacity: 0, y: 16 }}

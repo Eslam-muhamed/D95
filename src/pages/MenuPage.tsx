@@ -10,10 +10,12 @@ import ItemCustomizerModal from '@/components/features/ItemCustomizerModal';
 import Footer from '@/components/layout/Footer';
 import ReviewsSection from '@/components/features/ReviewsSection';
 import ContactSection from '@/components/features/ContactSection';
-import { categories } from '@/constants/menuMetadata';
-import { allItems } from '@/constants/menuData';
-import type { MenuItem } from '@/types/menu';
+import { categories as defaultCategories } from '@/constants/menuMetadata';
+import { allItems as defaultItems } from '@/constants/menuData';
+import type { MenuItem, MenuCategory } from '@/types/menu';
 import { playCafeEntranceSound } from '@/lib/sound';
+import { fetchCategories, fetchProducts, fetchOffers } from '@/services/menuService';
+import type { DBOffer } from '@/types/database';
 
 function ScrollToTop() {
   const [visible, setVisible] = useState(false);
@@ -45,6 +47,48 @@ export default function MenuPage() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+
+  const [categories, setCategories] = useState<MenuCategory[]>(defaultCategories);
+  const [allItems, setAllItems] = useState<MenuItem[]>(defaultItems);
+  const [liveOffers, setLiveOffers] = useState<DBOffer[]>([]);
+
+  // Load live menu items, categories, and offers from Supabase
+  useEffect(() => {
+    Promise.all([
+      fetchCategories(),
+      fetchProducts('all'),
+      fetchOffers()
+    ]).then(([cats, prods, offs]) => {
+      if (cats && cats.length > 0) {
+        setCategories(cats.map(c => ({
+          id: c.id,
+          name: c.name,
+          icon: c.icon || '☕',
+          description: c.description || undefined
+        })));
+      }
+      if (prods && prods.length > 0) {
+        setAllItems(prods.filter(p => p.is_available).map(p => ({
+          id: p.slug || p.id,
+          name: p.name,
+          description: p.description || '',
+          price: Number(p.price),
+          currency: p.currency || 'ج.م',
+          category: p.category_id || '',
+          image: p.image_url || '',
+          badge: (p.badge as MenuItem['badge']) || undefined,
+          tags: p.tags || [],
+          isHot: p.is_hot,
+          isCold: p.is_cold
+        })));
+      }
+      if (offs && offs.length > 0) {
+        setLiveOffers(offs);
+      }
+    }).catch(err => {
+      console.warn('Using local fallback menu data:', err);
+    });
+  }, []);
 
   // Play coffee cups clink chime upon entering the menu
   useEffect(() => {
@@ -110,7 +154,7 @@ export default function MenuPage() {
       </div>
 
       {/* Sticky Category Navigator */}
-      <CategoryNav activeCategory={activeCategory} onCategoryChange={handleCategoryChange} />
+      <CategoryNav activeCategory={activeCategory} onCategoryChange={handleCategoryChange} categoriesList={categories} />
 
       {/* Modern Search Bar */}
       <SearchBar value={search} onChange={setSearch} />
@@ -226,7 +270,7 @@ export default function MenuPage() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.22 }}
             >
-              <OffersSection />
+              <OffersSection liveOffers={liveOffers} />
               {categories.map(cat => (
                 <MenuSection
                   key={cat.id}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,6 +13,17 @@ import PlaystationPage from '@/pages/PlaystationPage';
 import BookingDetailsPage from '@/pages/BookingDetailsPage';
 import BookingPaymentPage from '@/pages/BookingPaymentPage';
 import BookingSuccessPage from '@/pages/BookingSuccessPage';
+
+const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'));
+const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage'));
+
+function AdminLoadingFallback() {
+    return (
+        <div className="min-h-screen bg-[#0a0809] flex items-center justify-center text-red-500">
+            <div className="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+    );
+}
 
 function NotFound() {
     return (
@@ -47,10 +58,11 @@ function PageWrapper({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
     const location = useLocation();
+    const isAdminRoute = location.pathname.startsWith('/admin');
 
     return (
         <div className="w-full min-h-screen bg-[var(--bg-main)] flex flex-col selection:bg-red-500/30">
-            <CartSheet />
+            {!isAdminRoute && <CartSheet />}
             <AnimatePresence mode="wait">
                 <Routes location={location} key={location.pathname}>
                     <Route path="/" element={<PageWrapper><GatewayPage /></PageWrapper>} />
@@ -59,10 +71,20 @@ function AppRoutes() {
                     <Route path="/playstation/payment" element={<PageWrapper><BookingPaymentPage /></PageWrapper>} />
                     <Route path="/playstation/success" element={<PageWrapper><BookingSuccessPage /></PageWrapper>} />
                     <Route path="/menu" element={<PageWrapper><MenuPage /></PageWrapper>} />
+                    <Route path="/admin" element={
+                        <Suspense fallback={<AdminLoadingFallback />}>
+                            <AdminDashboardPage />
+                        </Suspense>
+                    } />
+                    <Route path="/admin/login" element={
+                        <Suspense fallback={<AdminLoadingFallback />}>
+                            <AdminLoginPage />
+                        </Suspense>
+                    } />
                     <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
                 </Routes>
             </AnimatePresence>
-            <BottomNav />
+            {!isAdminRoute && <BottomNav />}
             <Toaster position="top-center" richColors />
         </div>
     );

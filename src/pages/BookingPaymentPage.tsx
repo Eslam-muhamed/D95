@@ -22,6 +22,8 @@ import { motion } from 'framer-motion';
 import { useTheme } from '@/stores/themeStore';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
+import { createBooking } from '@/services/bookingService';
+import { createDateTimeFromBusinessDate, calculateEndDateTime } from '@/lib/bookingDatetime';
 
 type PaymentMethod = 'instapay' | 'wallet' | 'cash';
 
@@ -40,10 +42,12 @@ export default function BookingPaymentPage() {
 
     // Booking context from state with rock-solid defaults
     const bookingState = location.state || {
-        room: { name: 'غرفة 01 (Play Room)', type: 'standard', rate: 100 },
+        room: { id: 'room-1', name: 'غرفة 01 (Play Room)', type: 'standard', rate: 100 },
         date: new Date().toISOString().split('T')[0],
         startTime: '06:00 م',
         endTime: '08:00 م',
+        startDateTime: undefined,
+        endDateTime: undefined,
         durationHours: 2,
         roomSubtotal: 200,
         snacks: [],
@@ -51,7 +55,18 @@ export default function BookingPaymentPage() {
         total: 200,
     };
 
-    const { room, date, startTime, endTime, durationHours, roomSubtotal, snacks, snacksTotal } = bookingState;
+    const {
+        room,
+        date,
+        startTime,
+        endTime,
+        startDateTime,
+        endDateTime,
+        durationHours,
+        roomSubtotal,
+        snacks,
+        snacksTotal
+    } = bookingState;
 
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('instapay');
     const [name, setName] = useState('');
@@ -89,8 +104,9 @@ export default function BookingPaymentPage() {
     const rawTotal = (roomSubtotal || 200) + (snacksTotal || 0);
     const discountAmount = appliedPromo ? Math.round(rawTotal * 0.1) : 0;
     const netTotal = Math.max(0, rawTotal - discountAmount);
+    const [submitting, setSubmitting] = useState(false);
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (!name.trim() || name.trim().length < 3) {
             toast.error('برجاء كتابة اسمك الكريم بالكامل');
             return;
@@ -104,9 +120,63 @@ export default function BookingPaymentPage() {
         }
 
         playPs5SelectSound();
+        setSubmitting(true);
 
         // Generate a VIP Reservation ID
         const reservationId = `D95-PS-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        // Resolve exact start_datetime and end_datetime
+        let finalStartDateTime = startDateTime;
+        let finalEndDateTime = endDateTime;
+
+        if (!finalStartDateTime || !finalEndDateTime) {
+            // Fallback: parse startTime (e.g. "06:00 م" or "18:00")
+            const isPM = startTime.includes('م') || startTime.includes('PM');
+            const cleanTime = startTime.replace(/[^\d:]/g, '').trim();
+            const [hStr, mStr] = cleanTime.split(':');
+            let h = parseInt(hStr || '18', 10);
+            const m = parseInt(mStr || '0', 10);
+            if (isPM && h < 12) h += 12;
+            if (!isPM && h === 12) h = 0;
+            const time24 = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            const sDate = createDateTimeFromBusinessDate(date, time24);
+            const eDate = calculateEndDateTime(sDate, Number(durationHours) || 1);
+            finalStartDateTime = sDate.toISOString();
+            finalEndDateTime = eDate.toISOString();
+        }
+
+        // Record booking to Supabase database
+        try {
+            await createBooking({
+                reservation_id: reservationId,
+                customer_name: name.trim(),
+                customer_phone: cleanPhone,
+                room_id: room?.id || 'room-1',
+                room_name: room?.name || 'غرفة 01 (Play Room)',
+                booking_date: date,
+                start_time: startTime,
+                end_time: endTime,
+                start_datetime: finalStartDateTime,
+                end_datetime: finalEndDateTime,
+                duration_hours: Number(durationHours) || 1,
+                subtotal: Number(roomSubtotal) || 0,
+                snacks_total: Number(snacksTotal) || 0,
+                discount_amount: Number(discountAmount) || 0,
+                total_amount: Number(netTotal) || 0,
+                payment_method: paymentMethod,
+                status: 'pending',
+                snacks: snacks || [],
+                notes: notes.trim() || null,
+            });
+        } catch (err: unknown) {
+            console.error('Failed to save booking to Supabase:', err);
+            const msg = err instanceof Error ? err.message : 'عذراً، تعذر إتمام الحجز لوجود تعارض في الموعد أو مشكلة في الاتصال';
+            toast.error(msg);
+            setSubmitting(false);
+            return; // Abort on failure - do NOT navigate to success!
+        } finally {
+            setSubmitting(false);
+        }
 
         navigate('/playstation/success', {
             state: {
@@ -244,11 +314,10 @@ export default function BookingPaymentPage() {
                                     setPaymentMethod('instapay');
                                     playPs5NavigateSound();
                                 }}
-                                className={`w-full text-right p-4 rounded-2xl border-2 transition-all flex flex-col gap-3 cursor-pointer ${
-                                    paymentMethod === 'instapay'
+                                className={`w-full text-right p-4 rounded-2xl border-2 transition-all flex flex-col gap-3 cursor-pointer ${paymentMethod === 'instapay'
                                         ? 'bg-red-50 dark:bg-red-950/40 border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.15)] dark:shadow-[0_0_20px_rgba(220,38,38,0.25)] scale-[1.01]'
                                         : 'bg-white dark:bg-[#140e10]/95 border-neutral-200 dark:border-white/10 hover:border-neutral-300 dark:hover:border-white/20 text-neutral-700 dark:text-neutral-300'
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-center justify-between w-full">
                                     <div className="flex items-center gap-3">
@@ -266,9 +335,8 @@ export default function BookingPaymentPage() {
                                         </div>
                                     </div>
                                     <div
-                                        className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${
-                                            paymentMethod === 'instapay' ? 'bg-red-600 border-red-500 text-white' : 'border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-black/40'
-                                        }`}
+                                        className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${paymentMethod === 'instapay' ? 'bg-red-600 border-red-500 text-white' : 'border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-black/40'
+                                            }`}
                                     >
                                         {paymentMethod === 'instapay' && <Check className="w-4 h-4 stroke-[3]" />}
                                     </div>
@@ -325,11 +393,10 @@ export default function BookingPaymentPage() {
                                     setPaymentMethod('cash');
                                     playPs5NavigateSound();
                                 }}
-                                className={`w-full text-right p-4 rounded-2xl border-2 transition-all flex flex-col gap-2 cursor-pointer ${
-                                    paymentMethod === 'cash'
+                                className={`w-full text-right p-4 rounded-2xl border-2 transition-all flex flex-col gap-2 cursor-pointer ${paymentMethod === 'cash'
                                         ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-500 shadow-[0_0_20px_rgba(212,160,23,0.15)] dark:shadow-[0_0_20px_rgba(212,160,23,0.25)] scale-[1.01]'
                                         : 'bg-white dark:bg-[#140e10]/95 border-neutral-200 dark:border-white/10 hover:border-neutral-300 dark:hover:border-white/20 text-neutral-700 dark:text-neutral-300'
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-center justify-between w-full">
                                     <div className="flex items-center gap-3">
@@ -347,9 +414,8 @@ export default function BookingPaymentPage() {
                                         </div>
                                     </div>
                                     <div
-                                        className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${
-                                            paymentMethod === 'cash' ? 'bg-amber-500 border-amber-500 text-black' : 'border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-black/40'
-                                        }`}
+                                        className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${paymentMethod === 'cash' ? 'bg-amber-500 border-amber-500 text-black' : 'border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-black/40'
+                                            }`}
                                     >
                                         {paymentMethod === 'cash' && <Check className="w-4 h-4 stroke-[3]" />}
                                     </div>
@@ -374,11 +440,10 @@ export default function BookingPaymentPage() {
                                     setPaymentMethod('wallet');
                                     playPs5NavigateSound();
                                 }}
-                                className={`w-full text-right p-4 rounded-2xl border-2 transition-all flex flex-col gap-3 cursor-pointer ${
-                                    paymentMethod === 'wallet'
+                                className={`w-full text-right p-4 rounded-2xl border-2 transition-all flex flex-col gap-3 cursor-pointer ${paymentMethod === 'wallet'
                                         ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.15)] dark:shadow-[0_0_20px_rgba(16,185,129,0.25)] scale-[1.01]'
                                         : 'bg-white dark:bg-[#140e10]/95 border-neutral-200 dark:border-white/10 hover:border-neutral-300 dark:hover:border-white/20 text-neutral-700 dark:text-neutral-300'
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-center justify-between w-full">
                                     <div className="flex items-center gap-3">
@@ -396,9 +461,8 @@ export default function BookingPaymentPage() {
                                         </div>
                                     </div>
                                     <div
-                                        className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${
-                                            paymentMethod === 'wallet' ? 'bg-emerald-500 border-emerald-500 text-black' : 'border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-black/40'
-                                        }`}
+                                        className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${paymentMethod === 'wallet' ? 'bg-emerald-500 border-emerald-500 text-black' : 'border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-black/40'
+                                            }`}
                                     >
                                         {paymentMethod === 'wallet' && <Check className="w-4 h-4 stroke-[3]" />}
                                     </div>
@@ -545,9 +609,12 @@ export default function BookingPaymentPage() {
                             <button
                                 type="button"
                                 onClick={handleConfirm}
-                                className="hidden lg:flex w-full py-3.5 px-6 rounded-xl font-bold font-body text-sm text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 transition-all shadow-[0_4px_20px_rgba(220,38,38,0.35)] active:scale-[0.98] cursor-pointer items-center justify-center gap-2 mt-4 border border-red-500/50"
+                                disabled={submitting}
+                                className={`hidden lg:flex w-full py-3.5 px-6 rounded-xl font-bold font-body text-sm text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 transition-all shadow-[0_4px_20px_rgba(220,38,38,0.35)] active:scale-[0.98] items-center justify-center gap-2 mt-4 border border-red-500/50 ${
+                                    submitting ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                                }`}
                             >
-                                <span>تأكيد الحجز والحصول على التذكرة</span>
+                                <span>{submitting ? 'جاري تأكيد الحجز...' : 'تأكيد الحجز والحصول على التذكرة'}</span>
                                 <ArrowRight className="w-4 h-4 rotate-180" />
                             </button>
                         </section>
@@ -568,9 +635,12 @@ export default function BookingPaymentPage() {
                     <button
                         type="button"
                         onClick={handleConfirm}
-                        className="flex-1 py-3 px-5 rounded-xl font-bold font-body text-sm text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 transition-all shadow-[0_0_20px_rgba(220,38,38,0.35)] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 border border-red-500/50"
+                        disabled={submitting}
+                        className={`flex-1 py-3 px-5 rounded-xl font-bold font-body text-sm text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 transition-all shadow-[0_0_20px_rgba(220,38,38,0.35)] active:scale-[0.98] flex items-center justify-center gap-2 border border-red-500/50 ${
+                            submitting ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                        }`}
                     >
-                        <span>تأكيد الحجز</span>
+                        <span>{submitting ? 'جاري التأكيد...' : 'تأكيد الحجز'}</span>
                         <ArrowRight className="w-4 h-4 rotate-180" />
                     </button>
                 </div>
