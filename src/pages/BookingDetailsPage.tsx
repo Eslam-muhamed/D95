@@ -33,6 +33,8 @@ import {
     calculateEndDateTime,
     getBusinessOperatingWindow,
     checkAvailability,
+    generateStartTimeOptions,
+    TimeOption,
     OPERATING_HOURS,
 } from '@/lib/bookingDatetime';
 import { fetchRoomOccupiedIntervals } from '@/services/bookingService';
@@ -98,7 +100,7 @@ export default function BookingDetailsPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
-    const { items: cartItems, cafeTotal, setBooking, openCart, itemCount } = useCart();
+    const { items: cartItems, booking: cartBooking, cafeTotal, setBooking, openCart, itemCount } = useCart();
 
     // Initial room fallback from navigation state
     const initialRoom = location.state?.room || { name: 'غرفة 01 (Play Room)' };
@@ -310,105 +312,109 @@ export default function BookingDetailsPage() {
         loadOccupiedIntervals();
     }, [loadOccupiedIntervals]);
 
-    // Sorted active booked intervals
+    // Combine database occupied intervals with current cart booking (if in same room and date)
+    const effectiveOccupiedIntervals = useMemo<BookingInterval[]>(() => {
+        const intervals = [...occupiedIntervals];
+        if (
+            cartBooking &&
+            cartBooking.roomId === currentRoom.id &&
+            cartBooking.date === selectedDate
+        ) {
+            let start: Date | null = null;
+            let end: Date | null = null;
+            if (cartBooking.startDateTime && cartBooking.endDateTime) {
+                start = new Date(cartBooking.startDateTime);
+                end = new Date(cartBooking.endDateTime);
+            } else if (cartBooking.startTime) {
+                start = createDateTimeFromBusinessDate(cartBooking.date, cartBooking.startTime);
+                end = calculateEndDateTime(start, cartBooking.durationHours || 1);
+            }
+            if (start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
+                const alreadyExists = intervals.some(
+                    inv => Math.abs(inv.start.getTime() - start!.getTime()) < 60000 &&
+                           Math.abs(inv.end.getTime() - end!.getTime()) < 60000
+                );
+                if (!alreadyExists) {
+                    intervals.push({ start, end, status: 'in_cart', id: 'cart-booking' });
+                }
+            }
+        }
+        return intervals;
+    }, [occupiedIntervals, cartBooking, currentRoom.id, selectedDate]);
+
+    // Sorted active booked intervals (blocking)
     const sortedBookings = useMemo(() => {
-        return [...occupiedIntervals].sort((a, b) => a.start.getTime() - b.start.getTime());
-    }, [occupiedIntervals]);
+        return [...effectiveOccupiedIntervals].sort((a, b) => a.start.getTime() - b.start.getTime());
+    }, [effectiveOccupiedIntervals]);
 
     // Time slot picker helper state
     const [timePeriodTab, setTimePeriodTab] = useState<'evening' | 'morning'>('evening');
     const [showCustomTime, setShowCustomTime] = useState(false);
 
-    const TIME_SLOTS_EVENING = useMemo(() => {
-        const slots = [];
-        // 05:00 PM to 11:30 PM
-        for (let h = 17; h <= 23; h++) {
-            for (const m of [0, 30]) {
-                const h12 = h > 12 ? h - 12 : h;
-                const label = `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} م`;
-                slots.push({ h24: h, min: m, h12, period: 'PM' as const, label });
-            }
-        }
-        // 12:00 AM to 03:30 AM
-        for (let h = 0; h <= 3; h++) {
-            for (const m of [0, 30]) {
-                const h12 = h === 0 ? 12 : h;
-                const label = `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ص`;
-                slots.push({ h24: h, min: m, h12, period: 'AM' as const, label });
-            }
-        }
-        return slots;
-    }, []);
+    const activeDuration = durationHours || 1.0;
 
-    const TIME_SLOTS_MORNING = useMemo(() => {
-        const slots = [];
-        // 08:00 AM to 11:30 AM
-        for (let h = 8; h <= 11; h++) {
-            for (const m of [0, 30]) {
-                const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} ص`;
-                slots.push({ h24: h, min: m, h12: h, period: 'AM' as const, label });
-            }
-        }
-        // 12:00 PM to 04:30 PM
-        for (let h = 12; h <= 16; h++) {
-            for (const m of [0, 30]) {
-                const h12 = h === 12 ? 12 : h - 12;
-                const label = `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} م`;
-                slots.push({ h24: h, min: m, h12, period: 'PM' as const, label });
-            }
-        }
-        return slots;
-    }, []);
-
-    // Check if slot falls in any occupied interval
-    const isSlotOccupied = useCallback((h24: number, min: number) => {
-        const slotDate = createDateTimeFromBusinessDate(
-            selectedDate,
-            `${String(h24).padStart(2, '0')}:${String(min).padStart(2, '0')}`
-        );
-        return occupiedIntervals.some(b => slotDate >= b.start && slotDate < b.end);
-    }, [selectedDate, occupiedIntervals]);
-
-    // Check if slot is past (for today)
-    const isSlotPast = useCallback((h24: number, min: number) => {
-        const slotDate = createDateTimeFromBusinessDate(
-            selectedDate,
-            `${String(h24).padStart(2, '0')}:${String(min).padStart(2, '0')}`
-        );
+    // Filter all 15-minute start times across the 20h operating window:
+    // Only display start times that:
+    // 1. Are NOT in the past (for today)
+    // 2. Do NOT exceed the 04:00 AM closing boundary for the selected duration
+    // 3. Do NOT overlap with ANY existing booking interval
+    const allAvailableSlots = useMemo<TimeOption[]>(() => {
+        const rawOptions = generateStartTimeOptions(selectedDate);
         const now = new Date();
-        return slotDate.getTime() <= now.getTime();
-    }, [selectedDate]);
+        return rawOptions.filter((opt) => {
+            const check = checkAvailability(
+                opt.startDateTime,
+                activeDuration,
+                selectedDate,
+                effectiveOccupiedIntervals,
+                now
+            );
+            return check.isAvailable;
+        });
+    }, [selectedDate, activeDuration, effectiveOccupiedIntervals]);
+
+    // Evening & Night: 05:00 PM (17:00) to 03:45 AM (next morning)
+    const eveningAvailableSlots = useMemo(() => {
+        return allAvailableSlots.filter((s) => s.hour24 >= 17 || s.hour24 < 8);
+    }, [allAvailableSlots]);
+
+    // Morning & Afternoon: 08:00 AM to 04:45 PM (16:45)
+    const morningAvailableSlots = useMemo(() => {
+        return allAvailableSlots.filter((s) => s.hour24 >= 8 && s.hour24 < 17);
+    }, [allAvailableSlots]);
+
+    const displayedSlots = timePeriodTab === 'evening' ? eveningAvailableSlots : morningAvailableSlots;
+
+    // Quick shortcut: earliest available slot for the selected business date
+    const nextAvailableSlot = useMemo(() => {
+        if (allAvailableSlots.length === 0) return null;
+        return allAvailableSlots[0];
+    }, [allAvailableSlots]);
 
     // Handle picking a slot
-    const handleSelectSlot = (slot: { h12: number; min: number; period: 'AM' | 'PM'; h24: number }) => {
-        if (isSlotPast(slot.h24, slot.min) || isSlotOccupied(slot.h24, slot.min)) {
-            toast.error('هذا الموعد غير متاح حالياً');
-            return;
-        }
-        setSelectedHour(slot.h12);
-        setSelectedMinute(slot.min);
-        setSelectedPeriod(slot.period);
+    const handleSelectSlot = (slot: TimeOption) => {
+        const h12 = slot.hour24 % 12 === 0 ? 12 : slot.hour24 % 12;
+        const period: 'AM' | 'PM' = slot.hour24 >= 12 && slot.hour24 < 24 ? 'PM' : 'AM';
+        setSelectedHour(h12);
+        setSelectedMinute(slot.minute);
+        setSelectedPeriod(period);
         if (durationHours === null) {
             setDurationHours(1);
+        }
+        if (slot.hour24 >= 17 || slot.hour24 < 8) {
+            setTimePeriodTab('evening');
+        } else {
+            setTimePeriodTab('morning');
         }
         playPs5SelectSound();
     };
 
-    // Quick shortcut: next available slot for today
-    const nextAvailableSlot = useMemo(() => {
-        const allSlots = [...TIME_SLOTS_EVENING, ...TIME_SLOTS_MORNING];
-        const now = new Date();
-        for (const s of allSlots) {
-            const slotDate = createDateTimeFromBusinessDate(
-                selectedDate,
-                `${String(s.h24).padStart(2, '0')}:${String(s.min).padStart(2, '0')}`
-            );
-            if (slotDate.getTime() > now.getTime() && !isSlotOccupied(s.h24, s.min)) {
-                return s;
-            }
-        }
-        return null;
-    }, [TIME_SLOTS_EVENING, TIME_SLOTS_MORNING, selectedDate, isSlotOccupied]);
+    const isSlotSelected = (slot: TimeOption) => {
+        if (selectedHour === null || selectedMinute === null || selectedPeriod === null) return false;
+        const h12 = slot.hour24 % 12 === 0 ? 12 : slot.hour24 % 12;
+        const period: 'AM' | 'PM' = slot.hour24 >= 12 && slot.hour24 < 24 ? 'PM' : 'AM';
+        return selectedHour === h12 && selectedMinute === slot.minute && selectedPeriod === period;
+    };
 
     // =========================================================================
     // MOBILE EXPERIENCE: Dynamic calculation of all Free vs Occupied segments
@@ -488,7 +494,7 @@ export default function BookingDetailsPage() {
             startDateTime,
             durationHours,
             selectedDate,
-            occupiedIntervals
+            effectiveOccupiedIntervals
         );
 
         return {
@@ -498,7 +504,7 @@ export default function BookingDetailsPage() {
             formattedStart: formatArabicTimeDetailed(startDateTime),
             formattedEnd: formatArabicTimeDetailed(endDateTime),
         };
-    }, [startDateTime, durationHours, selectedDate, occupiedIntervals]);
+    }, [startDateTime, durationHours, selectedDate, effectiveOccupiedIntervals]);
 
     // Timeline calculation helper: minutes from 08:00 AM (0 to 1200 mins)
     const getTimelinePercent = useCallback((date: Date): number => {
@@ -1059,7 +1065,7 @@ export default function BookingDetailsPage() {
                         )}
                     </div>
 
-                    {/* Period Switcher Tabs & Quick "احجز الآن" button */}
+                    {/* Period Switcher Tabs & Quick "أقرب موعد متاح" button */}
                     <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
                         <div className="flex items-center p-1 rounded-xl bg-neutral-100 dark:bg-white/[0.05] border border-neutral-200/80 dark:border-white/10 gap-1">
                             <button
@@ -1068,13 +1074,20 @@ export default function BookingDetailsPage() {
                                     setTimePeriodTab('evening');
                                     playPs5NavigateSound();
                                 }}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                                     timePeriodTab === 'evening'
                                         ? 'bg-red-600 text-white shadow-xs'
                                         : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
                                 }`}
                             >
-                                🌙 المساء والسهرة
+                                <span>🌙 المساء والسهرة</span>
+                                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-semibold ${
+                                    timePeriodTab === 'evening'
+                                        ? 'bg-white/20 text-white'
+                                        : 'bg-neutral-200 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
+                                }`}>
+                                    {eveningAvailableSlots.length}
+                                </span>
                             </button>
                             <button
                                 type="button"
@@ -1082,13 +1095,20 @@ export default function BookingDetailsPage() {
                                     setTimePeriodTab('morning');
                                     playPs5NavigateSound();
                                 }}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                                     timePeriodTab === 'morning'
                                         ? 'bg-red-600 text-white shadow-xs'
                                         : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
                                 }`}
                             >
-                                ☀️ الصباح والظهيرة
+                                <span>☀️ الصباح والظهيرة</span>
+                                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-semibold ${
+                                    timePeriodTab === 'morning'
+                                        ? 'bg-white/20 text-white'
+                                        : 'bg-neutral-200 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
+                                }`}>
+                                    {morningAvailableSlots.length}
+                                </span>
                             </button>
                         </div>
 
@@ -1100,46 +1120,52 @@ export default function BookingDetailsPage() {
                                 className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
                             >
                                 <Sparkles className="w-3.5 h-3.5" />
-                                <span>أقرب موعد متاح ({nextAvailableSlot.label})</span>
+                                <span>أقرب موعد متاح ({nextAvailableSlot.displayTime})</span>
                             </button>
                         )}
                     </div>
 
-                    {/* Time Slots Grid (One-Tap Selection) */}
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                        {(timePeriodTab === 'evening' ? TIME_SLOTS_EVENING : TIME_SLOTS_MORNING).map((slot, idx) => {
-                            const isSelected = selectedHour === slot.h12 && selectedMinute === slot.min && selectedPeriod === slot.period;
-                            const occupied = isSlotOccupied(slot.h24, slot.min);
-                            const past = isSlotPast(slot.h24, slot.min);
-                            const disabled = occupied || past;
+                    {/* Time Slots Grid (Only available slots are displayed) */}
+                    {displayedSlots.length > 0 ? (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                            {displayedSlots.map((slot) => {
+                                const isSelected = isSlotSelected(slot);
 
-                            return (
-                                <button
-                                    key={idx}
-                                    type="button"
-                                    disabled={disabled}
-                                    onClick={() => handleSelectSlot(slot)}
-                                    className={`py-2.5 px-1.5 rounded-xl text-center font-mono text-xs font-bold transition-all cursor-pointer relative border ${
-                                        disabled
-                                            ? occupied
-                                                ? 'bg-red-50/50 dark:bg-red-950/20 border-red-200/50 dark:border-red-900/30 text-red-400 opacity-50 cursor-not-allowed'
-                                                : 'bg-neutral-100/50 dark:bg-white/[0.02] border-neutral-200/40 dark:border-white/5 text-neutral-400 dark:text-neutral-600 opacity-40 cursor-not-allowed'
-                                            : isSelected
-                                            ? 'bg-red-600 border-red-600 text-white shadow-md shadow-red-600/30 scale-[1.03] z-10'
-                                            : 'bg-neutral-50 dark:bg-white/[0.04] border-neutral-200/80 dark:border-white/10 text-neutral-800 dark:text-neutral-200 hover:border-red-500/40 hover:bg-neutral-100 dark:hover:bg-white/[0.08] active:scale-[0.98]'
-                                    }`}
-                                >
-                                    <div className="flex items-center justify-center gap-1">
-                                        {occupied && <Lock className="w-3 h-3 text-red-500" />}
-                                        <span>{slot.label}</span>
-                                    </div>
-                                    {occupied && (
-                                        <div className="text-[9px] text-red-500 font-sans font-normal mt-0.5">محجوز</div>
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
+                                return (
+                                    <button
+                                        key={slot.time24}
+                                        type="button"
+                                        onClick={() => handleSelectSlot(slot)}
+                                        className={`py-2.5 px-1.5 rounded-xl text-center font-mono text-xs font-bold transition-all cursor-pointer relative border ${
+                                            isSelected
+                                                ? 'bg-red-600 border-red-600 text-white shadow-md shadow-red-600/30 scale-[1.03] z-10'
+                                                : 'bg-neutral-50 dark:bg-white/[0.04] border-neutral-200/80 dark:border-white/10 text-neutral-800 dark:text-neutral-200 hover:border-red-500/40 hover:bg-neutral-100 dark:hover:bg-white/[0.08] active:scale-[0.98]'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-center gap-1">
+                                            <span>{slot.displayTime}</span>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="p-4 rounded-xl bg-neutral-100/70 dark:bg-white/[0.03] border border-neutral-200/80 dark:border-white/10 text-center space-y-2">
+                            <p className="text-xs text-neutral-600 dark:text-neutral-400 font-medium">
+                                لا توجد مواعيد متاحة في هذه الفترة لطلب مدته {activeDuration} {activeDuration === 1 ? 'ساعة' : 'ساعات'}.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setTimePeriodTab(timePeriodTab === 'evening' ? 'morning' : 'evening');
+                                    playPs5NavigateSound();
+                                }}
+                                className="text-xs font-bold text-red-600 dark:text-red-400 hover:underline cursor-pointer"
+                            >
+                                الانتقال إلى فترة {timePeriodTab === 'evening' ? 'الصباح والظهيرة' : 'المساء والسهرة'} ({timePeriodTab === 'evening' ? morningAvailableSlots.length : eveningAvailableSlots.length} موعد متاح)
+                            </button>
+                        </div>
+                    )}
 
                     {/* DURATION SELECTOR */}
                     <div className="pt-3 border-t border-neutral-100 dark:border-white/[0.06] space-y-2">
