@@ -82,25 +82,17 @@ const AVAILABLE_ROOMS: Room[] = [
 ];
 
 const DURATION_OPTIONS = [
-    { value: 1, label: 'ساعة واحدة', subtitle: '60 دقيقة' },
-    { value: 1.5, label: 'ساعة ونصف', subtitle: '90 دقيقة' },
-    { value: 2, label: 'ساعتان', subtitle: '120 دقيقة' },
-    { value: 2.5, label: 'ساعتان ونصف', subtitle: '150 دقيقة' },
-    { value: 3, label: '3 ساعات', subtitle: '180 دقيقة' },
-    { value: 4, label: '4 ساعات', subtitle: '240 دقيقة' },
-    { value: 5, label: '5 ساعات', subtitle: '300 دقيقة' },
+    { value: 1, label: '1 h' },
+    { value: 2, label: '2 h' },
+    { value: 3, label: '3 h' },
+    { value: 4, label: '4 h' },
+    { value: 5, label: '5 h' },
+    { value: 6, label: '6 h' },
 ];
 
 function formatDurationLabel(hours: number | null): string {
     if (hours === null) return 'اختر المدة';
-    if (hours === 1) return 'ساعة واحدة';
-    if (hours === 1.5) return 'ساعة ونصف';
-    if (hours === 2) return 'ساعتان';
-    if (hours === 2.5) return 'ساعتان ونصف';
-    if (hours === 3) return '3 ساعات';
-    if (hours === 4) return '4 ساعات';
-    if (hours === 5) return '5 ساعات';
-    return `${hours} ساعات`;
+    return `${hours} h`;
 }
 
 const ARABIC_MONTHS = [
@@ -909,7 +901,7 @@ export default function BookingDetailsPage() {
                                 >
                                     <Timer className="w-3.5 h-3.5 text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform shrink-0" />
                                     <span className="text-red-600 dark:text-red-400 font-extrabold">المدة:</span>
-                                    <span>{formatDurationLabel(durationHours)}</span>
+                                    <span className="font-mono">{formatDurationLabel(durationHours)}</span>
                                     <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${isDurationMenuOpen ? 'rotate-180 text-red-600' : ''}`} />
                                 </button>
 
@@ -921,11 +913,11 @@ export default function BookingDetailsPage() {
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                             transition={{ duration: 0.15 }}
-                                            className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-56 p-1.5 bg-white dark:bg-[#181416] border border-neutral-200/90 dark:border-white/10 rounded-2xl shadow-2xl z-40 space-y-1"
+                                            className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-48 p-1.5 bg-white dark:bg-[#181416] border border-neutral-200/90 dark:border-white/10 rounded-2xl shadow-2xl z-40 space-y-1"
                                         >
                                             <div className="px-2.5 py-1.5 text-[11px] font-bold text-neutral-400 dark:text-neutral-500 border-b border-neutral-100 dark:border-white/[0.06] flex items-center justify-between">
                                                 <span>اختر مدة الجلسة</span>
-                                                <span>{currentRoom.rate} ج.م/س</span>
+                                                <span className="font-mono">{currentRoom.rate} ج.م/س</span>
                                             </div>
                                             <div className="max-h-60 overflow-y-auto space-y-0.5 pt-0.5">
                                                 {DURATION_OPTIONS.map((opt) => {
@@ -947,10 +939,7 @@ export default function BookingDetailsPage() {
                                                         >
                                                             <div className="flex items-center gap-2">
                                                                 <div className={`w-2 h-2 rounded-full shrink-0 ${isSelected ? 'bg-white' : 'border border-neutral-300 dark:border-neutral-600'}`} />
-                                                                <span>{opt.label}</span>
-                                                                <span className={`text-[10px] font-normal ${isSelected ? 'text-white/80' : 'text-neutral-400'}`}>
-                                                                    ({opt.subtitle})
-                                                                </span>
+                                                                <span className="font-mono font-bold text-xs">{opt.label}</span>
                                                             </div>
                                                             <span className={`font-mono text-[11px] font-bold shrink-0 ${isSelected ? 'text-white' : 'text-neutral-500 dark:text-neutral-400'}`}>
                                                                 {Math.round(opt.value * currentRoom.rate)} ج.م
