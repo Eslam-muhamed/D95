@@ -12,7 +12,6 @@ import {
     CheckCircle2,
     Sparkles,
     Check,
-    Smartphone,
     ShoppingBag,
     Coffee,
     ChevronDown,
@@ -453,19 +452,6 @@ export default function BookingDetailsPage() {
     const [tempHour, setTempHour] = useState<number>(6);
     const [tempMinute, setTempMinute] = useState<number>(0);
     const [tempPeriod, setTempPeriod] = useState<'AM' | 'PM'>('PM');
-    const [hourInputStr, setHourInputStr] = useState<string>('06');
-    const [minuteInputStr, setMinuteInputStr] = useState<string>('00');
-    const hourInputRef = useRef<HTMLInputElement>(null);
-    const minuteInputRef = useRef<HTMLInputElement>(null);
-
-    // Sync input strings with drum wheel changes
-    useEffect(() => {
-        setHourInputStr(String(tempHour).padStart(2, '0'));
-    }, [tempHour]);
-
-    useEffect(() => {
-        setMinuteInputStr(String(tempMinute).padStart(2, '0'));
-    }, [tempMinute]);
 
     const hasCustomMinuteSelected = hasSelectedTime && selectedMinute !== 0;
 
@@ -1335,14 +1321,9 @@ export default function BookingDetailsPage() {
                         <button
                             type="button"
                             onClick={() => {
-                                const h = selectedHour ?? 6;
-                                const m = selectedMinute ?? 0;
-                                const p = selectedPeriod ?? 'PM';
-                                setTempHour(h);
-                                setTempMinute(m);
-                                setTempPeriod(p);
-                                setHourInputStr(String(h).padStart(2, '0'));
-                                setMinuteInputStr(String(m).padStart(2, '0'));
+                                setTempHour(selectedHour ?? 6);
+                                setTempMinute(selectedMinute ?? 0);
+                                setTempPeriod(selectedPeriod ?? 'PM');
                                 setIsCustomTimeModalOpen(true);
                                 playPs5NavigateSound();
                             }}
@@ -1575,143 +1556,8 @@ export default function BookingDetailsPage() {
 
                             {/* Modal Body */}
                             <div className="p-4 space-y-4 max-h-[75vh] overflow-y-auto">
-                                {/* 1. Direct Typing Inputs & AM/PM Switcher (Desktop Keyboard + Instant Entry) */}
-                                <div className="bg-neutral-950 rounded-2xl p-3 sm:p-4 border border-neutral-800/90 flex items-center justify-between gap-3 shadow-inner">
-                                    <div className="flex items-center gap-1.5 font-mono text-2xl sm:text-3xl font-black text-white" dir="ltr">
-                                        {/* Hour Input */}
-                                        <div className="flex flex-col items-center">
-                                            <input
-                                                ref={hourInputRef}
-                                                type="text"
-                                                inputMode="numeric"
-                                                pattern="[0-9]*"
-                                                maxLength={2}
-                                                value={hourInputStr}
-                                                onFocus={(e) => e.target.select()}
-                                                onChange={(e) => {
-                                                    const cleaned = e.target.value.replace(/\D/g, '');
-                                                    if (cleaned.length > 2) return;
-                                                    setHourInputStr(cleaned);
-                                                    if (cleaned === '') return;
-                                                    const num = parseInt(cleaned, 10);
-                                                    if (!isNaN(num) && num >= 1 && num <= 12) {
-                                                        setTempHour(num);
-                                                        playPs5NavigateSound();
-                                                        if (cleaned.length === 2 || num > 1) {
-                                                            minuteInputRef.current?.focus();
-                                                            minuteInputRef.current?.select();
-                                                        }
-                                                    }
-                                                }}
-                                                onBlur={() => {
-                                                    setHourInputStr(String(tempHour).padStart(2, '0'));
-                                                }}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'ArrowUp') {
-                                                        e.preventDefault();
-                                                        const next = tempHour >= 12 ? 1 : tempHour + 1;
-                                                        setTempHour(next);
-                                                        playPs5NavigateSound();
-                                                    } else if (e.key === 'ArrowDown') {
-                                                        e.preventDefault();
-                                                        const prev = tempHour <= 1 ? 12 : tempHour - 1;
-                                                        setTempHour(prev);
-                                                        playPs5NavigateSound();
-                                                    } else if (e.key === 'Enter' || e.key === ':') {
-                                                        e.preventDefault();
-                                                        minuteInputRef.current?.focus();
-                                                        minuteInputRef.current?.select();
-                                                    }
-                                                }}
-                                                className="w-14 sm:w-16 h-12 sm:h-14 text-center bg-neutral-900 border-2 border-neutral-700/80 focus:border-red-500 focus:bg-neutral-900/90 rounded-xl text-red-400 focus:text-white font-mono text-2xl sm:text-3xl font-black transition-all outline-none selection:bg-red-500 selection:text-white shadow-inner cursor-text"
-                                                title="اكتب الساعة بالكيبورد (1-12) أو استخدم الأسهم ↑ ↓"
-                                            />
-                                            <span className="text-[10px] text-neutral-500 font-sans mt-1">ساعة</span>
-                                        </div>
-
-                                        <span className="text-neutral-500 font-sans text-xl pb-5 animate-pulse">:</span>
-
-                                        {/* Minute Input */}
-                                        <div className="flex flex-col items-center">
-                                            <input
-                                                ref={minuteInputRef}
-                                                type="text"
-                                                inputMode="numeric"
-                                                pattern="[0-9]*"
-                                                maxLength={2}
-                                                value={minuteInputStr}
-                                                onFocus={(e) => e.target.select()}
-                                                onChange={(e) => {
-                                                    const cleaned = e.target.value.replace(/\D/g, '');
-                                                    if (cleaned.length > 2) return;
-                                                    setMinuteInputStr(cleaned);
-                                                    if (cleaned === '') return;
-                                                    const num = parseInt(cleaned, 10);
-                                                    if (!isNaN(num) && num >= 0 && num <= 59) {
-                                                        setTempMinute(num);
-                                                        playPs5NavigateSound();
-                                                    }
-                                                }}
-                                                onBlur={() => {
-                                                    setMinuteInputStr(String(tempMinute).padStart(2, '0'));
-                                                }}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'ArrowUp') {
-                                                        e.preventDefault();
-                                                        const next = (tempMinute + 1) % 60;
-                                                        setTempMinute(next);
-                                                        playPs5NavigateSound();
-                                                    } else if (e.key === 'ArrowDown') {
-                                                        e.preventDefault();
-                                                        const prev = (tempMinute - 1 + 60) % 60;
-                                                        setTempMinute(prev);
-                                                        playPs5NavigateSound();
-                                                    }
-                                                }}
-                                                className="w-14 sm:w-16 h-12 sm:h-14 text-center bg-neutral-900 border-2 border-neutral-700/80 focus:border-red-500 focus:bg-neutral-900/90 rounded-xl text-red-400 focus:text-white font-mono text-2xl sm:text-3xl font-black transition-all outline-none selection:bg-red-500 selection:text-white shadow-inner cursor-text"
-                                                title="اكتب الدقيقة بالكيبورد (00-59) أو استخدم الأسهم ↑ ↓"
-                                            />
-                                            <span className="text-[10px] text-neutral-500 font-sans mt-1">دقيقة</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Period Switcher AM/PM */}
-                                    <div className="flex flex-col items-end gap-1.5">
-                                        <div className="flex items-center bg-neutral-900 p-1 rounded-xl border border-neutral-800 gap-1">
-                                            <button
-                                                type="button"
-                                                onClick={() => { setTempPeriod('PM'); playPs5NavigateSound(); }}
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                                    tempPeriod === 'PM'
-                                                        ? 'bg-red-600 text-white shadow-sm'
-                                                        : 'text-neutral-400 hover:text-neutral-200'
-                                                }`}
-                                            >
-                                                مساءً
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => { setTempPeriod('AM'); playPs5NavigateSound(); }}
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                                    tempPeriod === 'AM'
-                                                        ? 'bg-red-600 text-white shadow-sm'
-                                                        : 'text-neutral-400 hover:text-neutral-200'
-                                                }`}
-                                            >
-                                                صباحاً
-                                            </button>
-                                        </div>
-                                        <span className="text-[10px] text-neutral-400 font-medium hidden sm:inline">⌨️ اكتب بالكيبورد أو استخدم الأسهم</span>
-                                    </div>
-                                </div>
-
-                                {/* 2. Mobile Alarm Drum Wheel (Smooth Touch & Wheel Scroll) */}
+                                {/* Mobile Alarm Drum Wheel (Smooth Touch & Wheel Scroll) */}
                                 <div className="space-y-1.5">
-                                    <div className="flex items-center justify-between text-xs px-1">
-                                        <span className="font-bold text-neutral-300">تمرير المنبه (Touch / Scroll):</span>
-                                        <span className="text-[10px] text-neutral-500">اسحب للأعلى أو الأسفل كمنبه الهاتف</span>
-                                    </div>
-
                                     <div className="relative bg-neutral-950/80 rounded-2xl p-2 border border-neutral-800/80 overflow-hidden shadow-inner">
                                         {/* Center Highlight Lens (Across all 3 drums) */}
                                         <div
@@ -1761,64 +1607,6 @@ export default function BookingDetailsPage() {
                                             />
                                         </div>
                                     </div>
-                                </div>
-
-                                {/* 3. Quick Minute Presets */}
-                                <div className="flex items-center justify-between pt-0.5 text-xs">
-                                    <span className="text-[11px] text-neutral-400 font-bold">دقائق سريعة:</span>
-                                    <div className="flex items-center gap-1.5">
-                                        {[0, 15, 30, 45].map((m) => {
-                                            const isSelected = tempMinute === m;
-                                            return (
-                                                <button
-                                                    key={m}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setTempMinute(m);
-                                                        playPs5NavigateSound();
-                                                    }}
-                                                    className={`px-2.5 py-1 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer border ${
-                                                        isSelected
-                                                            ? 'bg-red-600 border-red-500 text-white shadow-xs'
-                                                            : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700/60 text-neutral-300'
-                                                    }`}
-                                                >
-                                                    :{String(m).padStart(2, '0')}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                {/* Native Clock Option for supported devices */}
-                                <div className="pt-2 border-t border-neutral-800 flex items-center justify-between text-xs text-neutral-400">
-                                    <span className="text-[11px]">أو من ساعة الهاتف / المتصفح:</span>
-                                    <label className="relative inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border border-neutral-700 text-xs font-medium cursor-pointer transition-all">
-                                        <Smartphone size={12} className="text-neutral-400" />
-                                        <span>ساعة الجهاز</span>
-                                        <input
-                                            type="time"
-                                            value={tempTime24}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                if (!val) return;
-                                                const parts = val.split(':');
-                                                if (parts.length >= 2) {
-                                                    let h = parseInt(parts[0], 10);
-                                                    const m = parseInt(parts[1], 10);
-                                                    if (!isNaN(h) && !isNaN(m)) {
-                                                        const p: 'AM' | 'PM' = h >= 12 ? 'PM' : 'AM';
-                                                        if (h === 0) h = 12;
-                                                        else if (h > 12) h -= 12;
-                                                        setTempHour(h);
-                                                        setTempMinute(m);
-                                                        setTempPeriod(p);
-                                                    }
-                                                }
-                                            }}
-                                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                        />
-                                    </label>
                                 </div>
 
                                 {/* Live Availability Status Feedback */}
