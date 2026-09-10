@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -18,6 +18,7 @@ import {
     ChevronDown,
     ChevronLeft,
     ChevronRight,
+    X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -36,6 +37,7 @@ import {
     generateStartTimeOptions,
     TimeOption,
     OPERATING_HOURS,
+    formatArabicTime,
 } from '@/lib/bookingDatetime';
 import { fetchRoomOccupiedIntervals } from '@/services/bookingService';
 
@@ -241,38 +243,13 @@ export default function BookingDetailsPage() {
     }, [hasSelectedTime, selectedHour, selectedMinute, selectedPeriod]);
 
 
-    // Handle HTML5 native time picker input
-    const handleNativeTimeChange = (val: string) => {
-        if (!val) return;
-        const parts = val.split(':');
-        if (parts.length < 2) return;
-        let h = parseInt(parts[0], 10);
-        const m = parseInt(parts[1], 10);
-        if (isNaN(h) || isNaN(m)) return;
+    // Custom Time Modal State
+    const [isCustomTimeModalOpen, setIsCustomTimeModalOpen] = useState(false);
+    const [tempHour, setTempHour] = useState<number>(6);
+    const [tempMinute, setTempMinute] = useState<number>(0);
+    const [tempPeriod, setTempPeriod] = useState<'AM' | 'PM'>('PM');
 
-        const period: 'AM' | 'PM' = h >= 12 ? 'PM' : 'AM';
-        if (h === 0) h = 12;
-        else if (h > 12) h -= 12;
-
-        setSelectedHour(h);
-        setSelectedMinute(m);
-        setSelectedPeriod(period);
-        if (durationHours === null) {
-            setDurationHours(1);
-        }
-        playPs5SelectSound();
-    };
-
-    const timeInputRef = useRef<HTMLInputElement>(null);
-
-    const handleOpenTimePicker = () => {
-        playPs5NavigateSound();
-        try {
-            timeInputRef.current?.showPicker();
-        } catch {
-            timeInputRef.current?.focus();
-        }
-    };
+    const hasCustomMinuteSelected = hasSelectedTime && selectedMinute !== 0;
 
     // Construct start datetime
     const startDateTime = useMemo(() => {
@@ -338,6 +315,39 @@ export default function BookingDetailsPage() {
     const [showOccupiedDropdown, setShowOccupiedDropdown] = useState(false);
 
     const activeDuration = durationHours || 1.0;
+
+    // Temporary modal calculated time and availability
+    const tempH24 = useMemo(() => {
+        let h24 = tempHour;
+        if (tempPeriod === 'PM' && tempHour < 12) h24 += 12;
+        if (tempPeriod === 'AM' && tempHour === 12) h24 = 0;
+        return h24;
+    }, [tempHour, tempPeriod]);
+
+    const tempTime24 = useMemo(() => {
+        return `${String(tempH24).padStart(2, '0')}:${String(tempMinute).padStart(2, '0')}`;
+    }, [tempH24, tempMinute]);
+
+    const tempStartDateTime = useMemo(() => {
+        return createDateTimeFromBusinessDate(selectedDate, tempTime24);
+    }, [selectedDate, tempTime24]);
+
+    const tempAvailability = useMemo(() => {
+        const end = calculateEndDateTime(tempStartDateTime, activeDuration);
+        const result = checkAvailability(
+            tempStartDateTime,
+            activeDuration,
+            selectedDate,
+            effectiveOccupiedIntervals
+        );
+        return {
+            ...result,
+            startDateTime: tempStartDateTime,
+            endDateTime: end,
+            formattedStart: formatArabicTimeDetailed(tempStartDateTime),
+            formattedEnd: formatArabicTimeDetailed(end),
+        };
+    }, [tempStartDateTime, activeDuration, selectedDate, effectiveOccupiedIntervals]);
 
     // Filter all 15-minute start times across the 20h operating window:
     // Only display start times that:
@@ -1219,26 +1229,40 @@ export default function BookingDetailsPage() {
                         </div>
                     </div>
 
-                    {/* Unified Custom Time Picker (Mobile Phone & Computer) */}
+                    {/* Custom Time Picker Button */}
                     <div className="pt-2.5 border-t border-neutral-100 dark:border-white/[0.06] flex items-center justify-between gap-2 text-xs">
                         <span className="text-neutral-500 dark:text-neutral-400 font-medium text-[11px] sm:text-xs">
                             تريد وقتاً آخر غير معروض؟
                         </span>
 
-                        <label
-                            onClick={handleOpenTimePicker}
-                            className="relative cursor-pointer text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-red-50 hover:bg-red-100/80 dark:bg-red-950/40 dark:hover:bg-red-950/60 border border-red-200 dark:border-red-900/40 transition-all active:scale-95 shadow-2xs shrink-0 select-none"
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setTempHour(selectedHour ?? 18);
+                                setTempMinute(selectedMinute ?? 0);
+                                setTempPeriod(selectedPeriod ?? 'PM');
+                                setIsCustomTimeModalOpen(true);
+                                playPs5NavigateSound();
+                            }}
+                            className={`inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-xs font-bold transition-all active:scale-95 shadow-2xs cursor-pointer ${
+                                hasCustomMinuteSelected
+                                    ? 'bg-red-600 text-white border-red-500 shadow-md shadow-red-600/25'
+                                    : 'bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.05] dark:hover:bg-white/[0.08] text-neutral-800 dark:text-neutral-200 border-neutral-200 dark:border-white/10 hover:border-red-500/40'
+                            }`}
                         >
-                            <Clock size={13} className="shrink-0" />
-                            <span>تحديد وقت مخصص (ساعة الهاتف / الكمبيوتر)</span>
-                            <input
-                                ref={timeInputRef}
-                                type="time"
-                                value={time24 || ''}
-                                onChange={(e) => handleNativeTimeChange(e.target.value)}
-                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                            />
-                        </label>
+                            <Clock size={13} className={hasCustomMinuteSelected ? 'text-white' : 'text-red-500'} />
+                            <span>وقت مخصص بالدقيقة</span>
+                            {hasCustomMinuteSelected && selectedHour !== null && selectedMinute !== null && (
+                                <span className="font-mono text-[11px] font-bold underline decoration-white/40 mr-0.5" dir="ltr">
+                                    ({formatArabicTime(
+                                        selectedPeriod === 'PM'
+                                            ? (selectedHour < 12 ? selectedHour + 12 : 12)
+                                            : (selectedHour === 12 ? 0 : selectedHour),
+                                        selectedMinute
+                                    )})
+                                </span>
+                            )}
+                        </button>
                     </div>
 
                     {/* Real-Time Availability Inline Feedback */}
@@ -1411,6 +1435,266 @@ export default function BookingDetailsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Custom Time Selection Modal */}
+            <AnimatePresence>
+                {isCustomTimeModalOpen && (
+                    <div
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+                        onClick={() => setIsCustomTimeModalOpen(false)}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                            transition={{ duration: 0.2 }}
+                            className="relative w-full max-w-sm rounded-2xl bg-neutral-900 border border-neutral-800 shadow-2xl overflow-hidden text-neutral-100 flex flex-col"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Header */}
+                            <div className="p-4 border-b border-neutral-800 flex items-center justify-between">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-xl bg-red-600/15 border border-red-500/30 flex items-center justify-center text-red-500">
+                                        <Clock size={16} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-sm text-white">تحديد وقت مخصص</h3>
+                                        <p className="text-[11px] text-neutral-400">اختر وقت البداية بالساعة والدقيقة</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCustomTimeModalOpen(false)}
+                                    className="w-7 h-7 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                                >
+                                    <X size={15} />
+                                </button>
+                            </div>
+
+                            {/* Modal Body */}
+                            <div className="p-4 space-y-4 max-h-[75vh] overflow-y-auto">
+                                {/* Digital Clock Display */}
+                                <div className="bg-neutral-950 rounded-2xl p-3.5 border border-neutral-800/80 flex items-center justify-between gap-3 shadow-inner">
+                                    <div className="flex items-center gap-1 font-mono text-3xl font-black text-white" dir="ltr">
+                                        <span className="bg-neutral-900/90 px-3 py-1.5 rounded-xl border border-neutral-800 text-red-400 shadow-inner">
+                                            {String(tempHour).padStart(2, '0')}
+                                        </span>
+                                        <span className="text-neutral-500 animate-pulse font-sans">:</span>
+                                        <span className="bg-neutral-900/90 px-3 py-1.5 rounded-xl border border-neutral-800 text-red-400 shadow-inner">
+                                            {String(tempMinute).padStart(2, '0')}
+                                        </span>
+                                    </div>
+
+                                    {/* Period Switcher AM/PM */}
+                                    <div className="flex items-center bg-neutral-900 p-1 rounded-xl border border-neutral-800 gap-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => { setTempPeriod('PM'); playPs5NavigateSound(); }}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                                tempPeriod === 'PM'
+                                                    ? 'bg-red-600 text-white shadow-sm'
+                                                    : 'text-neutral-400 hover:text-neutral-200'
+                                            }`}
+                                        >
+                                            مساءً
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setTempPeriod('AM'); playPs5NavigateSound(); }}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                                tempPeriod === 'AM'
+                                                    ? 'bg-red-600 text-white shadow-sm'
+                                                    : 'text-neutral-400 hover:text-neutral-200'
+                                            }`}
+                                        >
+                                            صباحاً
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Hour Selection (1 to 12) */}
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="font-bold text-neutral-300">الساعة:</span>
+                                        <span className="font-mono text-neutral-400 text-[11px]">{tempHour}:00 {tempPeriod === 'PM' ? 'م' : 'ص'}</span>
+                                    </div>
+                                    <div className="grid grid-cols-6 gap-1.5">
+                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((h) => {
+                                            const isSelected = tempHour === h;
+                                            return (
+                                                <button
+                                                    key={h}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setTempHour(h);
+                                                        playPs5NavigateSound();
+                                                    }}
+                                                    className={`py-2 rounded-xl font-mono text-xs font-bold transition-all cursor-pointer border ${
+                                                        isSelected
+                                                            ? 'bg-red-600 border-red-500 text-white shadow-sm shadow-red-600/30 scale-[1.03]'
+                                                            : 'bg-neutral-800/70 hover:bg-neutral-800 border-neutral-700/60 text-neutral-300 hover:text-white'
+                                                    }`}
+                                                >
+                                                    {h}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Minute Selection */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="font-bold text-neutral-300">الدقيقة:</span>
+                                        <span className="font-mono text-neutral-400 text-[11px]">:{String(tempMinute).padStart(2, '0')}</span>
+                                    </div>
+                                    <div className="grid grid-cols-4 gap-1.5">
+                                        {[0, 15, 30, 45].map((m) => {
+                                            const isSelected = tempMinute === m;
+                                            return (
+                                                <button
+                                                    key={m}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setTempMinute(m);
+                                                        playPs5NavigateSound();
+                                                    }}
+                                                    className={`py-2 rounded-xl font-mono text-xs font-bold transition-all cursor-pointer border ${
+                                                        isSelected
+                                                            ? 'bg-red-600 border-red-500 text-white shadow-sm shadow-red-600/30 scale-[1.03]'
+                                                            : 'bg-neutral-800/70 hover:bg-neutral-800 border-neutral-700/60 text-neutral-300 hover:text-white'
+                                                    }`}
+                                                >
+                                                    :{String(m).padStart(2, '0')}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* 5-minute precision steppers */}
+                                    <div className="flex items-center justify-between pt-1 text-xs">
+                                        <span className="text-[11px] text-neutral-400">تعديل بالدقيقة:</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setTempMinute((prev) => (prev - 5 + 60) % 60);
+                                                    playPs5NavigateSound();
+                                                }}
+                                                className="px-2.5 py-1 rounded-lg bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-300 font-mono text-xs font-bold transition-all cursor-pointer active:scale-95"
+                                            >
+                                                -5 د
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setTempMinute((prev) => (prev + 5) % 60);
+                                                    playPs5NavigateSound();
+                                                }}
+                                                className="px-2.5 py-1 rounded-lg bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-300 font-mono text-xs font-bold transition-all cursor-pointer active:scale-95"
+                                            >
+                                                +5 د
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Native Clock Option for supported devices */}
+                                <div className="pt-2 border-t border-neutral-800 flex items-center justify-between text-xs text-neutral-400">
+                                    <span className="text-[11px]">أو من ساعة الهاتف / المتصفح:</span>
+                                    <label className="relative inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border border-neutral-700 text-xs font-medium cursor-pointer transition-all">
+                                        <Smartphone size={12} className="text-neutral-400" />
+                                        <span>ساعة الجهاز</span>
+                                        <input
+                                            type="time"
+                                            value={tempTime24}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                if (!val) return;
+                                                const parts = val.split(':');
+                                                if (parts.length >= 2) {
+                                                    let h = parseInt(parts[0], 10);
+                                                    const m = parseInt(parts[1], 10);
+                                                    if (!isNaN(h) && !isNaN(m)) {
+                                                        const p: 'AM' | 'PM' = h >= 12 ? 'PM' : 'AM';
+                                                        if (h === 0) h = 12;
+                                                        else if (h > 12) h -= 12;
+                                                        setTempHour(h);
+                                                        setTempMinute(m);
+                                                        setTempPeriod(p);
+                                                    }
+                                                }
+                                            }}
+                                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                        />
+                                    </label>
+                                </div>
+
+                                {/* Live Availability Status Feedback */}
+                                <div
+                                    className={`p-3 rounded-xl border text-xs transition-all ${
+                                        tempAvailability.isAvailable
+                                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                                            : 'bg-red-500/10 border-red-500/30 text-red-300'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        {tempAvailability.isAvailable ? (
+                                            <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
+                                        ) : (
+                                            <AlertCircle size={15} className="text-red-400 shrink-0" />
+                                        )}
+                                        <div className="font-semibold text-xs leading-tight">
+                                            {tempAvailability.isAvailable
+                                                ? `الموعد متاح للحجز مؤكداً (${tempAvailability.formattedStart} إلى ${tempAvailability.formattedEnd})`
+                                                : tempAvailability.reason === 'PAST_TIME'
+                                                ? 'هذا الوقت قد مضى بالفعل، يرجى اختيار موعد قادم'
+                                                : tempAvailability.reason === 'EXCEEDS_CLOSING'
+                                                ? 'يتجاوز موعد إغلاق الصالة (04:00 ص فجراً)'
+                                                : tempAvailability.conflictingInterval
+                                                ? `يتعارض مع حجز قائم من ${formatArabicTimeDetailed(tempAvailability.conflictingInterval.start)} إلى ${formatArabicTimeDetailed(tempAvailability.conflictingInterval.end)}`
+                                                : 'هذا الوقت غير متاح'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="p-4 border-t border-neutral-800 bg-neutral-950/50 flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCustomTimeModalOpen(false)}
+                                    className="px-4 py-2.5 rounded-xl border border-neutral-800 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-bold transition-all cursor-pointer"
+                                >
+                                    إلغاء
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={!tempAvailability.isAvailable}
+                                    onClick={() => {
+                                        setSelectedHour(tempHour);
+                                        setSelectedMinute(tempMinute);
+                                        setSelectedPeriod(tempPeriod);
+                                        if (durationHours === null) {
+                                            setDurationHours(1);
+                                        }
+                                        setIsCustomTimeModalOpen(false);
+                                        playPs5SelectSound();
+                                    }}
+                                    className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                                        tempAvailability.isAvailable
+                                            ? 'bg-red-600 hover:bg-red-500 text-white shadow-md shadow-red-600/30 active:scale-[0.98]'
+                                            : 'bg-neutral-800 text-neutral-500 border border-neutral-700/50 cursor-not-allowed'
+                                    }`}
+                                >
+                                    <Check size={14} />
+                                    <span>تأكيد الموعد ({tempAvailability.formattedStart})</span>
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
