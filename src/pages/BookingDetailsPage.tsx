@@ -416,7 +416,7 @@ export default function BookingDetailsPage() {
         toast.success(`تمت إضافة ${currentRoom.name} إلى السلة بنجاح! 🎮🛒`, {
             action: {
                 label: 'عرض السلة',
-                onClick: () => openCart(),
+                onClick: () => openCart('playstation'),
             },
         });
     };
@@ -497,7 +497,7 @@ export default function BookingDetailsPage() {
 
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={openCart}
+                            onClick={() => openCart('playstation')}
                             className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] border border-neutral-200/80 dark:border-white/10 text-neutral-800 dark:text-neutral-200"
                             aria-label="السلة"
                             title="عرض السلة"
@@ -1027,7 +1027,7 @@ export default function BookingDetailsPage() {
                         </div>
                         <button
                             type="button"
-                            onClick={() => openCart()}
+                            onClick={() => openCart('cafe')}
                             className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shrink-0 transition-all cursor-pointer shadow-xs"
                         >
                             تعديل السلة

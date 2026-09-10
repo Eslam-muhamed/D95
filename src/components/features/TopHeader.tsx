@@ -12,7 +12,7 @@ export default function TopHeader({ onCartOpen }: Props = {}) {
   const { itemCount, openCart } = useCart();
   const { theme, toggleTheme } = useTheme();
 
-  const handleCartClick = onCartOpen || openCart;
+  const handleCartClick = onCartOpen || (() => openCart('cafe'));
 
   return (
     <header className="fixed top-0 inset-x-0 z-50 bg-white/95 dark:bg-[#0c090b]/95 backdrop-blur-xl pt-safe border-b border-neutral-200 dark:border-white/[0.08] shadow-sm dark:shadow-[0_4px_25px_rgba(0,0,0,0.7)] transition-colors duration-200">

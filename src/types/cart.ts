@@ -35,4 +35,4 @@ export interface CartBooking {
     rate: number;
     subtotal: number;
 }
-
+export type CartTab = 'cafe' | 'playstation';

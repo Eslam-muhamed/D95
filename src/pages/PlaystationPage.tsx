@@ -272,7 +272,7 @@ export default function PlaystationPage() {
                         </button>
 
                         <button
-                            onClick={openCart}
+                            onClick={() => openCart('playstation')}
                             className="relative w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/20 border border-neutral-200 dark:border-white/15 text-neutral-800 dark:text-neutral-200 hover:text-red-600 dark:hover:text-white shadow-sm active:scale-95"
                             aria-label="سلة التسوق"
                         >

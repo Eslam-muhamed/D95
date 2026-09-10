@@ -100,7 +100,15 @@ export default function BottomNav() {
                     {/* Cart Button */}
                     <button
                         type="button"
-                        onClick={openCart}
+                        onClick={() => {
+                            if (location.pathname.startsWith('/menu')) {
+                                openCart('cafe');
+                            } else if (location.pathname.startsWith('/playstation')) {
+                                openCart('playstation');
+                            } else {
+                                openCart();
+                            }
+                        }}
                         className="relative flex-1 flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-150 active:scale-95 cursor-pointer group touch-manipulation select-none"
                     >
                         <div className="relative">
