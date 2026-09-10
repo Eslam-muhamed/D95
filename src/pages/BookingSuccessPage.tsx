@@ -94,7 +94,7 @@ export default function BookingSuccessPage() {
                 `\n\n`;
         }
 
-        let msg = `🎮 *--- تذكرة حجز غرفة بلايستيشن VIP ---*\n*D95 GAMING & CAFÉ*\n\n`;
+        let msg = `🎮 *--- طلب حجز غرفة بلايستيشن VIP (بانتظار التأكيد) ---*\n*D95 GAMING & CAFÉ*\n\n`;
         msg += `🎫 *رقم التذكرة:* ${reservationId}\n`;
         msg += `👤 *اسم اللاعب:* ${name}\n`;
         msg += `📱 *رقم الموبايل:* ${phone}\n\n`;
@@ -110,9 +110,9 @@ export default function BookingSuccessPage() {
         msg += `💰 *المبلغ النهائي المستحق:* ${netTotal} ج.م\n\n`;
 
         if (paymentMethod !== 'cash') {
-            msg += `📌 *مرفق مع هذه الرسالة إيصال التحويل لتأكيد الحجز فوراً.*`;
+            msg += `📌 *مرفق مع هذه الرسالة إيصال التحويل لتأكيد الحجز وقفل الموعد.*`;
         } else {
-            msg += `📌 *سأقوم بالدفع كاش بالصالة عند الحضور قبل الموعد بـ ١٠ دقائق.*`;
+            msg += `📌 *سأقوم بالدفع كاش بالصالة - برجاء مراجعة الطلب وتأكيد الحجز لقفل الموعد.*`;
         }
 
         window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -203,12 +203,12 @@ export default function BookingSuccessPage() {
                     </div>
 
                     <h2 className="font-bold text-xl text-neutral-900 dark:text-white mb-1 font-body">
-                        تم إصدار تذكرة الحجز بنجاح!
+                        تم تسجيل طلب الحجز بنجاح! 🎮
                     </h2>
                     <p className="text-neutral-600 dark:text-neutral-400 mb-4 text-xs px-3 leading-relaxed font-body font-medium">
                         {paymentMethod === 'cash'
-                            ? 'تم حجز مكانك. يرجى إرسال التذكرة عبر واتساب لتأكيد حضورك مع موظف الاستقبال.'
-                            : 'تم تجهيز تذكرتك. اضغط على الزر الأخضر لإرسال بيانات الحجز وإرفاق إيصال التحويل عبر واتساب.'}
+                            ? 'تم إرسال طلبك بنجاح. يرجى إرسال التذكرة عبر واتساب للإدارة لتأكيد الموعد وقفله باسمك.'
+                            : 'تم تجهيز تذكرتك المبدئية. اضغط على الزر الأخضر لإرسال التذكرة وإيصال التحويل عبر واتساب ليتم تأكيد الموعد فوراً.'}
                     </p>
 
                     {/* VIP DIGITAL BOARDING PASS TICKET (ATHLETIC CARD) */}
@@ -226,8 +226,8 @@ export default function BookingSuccessPage() {
                             </div>
                             <div className="flex flex-col items-end">
                                 <span className="font-mono text-xs font-bold text-red-600 dark:text-red-400">{reservationId}</span>
-                                <span className="text-[10px] bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full font-bold">
-                                    مؤكد
+                                <span className="text-[10px] bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 px-2.5 py-0.5 rounded-full font-bold border border-amber-500/30">
+                                    بانتظار تأكيد الإدارة ⏳
                                 </span>
                             </div>
                         </div>

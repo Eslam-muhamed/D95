@@ -64,10 +64,11 @@ export default function BookingsTab() {
     const handleConfirmBooking = async (b: DBBooking) => {
         try {
             await updateBookingStatus(b.id, 'confirmed');
-            toast.success(`تم تأكيد حجز ${b.customer_name} بنجاح!`);
+            toast.success(`تم تأكيد حجز ${b.customer_name} بنجاح! وتم قفل الموعد في الموقع على باقي الزبائن 🔒`);
             setBookings(prev => prev.map(item => item.id === b.id ? { ...item, status: 'confirmed' } : item));
-        } catch {
-            toast.error('حدث خطأ أثناء تأكيد الحجز');
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'حدث خطأ أثناء تأكيد الحجز';
+            toast.error(msg);
         }
     };
 
@@ -76,8 +77,9 @@ export default function BookingsTab() {
             await updateBookingStatus(id, newStatus);
             toast.success('تم تحديث حالة الحجز');
             setBookings(prev => prev.map(item => item.id === id ? { ...item, status: newStatus } : item));
-        } catch {
-            toast.error('تعذر تحديث الحالة');
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'تعذر تحديث الحالة';
+            toast.error(msg);
         }
     };
 
@@ -327,18 +329,25 @@ export default function BookingsTab() {
                                         </div>
 
                                         {/* Status Badge */}
-                                        <div className="shrink-0">
+                                        <div className="shrink-0 text-left">
                                             {isPending && (
-                                                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1 animate-pulse">
-                                                    <span>معلق</span>
-                                                    <span>⏳</span>
-                                                </span>
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1 animate-pulse">
+                                                        <span>طلب معلق</span>
+                                                        <span>⏳</span>
+                                                    </span>
+                                                    <span className="text-[10px] text-amber-400/90 font-mono bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-500/20">
+                                                        الموعد متاح حتى تؤكده
+                                                    </span>
+                                                </div>
                                             )}
                                             {isConfirmed && (
-                                                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
-                                                    <span>مؤكد</span>
-                                                    <CheckCircle2 className="w-3.5 h-3.5" />
-                                                </span>
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                                                        <span>مؤكد وقافل للموعد</span>
+                                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                                    </span>
+                                                </div>
                                             )}
                                             {isCompleted && (
                                                 <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/40">

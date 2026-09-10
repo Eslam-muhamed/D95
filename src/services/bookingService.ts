@@ -34,7 +34,7 @@ export async function fetchRoomOccupiedIntervals(
             .from('ps_bookings')
             .select('start_datetime, end_datetime, status')
             .eq('room_id', roomId)
-            .in('status', ['pending', 'confirmed', 'completed']);
+            .in('status', ['confirmed', 'completed']);
 
         if (windowStart && windowEnd) {
             query = query
@@ -184,7 +184,13 @@ export async function updateBookingStatus(
         .select()
         .single();
 
-    if (error) throw error;
+    if (error) {
+        console.error('Error updating booking status:', error);
+        if (error.code === '23P01' || error.message.includes('no_overlapping_bookings') || error.message.includes('exclusion')) {
+            throw new Error('تعذر تأكيد هذا الحجز: يوجد حجز مؤكد آخر يتعارض معه في نفس الغرفة والموعد 🔒');
+        }
+        throw error;
+    }
     return data as DBBooking;
 }
 
