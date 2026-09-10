@@ -15,7 +15,6 @@ import {
     Moon,
     Sparkles,
     ShoppingBag,
-    Check,
     type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -128,30 +127,20 @@ const WALK_IN_ITEMS = [
         id: 'ps-outside',
         nameEn: 'PS5 Open Floor',
         nameAr: 'بلايستيشن الصالة المفتوحة',
-        subtitle: 'أجهزة PS5 متطورة في صالة اللعب التنافسية',
+        subtitle: 'أجهزة PS5 في صالة اللعب التنافسية',
         price: 80,
         unitAr: 'ج.م / ساعة',
         icon: Gamepad2,
-        specs: [
-            'أحدث أجهزة PS5 مع دراعات DualSense أصلية',
-            'لعب سريع ومباشر في الصالة التنافسية',
-            'طلب مشروبات وسناكس مباشرة من الكافيه',
-        ],
         hint: 'أجهزة الصالة متاحة للعب المباشر عند حضورك للمحل دون حجز مسبق 🎮',
     },
     {
         id: 'billiards',
         nameEn: 'Pro Billiards',
         nameAr: 'طاولة بلياردو احترافية',
-        subtitle: 'طاولة قياسية بإضاءة وتجهيزات متكاملة',
+        subtitle: 'طاولة قياسية وتجهيزات متكاملة',
         price: 15,
         unitAr: 'ج.م / جيم',
         icon: Disc3,
-        specs: [
-            'طاولة قياسية عالمية نظيفة وموزونة بدقة',
-            'كرات وعصي مستوردة احترافية وإضاءة مخصصة',
-            'أجواء استراحة ولعب راقية ومريحة للشلة',
-        ],
         hint: 'طاولة البلياردو متاحة للعب المباشر بالفرع فور وصولك دون حجز مسبق 🎱',
     },
 ];
@@ -512,74 +501,62 @@ export default function PlaystationPage() {
 
                 {/* SECONDARY SECTION: OPEN FLOOR & BILLIARDS (WALK-IN ONLY) */}
                 <section className="mb-12">
-                    <div className="text-center mb-6 space-y-2">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold shadow-xs">
+                    <div className="text-center mb-4 sm:mb-6 space-y-1.5">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold shadow-xs">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                             <span>لعب مباشر بالفرع • بدون حجز مسبق</span>
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-bold font-body text-neutral-900 dark:text-white">
+                        <h2 className="text-lg sm:text-2xl font-bold font-body text-neutral-900 dark:text-white">
                             صالة اللعب المفتوحة والبلياردو
                         </h2>
                         <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 max-w-lg mx-auto">
-                            أجهزة الصالة وطاولة البلياردو متاحة للعب الفوري عند حضورك للفرع مباشرة
+                            الأسعار الرسمية للعب الفوري عند حضورك للفرع مباشرة
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+                    <div className="grid grid-cols-2 gap-2.5 sm:gap-4 max-w-2xl mx-auto">
                         {WALK_IN_ITEMS.map((item) => {
                             const Icon = item.icon;
                             return (
                                 <div
                                     key={item.id}
                                     onClick={() => handleWalkInClick(item.hint)}
-                                    className="group relative rounded-2xl p-5 bg-white dark:bg-[#150a0e] hover:bg-neutral-50 dark:hover:bg-[#1e0e14] border border-neutral-200 dark:border-white/10 hover:border-amber-500/50 dark:hover:border-amber-500/40 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md flex flex-col justify-between gap-4 text-right"
+                                    className="group relative rounded-2xl p-3 sm:p-5 bg-white dark:bg-[#150a0e] hover:bg-neutral-50 dark:hover:bg-[#1e0e14] border border-neutral-200/80 dark:border-white/10 hover:border-amber-500/40 transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md flex flex-col justify-between text-right"
                                 >
-                                    {/* Top: Icon + Titles + Direct Status */}
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                                                <Icon className="w-5 h-5" />
+                                    <div>
+                                        {/* Top: Icon + Status */}
+                                        <div className="flex items-center justify-between gap-1 mb-2.5">
+                                            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                                                <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                                             </div>
-                                            <div>
-                                                <h3 className="font-bold text-base text-neutral-900 dark:text-white">
-                                                    {item.nameAr}
-                                                </h3>
-                                                <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                                                    {item.nameEn} • {item.subtitle}
-                                                </p>
-                                            </div>
+                                            <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+                                                متاح فوراً
+                                            </span>
                                         </div>
 
-                                        <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0 whitespace-nowrap">
-                                            متاح فوراً
-                                        </span>
+                                        {/* Title & Short Tag */}
+                                        <h3 className="font-bold text-xs sm:text-base text-neutral-900 dark:text-white leading-snug">
+                                            {item.nameAr}
+                                        </h3>
+                                        <p className="text-[10px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
+                                            {item.subtitle}
+                                        </p>
                                     </div>
 
-                                    {/* Features Checklist */}
-                                    <ul className="space-y-2 py-1">
-                                        {item.specs.map((spec, sIdx) => (
-                                            <li key={sIdx} className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-300">
-                                                <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                                                <span>{spec}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-
-                                    {/* Footer: Price + Note */}
-                                    <div className="flex items-center justify-between border-t border-neutral-100 dark:border-white/10 pt-3 mt-1">
-                                        <div className="flex items-baseline gap-1.5" dir="rtl">
-                                            <span className="text-2xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
+                                    {/* Price & Walk-in Note */}
+                                    <div className="pt-2.5 mt-3 border-t border-neutral-100 dark:border-white/[0.08] flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+                                        <div className="flex items-baseline gap-1" dir="rtl">
+                                            <span className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
                                                 {item.price}
                                             </span>
-                                            <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
+                                            <span className="text-[10px] sm:text-xs font-bold text-neutral-500 dark:text-neutral-400">
                                                 {item.unitAr}
                                             </span>
                                         </div>
 
-                                        <div className="text-xs text-neutral-500 dark:text-neutral-400 font-medium flex items-center gap-1.5">
-                                            <span>حضور مباشر بالفرع</span>
-                                            <span>🏬</span>
-                                        </div>
+                                        <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium">
+                                            بدون حجز مسبق
+                                        </span>
                                     </div>
                                 </div>
                             );

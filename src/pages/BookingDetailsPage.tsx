@@ -350,6 +350,7 @@ export default function BookingDetailsPage() {
     // Time slot picker helper state
     const [timePeriodTab, setTimePeriodTab] = useState<'evening' | 'morning'>('evening');
     const [showCustomTime, setShowCustomTime] = useState(false);
+    const [showOccupiedDropdown, setShowOccupiedDropdown] = useState(false);
 
     const activeDuration = durationHours || 1.0;
 
@@ -983,45 +984,74 @@ export default function BookingDetailsPage() {
                         </div>
                     </div>
 
-                    {/* SECTION A: OCCUPIED SLOTS (High-Contrast & Unmistakable) */}
+                    {/* Collapsible Occupied Slots Dropdown */}
                     {sortedBookings.length > 0 ? (
-                        <div className="space-y-2.5 pt-2">
-                            <div className="flex items-center justify-between text-xs">
-                                <span className="font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5">
-                                    <Lock className="w-4 h-4" />
-                                    <span>المواعيد المحجوزة مسبقاً (غير متاحة):</span>
-                                </span>
-                                <span className="text-[11px] text-neutral-500">
-                                    مغلقة بالكامل لعملاء آخرين
-                                </span>
-                            </div>
-
-                            <div className="space-y-2">
-                                {sortedBookings.map((b, idx) => (
-                                    <div
-                                        key={idx}
-                                        className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 flex items-center justify-between shadow-xs"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-900/70 border border-red-300 dark:border-red-500/40 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
-                                                <Lock className="w-4 h-4" />
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="font-black text-sm text-neutral-900 dark:text-white">
-                                                    من {formatArabicTimeDetailed(b.start)} إلى {formatArabicTimeDetailed(b.end)}
-                                                </div>
-                                                <div className="text-xs text-red-600/90 dark:text-red-400 font-medium mt-0.5">
-                                                    محجوز مسبقاً • غير متاح للحجز
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <span className="px-2.5 py-1 rounded-md bg-red-600/10 dark:bg-red-950 border border-red-300 dark:border-red-500/40 text-red-600 dark:text-red-400 font-bold text-xs shrink-0 font-mono">
-                                            محجوز ✕
-                                        </span>
+                        <div className="rounded-2xl border border-red-200/80 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20 overflow-hidden transition-all duration-200">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowOccupiedDropdown(prev => !prev);
+                                    playPs5NavigateSound();
+                                }}
+                                className="w-full p-3.5 flex items-center justify-between gap-3 text-right cursor-pointer hover:bg-red-100/50 dark:hover:bg-red-900/30 transition-colors"
+                            >
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-900/60 border border-red-200 dark:border-red-800/40 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
+                                        <Lock className="w-4 h-4" />
                                     </div>
-                                ))}
-                            </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-bold text-xs text-red-900 dark:text-red-200">
+                                                المواعيد المحجوزة مسبقاً (غير متاحة)
+                                            </span>
+                                            <span className="px-2 py-0.5 rounded-full bg-red-600/10 dark:bg-red-900/60 text-red-600 dark:text-red-300 font-mono text-[10px] font-bold">
+                                                {sortedBookings.length}
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium">
+                                            {showOccupiedDropdown ? 'اضغط لطي القائمة' : 'اضغط لعرض تفاصيل المواعيد المغلقة'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <span className="text-[11px] font-semibold text-red-600 dark:text-red-400 hidden sm:inline">
+                                        {showOccupiedDropdown ? 'إخفاء' : 'عرض'}
+                                    </span>
+                                    <div className={`w-7 h-7 rounded-lg bg-white/80 dark:bg-white/5 border border-red-200/80 dark:border-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400 transition-transform duration-200 ${showOccupiedDropdown ? 'rotate-180' : ''}`}>
+                                        <ChevronDown className="w-4 h-4" />
+                                    </div>
+                                </div>
+                            </button>
+
+                            {showOccupiedDropdown && (
+                                <div className="p-3 pt-0 border-t border-red-200/50 dark:border-red-900/30 space-y-2 max-h-60 overflow-y-auto mt-2">
+                                    {sortedBookings.map((b, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="p-3 rounded-xl bg-white dark:bg-[#151012] border border-red-200/60 dark:border-red-900/40 flex items-center justify-between shadow-2xs"
+                                        >
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
+                                                    <Lock className="w-3.5 h-3.5" />
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="font-bold text-xs text-neutral-900 dark:text-white font-mono">
+                                                        من {formatArabicTimeDetailed(b.start)} إلى {formatArabicTimeDetailed(b.end)}
+                                                    </div>
+                                                    <div className="text-[10px] text-red-500 font-medium">
+                                                        محجوز مسبقاً • غير متاح للحجز
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <span className="px-2 py-0.5 rounded bg-red-500/10 dark:bg-red-950 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 font-bold text-[10px] shrink-0 font-mono">
+                                                محجوز ✕
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-600/40 flex items-center gap-3 text-emerald-900 dark:text-emerald-300 text-xs">
