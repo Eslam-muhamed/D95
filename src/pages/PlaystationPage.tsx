@@ -15,6 +15,8 @@ import {
     Moon,
     Sparkles,
     ShoppingBag,
+    CheckCircle2,
+    MapPin,
     type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -32,17 +34,12 @@ interface RoomData {
     subtitle: string;
     rate: number;
     badge: string;
-    accentColor: string;
-    glowColor: string;
-    neonBorder: string;
-    neonShadow: string;
     interiorImg: string;
     features: {
         icon: LucideIcon;
         label: string;
         desc: string;
     }[];
-    popularGames: string[];
 }
 
 const ROOMS: RoomData[] = [
@@ -50,102 +47,72 @@ const ROOMS: RoomData[] = [
         id: 'room-1',
         code: 'ROOM 01',
         titleEn: 'THE ARENA',
-        titleAr: 'غرفة الأبطال (Play Room 01)',
-        subtitle: 'أجواء تنافسية حماسية • شاشة 65 بوصة 4K 120Hz عملاقة',
+        titleAr: 'غرفة الأبطال (VIP Room 01)',
+        subtitle: 'أجواء حماسية خاصة مع شاشة 65 بوصة 4K 120Hz وعزل صوتي كامل',
         rate: 100,
-        badge: 'Available',
-        accentColor: '#00d2ff',
-        glowColor: 'rgba(0, 210, 255, 0.45)',
-        neonBorder: 'border-[#00d2ff]',
-        neonShadow: 'shadow-[0_0_35px_rgba(0,210,255,0.35)]',
+        badge: 'متاح للحجز الآن',
         interiorImg: room01InteriorImg,
         features: [
-            {
-                icon: Tv,
-                label: 'شاشة 65" 4K 120Hz',
-                desc: 'معدل تحديث فائق مع دعم HDR الكامل وسرعة استجابة 1ms',
-            },
-            {
-                icon: Gamepad2,
-                label: '4 دراعات DualSense',
-                desc: 'أذرع تحكم لاسلكية أصلية جاهزة لمباريات اللعب الرباعي',
-            },
-            {
-                icon: Volume2,
-                label: 'صوت محيطي 3D وعزل تام',
-                desc: 'نظام صوت نقي يضعك في قلب المعركة والمباريات',
-            },
-            {
-                icon: Wind,
-                label: 'تكييف مستقل وجلسة VIP',
-                desc: 'كنب مريح مصمم لجلسات اللعب الطويلة مع تحكم كامل بالحرارة',
-            },
+            { icon: Tv, label: 'شاشة 65" 4K 120Hz', desc: 'معدل تحديث فائق وسرعة استجابة 1ms' },
+            { icon: Gamepad2, label: '4 دراعات DualSense', desc: 'أذرع تحكم أصلية للعب الرباعي' },
+            { icon: Volume2, label: 'صوت محيطي معزول', desc: 'عزل صوتي كامل ونظام صوت 3D' },
+            { icon: Wind, label: 'تكييف VIP مستقل', desc: 'جلسة كنب مريحة مع تحكم بالحرارة' },
         ],
-        popularGames: ['EA FC 25', 'Tekken 8', 'Mortal Kombat 1', 'GTA V', 'Call of Duty'],
     },
     {
         id: 'room-2',
         code: 'ROOM 02',
         titleEn: 'VIP SUITE',
         titleAr: 'غرفة النجوم (VIP Room 02)',
-        subtitle: 'إضاءة نيون ونجوم سقفية • شاشة 65 بوصة 4K 120Hz',
+        subtitle: 'إضاءة نيون راقية ونجوم سقفية مع شاشة 65 بوصة 4K 120Hz وراحة فندقية',
         rate: 100,
-        badge: 'Available',
-        accentColor: '#ff007f',
-        glowColor: 'rgba(255, 0, 127, 0.45)',
-        neonBorder: 'border-[#ff007f]',
-        neonShadow: 'shadow-[0_0_35px_rgba(255,0,127,0.35)]',
+        badge: 'متاح للحجز الآن',
         interiorImg: room02InteriorImg,
         features: [
-            {
-                icon: Tv,
-                label: 'شاشة 65" 4K 120Hz',
-                desc: 'أعلى دقة وضوح وألوان سينمائية نابضة بالحياة',
-            },
-            {
-                icon: Gamepad2,
-                label: '4 دراعات DualSense',
-                desc: 'أذرع تحكم معقمة وجاهزة فوراً لكل اللاعبين',
-            },
-            {
-                icon: Volume2,
-                label: 'صوت سينمائي محيطي',
-                desc: 'مؤثرات واقعية وعزل صوتي كامل لخصوصية تامة',
-            },
-            {
-                icon: Wind,
-                label: 'تكييف خاص وركن استرخاء',
-                desc: 'أقصى درجات الراحة والاستجمام طوال فترة الجلسة',
-            },
+            { icon: Tv, label: 'شاشة 65" 4K 120Hz', desc: 'دقة فائقة وألوان سينمائية' },
+            { icon: Gamepad2, label: '4 دراعات DualSense', desc: 'أذرع معقمة وجاهزة للعب الفوري' },
+            { icon: Volume2, label: 'صوت سينمائي محيطي', desc: 'مؤثرات واقعية وخصوصية تامة' },
+            { icon: Wind, label: 'تكييف خاص وركن استرخاء', desc: 'أقصى درجات الراحة طوال الجلسة' },
         ],
-        popularGames: ['EA FC 25', 'Spider-Man 2', 'NBA 2K25', 'Tekken 8', 'Crash Team Racing'],
     },
 ];
 
-const WALK_IN_ITEMS = [
+const PRICING_ITEMS = [
     {
-        id: 'ps-outside',
-        nameEn: 'PS5 OPEN FLOOR',
-        nameAr: 'بلايستيشن الصالة المفتوحة',
-        subtitle: '2 أجهزة PS5 متوفرة في صالة اللعب التنافسية',
-        price: 80,
-        unit: 'EGP / HOUR',
-        badge: 'حجز مباشر بالفرع فقط 🏬',
+        id: 'vip-rooms',
+        title: 'غرف البلايستيشن VIP (01 & 02)',
+        category: 'حجز مسبق عبر الموقع',
+        price: '100',
+        unit: 'ج.م / ساعة',
+        highlight: 'شاشة 65" 4K • 4 دراعات • عزل تام',
+        isActionable: true,
+        actionLabel: 'احجز غرفتك الآن',
         icon: Gamepad2,
-        specs: ['أحدث أجهزة PS5 مع دراعات أصلية', 'لعب سريع ومباشر بدون انتظار', 'طلب مشروبات وسناكس من الكافيه'],
-        hint: 'الحجز واللعب متاح مباشرة عند حضورك للمحل دون الحاجة لحجز مسبق عبر الموقع 🎮',
+        accent: 'rose',
+    },
+    {
+        id: 'open-floor',
+        title: 'بلايستيشن الصالة المفتوحة (PS5)',
+        category: 'حضور مباشر بالفرع',
+        price: '80',
+        unit: 'ج.م / ساعة',
+        highlight: '2 أجهزة PS5 متوفرة في صالة اللعب التنافسية',
+        isActionable: false,
+        actionLabel: 'متاح بالفرع فور وصولك',
+        icon: Tv,
+        accent: 'amber',
     },
     {
         id: 'billiards',
-        nameEn: 'PRO BILLIARDS',
-        nameAr: 'طاولة بلياردو احترافية',
-        subtitle: 'طاولة قياسية عالمية بتجهيزات كاملة وإضاءة مخصصة',
-        price: 15,
-        unit: 'EGP / GAME',
-        badge: 'حجز مباشر بالفرع فقط 🏬',
+        title: 'طاولة البلياردو الدولية',
+        category: 'حضور مباشر بالفرع',
+        price: '15',
+        unit: 'ج.م / جيم',
+        highlight: 'طاولة قياسية وكرات وعصي مستوردة احترافية',
+        isActionable: false,
+        actionLabel: 'متاح بالفرع فور وصولك',
         icon: Disc3,
-        specs: ['كرات وعصي مستوردة احترافية', 'طاولة نظيفة وموزونة بدقة', 'أجواء استراحة ولعب راقية'],
-        hint: 'طاولة البلياردو متاحة للعب المباشر بالفرع فور وصولك دون حجز مسبق 🎱',
+        accent: 'emerald',
     },
 ];
 
@@ -158,17 +125,17 @@ const AMENITIES = [
     {
         icon: Flame,
         title: 'أحدث مكتبة ألعاب 2026',
-        desc: 'أحدث إصدارات الألعاب محدثة دائماً وجاهزة للتشغيل الفوري',
+        desc: 'أحدث إصدارات الألعاب محدثة دائماً وجاهزة للتشغيل الفوري (EA FC 25، GTA V، Tekken 8)',
     },
     {
         icon: Coffee,
         title: 'ضيافة الكافيه حتى غرفتك',
-        desc: 'إمكانية طلب القهوة المتخصصة، المشروبات، والسناكس مباشرة داخل الغرفة',
+        desc: 'طلب القهوة المختصة والمشروبات والسناكس مباشرة داخل الغرفة بضغطة زر',
     },
     {
         icon: ShieldCheck,
         title: 'نظافة وتعقيم مستمر',
-        desc: 'تعقيم كامل للدراعات والشاشات ونظافة فندقية بعد كل جلسة',
+        desc: 'تعقيم كامل للدراعات والشاشات ونظافة فندقية معتمدة بعد كل جلسة',
     },
 ];
 
@@ -177,10 +144,7 @@ export default function PlaystationPage() {
     const { theme, toggleTheme } = useTheme();
     const { itemCount, openCart } = useCart();
 
-    // ─────────────────────────────────────────────────────────────
-    // FAST & INSTANT ROOM ENTER (ZERO LAG • 60FPS SMOOTH)
-    // ─────────────────────────────────────────────────────────────
-    const handleDoorEnter = (room: RoomData) => {
+    const handleRoomEnter = (room: RoomData) => {
         navigate('/playstation/booking', {
             state: {
                 room: {
@@ -193,23 +157,16 @@ export default function PlaystationPage() {
         });
     };
 
-    const handleWalkInClick = (hint: string) => {
-        toast.info(hint, {
-            duration: 4500,
+    const handleWalkInNotice = (serviceName: string) => {
+        toast.info(`خدمة ${serviceName} متاحة للعب المباشر فور حضورك للفرع دون الحاجة لحجز مسبق! مرحباً بك دائماً 🎮`, {
+            duration: 4000,
         });
     };
 
     return (
-        <div className="bg-[#F6F5F2] dark:bg-[#0c0608] text-neutral-900 dark:text-white font-body text-sm flex flex-col min-h-screen selection:bg-red-600/40 relative overflow-x-hidden transition-colors duration-200">
-            {/* Ambient Background Glow */}
-            <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[850px] h-[380px] bg-[radial-gradient(ellipse_at_top,rgba(225,29,72,0.15)_0%,rgba(139,17,25,0.04)_45%,transparent_75%)]" />
-                <div className="absolute top-1/3 -left-32 w-[500px] h-[450px] bg-[radial-gradient(circle,rgba(155,28,28,0.10)_0%,transparent_70%)]" />
-                <div className="absolute bottom-10 -right-32 w-[500px] h-[450px] bg-[radial-gradient(circle,rgba(212,160,23,0.08)_0%,transparent_70%)]" />
-            </div>
-
+        <div className="bg-[#f8f9fa] dark:bg-[#0b080a] text-neutral-900 dark:text-neutral-100 font-body text-sm flex flex-col min-h-screen selection:bg-red-600/40 relative overflow-x-hidden transition-colors duration-200">
             {/* Top Navigation Bar */}
-            <header className="fixed top-0 inset-x-0 z-40 bg-white/95 dark:bg-[#14080b]/95 backdrop-blur-xl pt-safe border-b border-neutral-200 dark:border-red-900/30 shadow-md dark:shadow-[0_4px_25px_rgba(0,0,0,0.7)] transition-colors duration-200">
+            <header className="fixed top-0 inset-x-0 z-40 bg-white/95 dark:bg-[#120a0d]/95 backdrop-blur-xl pt-safe border-b border-neutral-200 dark:border-white/10 shadow-sm transition-colors duration-200">
                 <div className="h-16 px-4 md:px-8 flex items-center justify-between max-w-6xl mx-auto" dir="rtl">
                     {/* Brand & Back Link */}
                     <div className="flex items-center gap-3">
@@ -224,27 +181,27 @@ export default function PlaystationPage() {
                         <div className="flex flex-col text-right">
                             <div className="flex items-center gap-2">
                                 <div dir="ltr" className="flex items-baseline leading-none">
-                                    <span className="font-brush font-black text-xl text-neutral-900 dark:text-neutral-100">D</span>
-                                    <span className="font-brush font-black text-2xl text-red-600 dark:text-red-500 -ml-0.5">95</span>
+                                    <span className="font-extrabold text-xl tracking-tight text-neutral-900 dark:text-white">D</span>
+                                    <span className="font-black text-2xl text-red-600 -ml-0.5">95</span>
                                 </div>
                                 <span className="h-1.5 w-1.5 bg-red-600 rounded-full inline-block shadow-[0_0_8px_#c41e3a]" />
-                                <span className="text-[10px] font-bold bg-red-100 dark:bg-red-600/20 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full font-brush tracking-wider border border-red-200 dark:border-red-600/30">
+                                <span className="text-[10px] font-bold bg-red-500/10 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full tracking-wider border border-red-500/20">
                                     GAMING LOUNGE
                                 </span>
                             </div>
-                            <span className="font-body text-[10px] text-neutral-500 dark:text-neutral-400">
-                                أبواب الغرف الخاصة VIP والصالة
+                            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-medium">
+                                صالة الألعاب والغرف الخاصة VIP والبلياردو
                             </span>
                         </div>
                     </div>
 
                     {/* Center: Desktop Navigation Tabs (Visible on md: and above) */}
-                    <div className="hidden md:flex items-center gap-1.5 p-1 rounded-full bg-neutral-100/80 dark:bg-white/[0.05] border border-neutral-200/80 dark:border-white/10 text-xs font-body font-semibold">
+                    <div className="hidden md:flex items-center gap-1.5 p-1 rounded-full bg-neutral-100/80 dark:bg-white/[0.05] border border-neutral-200/80 dark:border-white/10 text-xs font-semibold">
                         <Link
                             to="/"
                             className="px-3.5 py-1.5 rounded-full text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-white dark:hover:bg-white/10 transition-all"
                         >
-                            البوابة
+                            البوابة الرئيسية
                         </Link>
                         <span className="px-3.5 py-1.5 rounded-full bg-red-600 text-white shadow-xs font-bold">
                             صالة الألعاب
@@ -264,21 +221,18 @@ export default function PlaystationPage() {
                             className="w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/20 border border-neutral-200 dark:border-white/15 text-neutral-800 dark:text-neutral-200 shadow-sm active:scale-95"
                             aria-label="تبديل المظهر"
                         >
-                            {theme === 'dark' ? (
-                                <Sun size={17} className="text-amber-400" />
-                            ) : (
-                                <Moon size={17} className="text-neutral-800" />
-                            )}
+                            {theme === 'dark' ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-neutral-800" />}
                         </button>
 
                         <button
                             onClick={() => openCart('playstation')}
                             className="relative w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/20 border border-neutral-200 dark:border-white/15 text-neutral-800 dark:text-neutral-200 hover:text-red-600 dark:hover:text-white shadow-sm active:scale-95"
                             aria-label="سلة التسوق"
+                            title="سلة التسوق"
                         >
                             <ShoppingBag size={18} />
                             {itemCount > 0 && (
-                                <span className="absolute -top-1 -right-1 flex items-center justify-center text-white font-mono font-bold rounded-full bg-red-600 border-2 border-white dark:border-[#14080b] shadow-xs text-[9px] w-5 h-5">
+                                <span className="absolute -top-1 -right-1 flex items-center justify-center text-white font-mono font-bold rounded-full bg-red-600 border-2 border-white dark:border-[#120a0d] shadow-xs text-[9px] w-5 h-5">
                                     {itemCount > 99 ? '99+' : itemCount}
                                 </span>
                             )}
@@ -288,195 +242,208 @@ export default function PlaystationPage() {
             </header>
 
             {/* Main Content Container */}
-            <main className="flex-1 flex flex-col relative z-10 w-full pt-20 sm:pt-24 pb-36 sm:pb-24 px-3 sm:px-6 max-w-6xl mx-auto" dir="rtl">
+            <main className="flex-1 flex flex-col relative z-10 w-full pt-20 sm:pt-24 pb-32 sm:pb-24 px-4 sm:px-6 max-w-6xl mx-auto space-y-10" dir="rtl">
 
                 {/* ─────────────────────────────────────────────────────────────
-                    HEADER: "CHOOSE YOUR GAMING ROOM"
+                    HERO HEADER: CRISP, PREMIUM & DECLUTTERED
                    ───────────────────────────────────────────────────────────── */}
-                <div className="text-center mt-1 mb-6 sm:mb-8 space-y-1.5">
-                    <span className="text-[10px] sm:text-xs font-brush tracking-[0.28em] text-neutral-500 dark:text-neutral-400 uppercase">
-                        CHOOSE YOUR
-                    </span>
-                    <h1 className="font-brush text-3xl sm:text-5xl md:text-6xl font-black text-neutral-900 dark:text-white tracking-wider flex items-center justify-center gap-2.5 drop-shadow-sm dark:drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
-                        <span>GAMING</span>
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 dark:from-cyan-400 dark:via-sky-400 dark:to-blue-500 drop-shadow-[0_0_25px_rgba(6,182,212,0.4)]">
-                            ROOM
-                        </span>
+                <div className="text-center mt-2 space-y-2">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600/10 text-red-600 dark:text-red-400 border border-red-500/20 text-xs font-bold shadow-xs">
+                        <Sparkles size={13} />
+                        <span>D95 GAMING &amp; ENTERTAINMENT LOUNGE</span>
+                    </div>
+                    <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-neutral-950 dark:text-white tracking-tight leading-tight">
+                        صالات البلايستيشن والغرف الخاصة والبلياردو
                     </h1>
-                    <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 max-w-lg mx-auto font-body font-medium px-2">
-                        غرفتان مجهزتان بأحدث تقنيات الـ PlayStation 5 • عزل صوتي كامل وشاشات 4K 120Hz
+                    <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 max-w-xl mx-auto font-medium leading-relaxed">
+                        اختر غرفتك الخاصة VIP للاستمتاع بخصوصية تامة، أو العب في الصالة المفتوحة وطاولة البلياردو مباشرة عند حضورك للفرع
                     </p>
                 </div>
 
                 {/* ─────────────────────────────────────────────────────────────
-                    VIP GAMING SUITE PORTALS (REDESIGNED FOR LUXURY & INSTANT ENTRY)
-                    NO SKEUOMORPHIC CLUTTER • HIGH CONTRAST • FAST FLUID TRANSITIONS
+                    1. CENTRAL PRICING SHOWCASE (HIGH VISIBILITY & TRANSPARENCY)
                    ───────────────────────────────────────────────────────────── */}
-                <section className="mb-10 sm:mb-12">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-5xl mx-auto">
+                <section className="space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b border-neutral-200 dark:border-white/10">
+                        <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-red-600" />
+                            <h2 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white">
+                                قائمة أسعار الألعاب والترفيه المعتمدة
+                            </h2>
+                        </div>
+                        <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">
+                            أسعار واضحة ومباشرة
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {PRICING_ITEMS.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                                <div
+                                    key={item.id}
+                                    className="rounded-2xl p-4 sm:p-5 bg-white dark:bg-[#150d10] border border-neutral-200/90 dark:border-white/10 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-4 relative overflow-hidden group"
+                                >
+                                    {/* Top info */}
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="w-10 h-10 rounded-xl bg-neutral-100 dark:bg-white/10 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
+                                                    <Icon size={20} />
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-sm sm:text-base text-neutral-900 dark:text-white">
+                                                        {item.title}
+                                                    </h3>
+                                                    <span className="text-[11px] text-neutral-500 dark:text-neutral-400 block">
+                                                        {item.category}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-medium">
+                                            {item.highlight}
+                                        </p>
+                                    </div>
+
+                                    {/* Price & Action */}
+                                    <div className="pt-3 border-t border-neutral-100 dark:border-white/10 flex items-center justify-between gap-3">
+                                        <div className="flex items-baseline gap-1" dir="ltr">
+                                            <span className="font-black text-2xl sm:text-3xl text-neutral-950 dark:text-white">
+                                                {item.price}
+                                            </span>
+                                            <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
+                                                {item.unit}
+                                            </span>
+                                        </div>
+
+                                        {item.isActionable ? (
+                                            <button
+                                                onClick={() => handleRoomEnter(ROOMS[0])}
+                                                className="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs cursor-pointer active:scale-95 transition-all shadow-xs flex items-center gap-1"
+                                            >
+                                                <span>احجز موعدك</span>
+                                                <ArrowRight size={13} className="rotate-180" />
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleWalkInNotice(item.title)}
+                                                className="px-3 py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/15 text-neutral-800 dark:text-neutral-200 font-bold text-xs cursor-pointer active:scale-95 transition-all border border-neutral-200 dark:border-white/10"
+                                            >
+                                                {item.actionLabel}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
+
+                {/* ─────────────────────────────────────────────────────────────
+                    2. VIP GAMING SUITES (CLEAR, LUXURIOUS & INTUITIVE)
+                   ───────────────────────────────────────────────────────────── */}
+                <section className="space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b border-neutral-200 dark:border-white/10">
+                        <div>
+                            <h2 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                                <Gamepad2 className="w-5 h-5 text-red-600" />
+                                <span>غرف البلايستيشن VIP الخاصة (احجز غرفتك أونلاين)</span>
+                            </h2>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                                خصوصية تامة • شاشات 65 بوصة 4K 120Hz • 4 دراعات تحكم • عزل صوتي كامل
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-5xl mx-auto">
                         {ROOMS.map((room) => {
                             const isRoom1 = room.id === 'room-1';
 
                             return (
                                 <div
                                     key={room.id}
-                                    onClick={() => handleDoorEnter(room)}
-                                    className={`group relative rounded-3xl bg-white dark:bg-[#11070a] border-2 transition-all duration-300 ease-out cursor-pointer overflow-hidden flex flex-col justify-between shadow-lg active:scale-[0.985] ${
-                                        isRoom1
-                                            ? 'border-cyan-500/40 hover:border-cyan-400 shadow-[0_8px_30px_rgba(0,210,255,0.12)] hover:shadow-[0_12px_40px_rgba(0,210,255,0.25)]'
-                                            : 'border-rose-500/40 hover:border-rose-400 shadow-[0_8px_30px_rgba(255,0,127,0.12)] hover:shadow-[0_12px_40px_rgba(255,0,127,0.25)]'
-                                    }`}
+                                    onClick={() => handleRoomEnter(room)}
+                                    className="group rounded-3xl bg-white dark:bg-[#140b0e] border border-neutral-200/90 dark:border-white/10 hover:border-red-500/60 dark:hover:border-red-500/60 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-xl active:scale-[0.99]"
                                 >
-                                    {/* 1. CINEMATIC INTERIOR IMAGE SHOWCASE */}
-                                    <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] overflow-hidden bg-neutral-950">
+                                    {/* Room Image Showcase */}
+                                    <div className="relative w-full aspect-[16/10] overflow-hidden bg-neutral-950">
                                         <img
                                             src={room.interiorImg}
                                             alt={room.titleAr}
                                             loading="eager"
-                                            decoding="async"
-                                            className="w-full h-full object-cover brightness-[0.85] contrast-[1.08] group-hover:scale-105 group-hover:brightness-95 transition-all duration-500 ease-out"
+                                            className="w-full h-full object-cover brightness-90 group-hover:scale-105 group-hover:brightness-100 transition-all duration-500 ease-out"
                                         />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-[#140b0e] via-black/20 to-black/60 pointer-events-none" />
 
-                                        {/* Ambient gradient scrim for maximum badge & text legibility */}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-[#11070a] via-black/25 to-black/60 pointer-events-none" />
-
-                                        {/* Floating Top Bar: Live Status Beacon & Cyber Monospace Room Code */}
+                                        {/* Top Floating Badge */}
                                         <div className="absolute top-3 inset-x-3 z-10 flex items-center justify-between pointer-events-none">
-                                            {/* Right (RTL Start): Live Status Beacon */}
-                                            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.3)]">
-                                                <span className="relative flex h-2 w-2">
-                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                                </span>
-                                                <span className="text-[11px] font-bold text-emerald-300 font-sans tracking-wide">
-                                                    متاح للحجز الآن
+                                            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-emerald-500/40 shadow-xs">
+                                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                                <span className="text-[11px] font-bold text-emerald-300 font-sans">
+                                                    {room.badge}
                                                 </span>
                                             </div>
 
-                                            {/* Left (RTL End): Cyber Room Tag */}
-                                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-white shadow-sm">
-                                                <span
-                                                    className={`w-2 h-2 rounded-full ${
-                                                        isRoom1
-                                                            ? 'bg-cyan-400 shadow-[0_0_8px_#00d2ff]'
-                                                            : 'bg-rose-400 shadow-[0_0_8px_#ff007f]'
-                                                    }`}
-                                                />
-                                                <span className="font-mono text-[11px] font-black tracking-widest uppercase">
-                                                    {room.code}
-                                                </span>
-                                            </div>
+                                            <span className="px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-white font-mono text-[11px] font-bold">
+                                                {room.code}
+                                            </span>
                                         </div>
 
-                                        {/* Bottom Overlay over Image: Room Identity & Quick Entry Indicator */}
-                                        <div className="absolute bottom-3 inset-x-3.5 z-10 flex items-end justify-between gap-2 pointer-events-none">
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span
-                                                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                                                            isRoom1
-                                                                ? 'bg-cyan-950/80 text-cyan-300 border border-cyan-500/40'
-                                                                : 'bg-rose-950/80 text-rose-300 border border-rose-500/40'
-                                                        }`}
-                                                    >
-                                                        {room.titleEn}
-                                                    </span>
-                                                    <span className="text-[11px] text-neutral-300 font-body font-semibold">
-                                                        PlayStation 5 VIP
-                                                    </span>
-                                                </div>
-                                                <h3 className="font-brush text-xl sm:text-2xl font-black text-white drop-shadow-md">
-                                                    {isRoom1 ? 'غرفة الأبطال' : 'غرفة النجوم VIP'}
-                                                </h3>
-                                            </div>
-
-                                            {/* Interactive Cue */}
-                                            <div className="hidden xs:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 text-white text-[11px] font-bold group-hover:bg-white/25 transition-colors">
-                                                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                                                <span>دخول سريع</span>
-                                                <ArrowRight className="w-3 h-3 rotate-180 group-hover:-translate-x-0.5 transition-transform" />
-                                            </div>
+                                        {/* Bottom Image Caption */}
+                                        <div className="absolute bottom-3 inset-x-4 z-10 pointer-events-none">
+                                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-red-600/80 text-white border border-red-400/30">
+                                                {room.titleEn}
+                                            </span>
+                                            <h3 className="text-xl sm:text-2xl font-black text-white drop-shadow-md mt-1">
+                                                {isRoom1 ? 'غرفة الأبطال (VIP 01)' : 'غرفة النجوم (VIP 02)'}
+                                            </h3>
                                         </div>
                                     </div>
 
-                                    {/* 2. CARD BODY: SUBTITLE & 4 LUXURY SPEC PILLS */}
+                                    {/* Card Body: Features */}
                                     <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4 text-right">
-                                        <p className="text-xs text-neutral-600 dark:text-neutral-300 font-body leading-relaxed">
+                                        <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-medium">
                                             {room.subtitle}
                                         </p>
 
-                                        {/* 4 Feature Badges in 2x2 Grid */}
+                                        {/* 4 Feature Pills */}
                                         <div className="grid grid-cols-2 gap-2">
-                                            <div className="flex items-center gap-2 p-2 rounded-xl bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200 dark:border-white/[0.08]">
-                                                <Tv
-                                                    className={`w-4 h-4 shrink-0 ${
-                                                        isRoom1 ? 'text-cyan-500' : 'text-rose-500'
-                                                    }`}
-                                                />
-                                                <div className="min-w-0">
-                                                    <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate">الشاشة</div>
-                                                    <div className="text-[11px] font-bold text-neutral-900 dark:text-white truncate">
-                                                        65" 4K 120Hz
+                                            {room.features.map((feat, fIdx) => {
+                                                const FeatIcon = feat.icon;
+                                                return (
+                                                    <div
+                                                        key={fIdx}
+                                                        className="flex items-center gap-2 p-2 rounded-xl bg-neutral-50 dark:bg-white/[0.04] border border-neutral-200/80 dark:border-white/10"
+                                                    >
+                                                        <FeatIcon className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
+                                                        <div className="min-w-0">
+                                                            <div className="text-[11px] font-bold text-neutral-900 dark:text-white truncate">
+                                                                {feat.label}
+                                                            </div>
+                                                            <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate">
+                                                                {feat.desc}
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-2 p-2 rounded-xl bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200 dark:border-white/[0.08]">
-                                                <Gamepad2
-                                                    className={`w-4 h-4 shrink-0 ${
-                                                        isRoom1 ? 'text-cyan-500' : 'text-rose-500'
-                                                    }`}
-                                                />
-                                                <div className="min-w-0">
-                                                    <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate">التحكم</div>
-                                                    <div className="text-[11px] font-bold text-neutral-900 dark:text-white truncate">
-                                                        4 DualSense
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-2 p-2 rounded-xl bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200 dark:border-white/[0.08]">
-                                                <Volume2
-                                                    className={`w-4 h-4 shrink-0 ${
-                                                        isRoom1 ? 'text-cyan-500' : 'text-rose-500'
-                                                    }`}
-                                                />
-                                                <div className="min-w-0">
-                                                    <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate">الصوت</div>
-                                                    <div className="text-[11px] font-bold text-neutral-900 dark:text-white truncate">
-                                                        صوت 3D معزول
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-2 p-2 rounded-xl bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200 dark:border-white/[0.08]">
-                                                <Wind
-                                                    className={`w-4 h-4 shrink-0 ${
-                                                        isRoom1 ? 'text-cyan-500' : 'text-rose-500'
-                                                    }`}
-                                                />
-                                                <div className="min-w-0">
-                                                    <div className="text-[9px] text-neutral-500 dark:text-neutral-400 truncate">الراحة</div>
-                                                    <div className="text-[11px] font-bold text-neutral-900 dark:text-white truncate">
-                                                        تكييف VIP مستقل
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                );
+                                            })}
                                         </div>
 
-                                        {/* 3. FOOTER: RATE & PRIMARY CTA */}
-                                        <div className="flex items-center justify-between gap-3 pt-3 border-t border-neutral-200 dark:border-white/[0.08]">
+                                        {/* Footer: Rate & Action CTA */}
+                                        <div className="flex items-center justify-between gap-3 pt-3 border-t border-neutral-200 dark:border-white/10">
                                             <div className="flex flex-col text-right">
                                                 <div className="flex items-baseline gap-1" dir="ltr">
-                                                    <span className="font-brush text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white tracking-tight">
+                                                    <span className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white">
                                                         {room.rate}
                                                     </span>
                                                     <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 font-sans">
-                                                        EGP / HR
+                                                        ج.م / ساعة
                                                     </span>
                                                 </div>
-                                                <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-medium">
-                                                    حجز بالساعة أو مفتوح
+                                                <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                                                    حجز مؤكد وفوري
                                                 </span>
                                             </div>
 
@@ -484,15 +451,11 @@ export default function PlaystationPage() {
                                                 type="button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleDoorEnter(room);
+                                                    handleRoomEnter(room);
                                                 }}
-                                                className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-95 ${
-                                                    isRoom1
-                                                        ? 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-900/30 border border-cyan-400/40'
-                                                        : 'bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-rose-900/30 border border-rose-400/40'
-                                                }`}
+                                                className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md bg-red-600 hover:bg-red-700 text-white active:scale-95"
                                             >
-                                                <span>احجز الغرفة الآن</span>
+                                                <span>اختيار الموعد والحجز</span>
                                                 <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
                                             </button>
                                         </div>
@@ -503,141 +466,178 @@ export default function PlaystationPage() {
                     </div>
                 </section>
 
-                {/* SECONDARY SECTION: OPEN FLOOR & BILLIARDS (WALK-IN ONLY) */}
-                <section className="mb-12">
-                    <div className="text-center mb-5 space-y-1">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-neutral-800 dark:text-neutral-300 text-xs font-bold shadow-sm">
-                            <span>OPEN FLOOR &amp; BILLIARDS</span>
-                            <span className="text-neutral-400 dark:text-neutral-500">•</span>
-                            <span className="text-amber-600 dark:text-amber-400">حجز مباشر بالفرع فقط</span>
+                {/* ─────────────────────────────────────────────────────────────
+                    3. WALK-IN ENTERTAINMENT: OPEN FLOOR & BILLIARDS
+                   ───────────────────────────────────────────────────────────── */}
+                <section className="space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b border-neutral-200 dark:border-white/10">
+                        <div>
+                            <h2 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                                <Disc3 className="w-5 h-5 text-amber-500" />
+                                <span>صالة الألعاب المفتوحة وطاولة البلياردو (حضور مباشر)</span>
+                            </h2>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                                بدون حجز مسبق عبر الموقع • تفضل بزيارتنا في الفرع وابدأ اللعب فوراً
+                            </p>
                         </div>
-                        <h2 className="font-brush text-xl sm:text-2xl text-neutral-900 dark:text-white">
-                            صالة اللعب المفتوحة والبلياردو
-                        </h2>
-                        <p className="text-xs text-neutral-600 dark:text-neutral-400 max-w-lg mx-auto px-2">
-                            أجهزة الصالة وطاولة البلياردو متاحة للعب الفوري عند حضورك للفرع دون الحاجة لحجز مسبق عبر الموقع.
-                        </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto">
-                        {WALK_IN_ITEMS.map((item) => {
-                            const Icon = item.icon;
+                        {/* Open Floor PS5 Card */}
+                        <div
+                            onClick={() => handleWalkInNotice('بلايستيشن الصالة المفتوحة')}
+                            className="rounded-2xl p-5 bg-white dark:bg-[#150d10] border border-neutral-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-4 cursor-pointer"
+                        >
+                            <div className="space-y-3">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                                            <Gamepad2 size={24} />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-base text-neutral-900 dark:text-white">
+                                                بلايستيشن الصالة المفتوحة (PS5 Open Floor)
+                                            </h3>
+                                            <span className="text-xs text-neutral-500 dark:text-neutral-400 block mt-0.5">
+                                                أجهزة بلايستيشن 5 مع دراعات أصلية في الصالة التنافسية
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2 pt-1">
+                                    <span className="px-2.5 py-1 rounded-lg bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10 text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                                        🎮 أحدث ألعاب PS5
+                                    </span>
+                                    <span className="px-2.5 py-1 rounded-lg bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10 text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                                        ⚡ لعب مباشر وفوري
+                                    </span>
+                                    <span className="px-2.5 py-1 rounded-lg bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10 text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                                        ☕ مشروبات وسناكس من الكافيه
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="pt-3 border-t border-neutral-100 dark:border-white/10 flex items-center justify-between">
+                                <div className="flex items-baseline gap-1" dir="ltr">
+                                    <span className="font-black text-2xl text-amber-600 dark:text-amber-400">
+                                        80
+                                    </span>
+                                    <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
+                                        ج.م / ساعة
+                                    </span>
+                                </div>
+                                <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium flex items-center gap-1">
+                                    <MapPin size={13} className="text-amber-500" />
+                                    <span>متاح بالفرع فور وصولك</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Pro Billiards Card */}
+                        <div
+                            onClick={() => handleWalkInNotice('طاولة البلياردو الاحترافية')}
+                            className="rounded-2xl p-5 bg-white dark:bg-[#150d10] border border-neutral-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-4 cursor-pointer"
+                        >
+                            <div className="space-y-3">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                                            <Disc3 size={24} />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-base text-neutral-900 dark:text-white">
+                                                طاولة البلياردو الدولية (Pro Billiards)
+                                            </h3>
+                                            <span className="text-xs text-neutral-500 dark:text-neutral-400 block mt-0.5">
+                                                طاولة قياسية مستوية بدقة مع إضاءة مخصصة وعصي احترافية
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2 pt-1">
+                                    <span className="px-2.5 py-1 rounded-lg bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10 text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                                        🎱 كرات وعصي مستوردة
+                                    </span>
+                                    <span className="px-2.5 py-1 rounded-lg bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10 text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                                        👌 طاولة نظيفة وموزونة
+                                    </span>
+                                    <span className="px-2.5 py-1 rounded-lg bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10 text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                                        🏆 أجواء لعب راقية
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="pt-3 border-t border-neutral-100 dark:border-white/10 flex items-center justify-between">
+                                <div className="flex items-baseline gap-1" dir="ltr">
+                                    <span className="font-black text-2xl text-emerald-600 dark:text-emerald-400">
+                                        15
+                                    </span>
+                                    <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
+                                        ج.م / جيم
+                                    </span>
+                                </div>
+                                <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium flex items-center gap-1">
+                                    <MapPin size={13} className="text-emerald-500" />
+                                    <span>متاحة بالفرع فور وصولك</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* ─────────────────────────────────────────────────────────────
+                    4. VENUE AMENITIES (CLEAN & TRUSTWORTHY)
+                   ───────────────────────────────────────────────────────────── */}
+                <section className="rounded-3xl bg-white dark:bg-[#140b0e] border border-neutral-200 dark:border-white/10 p-5 sm:p-7 shadow-sm space-y-6">
+                    <div className="text-center space-y-1">
+                        <h3 className="text-lg sm:text-xl font-bold text-neutral-900 dark:text-white">
+                            تجربة لعب لا مثيل لها في D95 Gaming Lounge
+                        </h3>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                            أعلى معايير الراحة والجودة لضمان جلسة تنافسية واستثنائية مع أصدقائك
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {AMENITIES.map((amenity, aIdx) => {
+                            const Icon = amenity.icon;
                             return (
                                 <div
-                                    key={item.id}
-                                    onClick={() => handleWalkInClick(item.hint)}
-                                    className="group relative rounded-2xl p-4 sm:p-5 bg-white dark:bg-[#1a0c10]/95 hover:bg-neutral-50 dark:hover:bg-[#241016] border-2 border-neutral-200 dark:border-red-600/30 hover:border-amber-500 transition-all duration-300 cursor-pointer shadow-md flex flex-col justify-between gap-4"
+                                    key={aIdx}
+                                    className="p-4 rounded-2xl bg-neutral-50 dark:bg-white/[0.03] border border-neutral-200/80 dark:border-white/10 flex flex-col items-center text-center space-y-2"
                                 >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-12 h-12 rounded-xl bg-neutral-100 dark:bg-black/60 border border-neutral-200 dark:border-white/10 flex items-center justify-center shrink-0 text-neutral-700 dark:text-neutral-200 group-hover:text-amber-600 dark:group-hover:text-amber-400 group-hover:border-amber-500/40 transition-colors">
-                                                <Icon className="w-6 h-6" />
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-brush text-base sm:text-lg text-neutral-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-300 transition-colors">
-                                                        {item.nameEn}
-                                                    </span>
-                                                    <span className="text-xs text-neutral-500 dark:text-neutral-400 font-bold hidden sm:inline">
-                                                        • {item.nameAr}
-                                                    </span>
-                                                </div>
-                                                <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">
-                                                    {item.subtitle}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-neutral-100 dark:bg-black/60 text-neutral-800 dark:text-neutral-300 border border-neutral-300 dark:border-neutral-700 whitespace-nowrap shrink-0">
-                                            {item.badge}
-                                        </span>
+                                    <div className="w-11 h-11 rounded-2xl bg-red-600/10 text-red-600 dark:text-red-400 flex items-center justify-center shadow-xs">
+                                        <Icon className="w-5 h-5" />
                                     </div>
-
-                                    {/* Specs chips */}
-                                    <div className="flex flex-wrap gap-1.5 pt-1">
-                                        {item.specs.map((spec, sIdx) => (
-                                            <span
-                                                key={sIdx}
-                                                className="px-2.5 py-1 rounded-md bg-neutral-100 dark:bg-black/50 border border-neutral-200 dark:border-white/10 text-[11px] text-neutral-800 dark:text-neutral-200 font-medium"
-                                            >
-                                                {spec}
-                                            </span>
-                                        ))}
-                                    </div>
-
-                                    {/* Price & Footnote */}
-                                    <div className="flex items-center justify-between border-t border-neutral-200 dark:border-white/10 pt-3 mt-1">
-                                        <div className="text-left" dir="ltr">
-                                            <div className="flex items-baseline gap-1">
-                                                <span className="font-brush text-2xl font-black text-amber-600 dark:text-amber-400">
-                                                    {item.price}
-                                                </span>
-                                                <span className="font-brush text-xs text-neutral-600 dark:text-neutral-300">
-                                                    {item.unit}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="text-xs text-neutral-700 dark:text-neutral-300 font-bold flex items-center gap-1 group-hover:text-neutral-900 dark:group-hover:text-white transition-colors">
-                                            <span>متاح بالفرع فور وصولك</span>
-                                            <span className="text-amber-600 dark:text-amber-400">🏬</span>
-                                        </div>
-                                    </div>
+                                    <h4 className="font-bold text-xs sm:text-sm text-neutral-900 dark:text-white">
+                                        {amenity.title}
+                                    </h4>
+                                    <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                                        {amenity.desc}
+                                    </p>
                                 </div>
                             );
                         })}
                     </div>
                 </section>
 
-                {/* VENUE AMENITIES & TRUST GUARANTEE */}
-                <section className="mb-10 max-w-5xl mx-auto w-full">
-                    <div className="rounded-3xl bg-white dark:bg-[#1a0c10]/95 border-2 border-neutral-200 dark:border-red-600/35 p-5 sm:p-7 shadow-xl">
-                        <div className="text-center mb-6">
-                            <h3 className="font-brush text-lg sm:text-xl text-neutral-900 dark:text-white">
-                                تجربة لا مثيل لها في D95 GAMING LOUNGE
-                            </h3>
-                            <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1">
-                                أعلى معايير الجودة والراحة لنوفر لك أفضل جلسة لعب مع أصدقائك
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {AMENITIES.map((amenity, aIdx) => {
-                                const Icon = amenity.icon;
-                                return (
-                                    <div
-                                        key={aIdx}
-                                        className="p-4 rounded-2xl bg-neutral-50 dark:bg-[#261016] border border-neutral-200 dark:border-red-500/25 flex flex-col items-center text-center space-y-2 shadow-sm"
-                                    >
-                                        <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/80 border border-red-300 dark:border-red-600/50 flex items-center justify-center text-red-600 dark:text-red-400 shadow-sm">
-                                            <Icon className="w-5 h-5" />
-                                        </div>
-                                        <h4 className="font-bold text-xs text-neutral-900 dark:text-white">
-                                            {amenity.title}
-                                        </h4>
-                                        <p className="text-[11px] text-neutral-300 leading-relaxed">
-                                            {amenity.desc}
-                                        </p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </section>
-
-                {/* Operating Hours Box & Brand Signoff */}
+                {/* ─────────────────────────────────────────────────────────────
+                    FOOTER: OPERATING HOURS & BRAND SIGNOFF
+                   ───────────────────────────────────────────────────────────── */}
                 <footer className="text-center space-y-3 pt-2">
-                    <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white dark:bg-[#18090d] border border-neutral-300 dark:border-red-600/40 text-xs text-neutral-800 dark:text-neutral-200 shadow-sm">
-                        <Clock className="w-4 h-4 text-red-600 dark:text-red-500" />
+                    <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-[#140b0e] border border-neutral-200 dark:border-white/10 text-xs text-neutral-800 dark:text-neutral-200 shadow-xs">
+                        <Clock className="w-4 h-4 text-red-600" />
                         <span>مواعيد العمل المعتمدة: يومياً من <strong>08:00 صباحاً</strong> حتى <strong>04:00 فجراً</strong></span>
                     </div>
 
-                    <div className="flex flex-col items-center justify-center space-y-1 pt-2">
-                        <p className="font-brush text-xs sm:text-sm text-red-600 dark:text-red-500/90 tracking-[0.25em]">
-                            THANK YOU &amp; ENJOY YOUR TIME!
+                    <div className="pt-2">
+                        <p className="text-xs font-bold text-red-600 dark:text-red-400 tracking-wider">
+                            D95 GAMING LOUNGE &amp; CAFÉ
                         </p>
-                        <p className="font-body text-[10px] text-neutral-500 dark:text-neutral-400 uppercase tracking-widest">
-                            D95 GAMING LOUNGE &amp; CAFÉ • CAIRO
+                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 uppercase tracking-widest mt-0.5">
+                            PREMIUM GAMING • SPECIALTY COFFEE • CAIRO
                         </p>
                     </div>
                 </footer>
