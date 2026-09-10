@@ -159,9 +159,25 @@ export default function BookingDetailsPage() {
         return AVAILABLE_ROOMS.find((r) => r.id === selectedRoomId) || AVAILABLE_ROOMS[0];
     }, [selectedRoomId]);
 
-    // Calendar state: compact expandable date picker
+    // Calendar state & ref: compact date picker
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
     const [calendarMonth, setCalendarMonth] = useState(() => new Date());
+    const calendarMenuRef = useRef<HTMLDivElement>(null);
+
+    // Close calendar popover on click outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (calendarMenuRef.current && !calendarMenuRef.current.contains(e.target as Node)) {
+                setIsCalendarOpen(false);
+            }
+        };
+        if (isCalendarOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isCalendarOpen]);
 
     // Duration dropdown state & ref
     const [isDurationMenuOpen, setIsDurationMenuOpen] = useState(false);
@@ -827,18 +843,92 @@ export default function BookingDetailsPage() {
                 {/* 2. TIME & DURATION SELECTOR (EFFORTLESS ONE-TAP SLOTS)    */}
                 {/* ========================================================= */}
                 <div className="bg-white dark:bg-[#120e10] border border-neutral-200/80 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
-                    {/* Header with Integrated Day & Duration Buttons */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-neutral-100 dark:border-white/[0.06]">
-                        <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto flex-wrap">
-                            <div className="flex items-center gap-2">
-                                <Clock className="w-4 h-4 text-red-600 dark:text-red-500 shrink-0" />
-                                <span className="font-bold text-sm text-neutral-900 dark:text-white">
-                                    وقت البدء والمدة
-                                </span>
+                    {/* Header with Title and Left-Corner Controls */}
+                    <div className="flex items-center justify-between gap-2 pb-2 border-b border-neutral-100 dark:border-white/[0.06] flex-wrap">
+                        <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-red-600 dark:text-red-500 shrink-0" />
+                            <span className="font-bold text-sm text-neutral-900 dark:text-white">
+                                وقت البدء ومدة الجلسة
+                            </span>
+                        </div>
+
+                        {/* Controls Group in the Left Corner */}
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                            {/* Duration Dropdown Button */}
+                            <div className="relative" ref={durationMenuRef}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsDurationMenuOpen(!isDurationMenuOpen);
+                                        setIsCalendarOpen(false);
+                                        playPs5NavigateSound();
+                                    }}
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all active:scale-95 cursor-pointer group shadow-2xs ${
+                                        hasSelectedDuration
+                                            ? 'bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30 hover:bg-red-500/20'
+                                            : 'bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] border-neutral-200/80 dark:border-white/10 text-neutral-800 dark:text-neutral-200'
+                                    }`}
+                                    title="اختر مدة الجلسة بالساعات"
+                                >
+                                    <Timer className="w-3.5 h-3.5 text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform shrink-0" />
+                                    <span className="text-red-600 dark:text-red-400 font-extrabold">المدة:</span>
+                                    <span>{formatDurationLabel(durationHours)}</span>
+                                    <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${isDurationMenuOpen ? 'rotate-180 text-red-600' : ''}`} />
+                                </button>
+
+                                {/* Duration Dropdown Popover */}
+                                <AnimatePresence>
+                                    {isDurationMenuOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-56 p-1.5 bg-white dark:bg-[#181416] border border-neutral-200/90 dark:border-white/10 rounded-2xl shadow-2xl z-40 space-y-1"
+                                        >
+                                            <div className="px-2.5 py-1.5 text-[11px] font-bold text-neutral-400 dark:text-neutral-500 border-b border-neutral-100 dark:border-white/[0.06] flex items-center justify-between">
+                                                <span>اختر مدة الجلسة</span>
+                                                <span>{currentRoom.rate} ج.م/س</span>
+                                            </div>
+                                            <div className="max-h-60 overflow-y-auto space-y-0.5 pt-0.5">
+                                                {DURATION_OPTIONS.map((opt) => {
+                                                    const isSelected = durationHours === opt.value;
+                                                    return (
+                                                        <button
+                                                            key={opt.value}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setDurationHours(opt.value);
+                                                                setIsDurationMenuOpen(false);
+                                                                playPs5SelectSound();
+                                                            }}
+                                                            className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                                                isSelected
+                                                                    ? 'bg-red-600 text-white shadow-xs'
+                                                                    : 'text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/[0.06]'
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                <div className={`w-2 h-2 rounded-full shrink-0 ${isSelected ? 'bg-white' : 'border border-neutral-300 dark:border-neutral-600'}`} />
+                                                                <span>{opt.label}</span>
+                                                                <span className={`text-[10px] font-normal ${isSelected ? 'text-white/80' : 'text-neutral-400'}`}>
+                                                                    ({opt.subtitle})
+                                                                </span>
+                                                            </div>
+                                                            <span className={`font-mono text-[11px] font-bold shrink-0 ${isSelected ? 'text-white' : 'text-neutral-500 dark:text-neutral-400'}`}>
+                                                                {Math.round(opt.value * currentRoom.rate)} ج.م
+                                                            </span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
 
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                                {/* Small Day Selector Button */}
+                            {/* Calendar Dropdown - Left Corner */}
+                            <div className="relative" ref={calendarMenuRef}>
                                 <button
                                     type="button"
                                     onClick={toggleCalendar}
@@ -846,233 +936,126 @@ export default function BookingDetailsPage() {
                                     title="اضغط لتغيير يوم الحجز"
                                 >
                                     <Calendar className="w-3.5 h-3.5 text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform shrink-0" />
-                                    <span className="text-red-600 dark:text-red-400 font-extrabold">{formattedDate.tag}:</span>
                                     <span>{formattedDate.full}</span>
                                     <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${isCalendarOpen ? 'rotate-180 text-red-600' : ''}`} />
                                 </button>
 
-                                {/* Duration Dropdown Button */}
-                                <div className="relative" ref={durationMenuRef}>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setIsDurationMenuOpen(!isDurationMenuOpen);
-                                            setIsCalendarOpen(false);
-                                            playPs5NavigateSound();
-                                        }}
-                                        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all active:scale-95 cursor-pointer group shadow-2xs ${
-                                            hasSelectedDuration
-                                                ? 'bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30 hover:bg-red-500/20'
-                                                : 'bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] border-neutral-200/80 dark:border-white/10 text-neutral-800 dark:text-neutral-200'
-                                        }`}
-                                        title="اختر مدة الجلسة بالساعات"
-                                    >
-                                        <Timer className="w-3.5 h-3.5 text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform shrink-0" />
-                                        <span className="text-red-600 dark:text-red-400 font-extrabold">المدة:</span>
-                                        <span>{formatDurationLabel(durationHours)}</span>
-                                        <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${isDurationMenuOpen ? 'rotate-180 text-red-600' : ''}`} />
-                                    </button>
+                                {/* Compact Calendar Popover */}
+                                <AnimatePresence>
+                                    {isCalendarOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="absolute left-0 top-full mt-2 w-72 p-3 bg-white dark:bg-[#181416] border border-neutral-200/90 dark:border-white/10 rounded-2xl shadow-2xl z-40 space-y-2.5"
+                                        >
+                                            {/* Quick select shortcuts: اليوم، غداً، بعد غد */}
+                                            <div className="flex items-center gap-1.5 justify-between">
+                                                {quickShortcuts.slice(0, 3).map((sc) => {
+                                                    const isSelected = selectedDate === sc.iso;
+                                                    return (
+                                                        <button
+                                                            key={sc.iso}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setSelectedDate(sc.iso);
+                                                                playPs5SelectSound();
+                                                                setIsCalendarOpen(false);
+                                                            }}
+                                                            className={`flex-1 py-1.5 px-1 rounded-xl text-xs font-bold transition-all text-center border cursor-pointer ${
+                                                                isSelected
+                                                                    ? 'bg-red-600 border-red-600 text-white shadow-xs'
+                                                                    : 'bg-neutral-50 dark:bg-white/[0.04] border-neutral-200/70 dark:border-white/10 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.08]'
+                                                            }`}
+                                                        >
+                                                            {sc.label}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
 
-                                    {/* Dropdown Popover */}
-                                    <AnimatePresence>
-                                        {isDurationMenuOpen && (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                                                transition={{ duration: 0.15 }}
-                                                className="absolute left-0 sm:right-0 sm:left-auto top-full mt-2 w-56 p-1.5 bg-white dark:bg-[#181416] border border-neutral-200/90 dark:border-white/10 rounded-2xl shadow-2xl z-40 space-y-1"
-                                            >
-                                                <div className="px-2.5 py-1.5 text-[11px] font-bold text-neutral-400 dark:text-neutral-500 border-b border-neutral-100 dark:border-white/[0.06] flex items-center justify-between">
-                                                    <span>اختر مدة الجلسة</span>
-                                                    <span>{currentRoom.rate} ج.م/س</span>
-                                                </div>
-                                                <div className="max-h-60 overflow-y-auto space-y-0.5 pt-0.5">
-                                                    {DURATION_OPTIONS.map((opt) => {
-                                                        const isSelected = durationHours === opt.value;
-                                                        return (
-                                                            <button
-                                                                key={opt.value}
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    setDurationHours(opt.value);
-                                                                    setIsDurationMenuOpen(false);
-                                                                    playPs5SelectSound();
-                                                                }}
-                                                                className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                                                                    isSelected
-                                                                        ? 'bg-red-600 text-white shadow-xs'
-                                                                        : 'text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/[0.06]'
-                                                                }`}
-                                                            >
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className={`w-2 h-2 rounded-full shrink-0 ${isSelected ? 'bg-white' : 'border border-neutral-300 dark:border-neutral-600'}`} />
-                                                                    <span>{opt.label}</span>
-                                                                    <span className={`text-[10px] font-normal ${isSelected ? 'text-white/80' : 'text-neutral-400'}`}>
-                                                                        ({opt.subtitle})
-                                                                    </span>
-                                                                </div>
-                                                                <span className={`font-mono text-[11px] font-bold shrink-0 ${isSelected ? 'text-white' : 'text-neutral-500 dark:text-neutral-400'}`}>
-                                                                    {Math.round(opt.value * currentRoom.rate)} ج.م
-                                                                </span>
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
+                                            {/* Month header & navigation */}
+                                            <div className="flex items-center justify-between px-1 text-xs">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (canGoPrevMonth) {
+                                                            setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+                                                            playPs5NavigateSound();
+                                                        }
+                                                    }}
+                                                    disabled={!canGoPrevMonth}
+                                                    className="p-1 rounded-lg border border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                                    title="الشهر السابق"
+                                                >
+                                                    <ChevronRight className="w-3.5 h-3.5" />
+                                                </button>
+
+                                                <span className="font-bold text-neutral-900 dark:text-white">
+                                                    {ARABIC_MONTHS[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
+                                                </span>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+                                                        playPs5NavigateSound();
+                                                    }}
+                                                    className="p-1 rounded-lg border border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                                                    title="الشهر القادم"
+                                                >
+                                                    <ChevronLeft className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+
+                                            {/* Days of week header */}
+                                            <div className="grid grid-cols-7 gap-1 text-center">
+                                                {['سبت', 'أحد', 'إثن', 'ثلا', 'أرب', 'خمي', 'جمع'].map((name, idx) => (
+                                                    <div key={idx} className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 py-0.5">
+                                                        {name}
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Calendar Grid of Day Cells */}
+                                            <div className="grid grid-cols-7 gap-1">
+                                                {monthDaysGrid.map((cell, idx) => {
+                                                    if (!cell) {
+                                                        return <div key={`empty-${idx}`} className="h-7" />;
+                                                    }
+                                                    const isSelected = selectedDate === cell.iso;
+                                                    return (
+                                                        <button
+                                                            key={cell.iso}
+                                                            type="button"
+                                                            disabled={cell.isPast}
+                                                            onClick={() => {
+                                                                setSelectedDate(cell.iso);
+                                                                playPs5SelectSound();
+                                                                setIsCalendarOpen(false);
+                                                            }}
+                                                            className={`h-7 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
+                                                                cell.isPast
+                                                                    ? 'text-neutral-300 dark:text-neutral-600 opacity-40 cursor-not-allowed'
+                                                                    : isSelected
+                                                                    ? 'bg-red-600 text-white shadow-xs scale-105 z-10'
+                                                                    : cell.isToday
+                                                                    ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30 hover:bg-red-500/20 cursor-pointer'
+                                                                    : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.08] cursor-pointer'
+                                                            }`}
+                                                        >
+                                                            <span>{cell.dayNumber}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
                         </div>
-
-                        {/* Selected Time Status Pill */}
-                        {hasSelectedTime ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-xs self-start sm:self-auto">
-                                <span>الموعد المختار: {formatArabicTimeDetailed(startDateTime!)}</span>
-                                {hasSelectedDuration && (
-                                    <span className="opacity-80 font-normal">
-                                        (ينتهي {currentAvailability.formattedEnd})
-                                    </span>
-                                )}
-                            </span>
-                        ) : (
-                            <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium">
-                                صالة الألعاب متاحة 20 ساعة يومياً (08:00 ص - 04:00 ص)
-                            </span>
-                        )}
                     </div>
-
-                    {/* Expandable Calendar Drawer */}
-                    <AnimatePresence>
-                        {isCalendarOpen && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{ duration: 0.2, ease: 'easeOut' }}
-                                className="overflow-hidden p-3 sm:p-4 rounded-2xl bg-neutral-50 dark:bg-white/[0.03] border border-neutral-200/80 dark:border-white/10 space-y-3"
-                            >
-                                {/* Quick select shortcuts: اليوم، غداً، بعد غد */}
-                                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-0.5">
-                                    <span className="text-[11px] font-bold text-neutral-500 dark:text-neutral-400 shrink-0">
-                                        اختيار سريع:
-                                    </span>
-                                    {quickShortcuts.map((sc) => {
-                                        const isSelected = selectedDate === sc.iso;
-                                        return (
-                                            <button
-                                                key={sc.iso}
-                                                type="button"
-                                                onClick={() => {
-                                                    setSelectedDate(sc.iso);
-                                                    playPs5SelectSound();
-                                                    setIsCalendarOpen(false);
-                                                }}
-                                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 border ${
-                                                    isSelected
-                                                        ? 'bg-red-600 border-red-600 text-white shadow-xs'
-                                                        : 'bg-white dark:bg-white/[0.05] border-neutral-200/60 dark:border-transparent text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.09]'
-                                                }`}
-                                            >
-                                                {sc.label} ({sc.dayNumber} {sc.monthName})
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                {/* Month header & navigation */}
-                                <div className="flex items-center justify-between px-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (canGoPrevMonth) {
-                                                setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
-                                                playPs5NavigateSound();
-                                            }
-                                        }}
-                                        disabled={!canGoPrevMonth}
-                                        className="p-1.5 rounded-lg border border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                                        title="الشهر السابق"
-                                    >
-                                        <ChevronRight className="w-4 h-4" />
-                                    </button>
-
-                                    <div className="font-bold text-sm text-neutral-900 dark:text-white">
-                                        {ARABIC_MONTHS[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
-                                            playPs5NavigateSound();
-                                        }}
-                                        className="p-1.5 rounded-lg border border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
-                                        title="الشهر القادم"
-                                    >
-                                        <ChevronLeft className="w-4 h-4" />
-                                    </button>
-                                </div>
-
-                                {/* Days of week header */}
-                                <div className="grid grid-cols-7 gap-1 text-center">
-                                    {WEEK_DAY_NAMES.map((name, idx) => (
-                                        <div key={idx} className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 py-1">
-                                            {name}
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Calendar Grid of Day Cells */}
-                                <div className="grid grid-cols-7 gap-1">
-                                    {monthDaysGrid.map((cell, idx) => {
-                                        if (!cell) {
-                                            return <div key={`empty-${idx}`} className="h-9" />;
-                                        }
-                                        const isSelected = selectedDate === cell.iso;
-                                        return (
-                                            <button
-                                                key={cell.iso}
-                                                type="button"
-                                                disabled={cell.isPast}
-                                                onClick={() => {
-                                                    setSelectedDate(cell.iso);
-                                                    playPs5SelectSound();
-                                                    setIsCalendarOpen(false);
-                                                }}
-                                                className={`h-9 rounded-xl flex flex-col items-center justify-center text-xs font-bold transition-all relative ${
-                                                    cell.isPast
-                                                        ? 'text-neutral-300 dark:text-neutral-600 opacity-40 cursor-not-allowed'
-                                                        : isSelected
-                                                        ? 'bg-red-600 text-white shadow-md shadow-red-600/30 scale-105 z-10'
-                                                        : cell.isToday
-                                                        ? 'bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30 hover:bg-red-500/20 cursor-pointer'
-                                                        : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.08] cursor-pointer'
-                                                }`}
-                                            >
-                                                <span>{cell.dayNumber}</span>
-                                                {cell.isToday && !isSelected && (
-                                                    <span className="w-1 h-1 rounded-full bg-red-500 -mt-0.5" />
-                                                )}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                {/* Close button */}
-                                <div className="flex justify-end pt-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsCalendarOpen(false)}
-                                        className="text-xs text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-white font-medium px-2 py-1 cursor-pointer"
-                                    >
-                                        إغلاق التقويم ✕
-                                    </button>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
 
                     {/* Period Switcher Tabs & Quick "أقرب موعد متاح" button */}
                     <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
