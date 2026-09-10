@@ -796,7 +796,7 @@ export default function BookingDetailsPage() {
                 {/* ========================================================= */}
                 <div className="bg-white dark:bg-[#120e10] border border-neutral-200/80 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
                     {/* Header with Title and Left-Corner Controls */}
-                    <div className="flex items-center justify-between gap-2 pb-2 border-b border-neutral-100 dark:border-white/[0.06] flex-wrap">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pb-2.5 border-b border-neutral-100 dark:border-white/[0.06]">
                         <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4 text-red-600 dark:text-red-500 shrink-0" />
                             <span className="font-bold text-sm text-neutral-900 dark:text-white">
@@ -804,86 +804,22 @@ export default function BookingDetailsPage() {
                             </span>
                         </div>
 
-                        {/* Controls Group in the Left Corner */}
-                        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                            {/* Booked Appointments Dropdown */}
-                            <div className="relative" ref={bookedMenuRef}>
-                                <button
-                                    type="button"
+                        {/* Controls Group: Mobile-First Prioritized (Order: 1. المدة, 2. اليوم, 3. المحجوز) */}
+                        <div className="relative flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 w-full sm:w-auto">
+                            {/* Mobile Overlay Backdrop for easy tap-outside */}
+                            {(isDurationMenuOpen || isCalendarOpen || isBookedMenuOpen) && (
+                                <div
+                                    className="fixed inset-0 bg-black/40 backdrop-blur-xs z-30 sm:hidden"
                                     onClick={() => {
-                                        setIsBookedMenuOpen((prev) => !prev);
                                         setIsDurationMenuOpen(false);
                                         setIsCalendarOpen(false);
-                                        playPs5NavigateSound();
+                                        setIsBookedMenuOpen(false);
                                     }}
-                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all active:scale-95 cursor-pointer group shadow-2xs ${
-                                        sortedBookings.length > 0
-                                            ? 'bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30 hover:bg-red-500/20'
-                                            : 'bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] border-neutral-200/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300'
-                                    }`}
-                                    title="المواعيد المحجوزة اليوم"
-                                >
-                                    <Lock className={`w-3.5 h-3.5 shrink-0 ${sortedBookings.length > 0 ? 'text-red-500' : 'text-emerald-500'}`} />
-                                    <span>المحجوز:</span>
-                                    <span className={`font-mono text-[11px] px-1 rounded ${
-                                        sortedBookings.length > 0 ? 'bg-red-500/20 text-red-600 dark:text-red-300 font-bold' : 'text-neutral-500'
-                                    }`}>
-                                        {sortedBookings.length}
-                                    </span>
-                                    <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${isBookedMenuOpen ? 'rotate-180 text-red-600' : ''}`} />
-                                </button>
+                                />
+                            )}
 
-                                {/* Dropdown Popover */}
-                                <AnimatePresence>
-                                    {isBookedMenuOpen && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                                            transition={{ duration: 0.15 }}
-                                            className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-72 p-2.5 bg-white dark:bg-[#181416] border border-neutral-200/90 dark:border-white/10 rounded-2xl shadow-2xl z-40 space-y-2"
-                                        >
-                                            <div className="flex items-center justify-between px-1 pb-1.5 border-b border-neutral-100 dark:border-white/[0.06]">
-                                                <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-900 dark:text-white">
-                                                    <Lock className="w-3.5 h-3.5 text-red-500" />
-                                                    <span>المواعيد المحجوزة اليوم ({currentRoom.nameEn})</span>
-                                                </div>
-                                                <span className="text-[10px] text-neutral-400 font-medium">غير متاحة</span>
-                                            </div>
-
-                                            {sortedBookings.length > 0 ? (
-                                                <div className="max-h-56 overflow-y-auto space-y-1.5 py-0.5">
-                                                    {sortedBookings.map((b, idx) => (
-                                                        <div
-                                                            key={idx}
-                                                            className="flex items-center justify-between px-2.5 py-2 rounded-xl bg-neutral-50 dark:bg-white/[0.04] border border-red-200/60 dark:border-red-900/30 text-xs font-mono"
-                                                        >
-                                                            <div className="flex items-center gap-2">
-                                                                <Lock className="w-3 h-3 text-red-500 shrink-0" />
-                                                                <span className="font-semibold text-neutral-900 dark:text-white">
-                                                                    {formatArabicTimeDetailed(b.start)}
-                                                                </span>
-                                                            </div>
-                                                            <span className="text-neutral-400 text-[10px]">إلى</span>
-                                                            <span className="font-semibold text-neutral-900 dark:text-white">
-                                                                {formatArabicTimeDetailed(b.end)}
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/30 flex items-center gap-2 text-emerald-700 dark:text-emerald-300 text-xs">
-                                                    <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
-                                                    <span>الغرفة متاحة بالكامل اليوم! لا توجد أي حجوزات مسبقة.</span>
-                                                </div>
-                                            )}
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-
-                            {/* Duration Dropdown Button */}
-                            <div className="relative" ref={durationMenuRef}>
+                            {/* 1. المدة: Duration Dropdown Button */}
+                            <div className="relative flex-1 sm:flex-initial" ref={durationMenuRef}>
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -892,7 +828,7 @@ export default function BookingDetailsPage() {
                                         setIsBookedMenuOpen(false);
                                         playPs5NavigateSound();
                                     }}
-                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all active:scale-95 cursor-pointer group shadow-2xs ${
+                                    className={`w-full sm:w-auto inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all active:scale-95 cursor-pointer group shadow-2xs whitespace-nowrap ${
                                         hasSelectedDuration
                                             ? 'bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30 hover:bg-red-500/20'
                                             : 'bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] border-neutral-200/80 dark:border-white/10 text-neutral-800 dark:text-neutral-200'
@@ -900,9 +836,9 @@ export default function BookingDetailsPage() {
                                     title="اختر مدة الجلسة بالساعات"
                                 >
                                     <Timer className="w-3.5 h-3.5 text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform shrink-0" />
-                                    <span className="text-red-600 dark:text-red-400 font-extrabold">المدة:</span>
-                                    <span className="font-mono">{formatDurationLabel(durationHours)}</span>
-                                    <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${isDurationMenuOpen ? 'rotate-180 text-red-600' : ''}`} />
+                                    <span className="text-red-600 dark:text-red-400 font-extrabold hidden sm:inline">المدة:</span>
+                                    <span className="font-mono">{hasSelectedDuration ? formatDurationLabel(durationHours) : 'المدة'}</span>
+                                    <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 shrink-0 ${isDurationMenuOpen ? 'rotate-180 text-red-600' : ''}`} />
                                 </button>
 
                                 {/* Duration Dropdown Popover */}
@@ -913,7 +849,7 @@ export default function BookingDetailsPage() {
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                             transition={{ duration: 0.15 }}
-                                            className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-48 p-1.5 bg-white dark:bg-[#181416] border border-neutral-200/90 dark:border-white/10 rounded-2xl shadow-2xl z-40 space-y-1"
+                                            className="absolute right-0 top-full mt-2 w-48 p-1.5 bg-white dark:bg-[#181416] border border-neutral-200/90 dark:border-white/10 rounded-2xl shadow-2xl z-40 space-y-1"
                                         >
                                             <div className="px-2.5 py-1.5 text-[11px] font-bold text-neutral-400 dark:text-neutral-500 border-b border-neutral-100 dark:border-white/[0.06] flex items-center justify-between">
                                                 <span>اختر مدة الجلسة</span>
@@ -953,17 +889,18 @@ export default function BookingDetailsPage() {
                                 </AnimatePresence>
                             </div>
 
-                            {/* Calendar Dropdown - Left Corner */}
-                            <div className="relative" ref={calendarMenuRef}>
+                            {/* 2. اليوم: Calendar Dropdown Button */}
+                            <div className="relative flex-1 sm:flex-initial" ref={calendarMenuRef}>
                                 <button
                                     type="button"
                                     onClick={toggleCalendar}
-                                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] border border-neutral-200/80 dark:border-white/10 text-xs font-bold text-neutral-800 dark:text-neutral-200 transition-all active:scale-95 cursor-pointer group shadow-2xs"
+                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] border border-neutral-200/80 dark:border-white/10 text-xs font-bold text-neutral-800 dark:text-neutral-200 transition-all active:scale-95 cursor-pointer group shadow-2xs whitespace-nowrap"
                                     title="اضغط لتغيير يوم الحجز"
                                 >
                                     <Calendar className="w-3.5 h-3.5 text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform shrink-0" />
-                                    <span>{formattedDate.full}</span>
-                                    <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${isCalendarOpen ? 'rotate-180 text-red-600' : ''}`} />
+                                    <span className="hidden sm:inline">{formattedDate.full}</span>
+                                    <span className="sm:hidden">{formattedDate.tag}</span>
+                                    <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 shrink-0 ${isCalendarOpen ? 'rotate-180 text-red-600' : ''}`} />
                                 </button>
 
                                 {/* Compact Calendar Popover */}
@@ -974,7 +911,7 @@ export default function BookingDetailsPage() {
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                             transition={{ duration: 0.15 }}
-                                            className="absolute left-0 top-full mt-2 w-72 p-3 bg-white dark:bg-[#181416] border border-neutral-200/90 dark:border-white/10 rounded-2xl shadow-2xl z-40 space-y-2.5"
+                                            className="absolute left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:right-0 top-full mt-2 w-72 max-w-[calc(100vw-2rem)] p-3 bg-white dark:bg-[#181416] border border-neutral-200/90 dark:border-white/10 rounded-2xl shadow-2xl z-40 space-y-2.5"
                                         >
                                             {/* Quick select shortcuts: اليوم، غداً، بعد غد */}
                                             <div className="flex items-center gap-1.5 justify-between">
@@ -1076,6 +1013,82 @@ export default function BookingDetailsPage() {
                                                     );
                                                 })}
                                             </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
+                            {/* 3. المحجوز: Booked Appointments Dropdown */}
+                            <div className="relative flex-1 sm:flex-initial" ref={bookedMenuRef}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsBookedMenuOpen((prev) => !prev);
+                                        setIsDurationMenuOpen(false);
+                                        setIsCalendarOpen(false);
+                                        playPs5NavigateSound();
+                                    }}
+                                    className={`w-full sm:w-auto inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all active:scale-95 cursor-pointer group shadow-2xs whitespace-nowrap ${
+                                        sortedBookings.length > 0
+                                            ? 'bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30 hover:bg-red-500/20'
+                                            : 'bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] border-neutral-200/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300'
+                                    }`}
+                                    title="المواعيد المحجوزة اليوم"
+                                >
+                                    <Lock className={`w-3.5 h-3.5 shrink-0 ${sortedBookings.length > 0 ? 'text-red-500' : 'text-emerald-500'}`} />
+                                    <span className="hidden sm:inline">المحجوز:</span>
+                                    <span className={`font-mono text-[11px] px-1 rounded ${
+                                        sortedBookings.length > 0 ? 'bg-red-500/20 text-red-600 dark:text-red-300 font-bold' : 'text-neutral-500'
+                                    }`}>
+                                        {sortedBookings.length}
+                                    </span>
+                                    <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 shrink-0 ${isBookedMenuOpen ? 'rotate-180 text-red-600' : ''}`} />
+                                </button>
+
+                                {/* Dropdown Popover */}
+                                <AnimatePresence>
+                                    {isBookedMenuOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="absolute left-0 top-full mt-2 w-72 max-w-[calc(100vw-2rem)] p-2.5 bg-white dark:bg-[#181416] border border-neutral-200/90 dark:border-white/10 rounded-2xl shadow-2xl z-40 space-y-2"
+                                        >
+                                            <div className="flex items-center justify-between px-1 pb-1.5 border-b border-neutral-100 dark:border-white/[0.06]">
+                                                <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-900 dark:text-white">
+                                                    <Lock className="w-3.5 h-3.5 text-red-500" />
+                                                    <span>المواعيد المحجوزة اليوم ({currentRoom.nameEn})</span>
+                                                </div>
+                                                <span className="text-[10px] text-neutral-400 font-medium">غير متاحة</span>
+                                            </div>
+
+                                            {sortedBookings.length > 0 ? (
+                                                <div className="max-h-56 overflow-y-auto space-y-1.5 py-0.5">
+                                                    {sortedBookings.map((b, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            className="flex items-center justify-between px-2.5 py-2 rounded-xl bg-neutral-50 dark:bg-white/[0.04] border border-red-200/60 dark:border-red-900/30 text-xs font-mono"
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                <Lock className="w-3 h-3 text-red-500 shrink-0" />
+                                                                <span className="font-semibold text-neutral-900 dark:text-white">
+                                                                    {formatArabicTimeDetailed(b.start)}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-neutral-400 text-[10px]">إلى</span>
+                                                            <span className="font-semibold text-neutral-900 dark:text-white">
+                                                                {formatArabicTimeDetailed(b.end)}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/30 flex items-center gap-2 text-emerald-700 dark:text-emerald-300 text-xs">
+                                                    <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
+                                                    <span>الغرفة متاحة بالكامل اليوم! لا توجد أي حجوزات مسبقة.</span>
+                                                </div>
+                                            )}
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
