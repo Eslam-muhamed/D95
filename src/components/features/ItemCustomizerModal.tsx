@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Plus } from 'lucide-react';
 import type { MenuItem } from '@/types/menu';
@@ -18,19 +18,32 @@ export default function ItemCustomizerModal({ item, onClose }: Props) {
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
 
-  // Always reset quantity and notes cleanly whenever a new item is selected or opened
+  // Lock body scroll while modal is active to prevent scroll fighting & frame stutter
   useEffect(() => {
-    setQuantity(1);
-    setNotes('');
+    if (item) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [item]);
+
+  // Cleanly reset quantity and notes whenever item changes or modal opens
+  useEffect(() => {
+    if (item) {
+      setQuantity(1);
+      setNotes('');
+    }
   }, [item?.id]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setNotes('');
     setQuantity(1);
     onClose();
-  };
+  }, [onClose]);
 
-  const handleAdd = () => {
+  const handleAdd = useCallback(() => {
     if (!item) return;
     const trimmedNotes = notes.trim();
     const customization: ItemCustomization = {
@@ -51,124 +64,141 @@ export default function ItemCustomizerModal({ item, onClose }: Props) {
     setNotes('');
     setQuantity(1);
     onClose();
-  };
+  }, [item, notes, quantity, addItem, onClose]);
 
   const unitPrice = item ? item.price : 0;
   const totalPrice = unitPrice * quantity;
 
-  const modal = (
+  return createPortal(
     <AnimatePresence>
       {item && (
         <motion.div
-          className="fixed inset-0 z-[80] flex items-end"
+          key="item-customizer-portal"
+          className="fixed inset-0 z-[80] flex items-end justify-center pointer-events-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
           onClick={handleClose}
         >
-          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} />
+          {/* Lightweight high-contrast backdrop without heavy blur for 60fps/120fps smoothness */}
+          <div
+            className="absolute inset-0 bg-black/65"
+            style={{ willChange: 'opacity' }}
+          />
+
           <motion.div
-            className="relative w-full rounded-t-3xl max-h-[88vh] overflow-y-auto scrollbar-hide max-w-lg mx-auto"
+            key={item.id}
+            className="relative w-full rounded-t-3xl max-h-[85vh] overflow-y-auto scrollbar-hide max-w-lg mx-auto transform-gpu"
             style={{
               background: 'var(--c-card)',
-              border: '1px solid rgba(139,26,42,0.3)',
-              boxShadow: '0 0 80px rgba(139,26,42,0.18), 0 -20px 60px rgba(0,0,0,0.5)',
+              border: '1px solid rgba(139,26,42,0.35)',
+              boxShadow: '0 -8px 30px rgba(0,0,0,0.4)',
               direction: 'rtl',
+              willChange: 'transform',
+              transform: 'translateZ(0)',
+              contain: 'layout style',
+              touchAction: 'pan-y',
             }}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', stiffness: 300, damping: 35 }}
+            transition={{
+              type: 'spring',
+              damping: 28,
+              stiffness: 350,
+              mass: 0.6,
+            }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Handle bar */}
+            {/* Grab handle */}
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(139,26,42,0.4)' }} />
+              <div className="w-10 h-1 rounded-full bg-neutral-300/40 dark:bg-white/20" />
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-4 pb-3" style={{ borderBottom: '1px solid var(--c-border)' }}>
+            <div className="flex items-center justify-between px-4 pb-3 border-b border-neutral-200/80 dark:border-white/10">
               <div className="flex items-center gap-3">
-                <img src={item.image} alt={item.name} className="w-14 h-14 rounded-xl object-cover shadow-sm" />
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="w-14 h-14 rounded-xl object-cover shadow-sm bg-neutral-100 dark:bg-black/30 border border-neutral-200 dark:border-white/10"
+                />
                 <div>
-                  <h3 className="font-bold text-base" style={{ color: 'var(--c-text-1)', fontFamily: 'Cairo, sans-serif' }}>
+                  <h3 className="font-bold text-base text-neutral-900 dark:text-white font-body">
                     {item.name}
                   </h3>
-                  <p style={{ color: 'var(--c-brand-l)', fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: 16 }}>
-                    {item.price} ج.م
+                  <p className="font-sans font-black text-red-600 dark:text-red-400 text-base" dir="ltr">
+                    {item.price} <span className="text-xs font-body font-normal text-neutral-500">ج.م</span>
                   </p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={handleClose}
-                className="flex items-center justify-center rounded-full cursor-pointer transition-transform active:scale-90"
-                style={{ width: 36, height: 36, background: 'rgba(139,26,42,0.15)' }}
-                aria-label="إغلاق"
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/15 text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer active:scale-95"
+                aria-label="إغلاق النافذة"
               >
-                <X size={18} style={{ color: 'var(--c-on-card)' }} />
+                <X size={18} />
               </button>
             </div>
 
+            {/* Body */}
             <div className="px-4 py-4 space-y-4">
               {/* Notes only */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-sm font-semibold flex items-center gap-1.5" style={{ color: 'var(--c-on-card)', fontFamily: 'Cairo, sans-serif' }}>
+                  <label
+                    htmlFor="custom-notes"
+                    className="text-xs sm:text-sm font-bold flex items-center gap-1.5 text-neutral-800 dark:text-neutral-200 font-body"
+                  >
                     <span>📝</span>
-                    <span>ملاحظات خاصة</span>
-                  </p>
-                  <span className="text-[11px] text-neutral-400" style={{ fontFamily: 'Cairo, sans-serif' }}>
+                    <span>ملاحظات خاصة بالطلب</span>
+                  </label>
+                  <span className="text-[11px] text-neutral-400 font-body">
                     اختياري
                   </span>
                 </div>
                 <textarea
+                  id="custom-notes"
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   placeholder="اكتب أي طلب خاص (مثلاً: سكر خفيف، بدون ثلج، حليب نباتي...)"
                   rows={3}
-                  className="w-full rounded-xl p-3 text-sm resize-none outline-none transition-colors leading-relaxed"
-                  style={{
-                    background: 'rgba(139,26,42,0.08)',
-                    border: '1px solid rgba(139,26,42,0.22)',
-                    color: 'var(--c-text-1)',
-                    fontFamily: 'Cairo, sans-serif',
-                    caretColor: '#C45C6A',
-                  }}
+                  className="w-full rounded-xl p-3 text-sm resize-none outline-none transition-colors leading-relaxed bg-neutral-50 dark:bg-[#151012] border border-neutral-200 dark:border-white/10 focus:border-red-500 dark:focus:border-red-500 text-neutral-900 dark:text-white font-body"
+                  style={{ caretColor: '#e11d48' }}
                 />
               </div>
 
               {/* Quantity + Add to Cart Button */}
-              <div className="flex items-center justify-between pt-2" style={{ borderTop: '1px solid var(--c-border)' }}>
-                <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between pt-2 border-t border-neutral-200/80 dark:border-white/10">
+                <div className="flex items-center gap-2.5">
                   <button
+                    type="button"
                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                    className="flex items-center justify-center rounded-full cursor-pointer active:scale-90 transition-transform"
-                    style={{ width: 36, height: 36, background: 'rgba(139,26,42,0.2)', border: '1px solid rgba(139,26,42,0.3)' }}
+                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/15 text-neutral-800 dark:text-white transition-all active:scale-95 cursor-pointer border border-neutral-200 dark:border-white/10"
                     aria-label="تقليل الكمية"
                   >
-                    <Minus size={16} style={{ color: 'var(--c-on-card)' }} />
+                    <Minus size={15} />
                   </button>
-                  <span className="font-bold text-lg w-6 text-center" style={{ color: 'var(--c-text-1)', fontFamily: '"Playfair Display", serif' }}>
+                  <span className="font-sans font-bold text-lg w-6 text-center text-neutral-900 dark:text-white">
                     {quantity}
                   </span>
                   <button
+                    type="button"
                     onClick={() => setQuantity(q => q + 1)}
-                    className="flex items-center justify-center rounded-full cursor-pointer active:scale-90 transition-transform"
-                    style={{ width: 36, height: 36, background: 'rgba(139,26,42,0.2)', border: '1px solid rgba(139,26,42,0.3)' }}
+                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/15 text-neutral-800 dark:text-white transition-all active:scale-95 cursor-pointer border border-neutral-200 dark:border-white/10"
                     aria-label="زيادة الكمية"
                   >
-                    <Plus size={16} style={{ color: 'var(--c-on-card)' }} />
+                    <Plus size={15} />
                   </button>
                 </div>
                 <motion.button
-                  whileTap={{ scale: 0.96 }}
+                  type="button"
+                  whileTap={{ scale: 0.97 }}
                   onClick={handleAdd}
-                  className="flex items-center gap-2 px-6 py-3 rounded-2xl text-white font-bold text-sm cursor-pointer shadow-md shadow-red-900/30"
-                  style={{
-                    background: 'linear-gradient(135deg, #8B1A2A, #C45C6A)',
-                    fontFamily: 'Cairo, sans-serif',
-                    minHeight: 48,
-                  }}
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-sm cursor-pointer shadow-md shadow-red-600/30 transition-all font-body"
+                  style={{ minHeight: 44 }}
                 >
                   أضف للسلة — {totalPrice} ج.م
                 </motion.button>
@@ -177,8 +207,7 @@ export default function ItemCustomizerModal({ item, onClose }: Props) {
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
-
-  return createPortal(modal, document.body);
 }

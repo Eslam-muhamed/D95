@@ -321,13 +321,10 @@ export default function MenuPage() {
       {/* Scroll to Top */}
       <ScrollToTop />
       {/* ── Modals ── */}
-      {selectedItem && (
-        <ItemCustomizerModal
-          key={selectedItem.id}
-          item={selectedItem}
-          onClose={() => setSelectedItem(null)}
-        />
-      )}
+      <ItemCustomizerModal
+        item={selectedItem}
+        onClose={() => setSelectedItem(null)}
+      />
     </div>
   );
 }
