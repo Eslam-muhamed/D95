@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -263,28 +263,14 @@ export default function BookingDetailsPage() {
         playPs5SelectSound();
     };
 
-    // Quick time adjustments
-    const addMinutesToTime = (minsToAdd: number) => {
+    const timeInputRef = useRef<HTMLInputElement>(null);
+
+    const handleOpenTimePicker = () => {
         playPs5NavigateSound();
-        let h24 = selectedHour ?? 18;
-        const curMin = selectedMinute ?? 0;
-
-        if (selectedPeriod === 'PM' && h24 < 12) h24 += 12;
-        if (selectedPeriod === 'AM' && h24 === 12) h24 = 0;
-
-        let totalMins = h24 * 60 + curMin + minsToAdd;
-        totalMins = (totalMins + 1440) % 1440;
-
-        const newH24 = Math.floor(totalMins / 60);
-        const newMin = totalMins % 60;
-        const newPeriod: 'AM' | 'PM' = newH24 >= 12 && newH24 < 24 ? 'PM' : 'AM';
-        const newH12 = newH24 % 12 === 0 ? 12 : newH24 % 12;
-
-        setSelectedHour(newH12);
-        setSelectedMinute(newMin);
-        setSelectedPeriod(newPeriod);
-        if (durationHours === null) {
-            setDurationHours(1);
+        try {
+            timeInputRef.current?.showPicker();
+        } catch {
+            timeInputRef.current?.focus();
         }
     };
 
@@ -349,7 +335,6 @@ export default function BookingDetailsPage() {
 
     // Time slot picker helper state
     const [timePeriodTab, setTimePeriodTab] = useState<'evening' | 'morning'>('evening');
-    const [showCustomTime, setShowCustomTime] = useState(false);
     const [showOccupiedDropdown, setShowOccupiedDropdown] = useState(false);
 
     const activeDuration = durationHours || 1.0;
@@ -1234,21 +1219,20 @@ export default function BookingDetailsPage() {
                         </div>
                     </div>
 
-                    {/* Fine-Tuning & Phone Clock Option */}
-                    <div className="pt-2 border-t border-neutral-100 dark:border-white/[0.06] flex items-center justify-between text-xs">
-                        <button
-                            type="button"
-                            onClick={() => setShowCustomTime(prev => !prev)}
-                            className="text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white font-medium flex items-center gap-1.5 cursor-pointer"
-                        >
-                            <span>⏱️ تخصيص الدقيقة بالضبط (مثل 08:15)</span>
-                            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showCustomTime ? 'rotate-180' : ''}`} />
-                        </button>
+                    {/* Unified Custom Time Picker (Mobile Phone & Computer) */}
+                    <div className="pt-2.5 border-t border-neutral-100 dark:border-white/[0.06] flex items-center justify-between gap-2 text-xs">
+                        <span className="text-neutral-500 dark:text-neutral-400 font-medium text-[11px] sm:text-xs">
+                            تريد وقتاً آخر غير معروض؟
+                        </span>
 
-                        <label className="relative cursor-pointer text-xs font-bold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1.5 py-1 px-2.5 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/40">
-                            <Smartphone size={13} />
-                            <span>ساعة الهاتف</span>
+                        <label
+                            onClick={handleOpenTimePicker}
+                            className="relative cursor-pointer text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-red-50 hover:bg-red-100/80 dark:bg-red-950/40 dark:hover:bg-red-950/60 border border-red-200 dark:border-red-900/40 transition-all active:scale-95 shadow-2xs shrink-0 select-none"
+                        >
+                            <Clock size={13} className="shrink-0" />
+                            <span>تحديد وقت مخصص (ساعة الهاتف / الكمبيوتر)</span>
                             <input
+                                ref={timeInputRef}
                                 type="time"
                                 value={time24 || ''}
                                 onChange={(e) => handleNativeTimeChange(e.target.value)}
@@ -1256,35 +1240,6 @@ export default function BookingDetailsPage() {
                             />
                         </label>
                     </div>
-
-                    {showCustomTime && (
-                        <div className="p-3 rounded-xl bg-neutral-50 dark:bg-white/[0.03] border border-neutral-200/80 dark:border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
-                            <span className="text-neutral-500">تقديم أو تأخير الوقت:</span>
-                            <div className="flex items-center gap-1.5">
-                                <button
-                                    type="button"
-                                    onClick={() => addMinutesToTime(-15)}
-                                    className="px-2.5 py-1 rounded-lg bg-neutral-200/70 dark:bg-white/10 text-xs font-mono font-bold text-neutral-800 dark:text-neutral-200 cursor-pointer"
-                                >
-                                    -15 دقيقة
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => addMinutesToTime(15)}
-                                    className="px-2.5 py-1 rounded-lg bg-neutral-200/70 dark:bg-white/10 text-xs font-mono font-bold text-neutral-800 dark:text-neutral-200 cursor-pointer"
-                                >
-                                    +15 دقيقة
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => addMinutesToTime(30)}
-                                    className="px-2.5 py-1 rounded-lg bg-neutral-200/70 dark:bg-white/10 text-xs font-mono font-bold text-neutral-800 dark:text-neutral-200 cursor-pointer"
-                                >
-                                    +30 دقيقة
-                                </button>
-                            </div>
-                        </div>
-                    )}
 
                     {/* Real-Time Availability Inline Feedback */}
                     {hasSelectedTime && hasSelectedDuration ? (

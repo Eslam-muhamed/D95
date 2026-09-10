@@ -9,9 +9,9 @@ const GOOGLE_MAPS_LINK = CONTACT_INFO.googleMapsLink;
 const MAPS_EMBED_SRC = CONTACT_INFO.mapsEmbedSrc;
 
 const INFO_ROWS = [
-  { Icon: MapPin, label: 'العنوان', value: CONTACT_INFO.address, href: GOOGLE_MAPS_LINK },
-  { Icon: Phone, label: 'التليفون', value: CAFE_PHONE_DISPLAY, href: `tel:+${CAFE_PHONE}` },
-  { Icon: Clock, label: 'مواعيد العمل', value: CONTACT_INFO.workingHours, href: null },
+  { Icon: MapPin, label: 'العنوان', value: CONTACT_INFO.address || '—', href: GOOGLE_MAPS_LINK || null },
+  { Icon: Phone, label: 'التليفون', value: CAFE_PHONE_DISPLAY || '—', href: CAFE_PHONE ? `tel:+${CAFE_PHONE}` : null },
+  { Icon: Clock, label: 'مواعيد العمل', value: CONTACT_INFO.workingHours || '—', href: null },
 ];
 
 export default function ContactSection() {
@@ -102,23 +102,40 @@ export default function ContactSection() {
         })}
       </motion.div>
 
-      {/* Google Maps iframe */}
+      {/* Google Maps iframe or Empty Placeholder */}
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={inView ? { opacity: 1, scale: 1 } : {}}
         transition={{ delay: 0.15, duration: 0.5 }}
-        className="w-full rounded-2xl overflow-hidden mb-5"
-        style={{ height: 220, border: '1px solid rgba(139,26,42,0.2)' }}
+        className="w-full rounded-2xl overflow-hidden mb-5 flex items-center justify-center"
+        style={{ height: 220, border: '1px solid rgba(139,26,42,0.2)', background: 'var(--c-card)' }}
       >
-        <iframe
-          src={MAPS_EMBED_SRC}
-          width="100%"
-          height="100%"
-          style={{ border: 0 }}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          title="موقع D95 Gaming & Café"
-        />
+        {MAPS_EMBED_SRC ? (
+          <iframe
+            src={MAPS_EMBED_SRC}
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="موقع الفرع"
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center text-center p-6 bg-neutral-100/40 dark:bg-white/[0.02]">
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center mb-2"
+              style={{ background: 'rgba(139,26,42,0.1)', border: '1px solid rgba(139,26,42,0.2)' }}
+            >
+              <MapPin size={22} style={{ color: '#C45C6A' }} />
+            </div>
+            <p className="text-sm font-bold text-neutral-800 dark:text-neutral-200" style={{ fontFamily: 'Cairo, sans-serif' }}>
+              خريطة الموقع
+            </p>
+            <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1" style={{ fontFamily: 'Cairo, sans-serif' }}>
+              سيتم إضافة خريطة الموقع الجديد فور تحديد العنوان
+            </p>
+          </div>
+        )}
       </motion.div>
 
       {/* Action buttons */}
@@ -129,31 +146,41 @@ export default function ContactSection() {
         className="flex gap-3"
       >
         <a
-          href={`https://wa.me/${CAFE_PHONE}?text=${encodeURIComponent('مرحباً! أريد الاستفسار عن D95 Gaming & Café 🎮☕')}`}
-          target="_blank"
+          href={CAFE_PHONE ? `https://wa.me/${CAFE_PHONE}?text=${encodeURIComponent('مرحباً! أريد الاستفسار 🎮☕')}` : '#'}
+          target={CAFE_PHONE ? '_blank' : '_self'}
           rel="noopener noreferrer"
-          className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90 active:scale-95 cursor-pointer"
+          className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm text-white transition-all ${
+            CAFE_PHONE ? 'hover:opacity-90 active:scale-95 cursor-pointer' : 'opacity-50 cursor-not-allowed'
+          }`}
           style={{
             background: 'linear-gradient(135deg, #128C7E, #25D366)',
             fontFamily: 'Cairo, sans-serif',
-            boxShadow: '0 3px 16px rgba(37,211,102,0.28)',
+            boxShadow: CAFE_PHONE ? '0 3px 16px rgba(37,211,102,0.28)' : 'none',
             minHeight: 52,
+          }}
+          onClick={(e) => {
+            if (!CAFE_PHONE) e.preventDefault();
           }}
         >
           <span style={{ fontSize: 18 }}>💬</span>
           واتساب
         </a>
         <a
-          href={GOOGLE_MAPS_LINK}
-          target="_blank"
+          href={GOOGLE_MAPS_LINK || '#'}
+          target={GOOGLE_MAPS_LINK ? '_blank' : '_self'}
           rel="noopener noreferrer"
-          className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-95 cursor-pointer"
+          className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm transition-all ${
+            GOOGLE_MAPS_LINK ? 'hover:opacity-90 active:scale-95 cursor-pointer' : 'opacity-50 cursor-not-allowed'
+          }`}
           style={{
             background: 'var(--c-card)',
             color: 'var(--c-text-1)',
             border: '1px solid rgba(139,26,42,0.28)',
             fontFamily: 'Cairo, sans-serif',
             minHeight: 52,
+          }}
+          onClick={(e) => {
+            if (!GOOGLE_MAPS_LINK) e.preventDefault();
           }}
         >
           <MapPin size={16} style={{ color: '#C45C6A' }} />

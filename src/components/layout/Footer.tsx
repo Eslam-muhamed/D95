@@ -20,8 +20,8 @@ export default function Footer() {
       <p className="text-xs mt-4" style={{ color: 'var(--c-text-5)', fontFamily: 'Cairo, sans-serif', letterSpacing: '0.02em' }}>
         designed &amp; developed by{' '}
         <a
-          href={`https://wa.me/${CONTACT_INFO.whatsappNumber}`}
-          target="_blank"
+          href={CONTACT_INFO.whatsappNumber ? `https://wa.me/${CONTACT_INFO.whatsappNumber}` : '#'}
+          target={CONTACT_INFO.whatsappNumber ? '_blank' : '_self'}
           rel="noopener noreferrer"
           className="transition-opacity hover:opacity-70"
           style={{ color: 'var(--c-brand-l)', textDecoration: 'none', fontWeight: 500 }}
