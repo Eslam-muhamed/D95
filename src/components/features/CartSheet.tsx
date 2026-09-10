@@ -200,6 +200,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
           onClick={handleClose}
         >
           <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)' }} />
@@ -210,11 +211,12 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
               border: '1px solid rgba(139,26,42,0.3)',
               boxShadow: '0 -20px 60px rgba(0,0,0,0.5)',
               direction: 'rtl',
+              willChange: 'transform',
             }}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', stiffness: 300, damping: 35 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 38, mass: 0.8 }}
             onClick={e => e.stopPropagation()}
           >
             {/* Grab handle */}
