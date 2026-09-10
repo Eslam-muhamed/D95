@@ -1,6 +1,12 @@
 import { supabase } from '@/lib/supabase';
 import type { DBBooking } from '@/types/database';
-import type { BookingInterval } from '@/lib/bookingDatetime';
+import {
+    type BookingInterval,
+    createDateTimeFromBusinessDate,
+    calculateEndDateTime,
+    getBusinessOperatingWindow,
+    formatArabicTimeFromDate,
+} from '@/lib/bookingDatetime';
 
 export async function fetchRoomOccupiedIntervals(
     roomId: string,
@@ -189,4 +195,212 @@ export async function deleteBooking(id: string): Promise<void> {
         .eq('id', id);
 
     if (error) throw error;
+}
+
+export interface ConflictingBookingShiftInfo {
+    booking: DBBooking;
+    currentStart: Date;
+    currentEnd: Date;
+    shiftedStart: Date;
+    shiftedEnd: Date;
+    shiftedStartTimeStr: string;
+    shiftedEndTimeStr: string;
+}
+
+export interface ExtensionPreviewInfo {
+    currentStart: Date;
+    currentEnd: Date;
+    newEnd: Date;
+    newEndTimeStr: string;
+    newDurationHours: number;
+    hourlyRate: number;
+    suggestedExtraPrice: number;
+    conflictingBookings: ConflictingBookingShiftInfo[];
+    exceedsClosing: boolean;
+}
+
+export interface ExtendBookingResult {
+    success: boolean;
+    extendedBooking: DBBooking;
+    shiftedBookings: DBBooking[];
+}
+
+export function parseTimeTo24(timeStr: string): string {
+    if (!timeStr) return '00:00';
+    const isPM = timeStr.includes('م') || timeStr.toLowerCase().includes('pm');
+    const isAM = timeStr.includes('ص') || timeStr.toLowerCase().includes('am');
+
+    const clean = timeStr.replace(/[^\d:]/g, '').trim();
+    const parts = clean.split(':');
+    let h = parseInt(parts[0] || '0', 10);
+    const m = parseInt(parts[1] || '0', 10);
+
+    if (isPM && h < 12) h += 12;
+    if (isAM && h === 12) h = 0;
+
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+export function getBookingDates(b: DBBooking): { start: Date; end: Date } {
+    let start = b.start_datetime ? new Date(b.start_datetime) : null;
+    let end = b.end_datetime ? new Date(b.end_datetime) : null;
+
+    if (!start || isNaN(start.getTime())) {
+        const time24 = parseTimeTo24(b.start_time);
+        start = createDateTimeFromBusinessDate(b.booking_date, time24);
+    }
+    if (!end || isNaN(end.getTime())) {
+        end = calculateEndDateTime(start, b.duration_hours || 1);
+    }
+    return { start, end };
+}
+
+export function calculateBookingExtensionInfo(
+    targetBooking: DBBooking,
+    allSameRoomBookings: DBBooking[],
+    extensionMinutes: number
+): ExtensionPreviewInfo {
+    const { start: currentStart, end: currentEnd } = getBookingDates(targetBooking);
+    const newEnd = new Date(currentEnd.getTime() + extensionMinutes * 60 * 1000);
+    const newEndTimeStr = formatArabicTimeFromDate(newEnd);
+
+    const duration = targetBooking.duration_hours || 1;
+    const hourlyRate = (targetBooking.subtotal || targetBooking.total_amount || 100) / duration;
+    const suggestedExtraPrice = Math.round(hourlyRate * (extensionMinutes / 60));
+    const newDurationHours = Number((duration + extensionMinutes / 60).toFixed(2));
+
+    // Operating window closing check (04:00 AM next day)
+    const { closing } = getBusinessOperatingWindow(targetBooking.booking_date);
+    const exceedsClosing = newEnd.getTime() > closing.getTime();
+
+    // Check chained conflicts
+    const conflictingBookings: ConflictingBookingShiftInfo[] = [];
+    let currentThreshold = newEnd;
+
+    const otherBookings = allSameRoomBookings
+        .filter(b => b.id !== targetBooking.id && ['pending', 'confirmed', 'completed'].includes(b.status))
+        .map(b => {
+            const dates = getBookingDates(b);
+            return { booking: b, ...dates };
+        })
+        .sort((a, b) => a.start.getTime() - b.start.getTime());
+
+    for (const item of otherBookings) {
+        // If this booking starts before the current threshold and ends after currentEnd
+        if (item.start.getTime() >= currentEnd.getTime() - 60000 && item.start.getTime() < currentThreshold.getTime()) {
+            const shiftedStart = new Date(item.start.getTime() + extensionMinutes * 60 * 1000);
+            const shiftedEnd = new Date(item.end.getTime() + extensionMinutes * 60 * 1000);
+            conflictingBookings.push({
+                booking: item.booking,
+                currentStart: item.start,
+                currentEnd: item.end,
+                shiftedStart,
+                shiftedEnd,
+                shiftedStartTimeStr: formatArabicTimeFromDate(shiftedStart),
+                shiftedEndTimeStr: formatArabicTimeFromDate(shiftedEnd),
+            });
+            // Extend threshold for cascading shifts
+            currentThreshold = shiftedEnd;
+        }
+    }
+
+    return {
+        currentStart,
+        currentEnd,
+        newEnd,
+        newEndTimeStr,
+        newDurationHours,
+        hourlyRate,
+        suggestedExtraPrice,
+        conflictingBookings,
+        exceedsClosing,
+    };
+}
+
+export async function extendBookingAndShiftConflicting(
+    bookingId: string,
+    extensionMinutes: number,
+    extraPrice: number,
+    autoShift: boolean
+): Promise<ExtendBookingResult> {
+    // 1. Fetch target booking
+    const { data: targetBooking, error: fetchErr } = await supabase
+        .from('ps_bookings')
+        .select('*')
+        .eq('id', bookingId)
+        .single();
+
+    if (fetchErr || !targetBooking) {
+        throw new Error('تعذر العثور على بيانات الحجز في قاعدة البيانات');
+    }
+
+    // 2. Fetch other bookings in the same room on the same date
+    const { data: sameRoomBookings, error: roomErr } = await supabase
+        .from('ps_bookings')
+        .select('*')
+        .eq('room_id', targetBooking.room_id)
+        .in('status', ['pending', 'confirmed', 'completed']);
+
+    if (roomErr) throw roomErr;
+
+    const preview = calculateBookingExtensionInfo(
+        targetBooking as DBBooking,
+        (sameRoomBookings || []) as DBBooking[],
+        extensionMinutes
+    );
+
+    if (preview.conflictingBookings.length > 0 && !autoShift) {
+        throw new Error('يوجد تعارض مع حجوزات تالية. يرجى تفعيل خيار ترحيل الحجز التالي.');
+    }
+
+    // 3. Shift conflicting bookings in REVERSE order (furthest first) to prevent transient overlaps
+    const shiftedResults: DBBooking[] = [];
+    for (let i = preview.conflictingBookings.length - 1; i >= 0; i--) {
+        const item = preview.conflictingBookings[i];
+        const { data: updatedShifted, error: shiftErr } = await supabase
+            .from('ps_bookings')
+            .update({
+                start_datetime: item.shiftedStart.toISOString(),
+                end_datetime: item.shiftedEnd.toISOString(),
+                start_time: item.shiftedStartTimeStr,
+                end_time: item.shiftedEndTimeStr,
+            })
+            .eq('id', item.booking.id)
+            .select()
+            .single();
+
+        if (shiftErr) {
+            console.error('Error shifting conflicting booking:', shiftErr);
+            throw new Error(`تعذر ترحيل حجز ${item.booking.customer_name}: ${shiftErr.message}`);
+        }
+        shiftedResults.unshift(updatedShifted as DBBooking);
+    }
+
+    // 4. Update the target extended booking
+    const newSubtotal = Number(((targetBooking.subtotal || 0) + extraPrice).toFixed(2));
+    const newTotal = Number(((targetBooking.total_amount || 0) + extraPrice).toFixed(2));
+
+    const { data: updatedTarget, error: updateErr } = await supabase
+        .from('ps_bookings')
+        .update({
+            end_datetime: preview.newEnd.toISOString(),
+            end_time: preview.newEndTimeStr,
+            duration_hours: preview.newDurationHours,
+            subtotal: newSubtotal,
+            total_amount: newTotal,
+        })
+        .eq('id', bookingId)
+        .select()
+        .single();
+
+    if (updateErr) {
+        console.error('Error extending target booking:', updateErr);
+        throw new Error(`تعذر تمديد الحجز: ${updateErr.message}`);
+    }
+
+    return {
+        success: true,
+        extendedBooking: updatedTarget as DBBooking,
+        shiftedBookings: shiftedResults,
+    };
 }

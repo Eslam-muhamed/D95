@@ -13,10 +13,20 @@ import {
     User,
     Banknote,
     Layers,
-    Coffee
+    Coffee,
+    AlertCircle,
+    X,
+    ArrowRight,
+    Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { fetchBookings, updateBookingStatus, deleteBooking } from '@/services/bookingService';
+import {
+    fetchBookings,
+    updateBookingStatus,
+    deleteBooking,
+    calculateBookingExtensionInfo,
+    extendBookingAndShiftConflicting,
+} from '@/services/bookingService';
 import type { DBBooking } from '@/types/database';
 
 export default function BookingsTab() {
@@ -90,6 +100,87 @@ export default function BookingsTab() {
             phone = '20' + phone;
         }
         const text = `أهلاً بحضرتك يا أستاذ ${b.customer_name} 👋\nمعاك إدارة D95 Gaming Lounge 🎮\n\nبخصوص حجزك رقم (${b.reservation_id}):\n📍 الغرفة: ${b.room_name}\n📅 التاريخ: ${b.booking_date}\n⏰ التوقيت: ${b.start_time} - ${b.end_time} (${b.duration_hours} س)\n💰 الإجمالي: ${b.total_amount} ج.م (${b.payment_method === 'instapay' ? 'إنستاباي' : b.payment_method === 'cash' ? 'كاش بالفرع' : 'محفظة'})\n\nتم تأكيد الحجز وجاهزين لاستقبالك! في انتظارك تنورنا.`;
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+    };
+
+    // State for Booking Extension Modal
+    const [extendingBooking, setExtendingBooking] = useState<DBBooking | null>(null);
+    const [extensionMinutes, setExtensionMinutes] = useState<number>(15);
+    const [extraPriceOverride, setExtraPriceOverride] = useState<string>('');
+    const [autoShiftConflicting, setAutoShiftConflicting] = useState<boolean>(true);
+    const [isSubmittingExtension, setIsSubmittingExtension] = useState<boolean>(false);
+    const [recentlyShiftedInfo, setRecentlyShiftedInfo] = useState<{
+        extended: DBBooking;
+        shifted: DBBooking[];
+    } | null>(null);
+
+    // Calculated Extension Preview
+    const extensionPreview = extendingBooking
+        ? calculateBookingExtensionInfo(extendingBooking, bookings, extensionMinutes)
+        : null;
+
+    const effectiveExtraPrice = extraPriceOverride !== ''
+        ? Number(extraPriceOverride)
+        : (extensionPreview?.suggestedExtraPrice ?? 0);
+
+    const handleConfirmExtension = async () => {
+        if (!extendingBooking) return;
+        setIsSubmittingExtension(true);
+        try {
+            const result = await extendBookingAndShiftConflicting(
+                extendingBooking.id,
+                extensionMinutes,
+                effectiveExtraPrice,
+                autoShiftConflicting
+            );
+
+            toast.success(
+                `تم تمديد حجز ${extendingBooking.customer_name} بنجاح! ${
+                    result.shiftedBookings.length > 0
+                        ? `(تم ترحيل ${result.shiftedBookings.length} حجز تالٍ)`
+                        : ''
+                }`
+            );
+
+            // Update bookings list in place
+            setBookings((prev) =>
+                prev.map((item) => {
+                    if (item.id === result.extendedBooking.id) {
+                        return result.extendedBooking;
+                    }
+                    const shiftedMatch = result.shiftedBookings.find((s) => s.id === item.id);
+                    if (shiftedMatch) {
+                        return shiftedMatch;
+                    }
+                    return item;
+                })
+            );
+
+            if (result.shiftedBookings.length > 0) {
+                setRecentlyShiftedInfo({
+                    extended: result.extendedBooking,
+                    shifted: result.shiftedBookings,
+                });
+            }
+
+            setExtendingBooking(null);
+            setExtraPriceOverride('');
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'تعذر تمديد الحجز';
+            toast.error(msg);
+        } finally {
+            setIsSubmittingExtension(false);
+        }
+    };
+
+    const openWhatsAppShifted = (b: DBBooking) => {
+        let phone = b.customer_phone.replace(/\D/g, '');
+        if (phone.startsWith('0')) {
+            phone = '2' + phone;
+        } else if (!phone.startsWith('20')) {
+            phone = '20' + phone;
+        }
+        const text = `أهلاً بحضرتك يا أستاذ ${b.customer_name} 👋\nمعاك إدارة D95 Gaming Lounge 🎮\n\nنود إبلاغك بتحديث موعد حجزك رقم (${b.reservation_id}) في (${b.room_name}):\n⏰ الموعد الجديد أصبح: من ${b.start_time} إلى ${b.end_time}\n(تم ترحيل الموعد ربع ساعة لضمان تجهيز الغرفة بأعلى جودة).\n\nبانتظار تشريفك لنا ونتمنى لك وقتاً ممتعاً!`;
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
     };
 
@@ -343,6 +434,23 @@ export default function BookingsTab() {
                                         </button>
                                     )}
 
+                                    {/* Extend Duration Button */}
+                                    {!isCancelled && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setExtendingBooking(b);
+                                                setExtensionMinutes(15);
+                                                setExtraPriceOverride('');
+                                                setAutoShiftConflicting(true);
+                                            }}
+                                            className="w-full py-2 px-3 rounded-xl bg-purple-950/40 hover:bg-purple-900/60 text-purple-300 border border-purple-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98]"
+                                        >
+                                            <Clock className="w-3.5 h-3.5 text-purple-400" />
+                                            <span>تمديد الوقت (+15 دقيقة) ⏱️</span>
+                                        </button>
+                                    )}
+
                                     <div className="flex items-center gap-2">
                                         {/* WhatsApp Quick Message */}
                                         <button
@@ -381,6 +489,275 @@ export default function BookingsTab() {
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {/* 1. EXTEND BOOKING MODAL */}
+            {extendingBooking && extensionPreview && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"
+                    onClick={() => setExtendingBooking(null)}
+                >
+                    <div
+                        className="relative w-full max-w-lg rounded-2xl bg-[#140e11] border border-white/15 shadow-2xl p-5 sm:p-6 text-white space-y-4 max-h-[90vh] overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="flex items-start justify-between pb-3 border-b border-white/10">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="p-1.5 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                        <Clock className="w-4 h-4" />
+                                    </span>
+                                    <h3 className="text-base font-bold text-white">
+                                        تمديد حجز العميل: {extendingBooking.customer_name}
+                                    </h3>
+                                </div>
+                                <p className="text-xs text-neutral-400 mt-1">
+                                    {extendingBooking.room_name} • كود #{extendingBooking.reservation_id}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setExtendingBooking(null)}
+                                className="p-1.5 rounded-lg hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Current Booking Overview */}
+                        <div className="bg-[#1c1417] p-3 rounded-xl border border-white/5 grid grid-cols-3 gap-2 text-center text-xs">
+                            <div>
+                                <span className="text-neutral-400 block text-[11px]">الموعد الحالي:</span>
+                                <span className="font-bold text-white font-mono mt-0.5 block">{extendingBooking.start_time} - {extendingBooking.end_time}</span>
+                            </div>
+                            <div>
+                                <span className="text-neutral-400 block text-[11px]">المدة الحالية:</span>
+                                <span className="font-bold text-purple-300 mt-0.5 block">{extendingBooking.duration_hours} ساعة</span>
+                            </div>
+                            <div>
+                                <span className="text-neutral-400 block text-[11px]">المبلغ الحالي:</span>
+                                <span className="font-bold text-emerald-400 mt-0.5 block">{extendingBooking.total_amount} ج.م</span>
+                            </div>
+                        </div>
+
+                        {/* Extension Duration Selector */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-neutral-300 flex items-center justify-between">
+                                <span>مقدار التمديد المطلوب:</span>
+                                <span className="text-purple-400 font-mono">+{extensionMinutes} دقيقة</span>
+                            </label>
+                            <div className="grid grid-cols-4 gap-2">
+                                {[15, 30, 45, 60].map((mins) => (
+                                    <button
+                                        key={mins}
+                                        type="button"
+                                        onClick={() => {
+                                            setExtensionMinutes(mins);
+                                            setExtraPriceOverride('');
+                                        }}
+                                        className={`py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                                            extensionMinutes === mins
+                                                ? 'bg-purple-600 border-purple-500 text-white shadow-md shadow-purple-600/30'
+                                                : 'bg-[#1c1417] border-white/10 text-neutral-300 hover:bg-white/10'
+                                        }`}
+                                    >
+                                        +{mins} دقيقة
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Summary of Changes */}
+                        <div className="bg-purple-950/20 border border-purple-500/30 rounded-xl p-3.5 space-y-2 text-xs">
+                            <div className="flex justify-between items-center">
+                                <span className="text-neutral-300">وقت الانتهاء الجديد:</span>
+                                <span className="font-bold text-white font-mono text-sm flex items-center gap-1.5" dir="ltr">
+                                    <span className="text-neutral-400 line-through text-xs">{extendingBooking.end_time}</span>
+                                    <span>➔</span>
+                                    <span className="text-purple-300 font-black">{extensionPreview.newEndTimeStr}</span>
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-neutral-300">المدة الكلية بعد الزيادة:</span>
+                                <span className="font-bold text-white font-mono">{extensionPreview.newDurationHours} ساعة</span>
+                            </div>
+                            <div className="flex justify-between items-center pt-2 border-t border-purple-500/20">
+                                <span className="text-neutral-300">مبلغ التمديد الإضافي:</span>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={extraPriceOverride !== '' ? extraPriceOverride : extensionPreview.suggestedExtraPrice}
+                                        onChange={(e) => setExtraPriceOverride(e.target.value)}
+                                        className="w-20 bg-[#140e11] border border-white/15 rounded-lg px-2 py-1 text-center font-bold text-emerald-400 text-xs outline-none focus:border-emerald-500"
+                                    />
+                                    <span className="text-neutral-400 text-[11px]">ج.م</span>
+                                </div>
+                            </div>
+                            <div className="flex justify-between items-center text-[11px] text-neutral-400">
+                                <span>الإجمالي الجديد للحجز:</span>
+                                <strong className="text-emerald-400 font-mono text-xs">
+                                    {extendingBooking.total_amount + effectiveExtraPrice} ج.م
+                                </strong>
+                            </div>
+                        </div>
+
+                        {/* Conflict & Shift Detection Alert */}
+                        {extensionPreview.conflictingBookings.length > 0 ? (
+                            <div className="bg-amber-950/30 border border-amber-500/40 rounded-xl p-3.5 space-y-2 text-xs">
+                                <div className="flex items-center gap-2 text-amber-300 font-bold">
+                                    <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+                                    <span>تنبيه: التمديد يتعارض مع حجز تالٍ في نفس الغرفة!</span>
+                                </div>
+                                <p className="text-[11px] text-neutral-300">
+                                    الحجز التالي يبدأ قبل انتهاء الموعد الممدد. يمكنك ترحيله تلقائياً لتفادي أي تداخل:
+                                </p>
+                                <div className="space-y-1.5 pt-1">
+                                    {extensionPreview.conflictingBookings.map((conf, idx) => (
+                                        <div key={idx} className="bg-black/40 p-2.5 rounded-lg border border-amber-500/20 flex items-center justify-between gap-2">
+                                            <div>
+                                                <span className="font-bold text-white block">
+                                                    العميل: {conf.booking.customer_name}
+                                                </span>
+                                                <span className="text-[10px] text-neutral-400 block mt-0.5">
+                                                    كود #{conf.booking.reservation_id} • هاتف: {conf.booking.customer_phone}
+                                                </span>
+                                            </div>
+                                            <div className="text-right text-[11px]">
+                                                <span className="text-neutral-400 block line-through">{conf.booking.start_time} - {conf.booking.end_time}</span>
+                                                <span className="text-emerald-400 font-bold block">
+                                                    ➔ {conf.shiftedStartTimeStr} - {conf.shiftedEndTimeStr}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <label className="flex items-center gap-2 pt-2 border-t border-amber-500/20 cursor-pointer select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={autoShiftConflicting}
+                                        onChange={(e) => setAutoShiftConflicting(e.target.checked)}
+                                        className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-white/20 bg-[#1c1417] cursor-pointer"
+                                    />
+                                    <span className="font-bold text-white text-xs">
+                                        ترحيل الحجز التالي تلقائياً بمقدار {extensionMinutes} دقيقة لمنع التعارض
+                                    </span>
+                                </label>
+                            </div>
+                        ) : (
+                            <div className="bg-emerald-950/20 border border-emerald-500/30 rounded-xl p-3 flex items-center gap-2 text-xs text-emerald-300">
+                                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                                <span>لا يوجد أي تعارض مع أي حجز تالٍ. يمكنك التمديد مباشرة.</span>
+                            </div>
+                        )}
+
+                        {extensionPreview.exceedsClosing && (
+                            <div className="bg-red-950/30 border border-red-500/40 rounded-xl p-3 flex items-center gap-2 text-xs text-red-300">
+                                <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                                <span>تنبيه: وقت الانتهاء يتجاوز موعد إغلاق الصالة (04:00 ص فجراً).</span>
+                            </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="flex gap-2 pt-3 border-t border-white/10">
+                            <button
+                                type="button"
+                                onClick={() => setExtendingBooking(null)}
+                                disabled={isSubmittingExtension}
+                                className="px-4 py-2.5 rounded-xl border border-white/10 hover:bg-white/10 text-neutral-300 text-xs font-bold transition-colors cursor-pointer"
+                            >
+                                إلغاء
+                            </button>
+                            <button
+                                type="button"
+                                disabled={isSubmittingExtension || (extensionPreview.conflictingBookings.length > 0 && !autoShiftConflicting)}
+                                onClick={handleConfirmExtension}
+                                className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                                    extensionPreview.conflictingBookings.length > 0 && !autoShiftConflicting
+                                        ? 'bg-neutral-800 text-neutral-500 border border-white/5 cursor-not-allowed'
+                                        : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-600/30 active:scale-98'
+                                }`}
+                            >
+                                {isSubmittingExtension ? (
+                                    <RefreshCw className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <Check className="w-4 h-4" />
+                                )}
+                                <span>
+                                    {extensionPreview.conflictingBookings.length > 0 && autoShiftConflicting
+                                        ? `تأكيد التمديد وترحيل الحجز التالي (${extensionPreview.conflictingBookings.length})`
+                                        : `تأكيد تمديد الحجز (+${extensionMinutes} دقيقة)`}
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 2. SHIFTED BOOKINGS NOTIFICATION & WHATSAPP PROMPT */}
+            {recentlyShiftedInfo && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"
+                    onClick={() => setRecentlyShiftedInfo(null)}
+                >
+                    <div
+                        className="relative w-full max-w-md rounded-2xl bg-[#140e11] border border-white/15 shadow-2xl p-5 text-white space-y-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                            <div className="flex items-center gap-2">
+                                <span className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                </span>
+                                <h3 className="text-base font-bold text-white">
+                                    تم التمديد والترحيل بنجاح!
+                                </h3>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setRecentlyShiftedInfo(null)}
+                                className="p-1 rounded hover:bg-white/10 text-neutral-400 hover:text-white"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        <p className="text-xs text-neutral-300">
+                            تم تمديد حجز <strong>{recentlyShiftedInfo.extended.customer_name}</strong>، وتم ترحيل الحجز التالي تلقائياً في قاعدة البيانات:
+                        </p>
+
+                        <div className="space-y-2">
+                            {recentlyShiftedInfo.shifted.map((b) => (
+                                <div key={b.id} className="bg-[#1c1417] p-3 rounded-xl border border-white/10 flex items-center justify-between gap-2 text-xs">
+                                    <div>
+                                        <span className="font-bold text-white block">{b.customer_name}</span>
+                                        <span className="text-[11px] text-neutral-400 font-mono block mt-0.5">
+                                            الموعد الجديد: {b.start_time} - {b.end_time}
+                                        </span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => openWhatsAppShifted(b)}
+                                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                                    >
+                                        <MessageCircle className="w-3.5 h-3.5" />
+                                        <span>إشعار واتساب</span>
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setRecentlyShiftedInfo(null)}
+                            className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs transition-colors cursor-pointer"
+                        >
+                            إغلاق
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

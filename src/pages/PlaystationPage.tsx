@@ -51,7 +51,7 @@ const ROOMS: RoomData[] = [
         code: 'ROOM 01',
         titleEn: 'THE ARENA',
         titleAr: 'غرفة الأبطال (Play Room 01)',
-        subtitle: 'أجواء تنافسية حماسية • شاشة 65 بوصة 4K 120Hz عملاقة',
+        subtitle: 'أجواء تنافسية حماسية لتحديات ومباريات اللعب الجماعي',
         rate: 100,
         badge: 'Available',
         accentColor: '#00d2ff',
@@ -88,7 +88,7 @@ const ROOMS: RoomData[] = [
         code: 'ROOM 02',
         titleEn: 'VIP SUITE',
         titleAr: 'غرفة النجوم (VIP Room 02)',
-        subtitle: 'إضاءة نيون ونجوم سقفية • شاشة 65 بوصة 4K 120Hz',
+        subtitle: 'إضاءة نيون وسقف نجوم سينمائي لجلسات الروقان والـ VIP',
         rate: 100,
         badge: 'Available',
         accentColor: '#ff007f',
@@ -395,68 +395,56 @@ export default function PlaystationPage() {
                                         </div>
                                     </div>
 
-                                    {/* 2. CARD BODY: SUBTITLE & 4 SPECS */}
-                                    <div className="p-2 sm:p-5 flex-1 flex flex-col justify-between space-y-2 sm:space-y-4 text-right">
-                                        <p className="text-[10px] sm:text-xs text-neutral-600 dark:text-neutral-300 font-body leading-tight sm:leading-relaxed line-clamp-1 sm:line-clamp-2">
+                                    {/* 2. CARD BODY: SUBTITLE & SLEEK UNIFIED SPECS */}
+                                    <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between space-y-2.5 sm:space-y-3 text-right">
+                                        <p className="text-[11px] sm:text-xs text-neutral-600 dark:text-neutral-400 font-body leading-relaxed line-clamp-1 sm:line-clamp-2">
                                             {room.subtitle}
                                         </p>
 
-                                        {/* 4 Feature Badges in 2x2 Grid */}
-                                        <div className="grid grid-cols-2 gap-1 sm:gap-2">
-                                            <div className="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200 dark:border-white/[0.08]">
+                                        {/* Ultra-Clean Unified Specs Bar (Compact & Sleek) */}
+                                        <div className="grid grid-cols-4 gap-1 py-2 px-1.5 rounded-xl bg-neutral-100/70 dark:bg-white/[0.03] border border-neutral-200/80 dark:border-white/[0.06] text-center shadow-2xs">
+                                            <div className="flex flex-col items-center justify-center gap-1">
                                                 <Tv
-                                                    className={`w-3 h-3 sm:w-4 sm:h-4 shrink-0 ${
-                                                        isRoom1 ? 'text-cyan-500' : 'text-rose-500'
+                                                    className={`w-3.5 h-3.5 ${
+                                                        isRoom1 ? 'text-cyan-400' : 'text-rose-400'
                                                     }`}
                                                 />
-                                                <div className="min-w-0">
-                                                    <div className="text-[8px] sm:text-[9px] text-neutral-500 dark:text-neutral-400 truncate">الشاشة</div>
-                                                    <div className="text-[9px] sm:text-[11px] font-bold text-neutral-900 dark:text-white truncate">
-                                                        65" 4K
-                                                    </div>
-                                                </div>
+                                                <span className="text-[10px] sm:text-[11px] font-bold text-neutral-800 dark:text-neutral-200 font-mono">
+                                                    65" 4K
+                                                </span>
                                             </div>
 
-                                            <div className="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200 dark:border-white/[0.08]">
+                                            <div className="flex flex-col items-center justify-center gap-1 border-r border-neutral-200 dark:border-white/10">
                                                 <Gamepad2
-                                                    className={`w-3 h-3 sm:w-4 sm:h-4 shrink-0 ${
-                                                        isRoom1 ? 'text-cyan-500' : 'text-rose-500'
+                                                    className={`w-3.5 h-3.5 ${
+                                                        isRoom1 ? 'text-cyan-400' : 'text-rose-400'
                                                     }`}
                                                 />
-                                                <div className="min-w-0">
-                                                    <div className="text-[8px] sm:text-[9px] text-neutral-500 dark:text-neutral-400 truncate">التحكم</div>
-                                                    <div className="text-[9px] sm:text-[11px] font-bold text-neutral-900 dark:text-white truncate">
-                                                        4 دراعات
-                                                    </div>
-                                                </div>
+                                                <span className="text-[10px] sm:text-[11px] font-bold text-neutral-800 dark:text-neutral-200">
+                                                    4 دراعات
+                                                </span>
                                             </div>
 
-                                            <div className="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200 dark:border-white/[0.08]">
+                                            <div className="flex flex-col items-center justify-center gap-1 border-r border-neutral-200 dark:border-white/10">
                                                 <Volume2
-                                                    className={`w-3 h-3 sm:w-4 sm:h-4 shrink-0 ${
-                                                        isRoom1 ? 'text-cyan-500' : 'text-rose-500'
+                                                    className={`w-3.5 h-3.5 ${
+                                                        isRoom1 ? 'text-cyan-400' : 'text-rose-400'
                                                     }`}
                                                 />
-                                                <div className="min-w-0">
-                                                    <div className="text-[8px] sm:text-[9px] text-neutral-500 dark:text-neutral-400 truncate">الصوت</div>
-                                                    <div className="text-[9px] sm:text-[11px] font-bold text-neutral-900 dark:text-white truncate">
-                                                        صوت 3D
-                                                    </div>
-                                                </div>
+                                                <span className="text-[10px] sm:text-[11px] font-bold text-neutral-800 dark:text-neutral-200">
+                                                    صوت 3D
+                                                </span>
                                             </div>
 
-                                            <div className="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200 dark:border-white/[0.08]">
+                                            <div className="flex flex-col items-center justify-center gap-1 border-r border-neutral-200 dark:border-white/10">
                                                 <Wind
-                                                    className={`w-3 h-3 sm:w-4 sm:h-4 shrink-0 ${
-                                                        isRoom1 ? 'text-cyan-500' : 'text-rose-500'
+                                                    className={`w-3.5 h-3.5 ${
+                                                        isRoom1 ? 'text-cyan-400' : 'text-rose-400'
                                                     }`}
                                                 />
-                                                <div className="min-w-0">
-                                                    <div className="text-[8px] sm:text-[9px] text-neutral-500 dark:text-neutral-400 truncate">الراحة</div>
-                                                    <div className="text-[9px] sm:text-[11px] font-bold text-neutral-900 dark:text-white truncate">
-                                                        تكييف VIP
-                                                    </div>
-                                                </div>
+                                                <span className="text-[10px] sm:text-[11px] font-bold text-neutral-800 dark:text-neutral-200">
+                                                    تكييف VIP
+                                                </span>
                                             </div>
                                         </div>
 
