@@ -1,5 +1,6 @@
 import type { MenuCategory, MenuItem } from '@/types/menu';
 import MenuCard from './MenuCard';
+import CategoryIcon from './CategoryIcon';
 
 interface Props {
   category: MenuCategory;
@@ -21,7 +22,7 @@ export default function MenuSection({ category, items, onAdd }: Props) {
       <div className="flex items-center gap-3 mb-3.5">
         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-neutral-300 dark:via-white/10 to-red-600/30" />
         <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-neutral-100 dark:bg-[#140e10] border border-neutral-200 dark:border-white/10 shadow-sm transition-colors">
-          <span className="text-base leading-none">{category.icon}</span>
+          <CategoryIcon categoryId={category.id} icon={category.icon} size={18} className="text-red-600 dark:text-red-400 shrink-0" />
           <h2 className="font-bold text-sm sm:text-base text-neutral-900 dark:text-white font-body">
             {category.name}
           </h2>

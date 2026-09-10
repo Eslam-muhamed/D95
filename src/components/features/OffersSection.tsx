@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Flame } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 import { useTheme } from '@/stores/themeStore';
+import CategoryIcon from './CategoryIcon';
 
 const offers = [
   {
@@ -111,7 +112,9 @@ export default function OffersSection({ liveOffers }: OffersSectionProps) {
             {/* Header: Icon, Badge, and Title */}
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex items-center gap-2">
-                <span className="text-xl shrink-0 p-1.5 rounded-lg bg-neutral-100 dark:bg-white/[0.05] border border-neutral-200/60 dark:border-white/10">{offer.icon}</span>
+                <div className="shrink-0 p-1.5 rounded-lg bg-neutral-100 dark:bg-white/[0.05] border border-neutral-200/60 dark:border-white/10 text-red-600 dark:text-red-400">
+                  <CategoryIcon icon={offer.icon} size={18} />
+                </div>
                 <h3 className="font-bold text-neutral-900 dark:text-white text-sm sm:text-base font-body leading-tight">
                   {offer.title}
                 </h3>

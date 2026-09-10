@@ -3,6 +3,7 @@ import { Plus, Edit3, Trash2, RefreshCw, FolderTree, Layers } from 'lucide-react
 import { toast } from 'sonner';
 import { fetchCategories, deleteCategory } from '@/services/menuService';
 import CategoryModal from './CategoryModal';
+import CategoryIcon from '@/components/features/CategoryIcon';
 import type { DBCategory } from '@/types/database';
 
 export default function CategoriesTab() {
@@ -116,8 +117,8 @@ export default function CategoriesTab() {
                             className="bg-[#140e11]/90 border border-white/10 rounded-2xl p-4 flex flex-col justify-between gap-3 backdrop-blur-md hover:border-white/20 transition-all"
                         >
                             <div className="flex items-start gap-3">
-                                <div className="w-12 h-12 rounded-xl bg-[#1c1417] border border-white/10 flex items-center justify-center text-2xl shrink-0">
-                                    {c.icon || '☕'}
+                                <div className="w-12 h-12 rounded-xl bg-[#1c1417] border border-white/10 flex items-center justify-center shrink-0 text-red-500">
+                                    <CategoryIcon categoryId={c.id} icon={c.icon} size={22} />
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-center justify-between gap-2">

@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Flame } from 'lucide-react';
 import { categories } from '@/constants/menuMetadata';
 import { useScrollSpy } from '@/hooks/useScrollSpy';
+import CategoryIcon from './CategoryIcon';
 
 import type { MenuCategory } from '@/types/menu';
 import type { DBCategory } from '@/types/database';
@@ -56,7 +57,7 @@ export default function CategoryNav({ activeCategory, onCategoryChange, categori
               : 'bg-neutral-100 dark:bg-white/[0.04] border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:border-neutral-300 dark:hover:border-white/20'
           }`}
         >
-          <span>🎮</span>
+          <CategoryIcon categoryId="all" size={14} className={isAllActive ? 'text-red-600 dark:text-red-400' : 'text-neutral-500 dark:text-neutral-400'} />
           <span>الكل</span>
         </button>
 
@@ -76,7 +77,7 @@ export default function CategoryNav({ activeCategory, onCategoryChange, categori
                   : 'bg-neutral-100 dark:bg-white/[0.04] border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:border-neutral-300 dark:hover:border-white/20'
               }`}
             >
-              <span>{cat.icon}</span>
+              <CategoryIcon categoryId={cat.id} icon={cat.icon} size={14} className={isCurrent ? 'text-red-600 dark:text-red-400' : 'text-neutral-500 dark:text-neutral-400'} />
               <span>{cat.name}</span>
             </button>
           );

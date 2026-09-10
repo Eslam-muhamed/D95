@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     ArrowRight,
@@ -22,6 +22,7 @@ import { motion } from 'framer-motion';
 import { useTheme } from '@/stores/themeStore';
 import { useCart } from '@/stores/cartStore';
 import { getItemUnitPrice } from '@/lib/cartUtils';
+import CategoryIcon from '@/components/features/CategoryIcon';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 import { createBooking } from '@/services/bookingService';
@@ -34,6 +35,7 @@ interface SnackItem {
     name: string;
     price: number;
     icon?: string;
+    category?: string;
     description?: string;
 }
 
@@ -43,20 +45,40 @@ export default function BookingPaymentPage() {
     const { theme, toggleTheme } = useTheme();
     const { items: cartItems, cafeTotal, clearCart } = useCart();
 
-    // Booking context from state with rock-solid defaults
-    const bookingState = location.state || {
-        room: { id: 'room-1', name: 'غرفة 01 (Play Room)', type: 'standard', rate: 100 },
-        date: new Date().toISOString().split('T')[0],
-        startTime: '06:00 م',
-        endTime: '08:00 م',
-        startDateTime: undefined,
-        endDateTime: undefined,
-        durationHours: 2,
-        roomSubtotal: 200,
-        snacks: [],
-        snacksTotal: 0,
-        total: 200,
-    };
+    // Booking context from state or session storage fallback
+    const [bookingState] = useState(() => {
+        if (location.state && location.state.room) {
+            try {
+                sessionStorage.setItem('d95_pending_booking', JSON.stringify(location.state));
+            } catch (e) {
+                console.warn('Could not cache pending booking:', e);
+            }
+            return location.state;
+        }
+
+        try {
+            const cached = sessionStorage.getItem('d95_pending_booking');
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (parsed?.room) return parsed;
+            }
+        } catch (e) {
+            console.warn('Could not read cached booking:', e);
+        }
+
+        return null;
+    });
+
+    useEffect(() => {
+        if (!bookingState || !bookingState.room) {
+            toast.info('يرجى اختيار الغرفة والموعد المناسب أولاً 🎮');
+            navigate('/playstation', { replace: true });
+        }
+    }, [bookingState, navigate]);
+
+    if (!bookingState) {
+        return null;
+    }
 
     const {
         room,
@@ -131,18 +153,19 @@ export default function BookingPaymentPage() {
             return;
         }
 
-        // Egyptian phone number check (at least 10-11 digits)
+        // Egyptian phone number check (010, 011, 012, 015 - 11 digits)
         const cleanPhone = phone.replace(/\D/g, '');
-        if (cleanPhone.length < 10) {
-            toast.error('برجاء إدخال رقم هاتف صحيح للتواصل وتأكيد الحجز');
+        const isValidEgyptianPhone = /^(01[0125][0-9]{8}|201[0125][0-9]{8})$/.test(cleanPhone);
+        if (!isValidEgyptianPhone) {
+            toast.error('برجاء إدخال رقم هاتف محمول صحيح (مثال: 01012345678) لتأكيد الحجز');
             return;
         }
 
         playPs5SelectSound();
         setSubmitting(true);
 
-        // Generate a VIP Reservation ID
-        const reservationId = `D95-PS-${Math.floor(1000 + Math.random() * 9000)}`;
+        // Generate a VIP Reservation ID with high entropy
+        const reservationId = `D95-PS-${Date.now().toString(36).slice(-4).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
         // Resolve exact start_datetime and end_datetime
         let finalStartDateTime = startDateTime;
@@ -188,7 +211,12 @@ export default function BookingPaymentPage() {
                 notes: notes.trim() || null,
             });
 
-            // Booking successfully recorded - clear cart
+            // Booking successfully recorded - clear cart & pending session
+            try {
+                sessionStorage.removeItem('d95_pending_booking');
+            } catch (e) {
+                console.warn('Could not clear pending session:', e);
+            }
             clearCart();
         } catch (err: unknown) {
             console.error('Failed to save booking to Supabase:', err);
@@ -606,7 +634,10 @@ export default function BookingPaymentPage() {
 
                                 {effectiveSnacks && effectiveSnacks.length > 0 && effectiveSnacks.map((s: SnackItem) => (
                                     <div key={s.id} className="flex justify-between items-center text-neutral-600 dark:text-neutral-400">
-                                        <span>{s.icon || '☕'} {s.name}:</span>
+                                        <span className="flex items-center gap-1.5">
+                                            <CategoryIcon categoryId={s.category} icon={s.icon} size={13} className="text-red-500 shrink-0" />
+                                            <span>{s.name}:</span>
+                                        </span>
                                         <span className="text-red-600 dark:text-red-400 font-bold">+{s.price} ج.م</span>
                                     </div>
                                 ))}
