@@ -1542,7 +1542,12 @@ export default function BookingDetailsPage() {
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-sm text-white">تحديد وقت مخصص</h3>
-                                        <p className="text-[11px] text-neutral-400">اختر وقت البداية بالساعة والدقيقة</p>
+                                        <p className="text-[11px] text-neutral-400 flex items-center gap-1.5 mt-0.5">
+                                            <span>ليوم:</span>
+                                            <span className="text-red-400 font-bold bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20">
+                                                {formattedDate.full}
+                                            </span>
+                                        </p>
                                     </div>
                                 </div>
                                 <button
@@ -1558,6 +1563,14 @@ export default function BookingDetailsPage() {
                             <div className="p-4 space-y-4 max-h-[75vh] overflow-y-auto">
                                 {/* Mobile Alarm Drum Wheel (Smooth Touch & Wheel Scroll) */}
                                 <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between text-xs px-1 text-neutral-400">
+                                        <span className="text-[11px] flex items-center gap-1.5">
+                                            <Calendar size={12} className="text-red-400" />
+                                            <span>تاريخ الحجز: <strong className="text-neutral-200 font-semibold">{formattedDate.dayName}، {formattedDate.d} {formattedDate.monthName}</strong></span>
+                                        </span>
+                                        <span className="text-[10px] text-neutral-500">اسحب للأعلى أو الأسفل</span>
+                                    </div>
+
                                     <div className="relative bg-neutral-950/80 rounded-2xl p-2 border border-neutral-800/80 overflow-hidden shadow-inner">
                                         {/* Center Highlight Lens (Across all 3 drums) */}
                                         <div
