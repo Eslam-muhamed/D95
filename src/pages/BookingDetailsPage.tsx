@@ -145,21 +145,6 @@ export default function BookingDetailsPage() {
         return `${String(h24).padStart(2, '0')}:${String(selectedMinute).padStart(2, '0')}`;
     }, [hasSelectedTime, selectedHour, selectedMinute, selectedPeriod]);
 
-    // Handle setting time from Date object (e.g. when tapping an available gap)
-    const setTimeFromDate = useCallback((date: Date) => {
-        const hour = date.getHours();
-        const min = date.getMinutes();
-        const p: 'AM' | 'PM' = hour >= 12 && hour < 24 ? 'PM' : 'AM';
-        const h12 = hour % 12 === 0 ? 12 : hour % 12;
-
-        setSelectedHour(h12);
-        setSelectedMinute(min);
-        setSelectedPeriod(p);
-        if (durationHours === null) {
-            setDurationHours(1);
-        }
-        playPs5SelectSound();
-    }, [durationHours]);
 
     // Handle HTML5 native time picker input
     const handleNativeTimeChange = (val: string) => {
@@ -295,10 +280,6 @@ export default function BookingDetailsPage() {
         return segments;
     }, [selectedDate, sortedBookings]);
 
-    // Filter available gaps only for quick touch selection
-    const availableGaps = useMemo(() => {
-        return dayScheduleSegments.filter((s) => s.type === 'available');
-    }, [dayScheduleSegments]);
 
     // Real-time availability evaluation
     const currentAvailability = useMemo(() => {
@@ -734,44 +715,7 @@ export default function BookingDetailsPage() {
                         </div>
                     )}
 
-                    {/* SECTION B: OPEN AVAILABLE INTERVALS (Touch-friendly quick select for mobile) */}
-                    {sortedBookings.length > 0 && availableGaps.length > 0 && (
-                        <div className="space-y-2 pt-2 border-t border-neutral-100 dark:border-white/[0.06]">
-                            <div className="flex items-center justify-between text-xs">
-                                <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-4 h-4" />
-                                    <span>الفترات المتاحة للعب اليوم (اضغط لاختيار الموعد):</span>
-                                </span>
-                            </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {availableGaps.map((gap, gIdx) => (
-                                    <button
-                                        key={gIdx}
-                                        type="button"
-                                        onClick={() => setTimeFromDate(gap.start)}
-                                        className="p-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100/60 dark:hover:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-600/30 flex items-center justify-between text-right transition-all cursor-pointer active:scale-[0.98]"
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                                            <div>
-                                                <div className="font-bold text-xs text-neutral-900 dark:text-white">
-                                                    من {formatArabicTimeDetailed(gap.start)}
-                                                </div>
-                                                <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                                                    إلى {formatArabicTimeDetailed(gap.end)} ({gap.durationHours} س)
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <span className="px-2 py-1 rounded bg-emerald-600 text-white font-bold text-[10px] shrink-0">
-                                            احجز هنا
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {/* ========================================================= */}
