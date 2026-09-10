@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -19,6 +19,7 @@ import {
     ChevronLeft,
     ChevronRight,
     X,
+    Gamepad2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -107,9 +108,31 @@ export default function BookingDetailsPage() {
     // Initial room fallback from navigation state
     const initialRoom = location.state?.room || { name: 'غرفة 01 (Play Room)' };
     const [selectedRoomId, setSelectedRoomId] = useState<string>(() => {
-        if (initialRoom.name && initialRoom.name.includes('02')) return 'room-2';
+        if (initialRoom.id) {
+            if (initialRoom.id === 'room-2' || initialRoom.id.includes('02') || initialRoom.id.includes('stars')) return 'room-2';
+            return 'room-1';
+        }
+        if (initialRoom.name && (initialRoom.name.includes('02') || initialRoom.name.includes('النجوم') || initialRoom.name.includes('VIP'))) return 'room-2';
         return 'room-1';
     });
+
+    const [isRoomMenuOpen, setIsRoomMenuOpen] = useState(false);
+    const roomMenuRef = useRef<HTMLDivElement>(null);
+
+    // Close room dropdown on click outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (roomMenuRef.current && !roomMenuRef.current.contains(e.target as Node)) {
+                setIsRoomMenuOpen(false);
+            }
+        };
+        if (isRoomMenuOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isRoomMenuOpen]);
 
     const currentRoom = useMemo(() => {
         return AVAILABLE_ROOMS.find((r) => r.id === selectedRoomId) || AVAILABLE_ROOMS[0];
@@ -647,22 +670,68 @@ export default function BookingDetailsPage() {
         <div className="min-h-screen w-full bg-[#f8f9fb] dark:bg-[#090708] text-neutral-900 dark:text-[#eae6e8] font-body text-sm flex flex-col selection:bg-red-600 selection:text-white relative select-none transition-colors duration-200">
             {/* Header */}
             <header className="sticky top-0 inset-x-0 z-50 bg-white/90 dark:bg-[#0c090a]/90 backdrop-blur-md border-b border-neutral-200 dark:border-white/[0.08] shadow-xs">
-                <div className="h-15 px-4 sm:px-6 flex items-center justify-between max-w-2xl mx-auto">
-                    <div className="flex items-center gap-3">
+                <div className="h-16 px-4 sm:px-6 flex items-center justify-between max-w-2xl mx-auto">
+                    <div className="flex items-center gap-2.5 sm:gap-3">
                         <Link
                             to="/playstation"
                             aria-label="الرجوع للغرف"
-                            className="w-9 h-9 rounded-xl bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] flex items-center justify-center text-neutral-700 dark:text-neutral-300 hover:text-red-600 dark:hover:text-white transition-all active:scale-95 border border-neutral-200/80 dark:border-white/10"
+                            className="w-9 h-9 rounded-xl bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] flex items-center justify-center text-neutral-700 dark:text-neutral-300 hover:text-red-600 dark:hover:text-white transition-all active:scale-95 border border-neutral-200/80 dark:border-white/10 shrink-0"
                         >
                             <ArrowRight className="w-4 h-4" />
                         </Link>
                         <div>
-                            <h1 className="font-bold text-base text-neutral-900 dark:text-white leading-tight">
+                            <h1 className="font-bold text-sm sm:text-base text-neutral-900 dark:text-white leading-tight">
                                 حجز موعد اللعب
                             </h1>
-                            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium">
-                                صالة D95 Gaming Lounge
-                            </p>
+                            {/* Room Indicator & Quick Switcher */}
+                            <div className="relative mt-0.5" ref={roomMenuRef}>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsRoomMenuOpen((prev) => !prev)}
+                                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-red-600/10 dark:bg-red-600/15 border border-red-600/20 hover:border-red-600/40 text-red-600 dark:text-red-400 text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                                    title="اضغط لتغيير الغرفة"
+                                >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                    <span>{currentRoom.titleAr}</span>
+                                    <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-normal">({currentRoom.rate} ج.م/س)</span>
+                                    <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isRoomMenuOpen ? 'rotate-180 text-red-600' : 'text-neutral-400'}`} />
+                                </button>
+
+                                {isRoomMenuOpen && (
+                                    <div className="absolute right-0 top-full mt-1.5 w-56 bg-white dark:bg-[#140e10] border border-neutral-200 dark:border-white/10 rounded-xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-150">
+                                        <div className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 px-2 py-1">
+                                            اختر الغرفة المراد حجزها:
+                                        </div>
+                                        {AVAILABLE_ROOMS.map((room) => {
+                                            const isSelected = selectedRoomId === room.id;
+                                            return (
+                                                <button
+                                                    key={room.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSelectedRoomId(room.id);
+                                                        setIsRoomMenuOpen(false);
+                                                        playPs5NavigateSound();
+                                                    }}
+                                                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-right text-xs transition-colors cursor-pointer ${
+                                                        isSelected
+                                                            ? 'bg-red-600 text-white font-bold'
+                                                            : 'text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/[0.06]'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <Gamepad2 className="w-3.5 h-3.5 shrink-0" />
+                                                        <span>{room.titleAr}</span>
+                                                    </div>
+                                                    <span className={`text-[10px] font-mono ${isSelected ? 'text-white/80' : 'text-neutral-400'}`}>
+                                                        {room.rate} ج.م/س
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -695,37 +764,7 @@ export default function BookingDetailsPage() {
             {/* Main Content */}
             <main className="flex-1 flex flex-col relative z-10 w-full pt-4 pb-32 px-4 sm:px-6 max-w-2xl mx-auto space-y-4" dir="rtl">
 
-                {/* 1. ROOM SELECTOR */}
-                <div className="bg-white dark:bg-[#120e10] border border-neutral-200/80 dark:border-white/[0.08] rounded-2xl p-2 shadow-xs">
-                    <div className="grid grid-cols-2 gap-2">
-                        {AVAILABLE_ROOMS.map((room) => {
-                            const isSelected = selectedRoomId === room.id;
-                            return (
-                                <button
-                                    key={room.id}
-                                    onClick={() => {
-                                        setSelectedRoomId(room.id);
-                                        playPs5NavigateSound();
-                                    }}
-                                    className={`py-3 px-3.5 rounded-xl text-center transition-all cursor-pointer border ${
-                                        isSelected
-                                            ? 'bg-red-600 border-red-600 text-white shadow-md shadow-red-600/25'
-                                            : 'bg-neutral-50 dark:bg-white/[0.03] border-transparent text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06]'
-                                    }`}
-                                >
-                                    <div className="font-bold text-xs sm:text-sm">
-                                        {room.titleAr}
-                                    </div>
-                                    <div className={`text-[11px] font-mono mt-0.5 ${isSelected ? 'text-red-100' : 'text-neutral-500'}`}>
-                                        {room.rate} ج.م / ساعة
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* 2. COMPACT EXPANDABLE DATE SELECTOR */}
+                {/* COMPACT EXPANDABLE DATE SELECTOR */}
                 <div className="bg-white dark:bg-[#120e10] border border-neutral-200/80 dark:border-white/[0.08] rounded-2xl p-3 sm:p-4 shadow-xs transition-all">
                     <div className="flex items-center justify-between gap-2">
                         <button
