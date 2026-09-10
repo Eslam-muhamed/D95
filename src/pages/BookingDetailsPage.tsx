@@ -112,6 +112,119 @@ function formatArabicTimeDetailed(date: Date): string {
     return `${String(h12).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${period}`;
 }
 
+const HOUR_WHEEL_ITEMS = Array.from({ length: 12 }, (_, i) => ({
+    value: i + 1,
+    label: String(i + 1).padStart(2, '0'),
+}));
+
+const MINUTE_WHEEL_ITEMS = Array.from({ length: 60 }, (_, i) => ({
+    value: i,
+    label: String(i).padStart(2, '0'),
+}));
+
+const PERIOD_WHEEL_ITEMS: { value: 'PM' | 'AM'; label: string }[] = [
+    { value: 'PM', label: 'مساءً' },
+    { value: 'AM', label: 'صباحاً' },
+];
+
+function DrumWheelColumn<T extends string | number>({
+    items,
+    selectedValue,
+    onSelect,
+    title,
+    itemHeight = 40,
+    visibleRows = 5,
+}: {
+    items: { value: T; label: string }[];
+    selectedValue: T;
+    onSelect: (val: T) => void;
+    title: string;
+    itemHeight?: number;
+    visibleRows?: number;
+}) {
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const isUserScrollingRef = useRef(false);
+    const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const centerIndex = Math.floor(visibleRows / 2);
+    const paddingHeight = centerIndex * itemHeight;
+
+    const selectedIndex = items.findIndex((item) => item.value === selectedValue);
+
+    useEffect(() => {
+        if (isUserScrollingRef.current) return;
+        if (selectedIndex >= 0 && scrollRef.current) {
+            const targetScroll = selectedIndex * itemHeight;
+            if (Math.abs(scrollRef.current.scrollTop - targetScroll) > 2) {
+                scrollRef.current.scrollTo({
+                    top: targetScroll,
+                    behavior: 'smooth',
+                });
+            }
+        }
+    }, [selectedIndex, itemHeight]);
+
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        isUserScrollingRef.current = true;
+        if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+
+        const currentScroll = e.currentTarget.scrollTop;
+        const index = Math.round(currentScroll / itemHeight);
+
+        if (index >= 0 && index < items.length) {
+            const item = items[index];
+            if (item && item.value !== selectedValue) {
+                onSelect(item.value);
+            }
+        }
+
+        scrollTimeoutRef.current = setTimeout(() => {
+            isUserScrollingRef.current = false;
+        }, 150);
+    };
+
+    return (
+        <div className="flex-1 flex flex-col items-center min-w-0">
+            <span className="text-[11px] font-bold text-neutral-400 mb-1 select-none">{title}</span>
+            <div
+                ref={scrollRef}
+                onScroll={handleScroll}
+                className="w-full relative overflow-y-auto scrollbar-none snap-y snap-mandatory select-none touch-pan-y"
+                style={{
+                    height: `${itemHeight * visibleRows}px`,
+                }}
+            >
+                <div style={{ height: `${paddingHeight}px` }} />
+                {items.map((item, idx) => {
+                    const isSelected = item.value === selectedValue;
+                    return (
+                        <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                                onSelect(item.value);
+                                scrollRef.current?.scrollTo({
+                                    top: idx * itemHeight,
+                                    behavior: 'smooth',
+                                });
+                            }}
+                            style={{ height: `${itemHeight}px` }}
+                            className={`w-full flex items-center justify-center snap-center cursor-pointer transition-all duration-150 font-mono text-center outline-none ${
+                                isSelected
+                                    ? 'text-white text-xl font-black scale-110 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]'
+                                    : 'text-neutral-500 hover:text-neutral-300 text-sm font-medium'
+                            }`}
+                        >
+                            {item.label}
+                        </button>
+                    );
+                })}
+                <div style={{ height: `${paddingHeight}px` }} />
+            </div>
+        </div>
+    );
+}
+
 export default function BookingDetailsPage() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -340,6 +453,19 @@ export default function BookingDetailsPage() {
     const [tempHour, setTempHour] = useState<number>(6);
     const [tempMinute, setTempMinute] = useState<number>(0);
     const [tempPeriod, setTempPeriod] = useState<'AM' | 'PM'>('PM');
+    const [hourInputStr, setHourInputStr] = useState<string>('06');
+    const [minuteInputStr, setMinuteInputStr] = useState<string>('00');
+    const hourInputRef = useRef<HTMLInputElement>(null);
+    const minuteInputRef = useRef<HTMLInputElement>(null);
+
+    // Sync input strings with drum wheel changes
+    useEffect(() => {
+        setHourInputStr(String(tempHour).padStart(2, '0'));
+    }, [tempHour]);
+
+    useEffect(() => {
+        setMinuteInputStr(String(tempMinute).padStart(2, '0'));
+    }, [tempMinute]);
 
     const hasCustomMinuteSelected = hasSelectedTime && selectedMinute !== 0;
 
@@ -1209,9 +1335,14 @@ export default function BookingDetailsPage() {
                         <button
                             type="button"
                             onClick={() => {
-                                setTempHour(selectedHour ?? 18);
-                                setTempMinute(selectedMinute ?? 0);
-                                setTempPeriod(selectedPeriod ?? 'PM');
+                                const h = selectedHour ?? 6;
+                                const m = selectedMinute ?? 0;
+                                const p = selectedPeriod ?? 'PM';
+                                setTempHour(h);
+                                setTempMinute(m);
+                                setTempPeriod(p);
+                                setHourInputStr(String(h).padStart(2, '0'));
+                                setMinuteInputStr(String(m).padStart(2, '0'));
                                 setIsCustomTimeModalOpen(true);
                                 playPs5NavigateSound();
                             }}
@@ -1444,82 +1575,198 @@ export default function BookingDetailsPage() {
 
                             {/* Modal Body */}
                             <div className="p-4 space-y-4 max-h-[75vh] overflow-y-auto">
-                                {/* Digital Clock Display */}
-                                <div className="bg-neutral-950 rounded-2xl p-3.5 border border-neutral-800/80 flex items-center justify-between gap-3 shadow-inner">
-                                    <div className="flex items-center gap-1 font-mono text-3xl font-black text-white" dir="ltr">
-                                        <span className="bg-neutral-900/90 px-3 py-1.5 rounded-xl border border-neutral-800 text-red-400 shadow-inner">
-                                            {String(tempHour).padStart(2, '0')}
-                                        </span>
-                                        <span className="text-neutral-500 animate-pulse font-sans">:</span>
-                                        <span className="bg-neutral-900/90 px-3 py-1.5 rounded-xl border border-neutral-800 text-red-400 shadow-inner">
-                                            {String(tempMinute).padStart(2, '0')}
-                                        </span>
+                                {/* 1. Direct Typing Inputs & AM/PM Switcher (Desktop Keyboard + Instant Entry) */}
+                                <div className="bg-neutral-950 rounded-2xl p-3 sm:p-4 border border-neutral-800/90 flex items-center justify-between gap-3 shadow-inner">
+                                    <div className="flex items-center gap-1.5 font-mono text-2xl sm:text-3xl font-black text-white" dir="ltr">
+                                        {/* Hour Input */}
+                                        <div className="flex flex-col items-center">
+                                            <input
+                                                ref={hourInputRef}
+                                                type="text"
+                                                inputMode="numeric"
+                                                pattern="[0-9]*"
+                                                maxLength={2}
+                                                value={hourInputStr}
+                                                onFocus={(e) => e.target.select()}
+                                                onChange={(e) => {
+                                                    const cleaned = e.target.value.replace(/\D/g, '');
+                                                    if (cleaned.length > 2) return;
+                                                    setHourInputStr(cleaned);
+                                                    if (cleaned === '') return;
+                                                    const num = parseInt(cleaned, 10);
+                                                    if (!isNaN(num) && num >= 1 && num <= 12) {
+                                                        setTempHour(num);
+                                                        playPs5NavigateSound();
+                                                        if (cleaned.length === 2 || num > 1) {
+                                                            minuteInputRef.current?.focus();
+                                                            minuteInputRef.current?.select();
+                                                        }
+                                                    }
+                                                }}
+                                                onBlur={() => {
+                                                    setHourInputStr(String(tempHour).padStart(2, '0'));
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'ArrowUp') {
+                                                        e.preventDefault();
+                                                        const next = tempHour >= 12 ? 1 : tempHour + 1;
+                                                        setTempHour(next);
+                                                        playPs5NavigateSound();
+                                                    } else if (e.key === 'ArrowDown') {
+                                                        e.preventDefault();
+                                                        const prev = tempHour <= 1 ? 12 : tempHour - 1;
+                                                        setTempHour(prev);
+                                                        playPs5NavigateSound();
+                                                    } else if (e.key === 'Enter' || e.key === ':') {
+                                                        e.preventDefault();
+                                                        minuteInputRef.current?.focus();
+                                                        minuteInputRef.current?.select();
+                                                    }
+                                                }}
+                                                className="w-14 sm:w-16 h-12 sm:h-14 text-center bg-neutral-900 border-2 border-neutral-700/80 focus:border-red-500 focus:bg-neutral-900/90 rounded-xl text-red-400 focus:text-white font-mono text-2xl sm:text-3xl font-black transition-all outline-none selection:bg-red-500 selection:text-white shadow-inner cursor-text"
+                                                title="اكتب الساعة بالكيبورد (1-12) أو استخدم الأسهم ↑ ↓"
+                                            />
+                                            <span className="text-[10px] text-neutral-500 font-sans mt-1">ساعة</span>
+                                        </div>
+
+                                        <span className="text-neutral-500 font-sans text-xl pb-5 animate-pulse">:</span>
+
+                                        {/* Minute Input */}
+                                        <div className="flex flex-col items-center">
+                                            <input
+                                                ref={minuteInputRef}
+                                                type="text"
+                                                inputMode="numeric"
+                                                pattern="[0-9]*"
+                                                maxLength={2}
+                                                value={minuteInputStr}
+                                                onFocus={(e) => e.target.select()}
+                                                onChange={(e) => {
+                                                    const cleaned = e.target.value.replace(/\D/g, '');
+                                                    if (cleaned.length > 2) return;
+                                                    setMinuteInputStr(cleaned);
+                                                    if (cleaned === '') return;
+                                                    const num = parseInt(cleaned, 10);
+                                                    if (!isNaN(num) && num >= 0 && num <= 59) {
+                                                        setTempMinute(num);
+                                                        playPs5NavigateSound();
+                                                    }
+                                                }}
+                                                onBlur={() => {
+                                                    setMinuteInputStr(String(tempMinute).padStart(2, '0'));
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'ArrowUp') {
+                                                        e.preventDefault();
+                                                        const next = (tempMinute + 1) % 60;
+                                                        setTempMinute(next);
+                                                        playPs5NavigateSound();
+                                                    } else if (e.key === 'ArrowDown') {
+                                                        e.preventDefault();
+                                                        const prev = (tempMinute - 1 + 60) % 60;
+                                                        setTempMinute(prev);
+                                                        playPs5NavigateSound();
+                                                    }
+                                                }}
+                                                className="w-14 sm:w-16 h-12 sm:h-14 text-center bg-neutral-900 border-2 border-neutral-700/80 focus:border-red-500 focus:bg-neutral-900/90 rounded-xl text-red-400 focus:text-white font-mono text-2xl sm:text-3xl font-black transition-all outline-none selection:bg-red-500 selection:text-white shadow-inner cursor-text"
+                                                title="اكتب الدقيقة بالكيبورد (00-59) أو استخدم الأسهم ↑ ↓"
+                                            />
+                                            <span className="text-[10px] text-neutral-500 font-sans mt-1">دقيقة</span>
+                                        </div>
                                     </div>
 
                                     {/* Period Switcher AM/PM */}
-                                    <div className="flex items-center bg-neutral-900 p-1 rounded-xl border border-neutral-800 gap-1">
-                                        <button
-                                            type="button"
-                                            onClick={() => { setTempPeriod('PM'); playPs5NavigateSound(); }}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                                tempPeriod === 'PM'
-                                                    ? 'bg-red-600 text-white shadow-sm'
-                                                    : 'text-neutral-400 hover:text-neutral-200'
-                                            }`}
-                                        >
-                                            مساءً
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => { setTempPeriod('AM'); playPs5NavigateSound(); }}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                                tempPeriod === 'AM'
-                                                    ? 'bg-red-600 text-white shadow-sm'
-                                                    : 'text-neutral-400 hover:text-neutral-200'
-                                            }`}
-                                        >
-                                            صباحاً
-                                        </button>
+                                    <div className="flex flex-col items-end gap-1.5">
+                                        <div className="flex items-center bg-neutral-900 p-1 rounded-xl border border-neutral-800 gap-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => { setTempPeriod('PM'); playPs5NavigateSound(); }}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                                    tempPeriod === 'PM'
+                                                        ? 'bg-red-600 text-white shadow-sm'
+                                                        : 'text-neutral-400 hover:text-neutral-200'
+                                                }`}
+                                            >
+                                                مساءً
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => { setTempPeriod('AM'); playPs5NavigateSound(); }}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                                    tempPeriod === 'AM'
+                                                        ? 'bg-red-600 text-white shadow-sm'
+                                                        : 'text-neutral-400 hover:text-neutral-200'
+                                                }`}
+                                            >
+                                                صباحاً
+                                            </button>
+                                        </div>
+                                        <span className="text-[10px] text-neutral-400 font-medium hidden sm:inline">⌨️ اكتب بالكيبورد أو استخدم الأسهم</span>
                                     </div>
                                 </div>
 
-                                {/* Hour Selection (1 to 12) */}
+                                {/* 2. Mobile Alarm Drum Wheel (Smooth Touch & Wheel Scroll) */}
                                 <div className="space-y-1.5">
-                                    <div className="flex items-center justify-between text-xs">
-                                        <span className="font-bold text-neutral-300">الساعة:</span>
-                                        <span className="font-mono text-neutral-400 text-[11px]">{tempHour}:00 {tempPeriod === 'PM' ? 'م' : 'ص'}</span>
+                                    <div className="flex items-center justify-between text-xs px-1">
+                                        <span className="font-bold text-neutral-300">تمرير المنبه (Touch / Scroll):</span>
+                                        <span className="text-[10px] text-neutral-500">اسحب للأعلى أو الأسفل كمنبه الهاتف</span>
                                     </div>
-                                    <div className="grid grid-cols-6 gap-1.5">
-                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((h) => {
-                                            const isSelected = tempHour === h;
-                                            return (
-                                                <button
-                                                    key={h}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setTempHour(h);
-                                                        playPs5NavigateSound();
-                                                    }}
-                                                    className={`py-2 rounded-xl font-mono text-xs font-bold transition-all cursor-pointer border ${
-                                                        isSelected
-                                                            ? 'bg-red-600 border-red-500 text-white shadow-sm shadow-red-600/30 scale-[1.03]'
-                                                            : 'bg-neutral-800/70 hover:bg-neutral-800 border-neutral-700/60 text-neutral-300 hover:text-white'
-                                                    }`}
-                                                >
-                                                    {h}
-                                                </button>
-                                            );
-                                        })}
+
+                                    <div className="relative bg-neutral-950/80 rounded-2xl p-2 border border-neutral-800/80 overflow-hidden shadow-inner">
+                                        {/* Center Highlight Lens (Across all 3 drums) */}
+                                        <div
+                                            className="pointer-events-none absolute inset-x-2 rounded-xl border-y border-red-500/40 bg-gradient-to-r from-red-500/5 via-red-500/15 to-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.15)] z-0"
+                                            style={{
+                                                top: 'calc(1.75rem + 80px)',
+                                                height: '40px',
+                                            }}
+                                        />
+
+                                        {/* Top and Bottom gradient masks */}
+                                        <div className="pointer-events-none absolute inset-x-0 top-7 h-16 bg-gradient-to-b from-neutral-950/95 via-neutral-950/70 to-transparent z-10" />
+                                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-neutral-950/95 via-neutral-950/70 to-transparent z-10" />
+
+                                        {/* 3 Drums */}
+                                        <div className="flex items-center justify-around gap-1 relative z-20">
+                                            <DrumWheelColumn
+                                                title="الساعة"
+                                                items={HOUR_WHEEL_ITEMS}
+                                                selectedValue={tempHour}
+                                                onSelect={(h) => {
+                                                    setTempHour(h);
+                                                    playPs5NavigateSound();
+                                                }}
+                                            />
+
+                                            <div className="text-neutral-600 font-bold text-xl pt-4">:</div>
+
+                                            <DrumWheelColumn
+                                                title="الدقيقة"
+                                                items={MINUTE_WHEEL_ITEMS}
+                                                selectedValue={tempMinute}
+                                                onSelect={(m) => {
+                                                    setTempMinute(m);
+                                                    playPs5NavigateSound();
+                                                }}
+                                            />
+
+                                            <DrumWheelColumn
+                                                title="الفترة"
+                                                items={PERIOD_WHEEL_ITEMS}
+                                                selectedValue={tempPeriod}
+                                                onSelect={(p) => {
+                                                    setTempPeriod(p);
+                                                    playPs5NavigateSound();
+                                                }}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Minute Selection */}
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between text-xs">
-                                        <span className="font-bold text-neutral-300">الدقيقة:</span>
-                                        <span className="font-mono text-neutral-400 text-[11px]">:{String(tempMinute).padStart(2, '0')}</span>
-                                    </div>
-                                    <div className="grid grid-cols-4 gap-1.5">
+                                {/* 3. Quick Minute Presets */}
+                                <div className="flex items-center justify-between pt-0.5 text-xs">
+                                    <span className="text-[11px] text-neutral-400 font-bold">دقائق سريعة:</span>
+                                    <div className="flex items-center gap-1.5">
                                         {[0, 15, 30, 45].map((m) => {
                                             const isSelected = tempMinute === m;
                                             return (
@@ -1530,43 +1777,16 @@ export default function BookingDetailsPage() {
                                                         setTempMinute(m);
                                                         playPs5NavigateSound();
                                                     }}
-                                                    className={`py-2 rounded-xl font-mono text-xs font-bold transition-all cursor-pointer border ${
+                                                    className={`px-2.5 py-1 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer border ${
                                                         isSelected
-                                                            ? 'bg-red-600 border-red-500 text-white shadow-sm shadow-red-600/30 scale-[1.03]'
-                                                            : 'bg-neutral-800/70 hover:bg-neutral-800 border-neutral-700/60 text-neutral-300 hover:text-white'
+                                                            ? 'bg-red-600 border-red-500 text-white shadow-xs'
+                                                            : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700/60 text-neutral-300'
                                                     }`}
                                                 >
                                                     :{String(m).padStart(2, '0')}
                                                 </button>
                                             );
                                         })}
-                                    </div>
-
-                                    {/* 5-minute precision steppers */}
-                                    <div className="flex items-center justify-between pt-1 text-xs">
-                                        <span className="text-[11px] text-neutral-400">تعديل بالدقيقة:</span>
-                                        <div className="flex items-center gap-1.5">
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setTempMinute((prev) => (prev - 5 + 60) % 60);
-                                                    playPs5NavigateSound();
-                                                }}
-                                                className="px-2.5 py-1 rounded-lg bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-300 font-mono text-xs font-bold transition-all cursor-pointer active:scale-95"
-                                            >
-                                                -5 د
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setTempMinute((prev) => (prev + 5) % 60);
-                                                    playPs5NavigateSound();
-                                                }}
-                                                className="px-2.5 py-1 rounded-lg bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-300 font-mono text-xs font-bold transition-all cursor-pointer active:scale-95"
-                                            >
-                                                +5 د
-                                            </button>
-                                        </div>
                                     </div>
                                 </div>
 
