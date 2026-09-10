@@ -58,7 +58,7 @@ export const categoryOptions: Record<string, CategoryOptions> = {
         hasExtraShot: false,
         hasCream: true,
         hasHoney: true,
-        toppingOptions: ['مكسرات', 'شوكولاتة', 'كراميل', 'فواكه'],
+        toppingOptions: ['مكسرات', 'شوكولاتة', 'كراميل', 'فواكه', 'أوريو', 'لوتس'],
     },
     'waffles': {
         hasSugar: false,

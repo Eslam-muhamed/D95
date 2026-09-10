@@ -161,11 +161,11 @@ export default function MenuPage() {
             <div className="flex items-center gap-2">
               <span className="text-red-600 dark:text-red-500 font-brush font-bold text-xl tracking-wider">D95</span>
               <h1 className="text-lg sm:text-2xl font-bold text-neutral-900 dark:text-white font-body tracking-wide">
-                قائمة المشروبات والمأكولات
+                قائمة المشروبات والحلويات
               </h1>
             </div>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 font-medium">
-              أجود أنواع القهوة المختصة، المشروبات المنعشة وسناكس الجيمرز
+              أجود أنواع المشروبات الساخنة، المشروبات الساقعة المنعشة، والحلويات الفاخرة
             </p>
           </div>
 
@@ -253,7 +253,7 @@ export default function MenuPage() {
                       لا توجد نتائج مطابقة لبحثك
                     </p>
                     <p className="text-xs text-neutral-500 mt-1">
-                      جرب البحث بكلمات أخرى مثل &quot;إسبريسو&quot; أو &quot;شاي&quot; أو &quot;برجر&quot;
+                      جرب البحث بكلمات مثل &quot;إسبريسو&quot; أو &quot;موهيتو&quot; أو &quot;تشيز كيك&quot;
                     </p>
                   </div>
                 )}
