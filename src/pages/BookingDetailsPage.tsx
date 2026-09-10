@@ -335,7 +335,6 @@ export default function BookingDetailsPage() {
 
     // Time slot picker helper state
     const [timePeriodTab, setTimePeriodTab] = useState<'evening' | 'morning'>('evening');
-    const [showOccupiedDropdown, setShowOccupiedDropdown] = useState(false);
 
     const activeDuration = durationHours || 1.0;
 
@@ -524,47 +523,6 @@ export default function BookingDetailsPage() {
             formattedEnd: formatArabicTimeDetailed(endDateTime),
         };
     }, [startDateTime, durationHours, selectedDate, effectiveOccupiedIntervals]);
-
-    // Timeline calculation helper: minutes from 08:00 AM (0 to 1200 mins)
-    const getTimelinePercent = useCallback((date: Date): number => {
-        const [y, m, d] = selectedDate.split('-').map(Number);
-        const opening = new Date(y, m - 1, d, OPERATING_HOURS.START_HOUR, 0, 0, 0);
-        const diffMs = date.getTime() - opening.getTime();
-        const diffMins = Math.floor(diffMs / (60 * 1000));
-        return Math.max(0, Math.min(100, (diffMins / 1200) * 100));
-    }, [selectedDate]);
-
-    // Proposed session segment on timeline
-    const proposedTimeline = useMemo(() => {
-        if (!startDateTime || durationHours === null) return null;
-        const left = getTimelinePercent(startDateTime);
-        const end = calculateEndDateTime(startDateTime, durationHours);
-        const right = getTimelinePercent(end);
-        const width = Math.max(2, right - left);
-        return { left, width };
-    }, [startDateTime, durationHours, getTimelinePercent]);
-
-    // Tap on timeline to select time directly
-    const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const percent = Math.max(0, Math.min(1, clickX / rect.width));
-
-        const totalMinsFrom8AM = Math.round(percent * 1200);
-        const roundedMins = Math.round(totalMinsFrom8AM / 15) * 15;
-        const absoluteHour24 = (OPERATING_HOURS.START_HOUR + Math.floor(roundedMins / 60)) % 24;
-        const minute = roundedMins % 60;
-        const period: 'AM' | 'PM' = absoluteHour24 >= 12 && absoluteHour24 < 24 ? 'PM' : 'AM';
-        const h12 = absoluteHour24 % 12 === 0 ? 12 : absoluteHour24 % 12;
-
-        setSelectedHour(h12);
-        setSelectedMinute(minute);
-        setSelectedPeriod(period);
-        if (durationHours === null) {
-            setDurationHours(1);
-        }
-        playPs5NavigateSound();
-    };
 
     const roomSubtotal = hasSelectedDuration ? Math.round((durationHours || 0) * currentRoom.rate) : 0;
     const isReadyToContinue = hasSelectedTime && hasSelectedDuration && currentAvailability.isAvailable;
@@ -932,176 +890,63 @@ export default function BookingDetailsPage() {
                 </div>
 
                 {/* ========================================================= */}
-                {/* 3. MOBILE-PRIORITY: ULTRA-CLEAR SCHEDULE & AVAILABILITY   */}
+                {/* 3. BOOKED APPOINTMENTS SUMMARY (CLEAN & MINIMAL)           */}
                 {/* ========================================================= */}
-                <div className="bg-white dark:bg-[#120e10] border border-neutral-200/80 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+                <div className="bg-white dark:bg-[#120e10] border border-neutral-200/80 dark:border-white/[0.08] rounded-2xl p-3.5 sm:p-4 shadow-xs space-y-3">
                     {/* Header & Status Summary */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-neutral-100 dark:border-white/[0.06]">
+                    <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-red-600 dark:text-red-500" />
-                            <h2 className="font-bold text-sm text-neutral-900 dark:text-white">
-                                جدول مواعيد اليوم ({currentRoom.nameEn})
-                            </h2>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            {sortedBookings.length > 0 ? (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400">
-                                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                                    <span>يوجد {sortedBookings.length} موعد محجوز</span>
-                                </span>
-                            ) : (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/50 text-emerald-600 dark:text-emerald-400">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                                    <span>الغرفة متاحة طوال اليوم</span>
-                                </span>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Interactive 24h Timeline Bar */}
-                    <div className="space-y-2">
-                        <div
-                            onClick={handleTimelineClick}
-                            className="relative w-full h-9 sm:h-10 bg-neutral-100 dark:bg-[#060810] border border-neutral-200 dark:border-white/15 rounded-xl overflow-hidden shadow-inner cursor-pointer active:scale-[0.99] transition-transform"
-                            title="المس أو اضغط على أي وقت على الشريط لاختياره مباشرة"
-                        >
-                            {/* Hour Grid Markers */}
-                            <div className="absolute inset-0 flex justify-between px-2 pointer-events-none opacity-20">
-                                {[0, 20, 40, 60, 80, 100].map((pos) => (
-                                    <div key={pos} className="w-[1px] h-full bg-neutral-400 dark:bg-white" />
-                                ))}
+                            <div className="w-7 h-7 rounded-lg bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                                <Lock className="w-3.5 h-3.5" />
                             </div>
-
-                            {/* Booked Intervals (Red Striped Blocks) */}
-                            {sortedBookings.map((b, idx) => {
-                                const left = getTimelinePercent(b.start);
-                                const right = getTimelinePercent(b.end);
-                                const width = Math.max(2, right - left);
-                                return (
-                                    <div
-                                        key={idx}
-                                        style={{ left: `${left}%`, width: `${width}%` }}
-                                        className="absolute top-0 bottom-0 bg-red-600/80 border-x border-red-400 flex items-center justify-center text-[10px] text-white font-mono font-bold overflow-hidden shadow-sm pointer-events-none"
-                                        title={`محجوز من ${formatArabicTimeDetailed(b.start)} إلى ${formatArabicTimeDetailed(b.end)}`}
-                                    >
-                                        <Lock className="w-3.5 h-3.5 text-white shrink-0 drop-shadow-sm" />
-                                    </div>
-                                );
-                            })}
-
-                            {/* Customer's Proposed Selection (Green/Cyan or Warning Red) */}
-                            {proposedTimeline && (
-                                <div
-                                    style={{ left: `${proposedTimeline.left}%`, width: `${proposedTimeline.width}%` }}
-                                    className={`absolute top-0 bottom-0 transition-all border-2 flex items-center justify-center text-[10px] font-bold shadow-md z-10 pointer-events-none ${
-                                        currentAvailability.isAvailable
-                                            ? 'bg-emerald-500/85 border-emerald-400 text-white shadow-[0_0_12px_rgba(16,185,129,0.6)]'
-                                            : 'bg-red-500/85 border-amber-300 text-white animate-pulse'
-                                    }`}
-                                >
-                                    <span className="truncate px-1 font-mono text-[10px]">
-                                        {currentAvailability.isAvailable ? 'جلستك' : 'تعارض'}
-                                    </span>
-                                </div>
-                            )}
+                            <div>
+                                <h2 className="font-bold text-xs sm:text-sm text-neutral-900 dark:text-white leading-tight">
+                                    المواعيد المحجوزة اليوم ({currentRoom.nameEn})
+                                </h2>
+                                <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                                    {sortedBookings.length > 0 ? 'غير متاحة للاختيار منعاً للتعارض' : 'جميع المواعيد متاحة للحجز'}
+                                </p>
+                            </div>
                         </div>
 
-                        {/* Timeline Labels */}
-                        <div className="flex justify-between text-[10px] font-mono text-neutral-400 px-1" dir="ltr">
-                            <span>08:00 ص</span>
-                            <span>12:00 م</span>
-                            <span>04:00 م</span>
-                            <span>08:00 م</span>
-                            <span>12:00 ص</span>
-                            <span>04:00 ص</span>
-                        </div>
+                        {sortedBookings.length > 0 ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 font-mono">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                <span>{sortedBookings.length} {sortedBookings.length === 1 ? 'موعد محجوز' : sortedBookings.length === 2 ? 'موعدان محجوزان' : 'مواعيد محجوزة'}</span>
+                            </span>
+                        ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/50 text-emerald-600 dark:text-emerald-400">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                متاحة بالكامل
+                            </span>
+                        )}
                     </div>
 
-                    {/* Collapsible Occupied Slots Dropdown */}
+                    {/* Booked Slots Display */}
                     {sortedBookings.length > 0 ? (
-                        <div className="rounded-2xl border border-red-200/80 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20 overflow-hidden transition-all duration-200">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowOccupiedDropdown(prev => !prev);
-                                    playPs5NavigateSound();
-                                }}
-                                className="w-full p-3.5 flex items-center justify-between gap-3 text-right cursor-pointer hover:bg-red-100/50 dark:hover:bg-red-900/30 transition-colors"
-                            >
-                                <div className="flex items-center gap-2.5">
-                                    <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-900/60 border border-red-200 dark:border-red-800/40 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
-                                        <Lock className="w-4 h-4" />
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold text-xs text-red-900 dark:text-red-200">
-                                                المواعيد المحجوزة مسبقاً (غير متاحة)
-                                            </span>
-                                            <span className="px-2 py-0.5 rounded-full bg-red-600/10 dark:bg-red-900/60 text-red-600 dark:text-red-300 font-mono text-[10px] font-bold">
-                                                {sortedBookings.length}
-                                            </span>
-                                        </div>
-                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium">
-                                            {showOccupiedDropdown ? 'اضغط لطي القائمة' : 'اضغط لعرض تفاصيل المواعيد المغلقة'}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-2 shrink-0">
-                                    <span className="text-[11px] font-semibold text-red-600 dark:text-red-400 hidden sm:inline">
-                                        {showOccupiedDropdown ? 'إخفاء' : 'عرض'}
+                        <div className="flex flex-wrap gap-2 pt-0.5">
+                            {sortedBookings.map((b, idx) => (
+                                <div
+                                    key={idx}
+                                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-neutral-50 dark:bg-white/[0.04] border border-red-200/70 dark:border-red-900/40 text-neutral-800 dark:text-neutral-200 text-xs font-mono shadow-2xs"
+                                >
+                                    <Lock className="w-3 h-3 text-red-500 shrink-0" />
+                                    <span className="font-semibold text-neutral-900 dark:text-white">
+                                        {formatArabicTimeDetailed(b.start)}
                                     </span>
-                                    <div className={`w-7 h-7 rounded-lg bg-white/80 dark:bg-white/5 border border-red-200/80 dark:border-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400 transition-transform duration-200 ${showOccupiedDropdown ? 'rotate-180' : ''}`}>
-                                        <ChevronDown className="w-4 h-4" />
-                                    </div>
+                                    <span className="text-neutral-400 text-[10px]">إلى</span>
+                                    <span className="font-semibold text-neutral-900 dark:text-white">
+                                        {formatArabicTimeDetailed(b.end)}
+                                    </span>
                                 </div>
-                            </button>
-
-                            {showOccupiedDropdown && (
-                                <div className="p-3 pt-0 border-t border-red-200/50 dark:border-red-900/30 space-y-2 max-h-60 overflow-y-auto mt-2">
-                                    {sortedBookings.map((b, idx) => (
-                                        <div
-                                            key={idx}
-                                            className="p-3 rounded-xl bg-white dark:bg-[#151012] border border-red-200/60 dark:border-red-900/40 flex items-center justify-between shadow-2xs"
-                                        >
-                                            <div className="flex items-center gap-2.5">
-                                                <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
-                                                    <Lock className="w-3.5 h-3.5" />
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className="font-bold text-xs text-neutral-900 dark:text-white font-mono">
-                                                        من {formatArabicTimeDetailed(b.start)} إلى {formatArabicTimeDetailed(b.end)}
-                                                    </div>
-                                                    <div className="text-[10px] text-red-500 font-medium">
-                                                        محجوز مسبقاً • غير متاح للحجز
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <span className="px-2 py-0.5 rounded bg-red-500/10 dark:bg-red-950 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 font-bold text-[10px] shrink-0 font-mono">
-                                                محجوز ✕
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                            ))}
                         </div>
                     ) : (
-                        <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-600/40 flex items-center gap-3 text-emerald-900 dark:text-emerald-300 text-xs">
-                            <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            <div>
-                                <div className="font-bold text-sm text-emerald-950 dark:text-emerald-200">
-                                    الغرفة متاحة بالكامل طوال اليوم!
-                                </div>
-                                <div className="text-xs text-emerald-700 dark:text-emerald-400/90 mt-0.5">
-                                    لا يوجد أي حجز مسبق. يمكنك اختيار أي موعد تريده بحرية تامة من 08:00 ص حتى 04:00 ص.
-                                </div>
-                            </div>
+                        <div className="p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/30 flex items-center gap-2 text-emerald-700 dark:text-emerald-300 text-xs">
+                            <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
+                            <span>الغرفة متاحة بالكامل اليوم! لا توجد أي حجوزات مسبقة.</span>
                         </div>
                     )}
-
-
                 </div>
 
                 {/* ========================================================= */}
