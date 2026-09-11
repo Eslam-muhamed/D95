@@ -613,7 +613,7 @@ export default function BookingPaymentPage() {
 
                                 <div className="bg-red-600 px-3.5 py-2 rounded-xl flex flex-col items-center justify-center shrink-0 shadow-md text-white">
                                     <span className="text-[10px] font-bold text-white/80">المطلوب</span>
-                                    <span className="font-brush text-2xl font-black leading-tight">{netTotal}</span>
+                                    <span className="font-bebas text-3xl font-black leading-tight tracking-wider">{netTotal}</span>
                                     <span className="text-[10px] font-bold">ج.م</span>
                                 </div>
                             </div>
@@ -652,7 +652,7 @@ export default function BookingPaymentPage() {
                                 <div className="flex justify-between items-center pt-3 border-t border-neutral-200 dark:border-white/10">
                                     <span className="font-bold text-sm text-neutral-900 dark:text-white">المبلغ النهائي المستحق:</span>
                                     <div className="flex items-baseline gap-1">
-                                        <span className="font-brush text-2xl sm:text-3xl font-black text-red-600 dark:text-red-500">{netTotal}</span>
+                                        <span className="font-bebas text-3xl sm:text-4xl font-black text-red-600 dark:text-red-500 tracking-wider">{netTotal}</span>
                                         <span className="text-xs text-neutral-500 dark:text-neutral-400 font-bold">ج.م</span>
                                     </div>
                                 </div>

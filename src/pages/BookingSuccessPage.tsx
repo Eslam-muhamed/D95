@@ -220,7 +220,7 @@ export default function BookingSuccessPage() {
                                     D95
                                 </span>
                                 <div className="flex flex-col">
-                                    <span className="font-brush text-sm tracking-wider text-neutral-900 dark:text-white">VIP BOARDING PASS</span>
+                                    <span className="font-bebas text-base tracking-wider text-neutral-900 dark:text-white font-bold">VIP BOARDING PASS</span>
                                     <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-semibold">ESPORTS &amp; GAMING SUITES</span>
                                 </div>
                             </div>
@@ -320,7 +320,7 @@ export default function BookingSuccessPage() {
                                 </span>
                                 <div className="flex items-baseline gap-1 mt-1">
                                     <span className="text-neutral-500 dark:text-neutral-400 text-xs font-body">الإجمالي:</span>
-                                    <span className="font-brush font-black text-2xl text-red-600 dark:text-red-400">{netTotal}</span>
+                                    <span className="font-bebas font-black text-3xl text-red-600 dark:text-red-400 tracking-wider">{netTotal}</span>
                                     <span className="text-xs text-neutral-500 dark:text-neutral-400 font-bold">ج.م</span>
                                 </div>
                             </div>
