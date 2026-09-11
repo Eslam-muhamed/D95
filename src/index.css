@@ -121,7 +121,7 @@ html {
     scroll-behavior: smooth;
 }
 
-body {
+body, button, input, select, textarea {
     font-family: 'Bebas Neue', 'Changa', 'Cairo', system-ui, sans-serif;
     background: #090707;
     background: var(--bg-main);
@@ -141,6 +141,7 @@ h1, h2, h3, h4, h5, h6, .font-heading, .font-display, .font-bebas {
     letter-spacing: 0.03em;
 }
 
+/* Strict D95 Logo brush font mark */
 .font-brush, .font-logo-brush {
     font-family: 'Permanent Marker', 'Cairo', cursive, sans-serif;
     letter-spacing: 0.05em;

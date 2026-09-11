@@ -79,7 +79,7 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                         </div>
                     </div>
                     <div className="mt-4 flex items-baseline justify-between">
-                        <span className="font-brush text-4xl font-bold text-white">
+                        <span className="font-bebas text-5xl font-black text-white tracking-wider">
                             {pendingBookings.length}
                         </span>
                         <span className="text-xs text-amber-400/80 flex items-center gap-1 group-hover:translate-x-[-2px] transition-transform">
@@ -101,7 +101,7 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                         </div>
                     </div>
                     <div className="mt-4 flex items-baseline justify-between">
-                        <span className="font-brush text-4xl font-bold text-white">
+                        <span className="font-bebas text-5xl font-black text-white tracking-wider">
                             {confirmedBookings.length}
                         </span>
                         <span className="text-xs text-neutral-400 flex items-center gap-1">
@@ -122,7 +122,7 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                         </div>
                     </div>
                     <div className="mt-4 flex items-baseline justify-between">
-                        <span className="font-brush text-4xl font-bold text-white">
+                        <span className="font-bebas text-5xl font-black text-white tracking-wider">
                             {productCount}
                         </span>
                         <span className="text-xs text-red-400/80 flex items-center gap-1 group-hover:translate-x-[-2px] transition-transform">
@@ -144,7 +144,7 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                         </div>
                     </div>
                     <div className="mt-4 flex items-baseline justify-between">
-                        <span className="font-brush text-4xl font-bold text-white">
+                        <span className="font-bebas text-5xl font-black text-white tracking-wider">
                             {offerCount}
                         </span>
                         <span className="text-xs text-red-400/80 flex items-center gap-1 group-hover:translate-x-[-2px] transition-transform">

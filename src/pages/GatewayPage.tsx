@@ -76,7 +76,7 @@ export default function GatewayPage() {
                 {/* Status Badge */}
                 <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-white/80 dark:bg-black/60 rounded-full border border-neutral-300 dark:border-neutral-700/60 mb-2 shadow-md backdrop-blur-sm">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="font-brush text-xs text-neutral-800 dark:text-neutral-200 tracking-wider">OFFICIAL PORTAL</span>
+                    <span className="font-bebas text-xs sm:text-sm text-neutral-800 dark:text-neutral-200 tracking-wider">OFFICIAL PORTAL</span>
                     <span className="text-neutral-400 text-xs">•</span>
                     <span className="font-body text-[11px] text-red-600 dark:text-red-400 font-bold">مفتوح الآن</span>
                 </div>
@@ -265,7 +265,7 @@ export default function GatewayPage() {
             {/* Bottom Signoff */}
             <footer className="relative z-10 w-full max-w-xl mx-auto flex flex-col items-center text-center space-y-1.5 shrink-0">
                 <div className="px-4 py-1.5 rounded-lg bg-red-100 dark:bg-red-950/70 border border-red-300 dark:border-red-700/50 shadow-sm dark:shadow-lg">
-                    <p className="font-brush text-xs sm:text-sm text-red-800 dark:text-red-200 tracking-wider">
+                    <p className="font-bebas text-sm sm:text-base text-red-800 dark:text-red-200 tracking-wider font-bold">
                         THANK YOU &amp; ENJOY YOUR TIME!
                     </p>
                 </div>
