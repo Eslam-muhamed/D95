@@ -68,5 +68,6 @@ export interface DBBooking {
         quantity?: number;
     }>;
     notes: string | null;
+    promo_code?: string;
     created_at: string;
 }

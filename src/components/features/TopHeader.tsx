@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ShoppingBag, Sun, Moon } from 'lucide-react';
+import { ArrowRight, ShoppingBag, Sun, Moon, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/stores/cartStore';
 import { useTheme } from '@/stores/themeStore';
+import { isAudioMuted, toggleAudioMute } from '@/lib/sound';
 
 interface Props {
   onCartOpen?: () => void;
@@ -11,6 +13,12 @@ interface Props {
 export default function TopHeader({ onCartOpen }: Props = {}) {
   const { itemCount, openCart } = useCart();
   const { theme, toggleTheme } = useTheme();
+  const [muted, setMuted] = useState(() => isAudioMuted());
+
+  const handleToggleSound = () => {
+    const next = toggleAudioMute();
+    setMuted(next);
+  };
 
   const handleCartClick = onCartOpen || (() => openCart('cafe'));
 
@@ -66,6 +74,21 @@ export default function TopHeader({ onCartOpen }: Props = {}) {
 
         {/* Left side (RTL end): Theme toggle & Cart button */}
         <div className="flex items-center gap-2">
+          {/* Sound Mute Toggle */}
+          <button
+            type="button"
+            onClick={handleToggleSound}
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/20 border border-neutral-200 dark:border-white/15 text-neutral-800 dark:text-neutral-200 shadow-sm active:scale-95"
+            aria-label={muted ? 'تشغيل الصوت' : 'كتم الصوت'}
+            title={muted ? 'تشغيل أصوات الموقع' : 'كتم أصوات الموقع'}
+          >
+            {muted ? (
+              <VolumeX size={17} className="text-red-500" />
+            ) : (
+              <Volume2 size={17} className="text-emerald-500 dark:text-emerald-400" />
+            )}
+          </button>
+
           <button
             onClick={toggleTheme}
             className="w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/20 border border-neutral-200 dark:border-white/15 text-neutral-800 dark:text-neutral-200 shadow-sm active:scale-95"

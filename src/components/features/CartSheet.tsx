@@ -22,6 +22,7 @@ import {
 import { useCart } from '@/stores/cartStore';
 import { getItemUnitPrice } from '@/lib/cartUtils';
 import { CONTACT_INFO } from '@/constants/contactInfo';
+import { supabase } from '@/lib/supabase';
 
 const CAFE_NAME = CONTACT_INFO.fullName;
 const WHATSAPP_PHONE = CONTACT_INFO.whatsappNumber;
@@ -131,7 +132,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
   const playstationGrandTotal = (booking?.subtotal ?? 0) + playstationSnacksTotal;
 
   // Build WhatsApp Message specifically for Café Orders
-  const buildCafeWhatsAppMsg = () => {
+  const buildCafeWhatsAppMsg = (orderNum?: string) => {
     const payFull = PAYMENT_OPTIONS.find(p => p.value === paymentMethod)?.fullLabel ?? '';
     const itemLines = items
       .map(i => {
@@ -141,12 +142,14 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
       })
       .join('\n');
 
+    const refLine = orderNum ? `🔖 رقم الطلب: ${orderNum}\n` : '';
+
     if (orderType === 'dine') {
-      const header = `🪑 --- طلبية داخل صالة الكافيه ---\n🏠 ${CAFE_NAME}\n🪑 رقم الطاولة / مكان الجلوس: ${tableNo || 'غير محدد'}\n\n`;
+      const header = `🪑 --- طلبية داخل صالة الكافيه ---\n🏠 ${CAFE_NAME}\n${refLine}🪑 رقم الطاولة / مكان الجلوس: ${tableNo || 'غير محدد'}\n\n`;
       return encodeURIComponent(`${header}${itemLines}\n\n💰 إجمالي الكافيه: ${cafeTotal} ج.م`);
     } else {
       const header =
-        `🛵 --- طلب دليفري / توصيل خارجي ---\n🏠 ${CAFE_NAME}\n` +
+        `🛵 --- طلب دليفري / توصيل خارجي ---\n🏠 ${CAFE_NAME}\n${refLine}` +
         `👤 الاسم: ${delivName}\n📱 الموبايل: ${delivPhone}\n📍 العنوان: ${delivAddr}\n💳 طريقة الدفع: ${payFull}\n\n`;
       return encodeURIComponent(`${header}${itemLines}\n\n💰 الإجمالي: ${cafeTotal} ج.م`);
     }
@@ -174,8 +177,35 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
     return encodeURIComponent(msg);
   };
 
-  const sendCafeOrder = () => {
-    window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${buildCafeWhatsAppMsg()}`, '_blank');
+  const sendCafeOrder = async () => {
+    const orderNumber = `D95-ORD-${Date.now().toString(36).slice(-4).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    // Asynchronously save order to database
+    try {
+      await supabase.from('orders').insert({
+        order_number: orderNumber,
+        customer_name: orderType === 'delivery' ? (delivName.trim() || 'عميل دليفري') : `طاولة ${tableNo || 'صالة'}`,
+        customer_phone: orderType === 'delivery' ? delivPhone.trim() : null,
+        order_type: orderType,
+        table_number: orderType === 'dine' ? (tableNo.trim() || null) : null,
+        delivery_address: orderType === 'delivery' ? (delivAddr.trim() || null) : null,
+        payment_method: paymentMethod,
+        items: items.map(i => ({
+          id: i.id,
+          name: i.name,
+          price: getItemUnitPrice(i),
+          quantity: i.customization.quantity,
+          customization: i.customization,
+        })),
+        subtotal: cafeTotal,
+        total_amount: cafeTotal,
+        status: 'pending',
+      });
+    } catch (err) {
+      console.warn('Could not persist cafe order to database:', err);
+    }
+
+    window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${buildCafeWhatsAppMsg(orderNumber)}`, '_blank');
   };
 
   const sendPsOrder = () => {

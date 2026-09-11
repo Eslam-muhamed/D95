@@ -35,7 +35,7 @@ export default function ItemCustomizerModal({ item, onClose }: Props) {
       setQuantity(1);
       setNotes('');
     }
-  }, [item?.id]);
+  }, [item]);
 
   const handleClose = useCallback(() => {
     setNotes('');

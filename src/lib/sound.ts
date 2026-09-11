@@ -1,6 +1,35 @@
 let audioCtx: AudioContext | null = null;
+let isSoundMuted = false;
+
+try {
+    isSoundMuted = typeof window !== 'undefined' && localStorage.getItem('d95_sound_muted') === 'true';
+} catch {
+    // Ignore localStorage restrictions
+}
+
+export function isAudioMuted(): boolean {
+    return isSoundMuted;
+}
+
+export function setAudioMuted(muted: boolean): void {
+    isSoundMuted = muted;
+    try {
+        localStorage.setItem('d95_sound_muted', muted ? 'true' : 'false');
+    } catch {
+        // Ignore
+    }
+}
+
+export function toggleAudioMute(): boolean {
+    const next = !isSoundMuted;
+    setAudioMuted(next);
+    return next;
+}
 
 function getAudioContext(): AudioContext {
+    if (isSoundMuted) {
+        throw new Error('Sound muted');
+    }
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     }

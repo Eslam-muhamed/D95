@@ -69,6 +69,15 @@ export default function BookingPaymentPage() {
         return null;
     });
 
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('instapay');
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [notes, setNotes] = useState('');
+    const [promoInput, setPromoInput] = useState('');
+    const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
+    const [copiedKey, setCopiedKey] = useState<string | null>(null);
+    const [submitting, setSubmitting] = useState(false);
+
     useEffect(() => {
         if (!bookingState || !bookingState.room) {
             toast.info('يرجى اختيار الغرفة والموعد المناسب أولاً 🎮');
@@ -109,14 +118,6 @@ export default function BookingPaymentPage() {
         ? snacks.reduce((sum: number, s: SnackItem) => sum + (s.price || 0), 0)
         : cafeTotal;
 
-    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('instapay');
-    const [name, setName] = useState('');
-    const [phone, setPhone] = useState('');
-    const [notes, setNotes] = useState('');
-    const [promoInput, setPromoInput] = useState('');
-    const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
-    const [copiedKey, setCopiedKey] = useState<string | null>(null);
-
     // Copy with animated feedback
     const handleCopy = (text: string, key: string) => {
         navigator.clipboard.writeText(text);
@@ -145,7 +146,6 @@ export default function BookingPaymentPage() {
     const rawTotal = (roomSubtotal || 200) + (effectiveSnacksTotal || 0);
     const discountAmount = appliedPromo ? Math.round(rawTotal * 0.1) : 0;
     const netTotal = Math.max(0, rawTotal - discountAmount);
-    const [submitting, setSubmitting] = useState(false);
 
     const handleConfirm = async () => {
         if (!name.trim() || name.trim().length < 3) {
@@ -209,6 +209,7 @@ export default function BookingPaymentPage() {
                 status: 'pending',
                 snacks: effectiveSnacks || [],
                 notes: notes.trim() || null,
+                promo_code: appliedPromo || undefined,
             });
 
             // Booking successfully recorded - clear cart & pending session

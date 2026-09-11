@@ -160,16 +160,16 @@ function DrumWheelColumn<T extends string | number>({
         const currentScroll = e.currentTarget.scrollTop;
         const index = Math.round(currentScroll / itemHeight);
 
-        if (index >= 0 && index < items.length) {
-            const item = items[index];
-            if (item && item.value !== selectedValue) {
-                onSelect(item.value);
-            }
-        }
-
+        // Debounce selection commit to prevent 60+ re-renders per second while scrolling
         scrollTimeoutRef.current = setTimeout(() => {
             isUserScrollingRef.current = false;
-        }, 150);
+            if (index >= 0 && index < items.length) {
+                const item = items[index];
+                if (item && item.value !== selectedValue) {
+                    onSelect(item.value);
+                }
+            }
+        }, 90);
     };
 
     return (

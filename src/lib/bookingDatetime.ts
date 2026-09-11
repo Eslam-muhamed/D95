@@ -59,6 +59,26 @@ export function addDaysToDateString(dateStr: string, days: number): string {
 }
 
 /**
+ * Helper to get the UTC offset in minutes for Africa/Cairo on a specific date.
+ * Handles Egypt DST changes accurately.
+ */
+export function getCairoOffsetMinutes(d: Date): number {
+    try {
+        const str = d.toLocaleString('en-US', { timeZone: 'Africa/Cairo', timeZoneName: 'shortOffset' });
+        const match = str.match(/GMT([+-]\d+)(?::(\d+))?/);
+        if (match) {
+            const hours = parseInt(match[1], 10);
+            const mins = match[2] ? parseInt(match[2], 10) : 0;
+            return (hours * 60) + (hours < 0 ? -mins : mins);
+        }
+    } catch {
+        // Fallback: Egypt is UTC+3 in summer (Apr-Oct), UTC+2 in winter
+    }
+    const month = d.getUTCMonth();
+    return (month >= 3 && month <= 9) ? 180 : 120;
+}
+
+/**
  * Format Arabic time display (e.g. 14:30 -> "02:30 م", 01:15 -> "01:15 ص").
  */
 export function formatArabicTime(hour24: number, minute: number): string {
@@ -68,10 +88,27 @@ export function formatArabicTime(hour24: number, minute: number): string {
 }
 
 /**
- * Format Arabic time from Date object.
+ * Format Arabic time from Date object pinned to Africa/Cairo timezone.
  */
 export function formatArabicTimeFromDate(d: Date): string {
-    return formatArabicTime(d.getHours(), d.getMinutes());
+    try {
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'Africa/Cairo',
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: false,
+        });
+        const parts = formatter.formatToParts(d);
+        let h = 0;
+        let m = 0;
+        for (const part of parts) {
+            if (part.type === 'hour') h = parseInt(part.value, 10);
+            if (part.type === 'minute') m = parseInt(part.value, 10);
+        }
+        return formatArabicTime(h, m);
+    } catch {
+        return formatArabicTime(d.getHours(), d.getMinutes());
+    }
 }
 
 /**
@@ -86,23 +123,7 @@ export function getPeriodName(hour24: number): string {
 }
 
 /**
- * Get opening and closing Date objects for a business date.
- * Opening: businessDate 08:00:00
- * Closing: (businessDate + 1 day) 04:00:00
- */
-export function getBusinessOperatingWindow(businessDate: string): { opening: Date; closing: Date } {
-    const nextDay = addDaysToDateString(businessDate, 1);
-    const [y1, m1, d1] = businessDate.split('-').map(Number);
-    const [y2, m2, d2] = nextDay.split('-').map(Number);
-
-    const opening = new Date(y1, m1 - 1, d1, OPERATING_HOURS.START_HOUR, OPERATING_HOURS.START_MINUTE, 0, 0);
-    const closing = new Date(y2, m2 - 1, d2, OPERATING_HOURS.CLOSING_HOUR, OPERATING_HOURS.CLOSING_MINUTE, 0, 0);
-
-    return { opening, closing };
-}
-
-/**
- * Convert a businessDate and a time24 string (e.g. "23:30" or "01:15") into an exact Date object.
+ * Convert a businessDate and a time24 string (e.g. "23:30" or "01:15") into an exact Date object in Cairo time.
  * If hour < 8 (e.g. 00:00 to 04:00), it belongs to the next calendar day.
  */
 export function createDateTimeFromBusinessDate(businessDate: string, time24: string): Date {
@@ -114,7 +135,21 @@ export function createDateTimeFromBusinessDate(businessDate: string, time24: str
     const targetDateStr = isNextDay ? addDaysToDateString(businessDate, 1) : businessDate;
 
     const [y, m, d] = targetDateStr.split('-').map(Number);
-    return new Date(y, m - 1, d, hour, minute, 0, 0);
+    const approx = new Date(Date.UTC(y, m - 1, d, hour, minute));
+    const offsetMins = getCairoOffsetMinutes(approx);
+    const utcTimestamp = Date.UTC(y, m - 1, d, hour, minute, 0, 0) - (offsetMins * 60 * 1000);
+    return new Date(utcTimestamp);
+}
+
+/**
+ * Get opening and closing Date objects for a business date pinned to Cairo time.
+ * Opening: businessDate 08:00:00
+ * Closing: (businessDate + 1 day) 04:00:00
+ */
+export function getBusinessOperatingWindow(businessDate: string): { opening: Date; closing: Date } {
+    const opening = createDateTimeFromBusinessDate(businessDate, '08:00');
+    const closing = createDateTimeFromBusinessDate(businessDate, '04:00');
+    return { opening, closing };
 }
 
 /**

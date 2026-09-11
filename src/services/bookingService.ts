@@ -359,7 +359,55 @@ export async function extendBookingAndShiftConflicting(
         throw new Error('يوجد تعارض مع حجوزات تالية. يرجى تفعيل خيار ترحيل الحجز التالي.');
     }
 
-    // 3. Shift conflicting bookings in REVERSE order (furthest first) to prevent transient overlaps
+    // 3. Prepare atomic payload for PostgreSQL RPC
+    const newSubtotal = Number(((targetBooking.subtotal || 0) + extraPrice).toFixed(2));
+    const newTotal = Number(((targetBooking.total_amount || 0) + extraPrice).toFixed(2));
+
+    const shiftsPayload = preview.conflictingBookings.map(item => ({
+        id: item.booking.id,
+        start_datetime: item.shiftedStart.toISOString(),
+        end_datetime: item.shiftedEnd.toISOString(),
+        start_time: item.shiftedStartTimeStr,
+        end_time: item.shiftedEndTimeStr,
+    }));
+
+    const targetUpdatesPayload = {
+        end_datetime: preview.newEnd.toISOString(),
+        end_time: preview.newEndTimeStr,
+        duration_hours: preview.newDurationHours,
+        subtotal: newSubtotal,
+        total_amount: newTotal,
+    };
+
+    // Try atomic RPC in a single transaction
+    const { data: atomicData, error: atomicErr } = await supabase.rpc('extend_booking_atomic', {
+        p_booking_id: bookingId,
+        p_target_updates: targetUpdatesPayload,
+        p_shifts: shiftsPayload,
+    });
+
+    if (!atomicErr && atomicData) {
+        // Construct shifted objects for UI state update
+        const shiftedBookings: DBBooking[] = preview.conflictingBookings.map(item => ({
+            ...item.booking,
+            start_datetime: item.shiftedStart.toISOString(),
+            end_datetime: item.shiftedEnd.toISOString(),
+            start_time: item.shiftedStartTimeStr,
+            end_time: item.shiftedEndTimeStr,
+        }));
+
+        return {
+            success: true,
+            extendedBooking: atomicData as DBBooking,
+            shiftedBookings,
+        };
+    }
+
+    if (atomicErr) {
+        console.warn('extend_booking_atomic RPC failed, trying fallback:', atomicErr.message);
+    }
+
+    // Fallback: reverse order updates
     const shiftedResults: DBBooking[] = [];
     for (let i = preview.conflictingBookings.length - 1; i >= 0; i--) {
         const item = preview.conflictingBookings[i];
@@ -382,19 +430,9 @@ export async function extendBookingAndShiftConflicting(
         shiftedResults.unshift(updatedShifted as DBBooking);
     }
 
-    // 4. Update the target extended booking
-    const newSubtotal = Number(((targetBooking.subtotal || 0) + extraPrice).toFixed(2));
-    const newTotal = Number(((targetBooking.total_amount || 0) + extraPrice).toFixed(2));
-
     const { data: updatedTarget, error: updateErr } = await supabase
         .from('ps_bookings')
-        .update({
-            end_datetime: preview.newEnd.toISOString(),
-            end_time: preview.newEndTimeStr,
-            duration_hours: preview.newDurationHours,
-            subtotal: newSubtotal,
-            total_amount: newTotal,
-        })
+        .update(targetUpdatesPayload)
         .eq('id', bookingId)
         .select()
         .single();
