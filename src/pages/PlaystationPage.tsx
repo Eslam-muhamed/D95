@@ -224,7 +224,7 @@ export default function PlaystationPage() {
                                     <span className="font-brush font-black text-2xl text-[#E5252A] -ml-0.5">95</span>
                                 </div>
                                 <span className="h-1.5 w-1.5 bg-red-600 rounded-full inline-block shadow-[0_0_8px_#c41e3a]" />
-                                <span className="text-xs font-bold bg-red-100 dark:bg-red-600/20 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full font-bebas tracking-wider border border-red-200 dark:border-red-600/30">
+                                <span className="text-[10px] font-bold bg-red-100 dark:bg-red-600/20 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full font-brush tracking-wider border border-red-200 dark:border-red-600/30">
                                     GAMING LOUNGE
                                 </span>
                             </div>
@@ -290,10 +290,10 @@ export default function PlaystationPage() {
                     HEADER: "CHOOSE YOUR GAMING ROOM"
                    ───────────────────────────────────────────────────────────── */}
                 <div className="text-center mt-0 sm:mt-1 mb-3.5 sm:mb-8 space-y-1">
-                    <span className="text-xs sm:text-sm font-bebas tracking-[0.25em] text-neutral-500 dark:text-neutral-400 uppercase font-bold">
+                    <span className="text-[9px] sm:text-xs font-brush tracking-[0.25em] text-neutral-500 dark:text-neutral-400 uppercase">
                         CHOOSE YOUR
                     </span>
-                    <h1 className="font-bebas text-3xl sm:text-6xl md:text-7xl font-black text-neutral-900 dark:text-white tracking-wider flex items-center justify-center gap-2 drop-shadow-sm dark:drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
+                    <h1 className="font-brush text-2xl sm:text-5xl md:text-6xl font-black text-neutral-900 dark:text-white tracking-wider flex items-center justify-center gap-2 drop-shadow-sm dark:drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
                         <span>GAMING</span>
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 dark:from-cyan-400 dark:via-sky-400 dark:to-blue-500 drop-shadow-[0_0_25px_rgba(6,182,212,0.4)]">
                             ROOM
@@ -381,7 +381,7 @@ export default function PlaystationPage() {
                                                         PlayStation 5 VIP
                                                     </span>
                                                 </div>
-                                                <h3 className="font-bebas text-base sm:text-2xl font-black text-white drop-shadow-md truncate tracking-wide">
+                                                <h3 className="font-brush text-sm sm:text-2xl font-black text-white drop-shadow-md truncate">
                                                     {isRoom1 ? 'غرفة الأبطال' : 'غرفة النجوم VIP'}
                                                 </h3>
                                             </div>
@@ -452,7 +452,7 @@ export default function PlaystationPage() {
                                         <div className="flex flex-col xs:flex-row items-stretch xs:items-center justify-between gap-1.5 sm:gap-3 pt-2 sm:pt-3 border-t border-neutral-200 dark:border-white/[0.08]">
                                             <div className="flex items-baseline justify-between xs:justify-start xs:flex-col text-right">
                                                 <div className="flex items-baseline gap-1" dir="ltr">
-                                                    <span className="font-bebas text-xl sm:text-3xl font-black text-neutral-900 dark:text-white tracking-tight">
+                                                    <span className="font-brush text-lg sm:text-3xl font-black text-neutral-900 dark:text-white tracking-tight">
                                                         {room.rate}
                                                     </span>
                                                     <span className="text-[10px] sm:text-xs font-bold text-neutral-500 dark:text-neutral-400 font-sans">
@@ -556,7 +556,7 @@ export default function PlaystationPage() {
                 <section className="mb-10 max-w-5xl mx-auto w-full">
                     <div className="rounded-3xl bg-white dark:bg-[#1a0c10]/95 border-2 border-neutral-200 dark:border-red-600/35 p-5 sm:p-7 shadow-xl">
                         <div className="text-center mb-6">
-                            <h3 className="font-bebas text-xl sm:text-2xl font-black text-neutral-900 dark:text-white tracking-wide">
+                            <h3 className="font-brush text-lg sm:text-xl text-neutral-900 dark:text-white">
                                 تجربة لا مثيل لها في D95 GAMING LOUNGE
                             </h3>
                             <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1">
@@ -596,7 +596,7 @@ export default function PlaystationPage() {
                     </div>
 
                     <div className="flex flex-col items-center justify-center space-y-1 pt-2">
-                        <p className="font-bebas text-sm sm:text-base text-red-600 dark:text-red-500/90 tracking-[0.25em] font-bold">
+                        <p className="font-brush text-xs sm:text-sm text-red-600 dark:text-red-500/90 tracking-[0.25em]">
                             THANK YOU &amp; ENJOY YOUR TIME!
                         </p>
                         <p className="font-body text-[10px] text-neutral-500 dark:text-neutral-400 uppercase tracking-widest">

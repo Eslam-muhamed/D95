@@ -73,8 +73,8 @@ const config: Config = {
             },
             fontFamily: {
                 display: ['"Bebas Neue"', 'Changa', 'Cairo', 'sans-serif'],
-                body: ['"Bebas Neue"', 'Changa', 'Cairo', 'system-ui', 'sans-serif'],
-                sans: ['"Bebas Neue"', 'Changa', 'Cairo', 'system-ui', 'sans-serif'],
+                body: ['"Bebas Neue"', 'Cairo', 'Changa', 'system-ui', 'sans-serif'],
+                sans: ['"Bebas Neue"', 'Cairo', 'Changa', 'system-ui', 'sans-serif'],
                 brush: ['"Permanent Marker"', 'cursive', 'sans-serif'],
                 bebas: ['"Bebas Neue"', 'Changa', 'Cairo', 'sans-serif'],
             },

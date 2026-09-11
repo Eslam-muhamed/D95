@@ -197,7 +197,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                         {/* Category Capsule */}
                         <div className="mt-3 flex items-center gap-2 px-4 sm:px-5 py-1.5 rounded-full bg-white/[0.04] border border-red-500/30 backdrop-blur-md shadow-lg">
                             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                            <span className="font-bebas text-sm sm:text-base font-bold tracking-[0.25em] text-neutral-200">
+                            <span className="font-brush text-xs sm:text-sm font-bold tracking-[0.25em] text-neutral-200">
                                 GAMING LOUNGE &amp; CAFÉ
                             </span>
                         </div>

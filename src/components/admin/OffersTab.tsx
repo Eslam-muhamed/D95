@@ -169,7 +169,7 @@ export default function OffersTab() {
                                 )}
 
                                 <div className="flex items-baseline gap-2 pt-1 border-t border-white/10">
-                                    <span className="font-bebas text-2xl font-black text-red-500 tracking-wider">
+                                    <span className="font-brush text-xl font-bold text-red-500">
                                         {o.price}
                                     </span>
                                     {o.original_price && (
