@@ -60,16 +60,36 @@ function formatTimeAgo(dateStr: string): string {
     return `منذ ${Math.floor(hours / 24)} يوم`;
 }
 
-export default function BookingsTab() {
+export interface BookingsTabProps {
+    initialStatusFilter?: string;
+    initialDate?: string;
+}
+
+export default function BookingsTab({ initialStatusFilter = 'all', initialDate = '' }: BookingsTabProps = {}) {
     const [bookings, setBookings] = useState<DBBooking[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedDetailBooking, setSelectedDetailBooking] = useState<DBBooking | null>(null);
-    const [statusFilter, setStatusFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
     const [search, setSearch] = useState('');
-    const [selectedDate, setSelectedDate] = useState('');
+    const [selectedDate, setSelectedDate] = useState(initialDate);
     const [policy, setPolicy] = useState<BookingPolicy | null>(null);
     const [isSavingPolicy, setIsSavingPolicy] = useState(false);
     const [expandedConflictIds, setExpandedConflictIds] = useState<Record<string, boolean>>({});
+
+    // Synchronize state if parent passes new filter
+    useEffect(() => {
+        if (initialStatusFilter) {
+            setStatusFilter(initialStatusFilter);
+            setPage(1);
+        }
+    }, [initialStatusFilter]);
+
+    useEffect(() => {
+        if (initialDate !== undefined) {
+            setSelectedDate(initialDate);
+            setPage(1);
+        }
+    }, [initialDate]);
 
     // Server-side Pagination state
     const [page, setPage] = useState<number>(1);

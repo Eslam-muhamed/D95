@@ -43,6 +43,17 @@ export default function AdminDashboardPage() {
         });
     }, [navigate]);
 
+    const [bookingsFilter, setBookingsFilter] = useState<{ status?: string; date?: string }>({ status: 'all', date: '' });
+
+    const handleSwitchTab = (tab: TabType, filter?: { status?: string; date?: string }) => {
+        if (filter) {
+            setBookingsFilter(filter);
+        } else if (tab === 'bookings') {
+            setBookingsFilter({ status: 'all', date: '' });
+        }
+        setActiveTab(tab);
+    };
+
     const handleLogout = async () => {
         try {
             await supabase.auth.signOut();
@@ -180,13 +191,18 @@ export default function AdminDashboardPage() {
 
             {/* Main Content Area */}
             <main className="flex-1 max-w-7xl w-full mx-auto p-3.5 sm:p-6 lg:p-8 pb-24 sm:pb-8">
-                {activeTab === 'overview' && <OverviewTab onSwitchTab={(t: TabType) => setActiveTab(t)} />}
+                {activeTab === 'overview' && <OverviewTab onSwitchTab={handleSwitchTab} />}
                 {activeTab === 'daily_schedule' && (
                     <DailyScheduleTab
-                        onSwitchToBookingsTab={() => setActiveTab('bookings')}
+                        onSwitchToBookingsTab={() => handleSwitchTab('bookings', { status: 'all' })}
                     />
                 )}
-                {activeTab === 'bookings' && <BookingsTab />}
+                {activeTab === 'bookings' && (
+                    <BookingsTab
+                        initialStatusFilter={bookingsFilter.status || 'all'}
+                        initialDate={bookingsFilter.date || ''}
+                    />
+                )}
                 {activeTab === 'orders' && <OrdersTab />}
                 {activeTab === 'products' && <ProductsTab />}
                 {activeTab === 'categories' && <CategoriesTab />}

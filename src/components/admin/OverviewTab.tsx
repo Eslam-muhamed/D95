@@ -20,7 +20,10 @@ import type { DBBooking } from '@/types/database';
 import BookingDetailsModal from './BookingDetailsModal';
 
 interface OverviewTabProps {
-    onSwitchTab: (tab: 'daily_schedule' | 'bookings' | 'products' | 'categories' | 'offers') => void;
+    onSwitchTab: (
+        tab: 'daily_schedule' | 'bookings' | 'products' | 'categories' | 'offers',
+        filter?: { status?: string; date?: string }
+    ) => void;
 }
 
 export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
@@ -81,7 +84,7 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* 1. Pending Bookings (Urgent) */}
                 <div
-                    onClick={() => onSwitchTab('bookings')}
+                    onClick={() => onSwitchTab('bookings', { status: 'pending' })}
                     className="bg-gradient-to-br from-[#1c1214] to-[#140e11] border border-amber-500/30 hover:border-amber-500/60 rounded-2xl p-5 shadow-lg backdrop-blur-md cursor-pointer transition-all hover:scale-[1.02] group"
                 >
                     <div className="flex items-center justify-between">
@@ -94,7 +97,7 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                         <span className="font-bebas text-5xl font-black text-white tracking-wider">
                             {pendingCount}
                         </span>
-                        <span className="text-xs text-amber-400/80 flex items-center gap-1 group-hover:translate-x-[-2px] transition-transform">
+                        <span className="text-xs text-amber-400/80 flex items-center gap-1 group-hover:translate-x-[-2px] transition-transform font-bold">
                             <span>مراجعة الآن</span>
                             <ArrowUpRight className="w-3.5 h-3.5" />
                         </span>
@@ -103,7 +106,7 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
 
                 {/* 2. Confirmed & Active Bookings */}
                 <div
-                    onClick={() => onSwitchTab('daily_schedule')}
+                    onClick={() => onSwitchTab('bookings', { status: 'confirmed' })}
                     className="bg-[#140e11]/90 border border-white/10 hover:border-emerald-500/50 rounded-2xl p-5 shadow-lg backdrop-blur-md cursor-pointer transition-all hover:scale-[1.02] group"
                 >
                     <div className="flex items-center justify-between">
@@ -116,10 +119,17 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                         <span className="font-bebas text-5xl font-black text-white tracking-wider">
                             {confirmedCount}
                         </span>
-                        <span className="text-xs text-emerald-400/90 flex items-center gap-1 group-hover:translate-x-[-2px] transition-transform">
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onSwitchTab('daily_schedule');
+                            }}
+                            className="text-xs text-emerald-400/90 hover:text-emerald-300 flex items-center gap-1 group-hover:translate-x-[-2px] transition-all font-bold cursor-pointer"
+                        >
                             <span>{todayCount} اليوم • فتح الجدول</span>
                             <ArrowUpRight className="w-3.5 h-3.5" />
-                        </span>
+                        </button>
                     </div>
                 </div>
 
@@ -138,7 +148,7 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                         <span className="font-bebas text-5xl font-black text-white tracking-wider">
                             {productCount}
                         </span>
-                        <span className="text-xs text-red-400/80 flex items-center gap-1 group-hover:translate-x-[-2px] transition-transform">
+                        <span className="text-xs text-red-400/80 flex items-center gap-1 group-hover:translate-x-[-2px] transition-transform font-bold">
                             <span>إدارة المنتجات</span>
                             <ArrowUpRight className="w-3.5 h-3.5" />
                         </span>
@@ -160,7 +170,7 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                         <span className="font-bebas text-5xl font-black text-white tracking-wider">
                             {offerCount}
                         </span>
-                        <span className="text-xs text-red-400/80 flex items-center gap-1 group-hover:translate-x-[-2px] transition-transform">
+                        <span className="text-xs text-red-400/80 flex items-center gap-1 group-hover:translate-x-[-2px] transition-transform font-bold">
                             <span>تعديل العروض</span>
                             <ArrowUpRight className="w-3.5 h-3.5" />
                         </span>
