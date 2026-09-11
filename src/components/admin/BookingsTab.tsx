@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Calendar,
     Clock,
@@ -18,6 +18,13 @@ import {
     X,
     ArrowRight,
     Sparkles,
+    ShieldCheck,
+    Lock,
+    Unlock,
+    ChevronDown,
+    ChevronUp,
+    Users,
+    Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -26,8 +33,22 @@ import {
     deleteBooking,
     calculateBookingExtensionInfo,
     extendBookingAndShiftConflicting,
+    fetchBookingPolicy,
+    updateBookingPolicy,
+    confirmBookingAndResolveConflicts,
+    groupConflictingPendingBookings,
 } from '@/services/bookingService';
-import type { DBBooking } from '@/types/database';
+import type { DBBooking, BookingPolicy } from '@/types/database';
+
+function formatTimeAgo(dateStr: string): string {
+    const diffMs = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'الآن';
+    if (mins < 60) return `منذ ${mins} دقيقة`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `منذ ${hours} ساعة`;
+    return `منذ ${Math.floor(hours / 24)} يوم`;
+}
 
 export default function BookingsTab() {
     const [bookings, setBookings] = useState<DBBooking[]>([]);
@@ -35,18 +56,25 @@ export default function BookingsTab() {
     const [statusFilter, setStatusFilter] = useState('all');
     const [search, setSearch] = useState('');
     const [selectedDate, setSelectedDate] = useState('');
+    const [policy, setPolicy] = useState<BookingPolicy | null>(null);
+    const [isSavingPolicy, setIsSavingPolicy] = useState(false);
+    const [expandedConflictIds, setExpandedConflictIds] = useState<Record<string, boolean>>({});
 
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await fetchBookings({
-                status: statusFilter !== 'all' ? statusFilter : undefined,
-                date: selectedDate || undefined,
-                search: search || undefined
-            });
+            const [data, currentPolicy] = await Promise.all([
+                fetchBookings({
+                    status: statusFilter !== 'all' ? statusFilter : undefined,
+                    date: selectedDate || undefined,
+                    search: search || undefined
+                }),
+                fetchBookingPolicy(),
+            ]);
             setBookings(data);
+            setPolicy(currentPolicy);
         } catch {
-            toast.error('تعذر جلب قائمة الحجوزات');
+            toast.error('تعذر جلب قائمة الحجوزات أو إعدادات السياسة');
         } finally {
             setLoading(false);
         }
@@ -61,15 +89,73 @@ export default function BookingsTab() {
         loadData();
     };
 
+    const handlePolicySwitch = async (mode: 'admin_approval_only' | 'temporary_hold') => {
+        if (!policy || policy.mode === mode) return;
+        setIsSavingPolicy(true);
+        try {
+            const newPolicy: BookingPolicy = {
+                mode,
+                hold_minutes: 10,
+            };
+            await updateBookingPolicy(newPolicy);
+            setPolicy(newPolicy);
+            toast.success(
+                mode === 'admin_approval_only'
+                    ? 'تم تفعيل: الموافقة المسبقة للإدارة (المواعيد تظل متاحة على الموقع حتى تؤكدها)'
+                    : 'تم تفعيل: قفل مؤقت 10 دقائق (ينفك تلقائياً بعد 10 دقائق في حال عدم التأكيد)'
+            );
+        } catch {
+            toast.error('تعذر حفظ سياسة الحجز في قاعدة البيانات');
+        } finally {
+            setIsSavingPolicy(false);
+        }
+    };
+
     const handleConfirmBooking = async (b: DBBooking) => {
         try {
-            await updateBookingStatus(b.id, 'confirmed');
-            toast.success(`تم تأكيد حجز ${b.customer_name} بنجاح! وتم قفل الموعد في الموقع على باقي الزبائن 🔒`);
-            setBookings(prev => prev.map(item => item.id === b.id ? { ...item, status: 'confirmed' } : item));
+            const { confirmedBooking, cancelledIds } = await confirmBookingAndResolveConflicts(b.id, true);
+            toast.success(
+                `تم تأكيد حجز ${b.customer_name} بنجاح! وتم قفل الموعد في الموقع ${
+                    cancelledIds.length > 0 ? `(تم إلغاء ${cancelledIds.length} طلب متنافس تلقائياً)` : ''
+                } 🔒`
+            );
+            setBookings(prev =>
+                prev.map(item => {
+                    if (item.id === confirmedBooking.id) {
+                        return confirmedBooking;
+                    }
+                    if (cancelledIds.includes(item.id)) {
+                        return {
+                            ...item,
+                            status: 'cancelled',
+                            notes: (item.notes ? item.notes + ' | ' : '') + `تم الإلغاء لتأكيد الحجز المتنافس #${confirmedBooking.reservation_id}`,
+                        };
+                    }
+                    return item;
+                })
+            );
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'حدث خطأ أثناء تأكيد الحجز';
             toast.error(msg);
         }
+    };
+
+    // Calculate overlapping pending bookings
+    const conflictGroups = useMemo(() => {
+        return groupConflictingPendingBookings(bookings);
+    }, [bookings]);
+
+    const conflictingBookingIds = useMemo(() => {
+        const set = new Set<string>();
+        conflictGroups.forEach(g => g.bookings.forEach(b => set.add(b.id)));
+        return set;
+    }, [conflictGroups]);
+
+    const toggleConflictGroup = (groupId: string) => {
+        setExpandedConflictIds(prev => ({
+            ...prev,
+            [groupId]: prev[groupId] === undefined ? false : !prev[groupId]
+        }));
     };
 
     const handleStatusChange = async (id: string, newStatus: 'pending' | 'confirmed' | 'cancelled' | 'completed') => {
@@ -188,6 +274,109 @@ export default function BookingsTab() {
 
     return (
         <div className="space-y-6">
+            {/* Booking Policy Mode Selector */}
+            <div className="bg-[#140e11]/90 border border-white/10 rounded-2xl p-4 sm:p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-xl bg-red-600/20 text-red-400 flex items-center justify-center border border-red-500/30">
+                            <ShieldCheck className="w-4 h-4" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                                <span>سياسة وقفل مواعيد الحجز</span>
+                                <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 text-neutral-300 font-normal">
+                                    تحكم مباشر
+                                </span>
+                            </h3>
+                            <p className="text-[11px] text-neutral-400">
+                                اختر كيف يتعامل الموقع مع المواعيد عند قيام العملاء بحجز غرف البلايستيشن
+                            </p>
+                        </div>
+                    </div>
+
+                    {isSavingPolicy && (
+                        <div className="flex items-center gap-1 text-xs text-amber-400 animate-pulse">
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                            <span>جاري حفظ السياسة في قاعدة البيانات...</span>
+                        </div>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {/* System 1: Admin Approval Only */}
+                    <button
+                        type="button"
+                        onClick={() => handlePolicySwitch('admin_approval_only')}
+                        disabled={isSavingPolicy}
+                        className={`text-right p-3.5 sm:p-4 rounded-xl border transition-all cursor-pointer relative flex flex-col justify-between gap-2.5 ${
+                            policy?.mode === 'admin_approval_only'
+                                ? 'bg-red-950/40 border-red-500/80 shadow-[0_0_20px_rgba(220,38,38,0.2)] ring-1 ring-red-500/50'
+                                : 'bg-[#1c1417]/80 border-white/10 hover:border-white/20 text-neutral-300'
+                        }`}
+                    >
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                                <div className={`p-1.5 rounded-lg ${policy?.mode === 'admin_approval_only' ? 'bg-red-500 text-white' : 'bg-white/5 text-neutral-400'}`}>
+                                    <Unlock className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <span className="font-bold text-xs sm:text-sm text-white block">
+                                        النظام الأول: الموافقة المسبقة للإدارة
+                                    </span>
+                                    <span className="text-[10px] text-amber-400 font-mono">
+                                        الموعد يظل متاحاً للكل حتى تعتمده
+                                    </span>
+                                </div>
+                            </div>
+                            {policy?.mode === 'admin_approval_only' && (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white shadow">
+                                    النشط حالياً
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-[11px] text-neutral-400 leading-relaxed">
+                            الموعد لا يُقفل على الموقع إلا بعد ضغطك على تأكيد. يمكن لعدة عملاء تقديم طلبات لنفس التوقيت، وستظهر لك هنا للمفاضلة وتأكيد أحدهم.
+                        </p>
+                    </button>
+
+                    {/* System 2: Temporary 10-Minute Hold */}
+                    <button
+                        type="button"
+                        onClick={() => handlePolicySwitch('temporary_hold')}
+                        disabled={isSavingPolicy}
+                        className={`text-right p-3.5 sm:p-4 rounded-xl border transition-all cursor-pointer relative flex flex-col justify-between gap-2.5 ${
+                            policy?.mode === 'temporary_hold'
+                                ? 'bg-amber-950/40 border-amber-500/80 shadow-[0_0_20px_rgba(245,158,11,0.2)] ring-1 ring-amber-500/50'
+                                : 'bg-[#1c1417]/80 border-white/10 hover:border-white/20 text-neutral-300'
+                        }`}
+                    >
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                                <div className={`p-1.5 rounded-lg ${policy?.mode === 'temporary_hold' ? 'bg-amber-500 text-black' : 'bg-white/5 text-neutral-400'}`}>
+                                    <Lock className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <span className="font-bold text-xs sm:text-sm text-white block">
+                                        النظام الثاني: قفل مؤقت لمدة 10 دقائق
+                                    </span>
+                                    <span className="text-[10px] text-emerald-400 font-mono">
+                                        حجز فوري ينفك تلقائياً بعد 10 دقائق
+                                    </span>
+                                </div>
+                            </div>
+                            {policy?.mode === 'temporary_hold' && (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-black shadow">
+                                    النشط حالياً
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-[11px] text-neutral-400 leading-relaxed">
+                            الموعد يُقفل فوراً في الموقع بمجرد أن يرسل العميل طلبه لمدة 10 دقائق. إذا لم تؤكده خلال الـ 10 دقائق ينفك القفل تلقائياً ويعود متاحاً للعامة.
+                        </p>
+                    </button>
+                </div>
+            </div>
+
             {/* Control Bar: Filters & Actions */}
             <div className="bg-[#140e11]/90 border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center">
                 {/* Search */}
@@ -269,6 +458,178 @@ export default function BookingsTab() {
                 </div>
             </div>
 
+            {/* Conflicting Pending Bookings Alert & Dropdown Section */}
+            {conflictGroups.length > 0 && (
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                        <h3 className="text-sm sm:text-base font-bold text-amber-400 flex items-center gap-2">
+                            <AlertCircle className="w-5 h-5 text-amber-400 animate-pulse" />
+                            <span>مواعيد بها طلبات حجز متنافسة معلقة ({conflictGroups.length})</span>
+                        </h3>
+                        <span className="text-[11px] text-neutral-400">
+                            اضغط على أي موعد لفتح القائمة المنسدلة للعملاء واختيار الحجز المعتمد
+                        </span>
+                    </div>
+
+                    <div className="space-y-3">
+                        {conflictGroups.map((group) => {
+                            const isExpanded = expandedConflictIds[group.id] ?? true;
+
+                            return (
+                                <div
+                                    key={group.id}
+                                    className="bg-[#181114] border-2 border-amber-500/60 rounded-2xl overflow-hidden shadow-[0_0_25px_rgba(245,158,11,0.12)] transition-all"
+                                >
+                                    {/* Accordion / Dropdown Trigger Header */}
+                                    <div
+                                        onClick={() => toggleConflictGroup(group.id)}
+                                        className="p-4 sm:p-5 bg-gradient-to-r from-amber-950/50 via-[#1c1417] to-amber-950/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-amber-950/70 transition-colors select-none"
+                                    >
+                                        <div className="flex items-start sm:items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center shrink-0">
+                                                <Users className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="font-bold text-white text-sm sm:text-base">
+                                                        {group.roomName}
+                                                    </span>
+                                                    <span className="px-2 py-0.5 rounded bg-white/10 text-neutral-300 font-mono text-xs">
+                                                        📅 {group.bookingDate}
+                                                    </span>
+                                                    <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-xs border border-amber-500/40">
+                                                        ⏰ {group.formattedTimeRange}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-amber-300/90 mt-1 flex items-center gap-1.5">
+                                                    <span>⚠️ يوجد {group.bookings.length} عملاء طلبوا حجز هذا الموعد ولم يتم اعتماد أي منهم بعد.</span>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 self-end sm:self-center">
+                                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500 text-black shadow">
+                                                {group.bookings.length} طلبات متنافسة
+                                            </span>
+                                            <div className="p-1.5 rounded-lg bg-white/5 text-neutral-300">
+                                                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Collapsible Content: Competing bookings list */}
+                                    {isExpanded && (
+                                        <div className="p-4 sm:p-5 border-t border-amber-500/20 bg-[#120c0f] space-y-3">
+                                            <div className="text-xs text-neutral-400 bg-amber-950/30 border border-amber-500/20 rounded-xl p-3 flex items-start gap-2">
+                                                <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                                                <span>
+                                                    الطلبات مرتبة حسب أسبقية الإرسال. عند النقر على <strong>"تأكيد واعتماد هذا الحجز"</strong>، سيتم اعتماد الحجز المختار فوراً وقفل الموعد في الموقع لصالحه، وإلغاء الطلب المتنافس الآخر تلقائياً مع إمكانية مراسلته عبر واتساب لاقتراح موعد بديل.
+                                                </span>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                                {group.bookings.map((b, idx) => {
+                                                    const isFirst = idx === 0;
+                                                    const timeAgo = formatTimeAgo(b.created_at);
+
+                                                    return (
+                                                        <div
+                                                            key={b.id}
+                                                            className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${
+                                                                isFirst
+                                                                    ? 'bg-amber-950/20 border-amber-500/50 shadow-sm ring-1 ring-amber-500/30'
+                                                                    : 'bg-[#181114] border-white/10 hover:border-white/20'
+                                                            }`}
+                                                        >
+                                                            {/* Card Top */}
+                                                            <div>
+                                                                <div className="flex items-center justify-between gap-2 mb-2">
+                                                                    <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                                                                        isFirst
+                                                                            ? 'bg-amber-500 text-black'
+                                                                            : 'bg-white/10 text-neutral-300'
+                                                                    }`}>
+                                                                        {isFirst ? '🥇 العميل الأول (الأسبق)' : `🥈 متنافس #${idx + 1}`}
+                                                                    </span>
+                                                                    <span className="text-[10px] text-neutral-400 font-mono">
+                                                                        {timeAgo}
+                                                                    </span>
+                                                                </div>
+
+                                                                <div className="flex items-start justify-between">
+                                                                    <div>
+                                                                        <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                                                                            <User className="w-4 h-4 text-red-400 shrink-0" />
+                                                                            <span>{b.customer_name}</span>
+                                                                        </h4>
+                                                                        <div className="flex items-center gap-2 mt-1 text-xs text-neutral-400 font-mono">
+                                                                            <Phone className="w-3.5 h-3.5 text-neutral-500" />
+                                                                            <span dir="ltr">{b.customer_phone}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <span className="text-[11px] font-mono text-neutral-400 bg-white/5 px-2 py-0.5 rounded">
+                                                                        #{b.reservation_id}
+                                                                    </span>
+                                                                </div>
+
+                                                                <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+                                                                    <span className="text-neutral-400">
+                                                                        ⏰ {b.start_time} - {b.end_time} ({b.duration_hours} س)
+                                                                    </span>
+                                                                    <span className="text-emerald-400 font-bold font-mono">
+                                                                        {b.total_amount} ج.م
+                                                                    </span>
+                                                                </div>
+
+                                                                {b.notes && (
+                                                                    <div className="mt-2 text-[11px] bg-white/5 text-neutral-300 p-2 rounded-lg">
+                                                                        <strong>ملاحظة العميل:</strong> {b.notes}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Action Buttons */}
+                                                            <div className="pt-2 border-t border-white/10 flex items-center gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleConfirmBooking(b)}
+                                                                    className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
+                                                                >
+                                                                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                                                    <span>تأكيد واعتماد هذا الحجز</span>
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => openWhatsApp(b)}
+                                                                    className="p-2 rounded-xl bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-400 transition-colors cursor-pointer"
+                                                                    title="مراسلة عبر واتساب"
+                                                                >
+                                                                    <MessageCircle className="w-4 h-4" />
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleStatusChange(b.id, 'cancelled')}
+                                                                    className="p-2 rounded-xl bg-red-950/50 hover:bg-red-900 border border-red-500/40 text-red-400 transition-colors cursor-pointer"
+                                                                    title="إلغاء هذا الطلب"
+                                                                >
+                                                                    <XCircle className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
             {/* Bookings Count Summary */}
             <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
                 <span>
@@ -336,8 +697,15 @@ export default function BookingsTab() {
                                                         <span>طلب معلق</span>
                                                         <span>⏳</span>
                                                     </span>
+                                                    {conflictingBookingIds.has(b.id) && (
+                                                        <span className="text-[10px] text-red-300 font-bold bg-red-950/70 px-1.5 py-0.5 rounded border border-red-500/40 animate-pulse">
+                                                            ⚠️ متنافس على الموعد
+                                                        </span>
+                                                    )}
                                                     <span className="text-[10px] text-amber-400/90 font-mono bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-500/20">
-                                                        الموعد متاح حتى تؤكده
+                                                        {policy?.mode === 'admin_approval_only'
+                                                            ? 'الموعد متاح حتى تعتمده'
+                                                            : 'قفل مؤقت 10 د'}
                                                     </span>
                                                 </div>
                                             )}

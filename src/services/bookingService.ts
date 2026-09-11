@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { DBBooking } from '@/types/database';
+import type { DBBooking, BookingPolicy } from '@/types/database';
 import {
     type BookingInterval,
     createDateTimeFromBusinessDate,
@@ -447,4 +447,160 @@ export async function extendBookingAndShiftConflicting(
         extendedBooking: updatedTarget as DBBooking,
         shiftedBookings: shiftedResults,
     };
+}
+
+export async function fetchBookingPolicy(): Promise<BookingPolicy> {
+    try {
+        const { data, error } = await supabase
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'booking_policy')
+            .maybeSingle();
+
+        if (!error && data?.value) {
+            return data.value as BookingPolicy;
+        }
+    } catch (err) {
+        console.error('Error fetching booking policy:', err);
+    }
+    return { mode: 'temporary_hold', hold_minutes: 10 };
+}
+
+export async function updateBookingPolicy(policy: BookingPolicy): Promise<BookingPolicy> {
+    const { error } = await supabase
+        .from('app_settings')
+        .upsert({
+            key: 'booking_policy',
+            value: policy,
+            updated_at: new Date().toISOString(),
+        });
+
+    if (error) {
+        console.error('Error updating booking policy:', error);
+        throw error;
+    }
+    return policy;
+}
+
+export async function confirmBookingAndResolveConflicts(
+    bookingId: string,
+    autoCancelConflicts: boolean = true
+): Promise<{ confirmedBooking: DBBooking; cancelledIds: string[] }> {
+    try {
+        const { data, error } = await supabase.rpc('confirm_booking_and_resolve_conflicts', {
+            p_booking_id: bookingId,
+            p_auto_cancel_conflicts: autoCancelConflicts,
+        });
+
+        if (error) {
+            if (
+                error.code === '23P01' ||
+                error.message.includes('23P01') ||
+                error.message.includes('تعارض') ||
+                error.message.includes('مؤكد بالفعل')
+            ) {
+                throw new Error('لا يمكن تأكيد الحجز لوجود حجز آخر مؤكد بالفعل في نفس التوقيت');
+            }
+            throw error;
+        }
+
+        return {
+            confirmedBooking: data.confirmed_booking as DBBooking,
+            cancelledIds: (data.cancelled_conflict_ids || []) as string[],
+        };
+    } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        if (errMsg.includes('مؤكد بالفعل') || errMsg.includes('23P01')) {
+            throw err;
+        }
+        console.warn('RPC confirm_booking_and_resolve_conflicts fallback:', err);
+        const confirmed = await updateBookingStatus(bookingId, 'confirmed');
+        return { confirmedBooking: confirmed, cancelledIds: [] };
+    }
+}
+
+export interface ConflictGroup {
+    id: string;
+    roomId: string;
+    roomName: string;
+    bookingDate: string;
+    formattedTimeRange: string;
+    bookings: DBBooking[];
+}
+
+export function groupConflictingPendingBookings(allBookings: DBBooking[]): ConflictGroup[] {
+    const pendingList = allBookings.filter((b) => b.status === 'pending');
+    if (pendingList.length < 2) return [];
+
+    const getRange = (b: DBBooking) => {
+        let start: Date;
+        let end: Date;
+        if (b.start_datetime && b.end_datetime) {
+            start = new Date(b.start_datetime);
+            end = new Date(b.end_datetime);
+        } else {
+            start = createDateTimeFromBusinessDate(b.booking_date, b.start_time);
+            end = calculateEndDateTime(start, b.duration_hours || 1);
+        }
+        return { start, end };
+    };
+
+    const isOverlap = (a: DBBooking, b: DBBooking) => {
+        const roomIdA = a.room_id || 'room-1';
+        const roomIdB = b.room_id || 'room-1';
+        if (roomIdA !== roomIdB) return false;
+
+        const rangeA = getRange(a);
+        const rangeB = getRange(b);
+        return rangeA.start < rangeB.end && rangeA.end > rangeB.start;
+    };
+
+    const visited = new Set<string>();
+    const groups: ConflictGroup[] = [];
+
+    for (let i = 0; i < pendingList.length; i++) {
+        const b = pendingList[i];
+        if (visited.has(b.id)) continue;
+
+        const cluster: DBBooking[] = [b];
+        visited.add(b.id);
+        const queue: DBBooking[] = [b];
+
+        while (queue.length > 0) {
+            const curr = queue.shift()!;
+            for (const other of pendingList) {
+                if (!visited.has(other.id) && isOverlap(curr, other)) {
+                    visited.add(other.id);
+                    cluster.push(other);
+                    queue.push(other);
+                }
+            }
+        }
+
+        if (cluster.length >= 2) {
+            // Sort cluster by created_at ascending (earliest requester first)
+            cluster.sort((x, y) => new Date(x.created_at).getTime() - new Date(y.created_at).getTime());
+
+            let minStart = getRange(cluster[0]).start;
+            let maxEnd = getRange(cluster[0]).end;
+            for (const item of cluster) {
+                const { start, end } = getRange(item);
+                if (start < minStart) minStart = start;
+                if (end > maxEnd) maxEnd = end;
+            }
+
+            const formattedTimeRange = `${formatArabicTimeFromDate(minStart)} - ${formatArabicTimeFromDate(maxEnd)}`;
+
+            groups.push({
+                id: `conflict-${cluster[0].room_id || 'room-1'}-${cluster[0].booking_date}-${minStart.getTime()}`,
+                roomId: cluster[0].room_id || 'room-1',
+                roomName: cluster[0].room_name,
+                bookingDate: cluster[0].booking_date,
+                formattedTimeRange,
+                bookings: cluster,
+            });
+        }
+    }
+
+    return groups;
 }

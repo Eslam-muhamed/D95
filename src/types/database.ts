@@ -71,3 +71,8 @@ export interface DBBooking {
     promo_code?: string;
     created_at: string;
 }
+
+export interface BookingPolicy {
+    mode: 'admin_approval_only' | 'temporary_hold';
+    hold_minutes: number;
+}
