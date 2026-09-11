@@ -188,7 +188,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                             <span className="font-brush font-black text-7xl sm:text-9xl text-white tracking-tight drop-shadow-[0_6px_25px_rgba(0,0,0,0.95)]">
                                 D
                             </span>
-                            <span className="font-brush font-black text-7xl sm:text-9xl text-transparent bg-clip-text bg-gradient-to-br from-red-500 via-rose-500 to-red-600 -ml-1 drop-shadow-[0_0_40px_rgba(239,68,68,0.75)]">
+                            <span className="font-brush font-black text-7xl sm:text-9xl text-[#E5252A] -ml-1 drop-shadow-[0_0_40px_rgba(229,37,42,0.75)]">
                                 95
                             </span>
                             <span className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full bg-red-500 shadow-[0_0_14px_#ef4444] mb-2 sm:mb-4 ml-1.5 animate-pulse" />

@@ -221,7 +221,7 @@ export default function PlaystationPage() {
                             <div className="flex items-center gap-2">
                                 <div dir="ltr" className="flex items-baseline leading-none">
                                     <span className="font-brush font-black text-xl text-neutral-900 dark:text-neutral-100">D</span>
-                                    <span className="font-brush font-black text-2xl text-red-600 dark:text-red-500 -ml-0.5">95</span>
+                                    <span className="font-brush font-black text-2xl text-[#E5252A] -ml-0.5">95</span>
                                 </div>
                                 <span className="h-1.5 w-1.5 bg-red-600 rounded-full inline-block shadow-[0_0_8px_#c41e3a]" />
                                 <span className="text-[10px] font-bold bg-red-100 dark:bg-red-600/20 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full font-brush tracking-wider border border-red-200 dark:border-red-600/30">
