@@ -81,13 +81,15 @@ export default function GatewayPage() {
                     <span className="font-body text-[11px] text-red-600 dark:text-red-400 font-bold">مفتوح الآن</span>
                 </div>
 
-                {/* Branded Brush Logo */}
-                <D95BrushLogo size="lg" showSubtitle={true} showMotto={false} glow={true} />
+                {/* Branded Brush Logo with backdrop for maximum contrast */}
+                <div className="inline-flex flex-col items-center px-6 py-2 rounded-2xl bg-black/80 dark:bg-black/40 backdrop-blur-md border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.35)] my-1">
+                    <D95BrushLogo size="lg" showSubtitle={true} showMotto={false} glow={true} />
+                </div>
 
                 {/* Styled WE ARE OPEN Title */}
                 <div className="relative my-2 w-full flex items-center justify-center">
                     <span
-                        className="hidden sm:inline-block font-brush text-3xl md:text-5xl text-neutral-400 select-none mr-4 opacity-70 -rotate-12"
+                        className="hidden sm:inline-block font-bebas text-3xl md:text-5xl text-neutral-400 select-none mr-4 opacity-70 -rotate-12"
                         style={{ WebkitTextStroke: '1px currentColor' }}
                     >
                         ✕
@@ -95,18 +97,19 @@ export default function GatewayPage() {
 
                     <div className="relative text-center px-4">
                         <h1
-                            className="font-display font-black text-4xl sm:text-5xl md:text-6xl uppercase tracking-wider text-neutral-900 dark:text-neutral-100 drop-shadow-sm dark:drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]"
+                            className="font-bebas text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-[0.06em] text-neutral-900 dark:text-neutral-100 drop-shadow-sm dark:drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)] leading-none"
                         >
                             WE ARE OPEN
                         </h1>
-                        <div className="w-28 sm:w-40 h-[3px] bg-red-600 mx-auto mt-1 rounded-full shadow-[0_0_10px_#dc2626]" />
-                        <p className="font-display text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 tracking-[0.25em] uppercase mt-1.5 font-bold">
+                        {/* Red Accent Underline */}
+                        <div className="relative w-36 sm:w-56 h-[3.5px] bg-red-600 mx-auto mt-1.5 rounded-full shadow-[0_0_12px_rgba(220,38,38,0.85)]" />
+                        <p className="font-bebas text-[11px] sm:text-xs tracking-[0.28em] text-neutral-500 dark:text-neutral-400 uppercase mt-1">
                             PLAY • COMPETE • RELAX • REPEAT
                         </p>
                     </div>
 
                     <span
-                        className="hidden sm:inline-block font-brush text-3xl md:text-5xl text-neutral-400 select-none ml-4 opacity-70 rotate-12"
+                        className="hidden sm:inline-block font-bebas text-3xl md:text-5xl text-neutral-400 select-none ml-4 opacity-70 rotate-12"
                         style={{ WebkitTextStroke: '1px currentColor' }}
                     >
                         ✕
@@ -124,14 +127,14 @@ export default function GatewayPage() {
                         <div className="grid grid-cols-2 divide-x divide-neutral-300 dark:divide-neutral-500/50 text-center" dir="ltr">
                             {/* FROM */}
                             <div className="px-2 sm:px-4 flex flex-col items-center">
-                                <span className="font-display text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 tracking-widest uppercase">
+                                <span className="font-brush text-[10px] sm:text-xs text-neutral-500 dark:text-neutral-400 tracking-widest uppercase">
                                     FROM
                                 </span>
                                 <div className="flex items-baseline gap-1 mt-0.5">
-                                    <span className="font-display text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white">
+                                    <span className="font-brush text-xl sm:text-2xl font-black text-neutral-900 dark:text-white">
                                         08:00
                                     </span>
-                                    <span className="font-display text-sm sm:text-base font-bold text-red-600">
+                                    <span className="font-brush text-xs sm:text-sm font-bold text-red-600">
                                         AM
                                     </span>
                                 </div>
@@ -139,14 +142,14 @@ export default function GatewayPage() {
 
                             {/* TO */}
                             <div className="px-2 sm:px-4 flex flex-col items-center">
-                                <span className="font-display text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 tracking-widest uppercase">
+                                <span className="font-brush text-[10px] sm:text-xs text-neutral-500 dark:text-neutral-400 tracking-widest uppercase">
                                     TO
                                 </span>
                                 <div className="flex items-baseline gap-1 mt-0.5">
-                                    <span className="font-display text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white">
+                                    <span className="font-brush text-xl sm:text-2xl font-black text-neutral-900 dark:text-white">
                                         04:00
                                     </span>
-                                    <span className="font-display text-sm sm:text-base font-bold text-red-600">
+                                    <span className="font-brush text-xs sm:text-sm font-bold text-red-600">
                                         AM
                                     </span>
                                 </div>

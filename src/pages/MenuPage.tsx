@@ -159,8 +159,8 @@ export default function MenuPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-200 dark:border-white/[0.08]">
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-brush font-bold text-xl tracking-tight">
-                <span className="text-neutral-900 dark:text-white">D</span><span className="text-red-600 dark:text-red-500">95</span>
+              <span className="font-bebas text-2xl font-black tracking-wider leading-none">
+                <span className="text-neutral-900 dark:text-white">D</span><span className="text-red-600">95</span>
               </span>
               <h1 className="text-lg sm:text-2xl font-bold text-neutral-900 dark:text-white font-body tracking-wide">
                 قائمة المشروبات والحلويات
