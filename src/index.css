@@ -121,7 +121,7 @@ html {
     scroll-behavior: smooth;
 }
 
-body, button, input, select, textarea {
+body {
     font-family: 'Bebas Neue', 'Changa', 'Cairo', system-ui, sans-serif;
     background: #090707;
     background: var(--bg-main);
@@ -134,6 +134,10 @@ body, button, input, select, textarea {
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+button, input, select, textarea {
+    font-family: inherit;
 }
 
 h1, h2, h3, h4, h5, h6, .font-heading, .font-display, .font-bebas {
