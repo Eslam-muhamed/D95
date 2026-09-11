@@ -104,21 +104,21 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto" dir="rtl">
-            <div className="relative w-full max-w-2xl bg-[#140e11] border border-white/10 rounded-3xl p-6 sm:p-7 shadow-2xl my-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto" dir="rtl">
+            <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 shadow-2xl my-8">
                 {/* Close Button */}
                 <button
                     type="button"
                     onClick={onClose}
-                    className="absolute top-5 left-5 text-neutral-400 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+                    className="absolute top-5 left-5 text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
                 >
                     <X className="w-5 h-5" />
                 </button>
 
-                <h2 className="text-xl font-bold text-white mb-1">
+                <h2 className="text-xl font-bold text-slate-900 mb-1">
                     {isEdit ? 'تعديل بيانات المنتج' : 'إضافة منتج جديد للمنيو'}
                 </h2>
-                <p className="text-xs text-neutral-400 mb-6">
+                <p className="text-xs text-slate-500 mb-6">
                     قم بتعبئة بيانات الصنف وسيتم تحديثه مباشرة في موقع الزبائن.
                 </p>
 
@@ -126,7 +126,7 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
                     {/* Name & Category Row */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                 اسم المنتج (عربي) *
                             </label>
                             <input
@@ -135,18 +135,18 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="مثال: سبانش لاتيه بارد"
                                 required
-                                className="w-full bg-[#1c1417] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-red-500"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-red-500"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                 القسم التابع له *
                             </label>
                             <select
                                 value={categoryId}
                                 onChange={(e) => setCategoryId(e.target.value)}
-                                className="w-full bg-[#1c1417] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-red-500 cursor-pointer"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-red-500 cursor-pointer"
                             >
                                 {categories.map((c) => (
                                     <option key={c.id} value={c.id}>
@@ -160,7 +160,7 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
                     {/* Price & Discount Row */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                 سعر البيع (ج.م) *
                             </label>
                             <input
@@ -170,12 +170,12 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
                                 onChange={(e) => setPrice(e.target.value)}
                                 placeholder="مثال: 65"
                                 required
-                                className="w-full bg-[#1c1417] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-red-500"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-red-500"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                 السعر قبل الخصم (اختياري)
                             </label>
                             <input
@@ -184,14 +184,14 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
                                 value={originalPrice}
                                 onChange={(e) => setOriginalPrice(e.target.value)}
                                 placeholder="مثال: 80 (سيظهر مشطوباً كعرض)"
-                                className="w-full bg-[#1c1417] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-red-500"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-red-500"
                             />
                         </div>
                     </div>
 
                     {/* Description */}
                     <div>
-                        <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                             وصف المنتج ومكوناته
                         </label>
                         <textarea
@@ -199,22 +199,22 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
                             onChange={(e) => setDescription(e.target.value)}
                             rows={2}
                             placeholder="وصف مختصر للطبق أو المشروب ومكوناته المميزة..."
-                            className="w-full bg-[#1c1417] border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-red-500 resize-none"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-red-500 resize-none"
                         />
                     </div>
 
                     {/* Image Section (Upload or URL) */}
                     <div>
-                        <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                             صورة المنتج
                         </label>
                         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
                             {/* Preview */}
-                            <div className="w-20 h-20 rounded-2xl bg-[#1c1417] border border-white/10 overflow-hidden shrink-0 flex items-center justify-center relative group">
+                            <div className="w-20 h-20 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center relative group">
                                 {imageUrl ? (
                                     <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
                                 ) : (
-                                    <ImageIcon className="w-7 h-7 text-neutral-600" />
+                                    <ImageIcon className="w-7 h-7 text-slate-400" />
                                 )}
                             </div>
 
@@ -231,11 +231,11 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
                                         type="button"
                                         disabled={uploading}
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 border border-white/10"
+                                        className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 border border-slate-200"
                                     >
                                         {uploading ? (
-                                            <>
-                                                <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                                             <>
+                                                <Loader2 className="w-4 h-4 animate-spin text-red-600" />
                                                 <span>جاري الرفع...</span>
                                             </>
                                         ) : (
@@ -245,7 +245,7 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
                                             </>
                                         )}
                                     </button>
-                                    <span className="text-[11px] text-neutral-500">أو ضع الرابط بالأسفل</span>
+                                    <span className="text-[11px] text-slate-500">أو ضع الرابط بالأسفل</span>
                                 </div>
 
                                 <input
@@ -253,7 +253,7 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
                                     value={imageUrl}
                                     onChange={(e) => setImageUrl(e.target.value)}
                                     placeholder="https://images.unsplash.com/..."
-                                    className="w-full bg-[#1c1417] border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-neutral-600 focus:outline-none focus:border-red-500"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-red-500"
                                 />
                             </div>
                         </div>
@@ -262,13 +262,13 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
                     {/* Badge & Temperature Flags */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                         <div>
-                            <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                 شارة مميزة (Badge)
                             </label>
                             <select
                                 value={badge}
                                 onChange={(e) => setBadge(e.target.value)}
-                                className="w-full bg-[#1c1417] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-red-500 cursor-pointer"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-red-500 cursor-pointer"
                             >
                                 <option value="">بدون شارة</option>
                                 <option value="Popular">🔥 الأكثر طلباً (Popular)</option>
@@ -279,29 +279,29 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
 
                         {/* Temp toggles */}
                         <div>
-                            <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                 تصنيف المشروب
                             </label>
-                            <div className="flex items-center gap-3">
-                                <label className="flex items-center gap-1.5 text-xs text-neutral-300 cursor-pointer">
+                            <div className="flex items-center gap-3 pt-1">
+                                <label className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer">
                                     <input
                                         type="checkbox"
                                         checked={isHot}
                                         onChange={(e) => setIsHot(e.target.checked)}
-                                        className="rounded border-white/20 text-red-600 focus:ring-red-500 bg-[#1c1417]"
+                                        className="rounded border-slate-300 text-red-600 focus:ring-red-500 bg-white"
                                     />
                                     <Flame className="w-3.5 h-3.5 text-amber-500" />
                                     <span>ساخن</span>
                                 </label>
 
-                                <label className="flex items-center gap-1.5 text-xs text-neutral-300 cursor-pointer">
+                                <label className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer">
                                     <input
                                         type="checkbox"
                                         checked={isCold}
                                         onChange={(e) => setIsCold(e.target.checked)}
-                                        className="rounded border-white/20 text-blue-600 focus:ring-blue-500 bg-[#1c1417]"
+                                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 bg-white"
                                     />
-                                    <Snowflake className="w-3.5 h-3.5 text-sky-400" />
+                                    <Snowflake className="w-3.5 h-3.5 text-sky-500" />
                                     <span>بارد / مثلج</span>
                                 </label>
                             </div>
@@ -310,32 +310,32 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
 
                     {/* Availability Switch */}
                     <div className="pt-2">
-                        <label className="flex items-center gap-2 cursor-pointer">
+                        <label className="flex items-center gap-2 cursor-pointer p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors">
                             <input
                                 type="checkbox"
                                 checked={isAvailable}
                                 onChange={(e) => setIsAvailable(e.target.checked)}
-                                className="w-4 h-4 rounded border-white/20 text-emerald-600 focus:ring-emerald-500 bg-[#1c1417]"
+                                className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 bg-white"
                             />
-                            <span className="text-xs font-bold text-neutral-200">
+                            <span className="text-xs font-bold text-slate-800">
                                 المنتج متوفر حالياً في المنيو للزبائن
                             </span>
                         </label>
                     </div>
 
                     {/* Submit and Cancel Buttons */}
-                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs font-bold transition-colors cursor-pointer"
+                            className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer border border-slate-200"
                         >
                             إلغاء
                         </button>
                         <button
                             type="submit"
                             disabled={saving || uploading}
-                            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-xs font-bold transition-all shadow-[0_0_15px_rgba(220,38,38,0.3)] active:scale-95 cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                            className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                         >
                             {saving ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />

@@ -381,8 +381,8 @@ export default function SimpleOperationsTab() {
 
     return (
         <div className="space-y-4 max-w-7xl mx-auto" dir="rtl">
-            {/* SUB-TABS NAVIGATION (Clean Executive Slate Style) */}
-            <div className="bg-[#0f172a] border border-slate-800 rounded-2xl p-2 sm:p-2.5 flex flex-wrap items-center justify-between gap-2 shadow-sm">
+            {/* SUB-TABS NAVIGATION (Clean Light Executive Style) */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-2 sm:p-2.5 flex flex-wrap items-center justify-between gap-2 shadow-xs">
                 <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none w-full sm:w-auto">
                     {/* 1. Dashboard & Today */}
                     <button
@@ -394,7 +394,7 @@ export default function SimpleOperationsTab() {
                         className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 ${
                             activeSubTab === 'dashboard'
                                 ? 'bg-red-600 text-white shadow-sm'
-                                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                         }`}
                     >
                         <LayoutDashboard className="w-4 h-4" />
@@ -416,7 +416,7 @@ export default function SimpleOperationsTab() {
                         className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 ${
                             activeSubTab === 'details'
                                 ? 'bg-red-600 text-white shadow-sm'
-                                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                         }`}
                     >
                         <List className="w-4 h-4" />
@@ -433,7 +433,7 @@ export default function SimpleOperationsTab() {
                         className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 ${
                             activeSubTab === 'settings'
                                 ? 'bg-red-600 text-white shadow-sm'
-                                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                         }`}
                     >
                         <Settings2 className="w-4 h-4" />
@@ -443,19 +443,19 @@ export default function SimpleOperationsTab() {
 
                 {/* Clock & Refresh */}
                 <div className="flex items-center gap-2 mr-auto sm:mr-0 text-xs">
-                    <div className="bg-slate-900/90 border border-slate-800 rounded-xl px-3 py-1.5 flex items-center gap-2">
-                        <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="font-mono font-bold text-slate-200">{currentTimeStr}</span>
+                    <div className="bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="font-mono font-bold text-slate-700">{currentTimeStr}</span>
                     </div>
 
                     <button
                         type="button"
                         onClick={loadOperationsData}
                         disabled={loading}
-                        className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition-colors cursor-pointer"
+                        className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-slate-900 border border-slate-200 transition-colors cursor-pointer"
                         title="تحديث البيانات"
                     >
-                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-red-500' : ''}`} />
+                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-red-600' : ''}`} />
                     </button>
                 </div>
             </div>
@@ -468,58 +468,58 @@ export default function SimpleOperationsTab() {
                     {/* 4 Professional Executive KPI Cards */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         {/* 1. Today's Bookings */}
-                        <div className="bg-[#111827] border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+                        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs">
                             <div>
-                                <span className="text-xs text-slate-400 font-bold block">حجوزات اليوم</span>
-                                <span className="font-sans text-2xl sm:text-3xl font-black text-white mt-1 block">
+                                <span className="text-xs text-slate-500 font-bold block">حجوزات اليوم</span>
+                                <span className="font-sans text-2xl sm:text-3xl font-black text-slate-900 mt-1 block">
                                     {todayBookings.length}
                                 </span>
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center">
+                            <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
                                 <Calendar className="w-5 h-5" />
                             </div>
                         </div>
 
                         {/* 2. Ongoing Gaming Now */}
-                        <div className="bg-[#111827] border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+                        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs">
                             <div>
-                                <span className="text-xs text-emerald-400 font-bold flex items-center gap-1.5">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                <span className="text-xs text-emerald-700 font-bold flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                                     <span>شغال الآن بالصالة</span>
                                 </span>
-                                <span className="font-sans text-2xl sm:text-3xl font-black text-emerald-400 mt-1 block">
+                                <span className="font-sans text-2xl sm:text-3xl font-black text-emerald-600 mt-1 block">
                                     {ongoingBookings.length}
                                 </span>
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+                            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center">
                                 <Gamepad2 className="w-5 h-5" />
                             </div>
                         </div>
 
                         {/* 3. Pending Bookings */}
-                        <div className={`bg-[#111827] border rounded-2xl p-4 flex items-center justify-between ${
-                            allPendingBookings.length > 0 ? 'border-amber-500/40 bg-amber-950/10' : 'border-slate-800'
+                        <div className={`border rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs ${
+                            allPendingBookings.length > 0 ? 'border-amber-300 bg-amber-50/40' : 'bg-white border-slate-200/90'
                         }`}>
                             <div>
-                                <span className="text-xs text-amber-400 font-bold block">بانتظار التأكيد</span>
-                                <span className="font-sans text-2xl sm:text-3xl font-black text-amber-300 mt-1 block">
+                                <span className="text-xs text-amber-800 font-bold block">بانتظار التأكيد</span>
+                                <span className="font-sans text-2xl sm:text-3xl font-black text-amber-600 mt-1 block">
                                     {allPendingBookings.length}
                                 </span>
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center">
+                            <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center">
                                 <AlertCircle className="w-5 h-5" />
                             </div>
                         </div>
 
                         {/* 4. Expected Revenue */}
-                        <div className="bg-[#111827] border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+                        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs">
                             <div>
-                                <span className="text-xs text-slate-400 font-bold block">إيرادات اليوم المتوقعة</span>
-                                <span className="font-sans text-2xl sm:text-3xl font-black text-white mt-1 block">
-                                    {todayRevenue} <span className="text-xs font-normal text-slate-400">ج.م</span>
+                                <span className="text-xs text-slate-500 font-bold block">إيرادات اليوم المتوقعة</span>
+                                <span className="font-sans text-2xl sm:text-3xl font-black text-slate-900 mt-1 block">
+                                    {todayRevenue} <span className="text-xs font-normal text-slate-500">ج.م</span>
                                 </span>
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-slate-800/80 text-slate-300 border border-slate-700/60 flex items-center justify-center">
+                            <div className="w-11 h-11 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center">
                                 <DollarSign className="w-5 h-5" />
                             </div>
                         </div>
@@ -527,15 +527,15 @@ export default function SimpleOperationsTab() {
 
                     {/* CONFLICT DROPDOWN LIST (نظام الـ 10 دقائق وتنافس المواعيد) */}
                     {conflictGroups.length > 0 && (
-                        <div className="space-y-3 bg-[#111827] border border-amber-500/40 rounded-2xl p-4 sm:p-5 shadow-sm">
+                        <div className="space-y-3 bg-amber-50/60 border border-amber-200 rounded-2xl p-4 sm:p-5 shadow-xs">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2.5">
-                                    <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
+                                    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
                                     <div>
-                                        <h3 className="text-sm sm:text-base font-bold text-amber-300">
+                                        <h3 className="text-sm sm:text-base font-bold text-amber-900">
                                             مواعيد بها طلبات حجز متنافسة في نفس الوقت ({conflictGroups.length})
                                         </h3>
-                                        <p className="text-xs text-slate-400 mt-0.5">
+                                        <p className="text-xs text-amber-800/80 mt-0.5">
                                             حجز أكثر من عميل نفس الموعد خلال نظام الـ 10 دقائق. اضغط على الموعد لاختيار العميل المعتمد.
                                         </p>
                                     </div>
@@ -550,41 +550,41 @@ export default function SimpleOperationsTab() {
                                     return (
                                         <div
                                             key={group.id}
-                                            className="bg-[#0f172a] border border-slate-800 rounded-xl overflow-hidden"
+                                            className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs"
                                         >
                                             {/* Trigger Header */}
                                             <div
                                                 onClick={() => toggleConflictGroup(group.id)}
-                                                className="p-3.5 bg-slate-900/60 hover:bg-slate-900 flex items-center justify-between gap-3 cursor-pointer transition-colors"
+                                                className="p-3.5 bg-slate-50/80 hover:bg-slate-100/80 flex items-center justify-between gap-3 cursor-pointer transition-colors"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold text-xs">
+                                                    <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 border border-amber-200 flex items-center justify-center font-bold text-xs">
                                                         <Users className="w-3.5 h-3.5" />
                                                     </div>
                                                     <div className="flex items-center gap-2.5 flex-wrap">
-                                                        <span className="font-bold text-white text-sm">{group.roomName}</span>
-                                                        <span className="text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
+                                                        <span className="font-bold text-slate-900 text-sm">{group.roomName}</span>
+                                                        <span className="text-xs font-bold text-amber-800 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded">
                                                             ⏰ {group.formattedTimeRange}
                                                         </span>
-                                                        <span className="text-xs text-slate-400">
+                                                        <span className="text-xs text-slate-500">
                                                             📅 {group.bookingDate}
                                                         </span>
                                                     </div>
                                                 </div>
 
                                                 <div className="flex items-center gap-2">
-                                                    <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500 text-slate-950">
+                                                    <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-400 text-slate-950">
                                                         {group.bookings.length} متنافسين
                                                     </span>
-                                                    {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                                                    {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
                                                 </div>
                                             </div>
 
                                             {/* Dropdown Content */}
                                             {isExpanded && (
-                                                <div className="p-3 sm:p-4 border-t border-slate-800 space-y-2 bg-[#0b0f19]">
-                                                    <div className="text-[11px] text-slate-400 flex items-center gap-1.5 pb-1">
-                                                        <Info className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                                <div className="p-3 sm:p-4 border-t border-slate-200 space-y-2 bg-slate-50/50">
+                                                    <div className="text-[11px] text-slate-600 flex items-center gap-1.5 pb-1">
+                                                        <Info className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                                                         <span>الطلبات مرتبة حسب أسبقية وقت الإرسال. تأكيد أحد الحجزين يقفل الموعد لصالحه ويلغي المتنافس الآخر تلقائياً.</span>
                                                     </div>
 
@@ -598,28 +598,28 @@ export default function SimpleOperationsTab() {
                                                                     key={b.id}
                                                                     className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                                                                         isFirst
-                                                                            ? 'bg-amber-950/10 border-amber-500/30'
-                                                                            : 'bg-[#111827] border-slate-800'
+                                                                            ? 'bg-amber-50/60 border-amber-300'
+                                                                            : 'bg-white border-slate-200'
                                                                     }`}
                                                                 >
                                                                     <div className="flex items-center gap-3">
                                                                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                                                                            isFirst ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'
+                                                                            isFirst ? 'bg-amber-400 text-slate-950' : 'bg-slate-100 text-slate-700'
                                                                         }`}>
                                                                             {isFirst ? '🥇 الأسبق' : `🥈 متنافس #${idx + 1}`}
                                                                         </span>
 
                                                                         <div>
                                                                             <div className="flex items-center gap-2">
-                                                                                <h4 className="text-sm font-bold text-white">{b.customer_name}</h4>
-                                                                                <span className="text-[11px] text-slate-400">({timeAgo})</span>
+                                                                                <h4 className="text-sm font-bold text-slate-900">{b.customer_name}</h4>
+                                                                                <span className="text-[11px] text-slate-500">({timeAgo})</span>
                                                                             </div>
-                                                                            <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
-                                                                                <span dir="ltr" className="font-mono">{b.customer_phone}</span>
+                                                                            <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                                                                                <span dir="ltr" className="font-mono text-slate-600">{b.customer_phone}</span>
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={(e) => openWhatsAppDirect(e, b)}
-                                                                                    className="text-emerald-400 hover:underline text-[11px] inline-flex items-center gap-0.5 font-bold"
+                                                                                    className="text-emerald-600 hover:underline text-[11px] inline-flex items-center gap-0.5 font-bold"
                                                                                 >
                                                                                     <MessageCircle className="w-3 h-3" />
                                                                                     <span>واتساب</span>
@@ -628,8 +628,8 @@ export default function SimpleOperationsTab() {
                                                                         </div>
                                                                     </div>
 
-                                                                    <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800">
-                                                                        <span className="font-bold text-emerald-400 text-sm">
+                                                                    <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200">
+                                                                        <span className="font-bold text-emerald-700 text-sm">
                                                                             {b.total_amount} ج.م
                                                                         </span>
 
@@ -637,7 +637,7 @@ export default function SimpleOperationsTab() {
                                                                             <button
                                                                                 type="button"
                                                                                 onClick={() => handleConfirmConflictWinner(b, group)}
-                                                                                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 transition-colors shadow-sm cursor-pointer"
+                                                                                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 transition-colors shadow-xs cursor-pointer"
                                                                             >
                                                                                 <Check className="w-3.5 h-3.5 stroke-[3]" />
                                                                                 <span>تأكيد واعتماد الحجز</span>
@@ -646,7 +646,7 @@ export default function SimpleOperationsTab() {
                                                                             <button
                                                                                 type="button"
                                                                                 onClick={() => handleQuickReject(b)}
-                                                                                className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-400 border border-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                                                                                className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 text-xs font-bold transition-colors cursor-pointer"
                                                                             >
                                                                                 <X className="w-3.5 h-3.5" />
                                                                             </button>
@@ -666,24 +666,24 @@ export default function SimpleOperationsTab() {
                     )}
 
                     {/* Date Navigator Bar & Room Filter */}
-                    <div className="bg-[#111827] border border-slate-800 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                    <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                         {/* Date Selector */}
                         <div className="flex items-center gap-2">
-                            <div className="flex items-center bg-[#0b0f19] border border-slate-800 rounded-xl p-0.5">
+                            <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl p-0.5">
                                 <button
                                     type="button"
                                     onClick={() => setSelectedDate(prev => addDaysToDateString(prev, -1))}
-                                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                                    className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white transition-colors"
                                     title="اليوم السابق"
                                 >
                                     <ChevronRight className="w-4 h-4" />
                                 </button>
 
                                 <div className="relative flex items-center px-3 py-1 cursor-pointer">
-                                    <span className="text-xs sm:text-sm font-bold text-white whitespace-nowrap">
+                                    <span className="text-xs sm:text-sm font-bold text-slate-900 whitespace-nowrap">
                                         {formattedDateTitle}
                                         {selectedDate === todayStr && (
-                                            <span className="mr-1.5 text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                                            <span className="mr-1.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded">
                                                 اليوم
                                             </span>
                                         )}
@@ -700,7 +700,7 @@ export default function SimpleOperationsTab() {
                                 <button
                                     type="button"
                                     onClick={() => setSelectedDate(prev => addDaysToDateString(prev, 1))}
-                                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                                    className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white transition-colors"
                                     title="اليوم التالي"
                                 >
                                     <ChevronLeft className="w-4 h-4" />
@@ -711,7 +711,7 @@ export default function SimpleOperationsTab() {
                                 <button
                                     type="button"
                                     onClick={() => setSelectedDate(todayStr)}
-                                    className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-colors"
+                                    className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
                                 >
                                     الرجوع لليوم
                                 </button>
@@ -719,12 +719,12 @@ export default function SimpleOperationsTab() {
                         </div>
 
                         {/* Room Filter Pills */}
-                        <div className="flex items-center gap-1 bg-[#0b0f19] border border-slate-800 rounded-xl p-0.5 text-xs">
+                        <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-0.5 text-xs">
                             <button
                                 type="button"
                                 onClick={() => setRoomFilter('all')}
                                 className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all ${
-                                    roomFilter === 'all' ? 'bg-red-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                                    roomFilter === 'all' ? 'bg-red-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                                 }`}
                             >
                                 كل الغرف
@@ -735,7 +735,7 @@ export default function SimpleOperationsTab() {
                                     type="button"
                                     onClick={() => setRoomFilter(r)}
                                     className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all ${
-                                        roomFilter === r ? 'bg-red-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                                        roomFilter === r ? 'bg-red-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                                     }`}
                                 >
                                     {r}
@@ -744,35 +744,35 @@ export default function SimpleOperationsTab() {
                         </div>
                     </div>
 
-                    {/* Today's Bookings Section (NO 20-slots timeline bar - completely deleted as requested!) */}
-                    <div className="bg-[#111827] border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm">
+                    {/* Today's Bookings Section */}
+                    <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <User className="w-4 h-4 text-red-500" />
-                                <h3 className="text-sm sm:text-base font-bold text-white">
+                                <User className="w-4 h-4 text-red-600" />
+                                <h3 className="text-sm sm:text-base font-bold text-slate-900">
                                     قائمة مواعيد اليوم ({filteredDailyBookings.length})
                                 </h3>
                             </div>
 
                             {/* Search */}
                             <div className="relative w-48 sm:w-64">
-                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                                 <input
                                     type="text"
                                     placeholder="بحث بالاسم أو الهاتف..."
                                     value={dailySearch}
                                     onChange={(e) => setDailySearch(e.target.value)}
-                                    className="w-full bg-[#0b0f19] text-white text-xs rounded-xl pr-9 pl-3 py-2 border border-slate-800 outline-none focus:border-red-500"
+                                    className="w-full bg-slate-50 text-slate-900 text-xs rounded-xl pr-9 pl-3 py-2 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
                                 />
                             </div>
                         </div>
 
                         {loading ? (
                             <div className="py-12 flex justify-center">
-                                <RefreshCw className="w-5 h-5 animate-spin text-red-500" />
+                                <RefreshCw className="w-5 h-5 animate-spin text-red-600" />
                             </div>
                         ) : filteredDailyBookings.length === 0 ? (
-                            <div className="py-12 text-center text-xs text-slate-400 border border-dashed border-slate-800 rounded-xl">
+                            <div className="py-12 text-center text-xs text-slate-500 border border-dashed border-slate-200 rounded-xl">
                                 لا توجد حجوزات مسجلة لهذا التاريخ.
                             </div>
                         ) : (
@@ -781,16 +781,16 @@ export default function SimpleOperationsTab() {
                                 <div className="hidden md:block overflow-x-auto">
                                     <table className="w-full text-right text-xs">
                                         <thead>
-                                            <tr className="border-b border-slate-800 text-slate-400">
-                                                <th className="pb-3 font-semibold">الموعد والمدة</th>
-                                                <th className="pb-3 font-semibold">العميل</th>
-                                                <th className="pb-3 font-semibold">الغرفة</th>
-                                                <th className="pb-3 font-semibold">المبلغ</th>
-                                                <th className="pb-3 font-semibold">الحالة</th>
-                                                <th className="pb-3 text-left font-semibold">إجراء فوري (تأكيد / إلغاء)</th>
+                                            <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/80">
+                                                <th className="py-3 px-3 font-semibold">الموعد والمدة</th>
+                                                <th className="py-3 px-3 font-semibold">العميل</th>
+                                                <th className="py-3 px-3 font-semibold">الغرفة</th>
+                                                <th className="py-3 px-3 font-semibold">المبلغ</th>
+                                                <th className="py-3 px-3 font-semibold">الحالة</th>
+                                                <th className="py-3 px-3 text-left font-semibold">إجراء فوري (تأكيد / إلغاء)</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-800/60">
+                                        <tbody className="divide-y divide-slate-100">
                                             {filteredDailyBookings.map((b) => {
                                                 const { start: bStart, end: bEnd } = getBookingDates(b);
                                                 const nowMs = Date.now();
@@ -802,27 +802,27 @@ export default function SimpleOperationsTab() {
                                                     <tr
                                                         key={b.id}
                                                         onClick={() => setActiveDetailBooking(b)}
-                                                        className="hover:bg-slate-800/40 transition-colors cursor-pointer group"
+                                                        className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                                                     >
                                                         {/* Time */}
-                                                        <td className="py-3.5">
-                                                            <div className="font-bold text-white text-xs">
+                                                        <td className="py-3.5 px-3">
+                                                            <div className="font-bold text-slate-900 text-xs">
                                                                 {b.start_time} - {b.end_time}
                                                             </div>
-                                                            <span className="text-[11px] text-slate-400">({b.duration_hours} س)</span>
+                                                            <span className="text-[11px] text-slate-500">({b.duration_hours} س)</span>
                                                         </td>
 
                                                         {/* Client */}
-                                                        <td className="py-3.5">
-                                                            <div className="font-bold text-white group-hover:text-red-400 transition-colors">
+                                                        <td className="py-3.5 px-3">
+                                                            <div className="font-bold text-slate-900 group-hover:text-red-600 transition-colors">
                                                                 {b.customer_name}
                                                             </div>
-                                                            <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
-                                                                <span dir="ltr" className="font-mono">{b.customer_phone}</span>
+                                                            <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
+                                                                <span dir="ltr" className="font-mono text-slate-600">{b.customer_phone}</span>
                                                                 <button
                                                                     type="button"
                                                                     onClick={(e) => openWhatsAppDirect(e, b)}
-                                                                    className="text-emerald-400 hover:underline inline-flex items-center gap-0.5 font-bold"
+                                                                    className="text-emerald-600 hover:underline inline-flex items-center gap-0.5 font-bold"
                                                                 >
                                                                     <MessageCircle className="w-3 h-3" />
                                                                     <span>واتساب</span>
@@ -831,52 +831,52 @@ export default function SimpleOperationsTab() {
                                                         </td>
 
                                                         {/* Room */}
-                                                        <td className="py-3.5 text-slate-200 font-medium">
+                                                        <td className="py-3.5 px-3 text-slate-700 font-medium">
                                                             {b.room_name}
                                                         </td>
 
                                                         {/* Amount */}
-                                                        <td className="py-3.5 font-bold text-emerald-400">
+                                                        <td className="py-3.5 px-3 font-bold text-emerald-700">
                                                             {b.total_amount} ج.م
                                                         </td>
 
                                                         {/* Status */}
-                                                        <td className="py-3.5">
+                                                        <td className="py-3.5 px-3">
                                                             {isOngoing ? (
-                                                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1.5">
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1.5">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                                                     <span>شغال الآن 🎮</span>
                                                                 </span>
                                                             ) : b.status === 'confirmed' ? (
                                                                 isEnded ? (
-                                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">
+                                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
                                                                         انتهى ⌛
                                                                     </span>
                                                                 ) : (
-                                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                                                                         مؤكد 🔒
                                                                     </span>
                                                                 )
                                                             ) : b.status === 'pending' ? (
-                                                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                                                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
                                                                     معلق ⏳
                                                                 </span>
                                                             ) : (
-                                                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">
+                                                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
                                                                     {b.status === 'completed' ? 'مكتمل' : 'ملغي'}
                                                                 </span>
                                                             )}
                                                         </td>
 
                                                         {/* Immediate Shortcuts */}
-                                                        <td className="py-3.5 text-left" onClick={(e) => e.stopPropagation()}>
+                                                        <td className="py-3.5 px-3 text-left" onClick={(e) => e.stopPropagation()}>
                                                             <div className="flex items-center justify-end gap-1.5">
                                                                 {b.status === 'pending' && (
                                                                     <>
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => handleQuickConfirm(b)}
-                                                                            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 transition-colors shadow-sm cursor-pointer"
+                                                                            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 transition-colors shadow-xs cursor-pointer"
                                                                             title="تأكيد الحجز فوراً"
                                                                         >
                                                                             <Check className="w-3.5 h-3.5 stroke-[3]" />
@@ -886,7 +886,7 @@ export default function SimpleOperationsTab() {
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => handleQuickReject(b)}
-                                                                            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-400 border border-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                                                                            className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 text-xs font-bold transition-colors cursor-pointer"
                                                                             title="إلغاء الحجز"
                                                                         >
                                                                             <X className="w-3.5 h-3.5" />
@@ -899,10 +899,10 @@ export default function SimpleOperationsTab() {
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => handleQuickFinish(b)}
-                                                                        className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                                                                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
                                                                         title="إنهاء الجلسة الآن"
                                                                     >
-                                                                        <Square className="w-3 h-3 text-emerald-400 fill-emerald-400" />
+                                                                        <Square className="w-3 h-3 text-emerald-600 fill-emerald-600" />
                                                                         <span>إنهاء الجلسة</span>
                                                                     </button>
                                                                 )}
@@ -910,7 +910,7 @@ export default function SimpleOperationsTab() {
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => setActiveDetailBooking(b)}
-                                                                    className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors cursor-pointer"
+                                                                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-medium transition-colors cursor-pointer"
                                                                 >
                                                                     تفاصيل
                                                                 </button>
@@ -923,7 +923,7 @@ export default function SimpleOperationsTab() {
                                     </table>
                                 </div>
 
-                                {/* Mobile Responsive Cards View (Optimized for phones) */}
+                                {/* Mobile Responsive Cards View */}
                                 <div className="md:hidden space-y-3">
                                     {filteredDailyBookings.map((b) => {
                                         const { start: bStart, end: bEnd } = getBookingDates(b);
@@ -936,17 +936,17 @@ export default function SimpleOperationsTab() {
                                             <div
                                                 key={b.id}
                                                 onClick={() => setActiveDetailBooking(b)}
-                                                className="bg-[#0b0f19] border border-slate-800 rounded-xl p-3.5 space-y-3 cursor-pointer"
+                                                className="bg-slate-50/80 border border-slate-200 rounded-xl p-3.5 space-y-3 cursor-pointer shadow-xs"
                                             >
                                                 <div className="flex items-start justify-between gap-2">
                                                     <div>
-                                                        <h4 className="text-sm font-bold text-white">{b.customer_name}</h4>
-                                                        <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
-                                                            <span dir="ltr" className="font-mono">{b.customer_phone}</span>
+                                                        <h4 className="text-sm font-bold text-slate-900">{b.customer_name}</h4>
+                                                        <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                                                            <span dir="ltr" className="font-mono text-slate-600">{b.customer_phone}</span>
                                                             <button
                                                                 type="button"
                                                                 onClick={(e) => openWhatsAppDirect(e, b)}
-                                                                className="text-emerald-400 text-[11px] font-bold"
+                                                                className="text-emerald-600 text-[11px] font-bold"
                                                             >
                                                                 واتساب
                                                             </button>
@@ -955,34 +955,34 @@ export default function SimpleOperationsTab() {
 
                                                     <div>
                                                         {isOngoing ? (
-                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                                                 شغال الآن 🎮
                                                             </span>
                                                         ) : b.status === 'confirmed' ? (
-                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                                                                 مؤكد 🔒
                                                             </span>
                                                         ) : b.status === 'pending' ? (
-                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
                                                                 معلق ⏳
                                                             </span>
                                                         ) : (
-                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">
+                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
                                                                 {b.status}
                                                             </span>
                                                         )}
                                                     </div>
                                                 </div>
 
-                                                <div className="bg-slate-900/80 rounded-lg p-2.5 flex items-center justify-between text-xs border border-slate-800">
+                                                <div className="bg-white rounded-lg p-2.5 flex items-center justify-between text-xs border border-slate-200">
                                                     <div>
-                                                        <span className="text-slate-400 text-[10px] block">الموعد والغرفة:</span>
-                                                        <span className="text-white font-bold">{b.room_name}</span>
-                                                        <span className="text-slate-300 text-[11px] block">{b.start_time} - {b.end_time} ({b.duration_hours} س)</span>
+                                                        <span className="text-slate-500 text-[10px] block">الموعد والغرفة:</span>
+                                                        <span className="text-slate-900 font-bold">{b.room_name}</span>
+                                                        <span className="text-slate-600 text-[11px] block">{b.start_time} - {b.end_time} ({b.duration_hours} س)</span>
                                                     </div>
                                                     <div className="text-left">
-                                                        <span className="text-slate-400 text-[10px] block">المبلغ:</span>
-                                                        <span className="text-emerald-400 font-bold text-sm">{b.total_amount} ج.م</span>
+                                                        <span className="text-slate-500 text-[10px] block">المبلغ:</span>
+                                                        <span className="text-emerald-700 font-bold text-sm">{b.total_amount} ج.م</span>
                                                     </div>
                                                 </div>
 
@@ -993,7 +993,7 @@ export default function SimpleOperationsTab() {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleQuickConfirm(b)}
-                                                                className="flex-1 py-2 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm"
+                                                                className="flex-1 py-2 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-xs"
                                                             >
                                                                 <Check className="w-3.5 h-3.5 stroke-[3]" />
                                                                 <span>تأكيد الحجز</span>
@@ -1001,7 +1001,7 @@ export default function SimpleOperationsTab() {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleQuickReject(b)}
-                                                                className="px-3 py-2 rounded-lg bg-slate-800 text-slate-300 hover:text-rose-400 text-xs font-bold"
+                                                                className="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:text-rose-600 border border-slate-200 text-xs font-bold"
                                                             >
                                                                 إلغاء
                                                             </button>
@@ -1012,17 +1012,17 @@ export default function SimpleOperationsTab() {
                                                         <button
                                                             type="button"
                                                             onClick={() => handleQuickFinish(b)}
-                                                            className="flex-1 py-2 rounded-lg bg-slate-800 text-slate-200 text-xs font-bold flex items-center justify-center gap-1.5"
+                                                            className="flex-1 py-2 rounded-lg bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5"
                                                         >
-                                                            <Square className="w-3 h-3 text-emerald-400 fill-emerald-400" />
-                                                            <span>إنهاء الجلسة الآن</span>
+                                                            <Square className="w-3 h-3 text-emerald-600 fill-emerald-600" />
+                                                            <span>إنهاء الجلسة</span>
                                                         </button>
                                                     )}
 
                                                     <button
                                                         type="button"
                                                         onClick={() => setActiveDetailBooking(b)}
-                                                        className="flex-1 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs font-bold text-center"
+                                                        className="flex-1 py-2 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold text-center"
                                                     >
                                                         عرض التفاصيل
                                                     </button>
@@ -1041,11 +1041,11 @@ export default function SimpleOperationsTab() {
             {/* SUB-TAB 2: DETAILED BOOKINGS ARCHIVE */}
             {/* ========================================================================= */}
             {activeSubTab === 'details' && (
-                <div className="bg-[#111827] border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm">
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
                     {/* Search & Filters */}
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                         <div className="relative flex-1 max-w-md">
-                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <input
                                 type="text"
                                 placeholder="ابحث باسم العميل أو الهاتف أو كود الحجز..."
@@ -1054,13 +1054,13 @@ export default function SimpleOperationsTab() {
                                     setArchiveSearch(e.target.value);
                                     setArchivePage(1);
                                 }}
-                                className="w-full bg-[#0b0f19] text-white text-xs rounded-xl pr-9 pl-3 py-2 border border-slate-800 outline-none focus:border-red-500"
+                                className="w-full bg-slate-50 text-slate-900 text-xs rounded-xl pr-9 pl-3 py-2 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
                             />
                         </div>
 
                         {/* Status Filter Pills */}
                         <div className="flex flex-wrap items-center gap-2 text-xs">
-                            <div className="flex items-center gap-1 bg-[#0b0f19] border border-slate-800 rounded-xl p-0.5">
+                            <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-0.5">
                                 {[
                                     { id: 'all', label: 'الكل' },
                                     { id: 'confirmed', label: 'مؤكد' },
@@ -1077,8 +1077,8 @@ export default function SimpleOperationsTab() {
                                         }}
                                         className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
                                             archiveStatusFilter === tab.id
-                                                ? 'bg-red-600 text-white'
-                                                : 'text-slate-400 hover:text-white'
+                                                ? 'bg-red-600 text-white shadow-xs'
+                                                : 'text-slate-600 hover:text-slate-900'
                                         }`}
                                     >
                                         {tab.label}
@@ -1087,8 +1087,8 @@ export default function SimpleOperationsTab() {
                             </div>
 
                             {/* Date Filter */}
-                            <div className="flex items-center gap-1.5 bg-[#0b0f19] border border-slate-800 rounded-xl px-2.5 py-1">
-                                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                            <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-xl px-2.5 py-1">
+                                <Calendar className="w-3.5 h-3.5 text-slate-500" />
                                 <input
                                     type="date"
                                     value={archiveDateFilter}
@@ -1096,7 +1096,7 @@ export default function SimpleOperationsTab() {
                                         setArchiveDateFilter(e.target.value);
                                         setArchivePage(1);
                                     }}
-                                    className="bg-transparent text-white text-xs outline-none cursor-pointer font-mono"
+                                    className="bg-transparent text-slate-800 text-xs outline-none cursor-pointer font-mono"
                                 />
                                 {archiveDateFilter && (
                                     <button
@@ -1105,7 +1105,7 @@ export default function SimpleOperationsTab() {
                                             setArchiveDateFilter('');
                                             setArchivePage(1);
                                         }}
-                                        className="text-slate-400 hover:text-white font-bold ml-1 text-xs"
+                                        className="text-slate-500 hover:text-slate-900 font-bold ml-1 text-xs"
                                         title="مسح فلتر التاريخ"
                                     >
                                         ✕
@@ -1118,72 +1118,72 @@ export default function SimpleOperationsTab() {
                     {/* Table */}
                     {archiveLoading ? (
                         <div className="py-16 flex justify-center">
-                            <RefreshCw className="w-5 h-5 animate-spin text-red-500" />
+                            <RefreshCw className="w-5 h-5 animate-spin text-red-600" />
                         </div>
                     ) : archiveBookings.length === 0 ? (
-                        <div className="py-12 text-center text-xs text-slate-400 border border-dashed border-slate-800 rounded-xl">
+                        <div className="py-12 text-center text-xs text-slate-500 border border-dashed border-slate-200 rounded-xl">
                             لا توجد نتائج مطابقة لمعايير البحث في الأرشيف.
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-right text-xs">
                                 <thead>
-                                    <tr className="border-b border-slate-800 text-slate-400">
-                                        <th className="pb-3 font-semibold">كود الحجز</th>
-                                        <th className="pb-3 font-semibold">العميل</th>
-                                        <th className="pb-3 font-semibold">الغرفة</th>
-                                        <th className="pb-3 font-semibold">التاريخ والتوقيت</th>
-                                        <th className="pb-3 font-semibold">المبلغ</th>
-                                        <th className="pb-3 font-semibold">الحالة</th>
-                                        <th className="pb-3 text-left font-semibold">الإجراءات</th>
+                                    <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/80">
+                                        <th className="py-3 px-3 font-semibold">كود الحجز</th>
+                                        <th className="py-3 px-3 font-semibold">العميل</th>
+                                        <th className="py-3 px-3 font-semibold">الغرفة</th>
+                                        <th className="py-3 px-3 font-semibold">التاريخ والتوقيت</th>
+                                        <th className="py-3 px-3 font-semibold">المبلغ</th>
+                                        <th className="py-3 px-3 font-semibold">الحالة</th>
+                                        <th className="py-3 px-3 text-left font-semibold">الإجراءات</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-800/60">
+                                <tbody className="divide-y divide-slate-100">
                                     {archiveBookings.map((b) => (
                                         <tr
                                             key={b.id}
                                             onClick={() => setActiveDetailBooking(b)}
-                                            className="hover:bg-slate-800/40 transition-colors cursor-pointer group"
+                                            className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                                         >
-                                            <td className="py-3.5 font-mono text-slate-400">#{b.reservation_id}</td>
-                                            <td className="py-3.5">
-                                                <div className="font-bold text-white group-hover:text-red-400 transition-colors">
+                                            <td className="py-3.5 px-3 font-mono text-slate-500">#{b.reservation_id}</td>
+                                            <td className="py-3.5 px-3">
+                                                <div className="font-bold text-slate-900 group-hover:text-red-600 transition-colors">
                                                     {b.customer_name}
                                                 </div>
-                                                <span className="text-[11px] text-slate-400 font-mono" dir="ltr">
+                                                <span className="text-[11px] text-slate-500 font-mono" dir="ltr">
                                                     {b.customer_phone}
                                                 </span>
                                             </td>
-                                            <td className="py-3.5 text-slate-200">{b.room_name}</td>
-                                            <td className="py-3.5">
-                                                <div className="text-white">{b.booking_date}</div>
-                                                <div className="text-slate-400 text-[11px]">{b.start_time} - {b.end_time}</div>
+                                            <td className="py-3.5 px-3 text-slate-700">{b.room_name}</td>
+                                            <td className="py-3.5 px-3">
+                                                <div className="text-slate-900">{b.booking_date}</div>
+                                                <div className="text-slate-500 text-[11px]">{b.start_time} - {b.end_time}</div>
                                             </td>
-                                            <td className="py-3.5 font-bold text-emerald-400">{b.total_amount} ج.م</td>
-                                            <td className="py-3.5">
+                                            <td className="py-3.5 px-3 font-bold text-emerald-700">{b.total_amount} ج.م</td>
+                                            <td className="py-3.5 px-3">
                                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                                                     b.status === 'confirmed'
-                                                        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
                                                         : b.status === 'pending'
-                                                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                                                        : 'bg-slate-800 text-slate-400'
+                                                        ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                                        : 'bg-slate-100 text-slate-600 border border-slate-200'
                                                 }`}>
                                                     {b.status === 'confirmed' ? 'مؤكد' : b.status === 'pending' ? 'معلق' : b.status === 'completed' ? 'مكتمل' : 'ملغي'}
                                                 </span>
                                             </td>
-                                            <td className="py-3.5 text-left" onClick={(e) => e.stopPropagation()}>
+                                            <td className="py-3.5 px-3 text-left" onClick={(e) => e.stopPropagation()}>
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     <button
                                                         type="button"
                                                         onClick={() => setActiveDetailBooking(b)}
-                                                        className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs"
+                                                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs"
                                                     >
                                                         تفاصيل
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => handleDeleteBooking(b.id, b.customer_name)}
-                                                        className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-950/40"
+                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50"
                                                         title="حذف الحجز"
                                                     >
                                                         <Trash2 className="w-3.5 h-3.5" />
@@ -1199,14 +1199,14 @@ export default function SimpleOperationsTab() {
 
                     {/* Pagination */}
                     {archiveTotalPages > 1 && (
-                        <div className="flex items-center justify-between pt-3 border-t border-slate-800 text-xs text-slate-400">
+                        <div className="flex items-center justify-between pt-3 border-t border-slate-200 text-xs text-slate-500">
                             <span>صفحة {archivePage} من {archiveTotalPages} ({archiveTotalCount} حجز)</span>
                             <div className="flex items-center gap-1.5">
                                 <button
                                     type="button"
                                     onClick={() => setArchivePage(p => Math.max(1, p - 1))}
                                     disabled={archivePage <= 1}
-                                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white disabled:opacity-30 cursor-pointer"
+                                    className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 disabled:opacity-30 cursor-pointer"
                                 >
                                     السابق
                                 </button>
@@ -1214,7 +1214,7 @@ export default function SimpleOperationsTab() {
                                     type="button"
                                     onClick={() => setArchivePage(p => Math.min(archiveTotalPages, p + 1))}
                                     disabled={archivePage >= archiveTotalPages}
-                                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white disabled:opacity-30 cursor-pointer"
+                                    className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 disabled:opacity-30 cursor-pointer"
                                 >
                                     التالي
                                 </button>
@@ -1230,22 +1230,22 @@ export default function SimpleOperationsTab() {
             {activeSubTab === 'settings' && (
                 <div className="space-y-4">
                     {/* Booking Policy Mode */}
-                    <div className="bg-[#111827] border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+                    <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3 shadow-xs">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-xl bg-red-600/10 text-red-500 flex items-center justify-center border border-red-500/20">
+                                <div className="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center border border-red-200">
                                     <ShieldCheck className="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-bold text-white">سياسة وقفل مواعيد الحجز</h3>
-                                    <p className="text-xs text-slate-400">
+                                    <h3 className="text-sm font-bold text-slate-900">سياسة وقفل مواعيد الحجز</h3>
+                                    <p className="text-xs text-slate-500">
                                         اختر كيف يتعامل الموقع مع المواعيد عند قيام الزبائن بطلب حجز غرف البلايستيشن
                                     </p>
                                 </div>
                             </div>
 
                             {isSavingPolicy && (
-                                <div className="flex items-center gap-1 text-xs text-amber-400 animate-pulse">
+                                <div className="flex items-center gap-1 text-xs text-amber-600 animate-pulse">
                                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                                     <span>جاري الحفظ...</span>
                                 </div>
@@ -1261,18 +1261,18 @@ export default function SimpleOperationsTab() {
                                 disabled={isSavingPolicy}
                                 className={`text-right p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
                                     policy?.mode === 'admin_approval_only'
-                                        ? 'bg-red-950/20 border-red-500 text-white shadow-sm ring-1 ring-red-500/50'
-                                        : 'bg-[#0b0f19] border-slate-800 hover:border-slate-700 text-slate-300'
+                                        ? 'bg-red-50/70 border-red-500 text-slate-900 shadow-xs ring-1 ring-red-500/40'
+                                        : 'bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700'
                                 }`}
                             >
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="flex items-center gap-2">
-                                        <div className={`p-1.5 rounded-lg ${policy?.mode === 'admin_approval_only' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                                        <div className={`p-1.5 rounded-lg ${policy?.mode === 'admin_approval_only' ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
                                             <Unlock className="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <span className="font-bold text-sm text-white block">النظام الأول: الموافقة المسبقة للإدارة</span>
-                                            <span className="text-[11px] text-amber-400">الموعد يظل متاحاً حتى تعتمده الإدارة</span>
+                                            <span className="font-bold text-sm text-slate-900 block">النظام الأول: الموافقة المسبقة للإدارة</span>
+                                            <span className="text-[11px] text-amber-700 font-medium">الموعد يظل متاحاً حتى تعتمده الإدارة</span>
                                         </div>
                                     </div>
                                     {policy?.mode === 'admin_approval_only' && (
@@ -1281,7 +1281,7 @@ export default function SimpleOperationsTab() {
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-xs text-slate-400 leading-relaxed">
+                                <p className="text-xs text-slate-500 leading-relaxed">
                                     الموعد لا يُقفل في الموقع إلا بعد تأكيدك. يمكن لعدة عملاء إرسال طلبات لنفس التوقيت، وستظهر لك في القائمة المنسدلة للمفاضلة واختيار العميل المعتمد.
                                 </p>
                             </button>
@@ -1293,27 +1293,27 @@ export default function SimpleOperationsTab() {
                                 disabled={isSavingPolicy}
                                 className={`text-right p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
                                     policy?.mode === 'temporary_hold'
-                                        ? 'bg-amber-950/20 border-amber-500 text-white shadow-sm ring-1 ring-amber-500/50'
-                                        : 'bg-[#0b0f19] border-slate-800 hover:border-slate-700 text-slate-300'
+                                        ? 'bg-amber-50/70 border-amber-500 text-slate-900 shadow-xs ring-1 ring-amber-500/40'
+                                        : 'bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700'
                                 }`}
                             >
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="flex items-center gap-2">
-                                        <div className={`p-1.5 rounded-lg ${policy?.mode === 'temporary_hold' ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
+                                        <div className={`p-1.5 rounded-lg ${policy?.mode === 'temporary_hold' ? 'bg-amber-500 text-slate-950' : 'bg-slate-200 text-slate-600'}`}>
                                             <Lock className="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <span className="font-bold text-sm text-white block">النظام الثاني: قفل مؤقت لمدة 10 دقائق</span>
-                                            <span className="text-[11px] text-emerald-400">قفل فوري ينفك تلقائياً بعد 10 دقائق</span>
+                                            <span className="font-bold text-sm text-slate-900 block">النظام الثاني: قفل مؤقت لمدة 10 دقائق</span>
+                                            <span className="text-[11px] text-emerald-700 font-medium">قفل فوري ينفك تلقائياً بعد 10 دقائق</span>
                                         </div>
                                     </div>
                                     {policy?.mode === 'temporary_hold' && (
-                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-slate-950">
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-400 text-slate-950">
                                             النشط حالياً
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-xs text-slate-400 leading-relaxed">
+                                <p className="text-xs text-slate-500 leading-relaxed">
                                     الموعد يُقفل فوراً في الموقع بمجرد أن يرسل العميل طلبه لمدة 10 دقائق. إذا لم تؤكده خلال الـ 10 دقائق ينفك القفل تلقائياً ويعود متاحاً للعامة.
                                 </p>
                             </button>
@@ -1321,19 +1321,19 @@ export default function SimpleOperationsTab() {
                     </div>
 
                     {/* Room Hourly Rates */}
-                    <div className="max-w-xl bg-[#111827] border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm">
-                        <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-                            <Gamepad2 className="w-5 h-5 text-red-500" />
-                            <h3 className="text-sm sm:text-base font-bold text-white">أسعار ساعات اللعب للغرف</h3>
+                    <div className="max-w-xl bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
+                        <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+                            <Gamepad2 className="w-5 h-5 text-red-600" />
+                            <h3 className="text-sm sm:text-base font-bold text-slate-900">أسعار ساعات اللعب للغرف</h3>
                         </div>
 
-                        <p className="text-xs text-slate-400 leading-relaxed">
+                        <p className="text-xs text-slate-500 leading-relaxed">
                             حدد سعر الساعة (ج.م) لكل غرفة. يتم تطبيق هذا السعر فوراً في صفحة الحجز لحساب التكلفة الإجمالية للزبائن.
                         </p>
 
                         <div className="space-y-3 pt-1">
                             <div>
-                                <label className="text-xs font-bold text-slate-300 block mb-1">
+                                <label className="text-xs font-bold text-slate-700 block mb-1">
                                     سعر ساعة الغرفة 1 (PLAY ROOM 01):
                                 </label>
                                 <div className="relative">
@@ -1342,14 +1342,14 @@ export default function SimpleOperationsTab() {
                                         min="1"
                                         value={rateRoom1}
                                         onChange={(e) => setRateRoom1(Number(e.target.value))}
-                                        className="w-full bg-[#0b0f19] text-white font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-slate-800 outline-none focus:border-red-500"
+                                        className="w-full bg-slate-50 text-slate-900 font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
                                     />
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">ج.م / ساعة</span>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="text-xs font-bold text-slate-300 block mb-1">
+                                <label className="text-xs font-bold text-slate-700 block mb-1">
                                     سعر ساعة الغرفة 2 (PLAY ROOM 02):
                                 </label>
                                 <div className="relative">
@@ -1358,7 +1358,7 @@ export default function SimpleOperationsTab() {
                                         min="1"
                                         value={rateRoom2}
                                         onChange={(e) => setRateRoom2(Number(e.target.value))}
-                                        className="w-full bg-[#0b0f19] text-white font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-slate-800 outline-none focus:border-red-500"
+                                        className="w-full bg-slate-50 text-slate-900 font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
                                     />
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">ج.م / ساعة</span>
                                 </div>
@@ -1370,7 +1370,7 @@ export default function SimpleOperationsTab() {
                                 type="button"
                                 onClick={handleSaveRoomRates}
                                 disabled={savingRates}
-                                className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+                                className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
                             >
                                 {savingRates ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                                 <span>حفظ الأسعار وتطبيقها فوراً</span>

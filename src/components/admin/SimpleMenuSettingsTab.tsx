@@ -224,15 +224,15 @@ export default function SimpleMenuSettingsTab() {
     return (
         <div className="space-y-6" dir="rtl">
             {/* Top Navigation / Section Switcher */}
-            <div className="bg-[#140e11] border border-white/10 rounded-2xl p-2.5 sm:p-3 flex flex-wrap items-center justify-between gap-2 shadow-md">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-2.5 sm:p-3 flex flex-wrap items-center justify-between gap-2 shadow-xs">
                 <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none w-full sm:w-auto">
                     <button
                         type="button"
                         onClick={() => { playPs5NavigateSound(); setActiveSection('products'); }}
                         className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
                             activeSection === 'products'
-                                ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md'
-                                : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                                ? 'bg-red-600 text-white shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                         }`}
                     >
                         <UtensilsCrossed className="w-4 h-4" />
@@ -244,8 +244,8 @@ export default function SimpleMenuSettingsTab() {
                         onClick={() => { playPs5NavigateSound(); setActiveSection('categories'); }}
                         className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
                             activeSection === 'categories'
-                                ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md'
-                                : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                                ? 'bg-red-600 text-white shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                         }`}
                     >
                         <FolderTree className="w-4 h-4" />
@@ -257,8 +257,8 @@ export default function SimpleMenuSettingsTab() {
                         onClick={() => { playPs5NavigateSound(); setActiveSection('offers'); }}
                         className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
                             activeSection === 'offers'
-                                ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md'
-                                : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                                ? 'bg-red-600 text-white shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                         }`}
                     >
                         <Flame className="w-4 h-4" />
@@ -270,8 +270,8 @@ export default function SimpleMenuSettingsTab() {
                         onClick={() => { playPs5NavigateSound(); setActiveSection('room_rates'); }}
                         className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
                             activeSection === 'room_rates'
-                                ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md'
-                                : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                                ? 'bg-red-600 text-white shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                         }`}
                     >
                         <Gamepad2 className="w-4 h-4" />
@@ -283,10 +283,10 @@ export default function SimpleMenuSettingsTab() {
                     type="button"
                     onClick={loadAllData}
                     disabled={loading}
-                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/10 transition-colors cursor-pointer mr-auto sm:mr-0"
+                    className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 border border-slate-200 transition-colors cursor-pointer mr-auto sm:mr-0"
                     title="تحديث البيانات"
                 >
-                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-red-500' : ''}`} />
+                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-red-600' : ''}`} />
                 </button>
             </div>
 
@@ -294,16 +294,16 @@ export default function SimpleMenuSettingsTab() {
             {activeSection === 'products' && (
                 <div className="space-y-4">
                     {/* Controls & Search Bar */}
-                    <div className="bg-[#140e11] border border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
+                    <div className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center shadow-xs">
                         {/* Search */}
                         <div className="relative flex-1">
-                            <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                            <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <input
                                 type="text"
                                 placeholder="ابحث عن صنف أو مشروب..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full bg-[#1c1417] text-white text-xs rounded-xl pr-10 pl-4 py-2.5 border border-white/10 outline-none focus:border-red-500"
+                                className="w-full bg-slate-50 text-slate-900 text-xs rounded-xl pr-10 pl-4 py-2.5 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
                             />
                         </div>
 
@@ -312,7 +312,7 @@ export default function SimpleMenuSettingsTab() {
                             <select
                                 value={selectedCategory}
                                 onChange={(e) => setSelectedCategory(e.target.value)}
-                                className="bg-[#1c1417] text-white text-xs border border-white/10 rounded-xl px-3 py-2.5 outline-none cursor-pointer"
+                                className="bg-slate-50 text-slate-800 text-xs border border-slate-200 rounded-xl px-3 py-2.5 outline-none cursor-pointer focus:bg-white"
                             >
                                 <option value="all">جميع الأقسام ({products.length})</option>
                                 {categories.map((c) => (
@@ -326,7 +326,7 @@ export default function SimpleMenuSettingsTab() {
                             <button
                                 type="button"
                                 onClick={() => setActiveModalProduct('new')}
-                                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md shrink-0"
+                                className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0"
                             >
                                 <Plus className="w-4 h-4" />
                                 <span>صنف جديد</span>
@@ -337,10 +337,10 @@ export default function SimpleMenuSettingsTab() {
                     {/* Products Grid */}
                     {loading ? (
                         <div className="py-20 flex justify-center">
-                            <RefreshCw className="w-8 h-8 animate-spin text-red-500" />
+                            <RefreshCw className="w-8 h-8 animate-spin text-red-600" />
                         </div>
                     ) : filteredProducts.length === 0 ? (
-                        <div className="py-16 text-center border border-dashed border-white/10 rounded-2xl p-8 text-neutral-400 text-xs">
+                        <div className="py-16 text-center border border-dashed border-slate-200 rounded-2xl p-8 text-slate-500 text-xs bg-white shadow-xs">
                             لا توجد أصناف مطابقة للبحث أو القسم المحدد.
                         </div>
                     ) : (
@@ -348,38 +348,38 @@ export default function SimpleMenuSettingsTab() {
                             {filteredProducts.map((p) => (
                                 <div
                                     key={p.id}
-                                    className={`bg-[#140e11] border rounded-2xl p-3.5 flex flex-col justify-between gap-3 transition-all ${
+                                    className={`bg-white border rounded-2xl p-3.5 flex flex-col justify-between gap-3 transition-all shadow-xs ${
                                         p.is_available
-                                            ? 'border-white/10 hover:border-white/20'
-                                            : 'border-red-950/40 opacity-70 bg-[#120c0f]'
+                                            ? 'border-slate-200/90 hover:border-slate-300 hover:shadow-sm'
+                                            : 'border-rose-200 bg-rose-50/20 opacity-80'
                                     }`}
                                 >
                                     <div className="space-y-2">
                                         <div className="flex items-start gap-3">
                                             {/* Image / Placeholder */}
-                                            <div className="w-14 h-14 rounded-xl bg-[#1c1417] border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+                                            <div className="w-14 h-14 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
                                                 {p.image_url ? (
                                                     <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
                                                 ) : (
-                                                    <ImageIcon className="w-6 h-6 text-neutral-600" />
+                                                    <ImageIcon className="w-6 h-6 text-slate-400" />
                                                 )}
                                             </div>
 
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between gap-1">
-                                                    <h4 className="font-bold text-sm text-white truncate">{p.name}</h4>
-                                                    <span className="text-emerald-400 font-bold font-mono text-sm shrink-0">
+                                                    <h4 className="font-bold text-sm text-slate-900 truncate">{p.name}</h4>
+                                                    <span className="text-emerald-700 font-bold font-mono text-sm shrink-0">
                                                         {p.price} ج.م
                                                     </span>
                                                 </div>
 
                                                 {p.description && (
-                                                    <p className="text-[11px] text-neutral-400 line-clamp-1 mt-0.5">
+                                                    <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
                                                         {p.description}
                                                     </p>
                                                 )}
 
-                                                <span className="text-[10px] text-neutral-500 font-medium block mt-1">
+                                                <span className="text-[10px] text-slate-400 font-medium block mt-1">
                                                     {categories.find((c) => c.id === p.category_id)?.name || 'غير مصنف'}
                                                 </span>
                                             </div>
@@ -387,19 +387,19 @@ export default function SimpleMenuSettingsTab() {
                                     </div>
 
                                     {/* Action Row: Toggle Stock Switch & Edit / Delete */}
-                                    <div className="pt-2.5 border-t border-white/5 flex items-center justify-between gap-2">
+                                    <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
                                         {/* In-Stock Switch */}
                                         <button
                                             type="button"
                                             onClick={() => handleToggleAvailable(p)}
                                             className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
                                                 p.is_available
-                                                    ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-500/30'
-                                                    : 'bg-red-950/40 text-red-400 border border-red-500/30'
+                                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                                                    : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
                                             }`}
                                             title="اضغط لتغيير حالة التوفر فوراً"
                                         >
-                                            {p.is_available ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+                                            {p.is_available ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <XCircle className="w-3.5 h-3.5 text-rose-600" />}
                                             <span>{p.is_available ? 'متوفر' : 'نفذ'}</span>
                                         </button>
 
@@ -408,7 +408,7 @@ export default function SimpleMenuSettingsTab() {
                                             <button
                                                 type="button"
                                                 onClick={() => setActiveModalProduct(p)}
-                                                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white transition-colors cursor-pointer"
+                                                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
                                                 title="تعديل الصنف والسعر"
                                             >
                                                 <Edit3 className="w-3.5 h-3.5" />
@@ -416,7 +416,7 @@ export default function SimpleMenuSettingsTab() {
                                             <button
                                                 type="button"
                                                 onClick={() => handleDeleteProduct(p)}
-                                                className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-400 transition-colors cursor-pointer"
+                                                className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 transition-colors cursor-pointer"
                                                 title="حذف"
                                             >
                                                 <Trash2 className="w-3.5 h-3.5" />
@@ -433,15 +433,15 @@ export default function SimpleMenuSettingsTab() {
             {/* SECTION 2: CATEGORIES */}
             {activeSection === 'categories' && (
                 <div className="space-y-4">
-                    <div className="bg-[#140e11] border border-white/10 rounded-2xl p-4 flex items-center justify-between">
+                    <div className="bg-white border border-slate-200/90 rounded-2xl p-4 flex items-center justify-between shadow-xs">
                         <div>
-                            <h3 className="text-sm font-bold text-white">أقسام وتصنيفات المنيو</h3>
-                            <p className="text-xs text-neutral-400">تنظيم المنيو في أقسام يسهل على الزبون التصفح والطلب.</p>
+                            <h3 className="text-sm font-bold text-slate-900">أقسام وتصنيفات المنيو</h3>
+                            <p className="text-xs text-slate-500">تنظيم المنيو في أقسام يسهل على الزبون التصفح والطلب.</p>
                         </div>
                         <button
                             type="button"
                             onClick={() => setActiveModalCategory('new')}
-                            className="px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-md"
+                            className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
                         >
                             <Plus className="w-4 h-4" />
                             <span>قسم جديد</span>
@@ -452,15 +452,15 @@ export default function SimpleMenuSettingsTab() {
                         {categories.map((cat) => (
                             <div
                                 key={cat.id}
-                                className="bg-[#140e11] border border-white/10 rounded-xl p-4 flex items-center justify-between"
+                                className="bg-white border border-slate-200/90 rounded-xl p-4 flex items-center justify-between shadow-xs"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-red-600/20 border border-red-500/30 text-red-400 flex items-center justify-center">
-                                        <CategoryIcon iconName={cat.icon} className="w-5 h-5" />
+                                    <div className="w-10 h-10 rounded-xl bg-red-50 border border-red-200 text-red-600 flex items-center justify-center">
+                                        <CategoryIcon icon={cat.icon} className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-sm text-white">{cat.name}</h4>
-                                        <span className="text-[11px] text-neutral-400">
+                                        <h4 className="font-bold text-sm text-slate-900">{cat.name}</h4>
+                                        <span className="text-[11px] text-slate-500">
                                             {products.filter((p) => p.category_id === cat.id).length} أصناف
                                         </span>
                                     </div>
@@ -470,7 +470,7 @@ export default function SimpleMenuSettingsTab() {
                                     <button
                                         type="button"
                                         onClick={() => setActiveModalCategory(cat)}
-                                        className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white"
+                                        className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900"
                                         title="تعديل"
                                     >
                                         <Edit3 className="w-3.5 h-3.5" />
@@ -478,7 +478,7 @@ export default function SimpleMenuSettingsTab() {
                                     <button
                                         type="button"
                                         onClick={() => handleDeleteCategory(cat)}
-                                        className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-400"
+                                        className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600"
                                         title="حذف"
                                     >
                                         <Trash2 className="w-3.5 h-3.5" />
@@ -493,15 +493,15 @@ export default function SimpleMenuSettingsTab() {
             {/* SECTION 3: OFFERS */}
             {activeSection === 'offers' && (
                 <div className="space-y-4">
-                    <div className="bg-[#140e11] border border-white/10 rounded-2xl p-4 flex items-center justify-between">
+                    <div className="bg-white border border-slate-200/90 rounded-2xl p-4 flex items-center justify-between shadow-xs">
                         <div>
-                            <h3 className="text-sm font-bold text-white">العروض الترويجية والخصومات</h3>
-                            <p className="text-xs text-neutral-400">العروض تظهر بشكل بارز في أعلى صفحة المنيو للزبائن.</p>
+                            <h3 className="text-sm font-bold text-slate-900">العروض الترويجية والخصومات</h3>
+                            <p className="text-xs text-slate-500">العروض تظهر بشكل بارز في أعلى صفحة المنيو للزبائن.</p>
                         </div>
                         <button
                             type="button"
                             onClick={() => setActiveModalOffer('new')}
-                            className="px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-md"
+                            className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
                         >
                             <Plus className="w-4 h-4" />
                             <span>عرض جديد</span>
@@ -512,24 +512,24 @@ export default function SimpleMenuSettingsTab() {
                         {offers.map((offer) => (
                             <div
                                 key={offer.id}
-                                className="bg-[#140e11] border border-white/10 rounded-xl p-4 space-y-3"
+                                className="bg-white border border-slate-200/90 rounded-xl p-4 space-y-3 shadow-xs"
                             >
                                 <div className="flex items-start justify-between gap-2">
                                     <div>
-                                        <h4 className="font-bold text-sm text-white">{offer.title}</h4>
-                                        <p className="text-xs text-neutral-400 mt-0.5">{offer.description}</p>
+                                        <h4 className="font-bold text-sm text-slate-900">{offer.title}</h4>
+                                        <p className="text-xs text-slate-500 mt-0.5">{offer.description}</p>
                                     </div>
-                                    <span className="text-emerald-400 font-bold font-mono text-sm">{offer.price}</span>
+                                    <span className="text-emerald-700 font-bold font-mono text-sm">{offer.price}</span>
                                 </div>
 
-                                <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+                                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                                     <button
                                         type="button"
                                         onClick={() => handleToggleOfferActive(offer)}
                                         className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer ${
                                             offer.is_active
-                                                ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-500/30'
-                                                : 'bg-neutral-800 text-neutral-400'
+                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                : 'bg-slate-100 text-slate-500'
                                         }`}
                                     >
                                         {offer.is_active ? 'نشط معروض' : 'معطل'}
@@ -539,14 +539,14 @@ export default function SimpleMenuSettingsTab() {
                                         <button
                                             type="button"
                                             onClick={() => setActiveModalOffer(offer)}
-                                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white"
+                                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900"
                                         >
                                             <Edit3 className="w-3.5 h-3.5" />
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => handleDeleteOffer(offer)}
-                                            className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-400"
+                                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600"
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </button>
@@ -560,19 +560,19 @@ export default function SimpleMenuSettingsTab() {
 
             {/* SECTION 4: ROOM RATES */}
             {activeSection === 'room_rates' && (
-                <div className="max-w-xl bg-[#140e11] border border-white/10 rounded-2xl p-5 sm:p-6 space-y-4 shadow-md">
-                    <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-                        <Gamepad2 className="w-5 h-5 text-red-500" />
-                        <h3 className="text-base font-bold text-white">أسعار ساعات اللعب في غرف البلايستيشن</h3>
+                <div className="max-w-xl bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
+                    <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+                        <Gamepad2 className="w-5 h-5 text-red-600" />
+                        <h3 className="text-base font-bold text-slate-900">أسعار ساعات اللعب في غرف البلايستيشن</h3>
                     </div>
 
-                    <p className="text-xs text-neutral-400 leading-relaxed">
+                    <p className="text-xs text-slate-500 leading-relaxed">
                         يتم استخدام هذه الأسعار تلقائياً لحساب تكلفة الحجز عند اختيار الزبون للغرفة والمدة.
                     </p>
 
                     <div className="space-y-4 pt-2">
                         <div>
-                            <label className="text-xs font-bold text-neutral-300 block mb-1">
+                            <label className="text-xs font-bold text-slate-700 block mb-1">
                                 سعر ساعة الغرفة 1 (Room 1):
                             </label>
                             <div className="relative">
@@ -581,14 +581,14 @@ export default function SimpleMenuSettingsTab() {
                                     min="1"
                                     value={rateRoom1}
                                     onChange={(e) => setRateRoom1(Number(e.target.value))}
-                                    className="w-full bg-[#1c1417] text-white font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-white/15 outline-none focus:border-red-500"
+                                    className="w-full bg-slate-50 text-slate-900 font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
                                 />
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400">ج.م / ساعة</span>
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">ج.م / ساعة</span>
                             </div>
                         </div>
 
                         <div>
-                            <label className="text-xs font-bold text-neutral-300 block mb-1">
+                            <label className="text-xs font-bold text-slate-700 block mb-1">
                                 سعر ساعة الغرفة 2 (Room 2):
                             </label>
                             <div className="relative">
@@ -597,9 +597,9 @@ export default function SimpleMenuSettingsTab() {
                                     min="1"
                                     value={rateRoom2}
                                     onChange={(e) => setRateRoom2(Number(e.target.value))}
-                                    className="w-full bg-[#1c1417] text-white font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-white/15 outline-none focus:border-red-500"
+                                    className="w-full bg-slate-50 text-slate-900 font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
                                 />
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400">ج.م / ساعة</span>
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">ج.م / ساعة</span>
                             </div>
                         </div>
                     </div>
@@ -609,7 +609,7 @@ export default function SimpleMenuSettingsTab() {
                             type="button"
                             onClick={handleSaveRoomRates}
                             disabled={savingRates}
-                            className="w-full py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-red-900/30"
+                            className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
                         >
                             {savingRates ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                             <span>حفظ الأسعار وتطبيقها فوراً</span>
