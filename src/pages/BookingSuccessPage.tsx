@@ -70,7 +70,6 @@ export default function BookingSuccessPage() {
         endTime,
         durationHours,
         snacks,
-        discountAmount,
         netTotal,
         paymentMethod,
         name,
@@ -106,7 +105,6 @@ export default function BookingSuccessPage() {
         if (notes) msg += `📝 *ملاحظات خاصة:* ${notes}\n\n`;
 
         msg += `💳 *طريقة الدفع:* ${paymentLabel}\n`;
-        if (discountAmount > 0) msg += `🎁 *خصم الكوبون:* ${discountAmount} ج.م\n`;
         msg += `💰 *المبلغ النهائي المستحق:* ${netTotal} ج.م\n\n`;
 
         if (paymentMethod !== 'cash') {

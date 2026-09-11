@@ -12,7 +12,6 @@ import {
     Copy,
     CheckCircle2,
     ShieldCheck,
-    Tag,
     FileText,
     Sun,
     Moon,
@@ -73,8 +72,6 @@ export default function BookingPaymentPage() {
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [notes, setNotes] = useState('');
-    const [promoInput, setPromoInput] = useState('');
-    const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
@@ -126,26 +123,8 @@ export default function BookingPaymentPage() {
         setTimeout(() => setCopiedKey(null), 2500);
     };
 
-    // Promo code handler (D95VIP or GAMER10 gives 10% discount)
-    const handleApplyPromo = () => {
-        const cleaned = promoInput.trim().toUpperCase();
-        if (!cleaned) {
-            toast.error('يرجى إدخال كود الخصم');
-            return;
-        }
-        if (cleaned === 'D95VIP' || cleaned === 'GAMER10' || cleaned === 'D95') {
-            playPs5SelectSound();
-            setAppliedPromo(cleaned);
-            toast.success('🎉 تم تفعيل خصم 10% بنجاح!');
-        } else {
-            toast.error('كود الخصم غير صالح أو منتهي الصلاحية');
-        }
-    };
-
-    // Calculate discount and net total
-    const rawTotal = (roomSubtotal || 200) + (effectiveSnacksTotal || 0);
-    const discountAmount = appliedPromo ? Math.round(rawTotal * 0.1) : 0;
-    const netTotal = Math.max(0, rawTotal - discountAmount);
+    // Net total calculation
+    const netTotal = (roomSubtotal || 200) + (effectiveSnacksTotal || 0);
 
     const handleConfirm = async () => {
         if (!name.trim() || name.trim().length < 3) {
@@ -203,13 +182,12 @@ export default function BookingPaymentPage() {
                 duration_hours: Number(durationHours) || 1,
                 subtotal: Number(roomSubtotal) || 0,
                 snacks_total: Number(effectiveSnacksTotal) || 0,
-                discount_amount: Number(discountAmount) || 0,
+                discount_amount: 0,
                 total_amount: Number(netTotal) || 0,
                 payment_method: paymentMethod,
                 status: 'pending',
                 snacks: effectiveSnacks || [],
                 notes: notes.trim() || null,
-                promo_code: appliedPromo || undefined,
             });
 
             // Booking successfully recorded - clear cart & pending session
@@ -240,13 +218,11 @@ export default function BookingPaymentPage() {
                 roomSubtotal,
                 snacks: effectiveSnacks,
                 snacksTotal: effectiveSnacksTotal,
-                discountAmount,
                 netTotal,
                 paymentMethod,
                 name: name.trim(),
                 phone: cleanPhone,
                 notes: notes.trim(),
-                appliedPromo,
             },
         });
     };
@@ -560,38 +536,6 @@ export default function BookingPaymentPage() {
                                 )}
                             </div>
                         </section>
-
-                        {/* PROMO CODE SECTION */}
-                        <section className="bg-white dark:bg-[#140e10]/95 border border-neutral-200 dark:border-white/10 rounded-2xl p-4 shadow-sm dark:shadow-xl backdrop-blur-md transition-colors">
-                            <div className="flex items-center gap-2 mb-2.5 text-neutral-900 dark:text-white font-bold text-xs sm:text-sm">
-                                <Tag className="w-4 h-4 text-red-600 dark:text-red-500" />
-                                <span>كوبون الخصم (Promo Code)</span>
-                            </div>
-
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={promoInput}
-                                    onChange={(e) => setPromoInput(e.target.value)}
-                                    placeholder="اكتب كود الخصم (جرب: D95VIP)"
-                                    className="flex-1 bg-neutral-50 dark:bg-[#1c1417]/80 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-body text-neutral-900 dark:text-white uppercase placeholder:text-neutral-400 dark:placeholder:text-neutral-500 outline-none border border-neutral-200 dark:border-white/10 focus:border-red-500 focus:bg-white dark:focus:bg-[#241a1e]"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleApplyPromo}
-                                    className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs sm:text-sm cursor-pointer transition-all active:scale-95 shadow-sm"
-                                >
-                                    تطبيق
-                                </button>
-                            </div>
-
-                            {appliedPromo && (
-                                <div className="mt-2.5 text-xs text-emerald-700 dark:text-emerald-300 font-bold flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/60 p-2 rounded-lg border border-emerald-200 dark:border-emerald-500/40">
-                                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                                    <span>تم تطبيق الكود ({appliedPromo}) - خصم 10% ({discountAmount} ج.م)</span>
-                                </div>
-                            )}
-                        </section>
                     </div>
 
                     {/* LEFT COLUMN: PREVIEW & TRANSPARENT BILL (5 of 12, sticky on desktop) */}
@@ -645,13 +589,6 @@ export default function BookingPaymentPage() {
                                         <span className="text-red-600 dark:text-red-400 font-bold">+{s.price} ج.م</span>
                                     </div>
                                 ))}
-
-                                {appliedPromo && (
-                                    <div className="flex justify-between items-center text-emerald-600 dark:text-emerald-400 font-bold">
-                                        <span>خصم الكوبون ({appliedPromo}):</span>
-                                        <span>-{discountAmount} ج.م</span>
-                                    </div>
-                                )}
 
                                 <div className="flex justify-between items-center pt-3 border-t border-neutral-200 dark:border-white/10">
                                     <span className="font-bold text-sm text-neutral-900 dark:text-white">المبلغ النهائي المستحق:</span>
