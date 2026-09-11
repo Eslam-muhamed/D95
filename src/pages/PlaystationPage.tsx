@@ -369,7 +369,7 @@ export default function PlaystationPage() {
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
                                                     <span
-                                                        className={`text-[8px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded ${
+                                                        className={`text-[9px] sm:text-xs font-bebas font-bold uppercase tracking-wider px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded ${
                                                             isRoom1
                                                                 ? 'bg-cyan-950/90 text-cyan-300 border border-cyan-500/40'
                                                                 : 'bg-rose-950/90 text-rose-300 border border-rose-500/40'
@@ -377,7 +377,7 @@ export default function PlaystationPage() {
                                                     >
                                                         {room.titleEn}
                                                     </span>
-                                                    <span className="text-[9px] sm:text-[11px] text-neutral-300 font-body font-semibold hidden md:inline">
+                                                    <span className="text-[10px] sm:text-xs text-neutral-300 font-bebas tracking-wide font-bold hidden md:inline">
                                                         PlayStation 5 VIP
                                                     </span>
                                                 </div>

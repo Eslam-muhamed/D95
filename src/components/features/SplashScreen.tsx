@@ -151,12 +151,12 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                         initial={{ opacity: 0, y: -15 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 0.1 }}
-                        className="relative z-10 flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md text-[10px] sm:text-xs font-mono text-neutral-400 tracking-wider shadow-sm"
+                        className="relative z-10 flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md text-xs font-bebas tracking-wider text-neutral-400 shadow-sm"
                     >
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                         <span>D95 LOUNGE &amp; CAFÉ</span>
                         <span className="text-neutral-600">•</span>
-                        <span className="text-red-400">VIP EXPERIENCE</span>
+                        <span className="text-red-400 font-bold">VIP EXPERIENCE</span>
                     </motion.div>
 
                     {/* 3. CENTER HERO: EMBLEM & MASTER LOGO */}
