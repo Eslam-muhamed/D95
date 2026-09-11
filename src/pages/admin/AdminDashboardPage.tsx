@@ -81,30 +81,30 @@ export default function AdminDashboardPage() {
     ];
 
     return (
-        <div className="min-h-screen w-full bg-[#0a0809] text-white font-body selection:bg-red-600 selection:text-white flex flex-col" dir="rtl">
+        <div className="min-h-screen w-full bg-[#0b0f19] text-slate-100 font-body selection:bg-red-600 selection:text-white flex flex-col" dir="rtl">
             {/* Top Navigation Bar */}
-            <header className="sticky top-0 z-40 bg-[#120c0f]/95 backdrop-blur-xl border-b border-white/10 px-4 sm:px-6 py-3 flex items-center justify-between">
+            <header className="sticky top-0 z-40 bg-[#0f172a]/95 backdrop-blur-xl border-b border-slate-800 px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-sm">
                 {/* Brand & Connection Badge */}
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-red-500 flex items-center justify-center text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] border border-red-400/30">
-                        <Gamepad2 className="w-6 h-6" />
+                    <div className="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white shadow-sm">
+                        <Gamepad2 className="w-5 h-5" />
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
-                            <span className="font-brush text-2xl text-red-500 font-bold leading-none">D95</span>
-                            <span className="text-[10px] bg-red-950 text-red-400 font-bold px-2 py-0.5 rounded-full border border-red-500/30">
-                                LOUNGE
+                            <span className="text-base font-bold text-white tracking-wide">D95 Lounge</span>
+                            <span className="text-[10px] bg-slate-800 text-slate-300 font-semibold px-2 py-0.5 rounded-full border border-slate-700">
+                                لوحة التحكم
                             </span>
                         </div>
                         <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-medium mt-0.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                            <span>متصل بالقاعدة (Supabase)</span>
+                            <span>متصل بالقاعدة السحابية</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Desktop Tabs In Header */}
-                <div className="hidden md:flex items-center gap-1.5 bg-[#181114] border border-white/10 p-1 rounded-2xl">
+                <div className="hidden md:flex items-center gap-1 bg-[#0b0f19] border border-slate-800 p-1 rounded-xl">
                     {navItems.map((item) => {
                         const isActive = activeTab === item.id;
                         return (
@@ -115,16 +115,16 @@ export default function AdminDashboardPage() {
                                     playPs5NavigateSound();
                                     setActiveTab(item.id);
                                 }}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                                     isActive
-                                        ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-[0_0_20px_rgba(220,38,38,0.35)] border border-red-500/40'
-                                        : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                                        ? 'bg-red-600 text-white shadow-sm'
+                                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                                 }`}
                             >
                                 {item.icon}
                                 <span>{item.label}</span>
                                 {item.badgeCount !== undefined && item.badgeCount > 0 && (
-                                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500 text-black animate-pulse">
+                                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-400 text-slate-950">
                                         {item.badgeCount}
                                     </span>
                                 )}
@@ -139,16 +139,16 @@ export default function AdminDashboardPage() {
                         href="/menu"
                         target="_blank"
                         rel="noreferrer"
-                        className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/10 text-xs font-semibold transition-colors cursor-pointer"
+                        className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold transition-colors cursor-pointer"
                     >
-                        <span>معاينة المنيو الحي</span>
+                        <span>معاينة المنيو</span>
                         <ExternalLink className="w-3.5 h-3.5" />
                     </a>
 
                     <button
                         type="button"
                         onClick={handleLogout}
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-500/20 text-xs font-semibold transition-colors cursor-pointer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/60 hover:bg-rose-950/50 text-slate-300 hover:text-rose-400 border border-slate-700 text-xs font-semibold transition-colors cursor-pointer"
                         title="تسجيل الخروج"
                     >
                         <LogOut className="w-3.5 h-3.5" />
@@ -157,8 +157,8 @@ export default function AdminDashboardPage() {
                 </div>
             </header>
 
-            {/* Mobile Top Sub-Header: Segmented Bar (For quick switching on small screens) */}
-            <div className="md:hidden bg-[#140e11] border-b border-white/10 px-3 py-2">
+            {/* Mobile Top Sub-Header: Segmented Bar */}
+            <div className="md:hidden bg-[#0f172a] border-b border-slate-800 px-3 py-2">
                 <div className="grid grid-cols-3 gap-1.5">
                     {navItems.map((item) => {
                         const isActive = activeTab === item.id;
@@ -172,14 +172,14 @@ export default function AdminDashboardPage() {
                                 }}
                                 className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer truncate ${
                                     isActive
-                                        ? 'bg-red-600 text-white shadow-md'
-                                        : 'bg-white/5 text-neutral-400 hover:text-white'
+                                        ? 'bg-red-600 text-white shadow-sm'
+                                        : 'bg-slate-800/50 text-slate-400 hover:text-white'
                                 }`}
                             >
                                 {item.icon}
                                 <span className="truncate">{item.label}</span>
                                 {item.badgeCount !== undefined && item.badgeCount > 0 && (
-                                    <span className="w-4 h-4 rounded-full bg-amber-400 text-black text-[9px] font-bold flex items-center justify-center shrink-0">
+                                    <span className="w-4 h-4 rounded-full bg-amber-400 text-slate-950 text-[9px] font-bold flex items-center justify-center shrink-0">
                                         {item.badgeCount}
                                     </span>
                                 )}
@@ -196,16 +196,16 @@ export default function AdminDashboardPage() {
                 {activeTab === 'menu_settings' && <SimpleMenuSettingsTab />}
             </main>
 
-            {/* Mobile Bottom Navigation Bar (Optimized for 1-Hand Phone Usage) */}
-            <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#120c0f]/95 backdrop-blur-xl border-t border-white/10 px-3 py-2 flex items-center justify-around shadow-[0_-10px_25px_rgba(0,0,0,0.6)]">
+            {/* Mobile Bottom Navigation Bar */}
+            <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0f172a]/95 backdrop-blur-xl border-t border-slate-800 px-3 py-2 flex items-center justify-around shadow-lg">
                 <button
                     type="button"
                     onClick={() => {
                         playPs5NavigateSound();
                         setActiveTab('operations');
                     }}
-                    className={`flex-1 flex flex-col items-center gap-1 py-1.5 rounded-xl transition-all cursor-pointer ${
-                        activeTab === 'operations' ? 'text-red-500 font-bold scale-105' : 'text-neutral-400'
+                    className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-xl transition-all cursor-pointer ${
+                        activeTab === 'operations' ? 'text-red-500 font-bold' : 'text-slate-400'
                     }`}
                 >
                     <Gamepad2 className="w-5 h-5" />
@@ -218,8 +218,8 @@ export default function AdminDashboardPage() {
                         playPs5NavigateSound();
                         setActiveTab('orders');
                     }}
-                    className={`flex-1 flex flex-col items-center gap-1 py-1.5 rounded-xl transition-all cursor-pointer relative ${
-                        activeTab === 'orders' ? 'text-amber-400 font-bold scale-105' : 'text-neutral-400'
+                    className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-xl transition-all cursor-pointer relative ${
+                        activeTab === 'orders' ? 'text-amber-400 font-bold' : 'text-slate-400'
                     }`}
                 >
                     <div className="relative">
@@ -237,8 +237,8 @@ export default function AdminDashboardPage() {
                         playPs5NavigateSound();
                         setActiveTab('menu_settings');
                     }}
-                    className={`flex-1 flex flex-col items-center gap-1 py-1.5 rounded-xl transition-all cursor-pointer ${
-                        activeTab === 'menu_settings' ? 'text-purple-400 font-bold scale-105' : 'text-neutral-400'
+                    className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-xl transition-all cursor-pointer ${
+                        activeTab === 'menu_settings' ? 'text-purple-400 font-bold' : 'text-slate-400'
                     }`}
                 >
                     <UtensilsCrossed className="w-5 h-5" />
