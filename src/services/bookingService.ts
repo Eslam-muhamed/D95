@@ -128,15 +128,30 @@ export async function createBooking(booking: Omit<DBBooking, 'id' | 'created_at'
     throw new Error('تعذر إتمام الحجز');
 }
 
-export async function fetchBookings(filter?: {
+export interface PaginatedBookingsResult {
+    bookings: DBBooking[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+}
+
+export async function fetchPaginatedBookings(filter?: {
     status?: string;
     date?: string;
     search?: string;
-}): Promise<DBBooking[]> {
+    page?: number;
+    pageSize?: number;
+}): Promise<PaginatedBookingsResult> {
+    const page = Math.max(1, filter?.page || 1);
+    const pageSize = Math.max(5, Math.min(100, filter?.pageSize || 20));
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
     try {
         let query = supabase
             .from('ps_bookings')
-            .select('*')
+            .select('*', { count: 'exact' })
             .order('created_at', { ascending: false });
 
         if (filter?.status && filter.status !== 'all') {
@@ -147,30 +162,69 @@ export async function fetchBookings(filter?: {
             query = query.eq('booking_date', filter.date);
         }
 
-        const { data, error } = await query;
+        if (filter?.search) {
+            const s = filter.search.trim();
+            query = query.or(`customer_name.ilike.%${s}%,customer_phone.ilike.%${s}%,reservation_id.ilike.%${s}%,room_name.ilike.%${s}%`);
+        }
+
+        const { data, count, error } = await query.range(from, to);
 
         if (error) {
-            console.error('Error fetching bookings:', error);
-            return [];
+            console.error('Error fetching paginated bookings:', error);
+            return { bookings: [], totalCount: 0, page, pageSize, totalPages: 1 };
         }
 
-        let bookings = (data || []) as DBBooking[];
+        const totalCount = count || 0;
+        const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
-        if (filter?.search) {
-            const s = filter.search.toLowerCase();
-            bookings = bookings.filter(b =>
-                b.customer_name.toLowerCase().includes(s) ||
-                b.customer_phone.includes(s) ||
-                b.reservation_id.toLowerCase().includes(s) ||
-                b.room_name.toLowerCase().includes(s)
-            );
-        }
-
-        return bookings;
+        return {
+            bookings: (data || []) as DBBooking[],
+            totalCount,
+            page,
+            pageSize,
+            totalPages,
+        };
     } catch (err) {
-        console.error('Exception fetching bookings:', err);
-        return [];
+        console.error('Exception in fetchPaginatedBookings:', err);
+        return { bookings: [], totalCount: 0, page, pageSize, totalPages: 1 };
     }
+}
+
+export async function fetchBookingMetrics(): Promise<{
+    pendingCount: number;
+    confirmedCount: number;
+    todayCount: number;
+    recentPending: DBBooking[];
+}> {
+    try {
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        const [pendingRes, confirmedRes, todayRes, recentRes] = await Promise.all([
+            supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+            supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('status', 'confirmed'),
+            supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('booking_date', todayStr),
+            supabase.from('ps_bookings').select('*').eq('status', 'pending').order('created_at', { ascending: false }).limit(6),
+        ]);
+
+        return {
+            pendingCount: pendingRes.count || 0,
+            confirmedCount: confirmedRes.count || 0,
+            todayCount: todayRes.count || 0,
+            recentPending: (recentRes.data || []) as DBBooking[],
+        };
+    } catch (err) {
+        console.error('Error fetching booking metrics:', err);
+        return { pendingCount: 0, confirmedCount: 0, todayCount: 0, recentPending: [] };
+    }
+}
+
+export async function fetchBookings(filter?: {
+    status?: string;
+    date?: string;
+    search?: string;
+}): Promise<DBBooking[]> {
+    const res = await fetchPaginatedBookings({ ...filter, page: 1, pageSize: 50 });
+    return res.bookings;
 }
 
 export async function updateBookingStatus(
@@ -603,4 +657,43 @@ export function groupConflictingPendingBookings(allBookings: DBBooking[]): Confl
     }
 
     return groups;
+}
+
+export interface RoomRates {
+    'room-1': number;
+    'room-2': number;
+    [roomId: string]: number;
+}
+
+export async function fetchRoomRates(): Promise<RoomRates> {
+    try {
+        const { data, error } = await supabase
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'room_rates')
+            .maybeSingle();
+
+        if (!error && data?.value) {
+            return data.value as RoomRates;
+        }
+    } catch (err) {
+        console.error('Error fetching room rates:', err);
+    }
+    return { 'room-1': 100, 'room-2': 100 };
+}
+
+export async function updateRoomRates(rates: RoomRates): Promise<RoomRates> {
+    const { error } = await supabase
+        .from('app_settings')
+        .upsert({
+            key: 'room_rates',
+            value: rates,
+            updated_at: new Date().toISOString(),
+        });
+
+    if (error) {
+        console.error('Error updating room rates:', error);
+        throw error;
+    }
+    return rates;
 }

@@ -10,6 +10,7 @@ export interface GamingStation {
     rate_per_match: number;
     status: 'available' | 'busy' | 'paused';
     display_order: number;
+    is_active?: boolean;
     created_at?: string;
 }
 
@@ -94,6 +95,7 @@ export async function fetchGamingStations(): Promise<GamingStation[]> {
         const { data, error } = await supabase
             .from('gaming_stations')
             .select('*')
+            .eq('is_active', true)
             .order('display_order', { ascending: true });
 
         if (error || !data || data.length === 0) {
@@ -402,11 +404,11 @@ export async function createGamingStation(station: Omit<GamingStation, 'id'>) {
     return data;
 }
 
-// Delete station
+// Soft delete station to preserve historical accounting and session data
 export async function deleteGamingStation(id: string) {
     const { error } = await supabase
         .from('gaming_stations')
-        .delete()
+        .update({ is_active: false })
         .eq('id', id);
 
     if (error) throw error;

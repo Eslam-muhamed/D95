@@ -14,7 +14,7 @@ import {
     RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { fetchBookings, updateBookingStatus } from '@/services/bookingService';
+import { fetchBookingMetrics, updateBookingStatus } from '@/services/bookingService';
 import { fetchProducts, fetchOffers } from '@/services/menuService';
 import type { DBBooking } from '@/types/database';
 
@@ -24,19 +24,25 @@ interface OverviewTabProps {
 
 export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
     const [loading, setLoading] = useState(true);
-    const [bookings, setBookings] = useState<DBBooking[]>([]);
+    const [pendingCount, setPendingCount] = useState(0);
+    const [confirmedCount, setConfirmedCount] = useState(0);
+    const [todayCount, setTodayCount] = useState(0);
+    const [recentBookings, setRecentBookings] = useState<DBBooking[]>([]);
     const [productCount, setProductCount] = useState(0);
     const [offerCount, setOfferCount] = useState(0);
 
     const loadMetrics = async () => {
         setLoading(true);
         try {
-            const [bData, pData, oData] = await Promise.all([
-                fetchBookings(),
+            const [bMetrics, pData, oData] = await Promise.all([
+                fetchBookingMetrics(),
                 fetchProducts('all'),
                 fetchOffers()
             ]);
-            setBookings(bData);
+            setPendingCount(bMetrics.pendingCount);
+            setConfirmedCount(bMetrics.confirmedCount);
+            setTodayCount(bMetrics.todayCount);
+            setRecentBookings(bMetrics.recentPending);
             setProductCount(pData.length);
             setOfferCount(oData.filter(o => o.is_active).length);
         } catch {
@@ -50,14 +56,13 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
         loadMetrics();
     }, []);
 
-    const pendingBookings = bookings.filter(b => b.status === 'pending');
-    const confirmedBookings = bookings.filter(b => b.status === 'confirmed');
-
     const handleQuickConfirm = async (b: DBBooking) => {
         try {
             await updateBookingStatus(b.id, 'confirmed');
             toast.success(`تم تأكيد حجز ${b.customer_name}!`);
-            setBookings(prev => prev.map(item => item.id === b.id ? { ...item, status: 'confirmed' } : item));
+            setRecentBookings(prev => prev.filter(item => item.id !== b.id));
+            setPendingCount(prev => Math.max(0, prev - 1));
+            setConfirmedCount(prev => prev + 1);
         } catch {
             toast.error('تعذر تأكيد الحجز');
         }
@@ -80,7 +85,7 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                     </div>
                     <div className="mt-4 flex items-baseline justify-between">
                         <span className="font-bebas text-5xl font-black text-white tracking-wider">
-                            {pendingBookings.length}
+                            {pendingCount}
                         </span>
                         <span className="text-xs text-amber-400/80 flex items-center gap-1 group-hover:translate-x-[-2px] transition-transform">
                             <span>مراجعة الآن</span>
@@ -102,10 +107,10 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                     </div>
                     <div className="mt-4 flex items-baseline justify-between">
                         <span className="font-bebas text-5xl font-black text-white tracking-wider">
-                            {confirmedBookings.length}
+                            {confirmedCount}
                         </span>
                         <span className="text-xs text-neutral-400 flex items-center gap-1">
-                            <span>من أصل {bookings.length}</span>
+                            <span>{todayCount} اليوم</span>
                         </span>
                     </div>
                 </div>
@@ -161,10 +166,10 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                     <div>
                         <h3 className="text-base font-bold text-white flex items-center gap-2">
                             <Clock className="w-4 h-4 text-red-500" />
-                            <span>أحدث الحجوزات الواردة</span>
+                            <span>أحدث طلبات الحجز بانتظار التأكيد</span>
                         </h3>
                         <p className="text-xs text-neutral-400 mt-0.5">
-                            آخر الحجوزات التي تمت عبر الموقع والتي تتطلب متابعة الصالة.
+                            آخر الحجوزات الواردة التي تتطلب مراجعة واعتماد الصالة.
                         </p>
                     </div>
 
@@ -184,7 +189,7 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                             onClick={() => onSwitchTab('bookings')}
                             className="text-xs text-red-400 hover:text-red-300 font-bold flex items-center gap-1 cursor-pointer"
                         >
-                            <span>عرض جميع الحجوزات ({bookings.length})</span>
+                            <span>عرض جميع الحجوزات</span>
                             <ArrowUpRight className="w-3.5 h-3.5" />
                         </button>
                     </div>
@@ -194,9 +199,9 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                     <div className="py-12 flex justify-center text-neutral-400">
                         <RefreshCw className="w-6 h-6 animate-spin text-red-500" />
                     </div>
-                ) : bookings.length === 0 ? (
+                ) : recentBookings.length === 0 ? (
                     <div className="py-10 text-center text-xs text-neutral-400 border border-dashed border-white/10 rounded-xl">
-                        لا توجد حجوزات واردة حتى الآن. ستظهر هنا فور إرسال أي عميل لحجز من الموقع.
+                        لا توجد طلبات حجز معلقة حالياً. جميع الحجوزات مستقرة.
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -213,7 +218,7 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                                {bookings.slice(0, 5).map((b) => (
+                                {recentBookings.map((b) => (
                                     <tr key={b.id} className="hover:bg-white/[0.02] transition-colors">
                                         <td className="py-3 pr-2 font-mono text-neutral-400">#{b.reservation_id}</td>
                                         <td className="py-3 font-bold text-white">

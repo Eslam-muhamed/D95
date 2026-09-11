@@ -23,18 +23,26 @@ import {
     Unlock,
     ChevronDown,
     ChevronUp,
+    ChevronRight,
+    ChevronLeft,
     Users,
     Info,
+    DollarSign,
+    Settings2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     fetchBookings,
+    fetchPaginatedBookings,
     updateBookingStatus,
     deleteBooking,
     calculateBookingExtensionInfo,
     extendBookingAndShiftConflicting,
     fetchBookingPolicy,
     updateBookingPolicy,
+    fetchRoomRates,
+    updateRoomRates,
+    type RoomRates,
     confirmBookingAndResolveConflicts,
     groupConflictingPendingBookings,
 } from '@/services/bookingService';
@@ -60,33 +68,82 @@ export default function BookingsTab() {
     const [isSavingPolicy, setIsSavingPolicy] = useState(false);
     const [expandedConflictIds, setExpandedConflictIds] = useState<Record<string, boolean>>({});
 
-    const loadData = useCallback(async () => {
+    // Server-side Pagination state
+    const [page, setPage] = useState<number>(1);
+    const [pageSize] = useState<number>(20);
+    const [totalCount, setTotalCount] = useState<number>(0);
+    const [totalPages, setTotalPages] = useState<number>(1);
+
+    // Dynamic Room Rates state
+    const [roomRates, setRoomRates] = useState<RoomRates | null>(null);
+    const [showRatesModal, setShowRatesModal] = useState<boolean>(false);
+    const [rateRoom1, setRateRoom1] = useState<number>(100);
+    const [rateRoom2, setRateRoom2] = useState<number>(100);
+    const [isSavingRates, setIsSavingRates] = useState<boolean>(false);
+
+    const loadData = useCallback(async (targetPage = page) => {
         setLoading(true);
         try {
-            const [data, currentPolicy] = await Promise.all([
-                fetchBookings({
+            const [paginatedRes, currentPolicy, rates] = await Promise.all([
+                fetchPaginatedBookings({
                     status: statusFilter !== 'all' ? statusFilter : undefined,
                     date: selectedDate || undefined,
-                    search: search || undefined
+                    search: search || undefined,
+                    page: targetPage,
+                    pageSize,
                 }),
                 fetchBookingPolicy(),
+                fetchRoomRates(),
             ]);
-            setBookings(data);
+            setBookings(paginatedRes.bookings);
+            setTotalCount(paginatedRes.totalCount);
+            setTotalPages(paginatedRes.totalPages);
             setPolicy(currentPolicy);
+            setRoomRates(rates);
+            setRateRoom1(rates['room-1'] || 100);
+            setRateRoom2(rates['room-2'] || 100);
         } catch {
-            toast.error('تعذر جلب قائمة الحجوزات أو إعدادات السياسة');
+            toast.error('تعذر جلب قائمة الحجوزات أو الإعدادات');
         } finally {
             setLoading(false);
         }
-    }, [statusFilter, selectedDate, search]);
+    }, [statusFilter, selectedDate, search, page, pageSize]);
 
     useEffect(() => {
-        loadData();
-    }, [loadData]);
+        loadData(page);
+    }, [loadData, page]);
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        loadData();
+        setPage(1);
+        loadData(1);
+    };
+
+    const handleStatusFilterChange = (newStatus: string) => {
+        setStatusFilter(newStatus);
+        setPage(1);
+    };
+
+    const handleDateFilterChange = (newDate: string) => {
+        setSelectedDate(newDate);
+        setPage(1);
+    };
+
+    const handleSaveRoomRates = async () => {
+        setIsSavingRates(true);
+        try {
+            const updated = await updateRoomRates({
+                'room-1': Number(rateRoom1) || 100,
+                'room-2': Number(rateRoom2) || 100,
+            });
+            setRoomRates(updated);
+            setShowRatesModal(false);
+            toast.success('تم تحديث أسعار ساعات الغرف بنجاح وتفعيلها في قاعدة البيانات! 🎮');
+        } catch {
+            toast.error('تعذر حفظ أسعار الغرف');
+        } finally {
+            setIsSavingRates(false);
+        }
     };
 
     const handlePolicySwitch = async (mode: 'admin_approval_only' | 'temporary_hold') => {
@@ -412,7 +469,7 @@ export default function BookingsTab() {
                         ].map((tab) => (
                             <button
                                 key={tab.id}
-                                onClick={() => setStatusFilter(tab.id)}
+                                onClick={() => handleStatusFilterChange(tab.id)}
                                 className={`px-2.5 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
                                     statusFilter === tab.id
                                         ? 'bg-red-600 text-white shadow'
@@ -430,13 +487,13 @@ export default function BookingsTab() {
                         <input
                             type="date"
                             value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
+                            onChange={(e) => handleDateFilterChange(e.target.value)}
                             className="bg-transparent text-white text-xs outline-none cursor-pointer"
                         />
                         {selectedDate && (
                             <button
                                 type="button"
-                                onClick={() => setSelectedDate('')}
+                                onClick={() => handleDateFilterChange('')}
                                 className="text-neutral-400 hover:text-red-400 font-bold ml-1 text-xs"
                                 title="إلغاء فلتر التاريخ"
                             >
@@ -445,10 +502,21 @@ export default function BookingsTab() {
                         )}
                     </div>
 
+                    {/* Room Rates Settings Button */}
+                    <button
+                        type="button"
+                        onClick={() => setShowRatesModal(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1c1417] hover:bg-white/10 text-amber-300 hover:text-amber-200 border border-amber-500/30 text-xs font-bold transition-colors cursor-pointer"
+                        title="تعديل أسعار ساعات الغرف"
+                    >
+                        <DollarSign className="w-3.5 h-3.5" />
+                        <span>تسعير الغرف</span>
+                    </button>
+
                     {/* Refresh */}
                     <button
                         type="button"
-                        onClick={loadData}
+                        onClick={() => loadData(page)}
                         disabled={loading}
                         className="p-2.5 rounded-xl bg-[#1c1417] hover:bg-white/10 text-neutral-300 hover:text-white border border-white/10 transition-colors cursor-pointer"
                         title="تحديث البيانات"
@@ -866,6 +934,150 @@ export default function BookingsTab() {
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="bg-[#140e11]/90 border border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                    <div className="text-neutral-400">
+                        عرض الصفحة <strong className="text-white font-bold">{page}</strong> من إجمالي <strong className="text-white font-bold">{totalPages}</strong> صفحة (إجمالي <strong className="text-white font-bold">{totalCount}</strong> حجز)
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                            disabled={page <= 1 || loading}
+                            className="px-3.5 py-2 rounded-xl bg-[#1c1417] hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold flex items-center gap-1.5 border border-white/10 transition-colors cursor-pointer"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                            <span>الصفحة السابقة</span>
+                        </button>
+
+                        <div className="flex items-center gap-1">
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                let pageNum = page - 2 + i;
+                                if (pageNum < 1) pageNum = i + 1;
+                                if (pageNum > totalPages) pageNum = totalPages - 4 + i;
+                                if (pageNum < 1 || pageNum > totalPages) return null;
+
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        type="button"
+                                        onClick={() => setPage(pageNum)}
+                                        className={`w-8 h-8 rounded-xl font-bold flex items-center justify-center transition-all cursor-pointer ${
+                                            page === pageNum
+                                                ? 'bg-red-600 text-white shadow'
+                                                : 'bg-[#1c1417] text-neutral-400 hover:text-white border border-white/10'
+                                        }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                            disabled={page >= totalPages || loading}
+                            className="px-3.5 py-2 rounded-xl bg-[#1c1417] hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold flex items-center gap-1.5 border border-white/10 transition-colors cursor-pointer"
+                        >
+                            <span>الصفحة التالية</span>
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ROOM RATES CONFIGURATION MODAL */}
+            {showRatesModal && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"
+                    onClick={() => setShowRatesModal(false)}
+                >
+                    <div
+                        className="relative w-full max-w-md rounded-2xl bg-[#140e11] border border-white/15 shadow-2xl p-5 sm:p-6 text-white space-y-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                            <div className="flex items-center gap-2">
+                                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
+                                    <DollarSign className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold text-white">تسعير ساعات الغرف (VIP)</h3>
+                                    <p className="text-xs text-neutral-400">تعديل سعر الساعة للغرف في قاعدة البيانات</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowRatesModal(false)}
+                                className="p-1 rounded-lg text-neutral-400 hover:text-white cursor-pointer"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3 py-2">
+                            <div>
+                                <label className="block text-xs font-bold text-neutral-300 mb-1.5">
+                                    سعر ساعة الغرفة 01 (الغرفة الخضراء / VIP):
+                                </label>
+                                <div className="flex items-center bg-[#1c1417] border border-white/10 rounded-xl px-3 py-2.5">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={rateRoom1}
+                                        onChange={(e) => setRateRoom1(Number(e.target.value))}
+                                        className="bg-transparent text-white font-mono font-bold text-sm w-full outline-none"
+                                    />
+                                    <span className="text-neutral-400 text-xs font-bold">ج.م / ساعة</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-neutral-300 mb-1.5">
+                                    سعر ساعة الغرفة 02 (الغرفة الحمراء / VIP):
+                                </label>
+                                <div className="flex items-center bg-[#1c1417] border border-white/10 rounded-xl px-3 py-2.5">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={rateRoom2}
+                                        onChange={(e) => setRateRoom2(Number(e.target.value))}
+                                        className="bg-transparent text-white font-mono font-bold text-sm w-full outline-none"
+                                    />
+                                    <span className="text-neutral-400 text-xs font-bold">ج.م / ساعة</span>
+                                </div>
+                            </div>
+
+                            <p className="text-[11px] text-neutral-400 bg-amber-950/20 border border-amber-500/20 rounded-xl p-2.5">
+                                💡 الأسعار المسجلة هنا يتم تطبيقها تلقائياً على أي حجز جديد يقوم به العملاء من الموقع، ويتم حسابها في قاعدة البيانات فورياً.
+                            </p>
+                        </div>
+
+                        <div className="pt-2 flex items-center justify-end gap-2 border-t border-white/10">
+                            <button
+                                type="button"
+                                onClick={() => setShowRatesModal(false)}
+                                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs font-bold cursor-pointer"
+                            >
+                                إلغاء
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSaveRoomRates}
+                                disabled={isSavingRates}
+                                className="px-5 py-2 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-red-900/30 cursor-pointer disabled:opacity-50"
+                            >
+                                {isSavingRates && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                                <span>حفظ وتطبيق السعر</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 

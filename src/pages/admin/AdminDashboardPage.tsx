@@ -13,10 +13,12 @@ import {
     Menu,
     X,
     Calendar,
+    ShoppingBag,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import OverviewTab from '@/components/admin/OverviewTab';
 import BookingsTab from '@/components/admin/BookingsTab';
+import OrdersTab from '@/components/admin/OrdersTab';
 import ProductsTab from '@/components/admin/ProductsTab';
 import CategoriesTab from '@/components/admin/CategoriesTab';
 import OffersTab from '@/components/admin/OffersTab';
@@ -24,7 +26,7 @@ import LiveStationsTab from '@/components/admin/LiveStationsTab';
 
 import { supabase } from '@/lib/supabase';
 
-type TabType = 'pos' | 'overview' | 'bookings' | 'products' | 'categories' | 'offers';
+type TabType = 'pos' | 'overview' | 'bookings' | 'orders' | 'products' | 'categories' | 'offers';
 
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
@@ -56,6 +58,7 @@ export default function AdminDashboardPage() {
         { id: 'pos', label: 'التحكم بالأجهزة (Gaming POS)', icon: <Gamepad2 className="w-4 h-4 text-red-500" /> },
         { id: 'overview', label: 'نظرة عامة', icon: <LayoutDashboard className="w-4 h-4" /> },
         { id: 'bookings', label: 'حجوزات البلايستيشن', icon: <Calendar className="w-4 h-4" /> },
+        { id: 'orders', label: 'طلبات الكافيه الرقمية', icon: <ShoppingBag className="w-4 h-4 text-amber-400" /> },
         { id: 'products', label: 'المنتجات والأسعار', icon: <UtensilsCrossed className="w-4 h-4" /> },
         { id: 'categories', label: 'أقسام المنيو', icon: <FolderTree className="w-4 h-4" /> },
         { id: 'offers', label: 'العروض الترويجية', icon: <Flame className="w-4 h-4" /> },
@@ -179,6 +182,7 @@ export default function AdminDashboardPage() {
                 {activeTab === 'pos' && <LiveStationsTab />}
                 {activeTab === 'overview' && <OverviewTab onSwitchTab={(t: TabType) => setActiveTab(t)} />}
                 {activeTab === 'bookings' && <BookingsTab />}
+                {activeTab === 'orders' && <OrdersTab />}
                 {activeTab === 'products' && <ProductsTab />}
                 {activeTab === 'categories' && <CategoriesTab />}
                 {activeTab === 'offers' && <OffersTab />}

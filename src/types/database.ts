@@ -76,3 +76,28 @@ export interface BookingPolicy {
     mode: 'admin_approval_only' | 'temporary_hold';
     hold_minutes: number;
 }
+
+export interface DBOrderItem {
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    customization?: Record<string, unknown>;
+}
+
+export interface DBOrder {
+    id: string;
+    order_number: string;
+    customer_name: string | null;
+    customer_phone: string | null;
+    order_type: 'dine' | 'takeaway' | 'delivery' | string;
+    table_number: string | null;
+    delivery_address: string | null;
+    payment_method: string | null;
+    items: DBOrderItem[];
+    subtotal: number;
+    total_amount: number;
+    status: 'pending' | 'preparing' | 'completed' | 'cancelled' | string;
+    notes: string | null;
+    created_at: string;
+}
