@@ -842,114 +842,133 @@ export default function BookingDetailsPage() {
                                 {/* Compact Calendar Popover */}
                                 <AnimatePresence>
                                     {isCalendarOpen && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                                            transition={{ duration: 0.15 }}
-                                            className="absolute left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:right-0 top-full mt-2 w-72 max-w-[calc(100vw-2rem)] p-3 bg-white dark:bg-[#181416] border border-neutral-200/90 dark:border-white/10 rounded-2xl shadow-2xl z-40 space-y-2.5"
-                                        >
-                                            {/* Quick select shortcuts: اليوم، غداً، بعد غد */}
-                                            <div className="flex items-center gap-1.5 justify-between">
-                                                {quickShortcuts.slice(0, 3).map((sc) => {
-                                                    const isSelected = selectedDate === sc.iso;
-                                                    return (
-                                                        <button
-                                                            key={sc.iso}
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setSelectedDate(sc.iso);
-                                                                playPs5SelectSound();
-                                                                setIsCalendarOpen(false);
-                                                            }}
-                                                            className={`flex-1 py-1.5 px-1 rounded-xl text-xs font-bold transition-all text-center border cursor-pointer ${
-                                                                isSelected
-                                                                    ? 'bg-red-600 border-red-600 text-white shadow-xs'
-                                                                    : 'bg-neutral-50 dark:bg-white/[0.04] border-neutral-200/70 dark:border-white/10 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.08]'
-                                                            }`}
-                                                        >
-                                                            {sc.label}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
+                                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none sm:pointer-events-auto sm:absolute sm:inset-auto sm:top-full sm:right-0 sm:mt-2 sm:p-0 sm:flex-initial sm:block">
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                                                transition={{ duration: 0.15 }}
+                                                className="pointer-events-auto w-full max-w-[320px] sm:w-72 p-3.5 bg-white dark:bg-[#181416] border border-neutral-200/90 dark:border-white/10 rounded-2xl shadow-2xl space-y-2.5 text-right"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                {/* Header with Title and Close button */}
+                                                <div className="flex items-center justify-between pb-1.5 border-b border-neutral-100 dark:border-white/[0.06]">
+                                                    <span className="font-bold text-xs text-neutral-900 dark:text-white flex items-center gap-1.5">
+                                                        <Calendar className="w-3.5 h-3.5 text-red-600 dark:text-red-500" />
+                                                        <span>اختر يوم الحجز</span>
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsCalendarOpen(false)}
+                                                        className="w-6 h-6 rounded-lg bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                                                        aria-label="إغلاق"
+                                                    >
+                                                        <X size={13} />
+                                                    </button>
+                                                </div>
 
-                                            {/* Month header & navigation */}
-                                            <div className="flex items-center justify-between px-1 text-xs">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (canGoPrevMonth) {
-                                                            setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+                                                {/* Quick select shortcuts: اليوم، غداً، بعد غد */}
+                                                <div className="flex items-center gap-1.5 justify-between">
+                                                    {quickShortcuts.slice(0, 3).map((sc) => {
+                                                        const isSelected = selectedDate === sc.iso;
+                                                        return (
+                                                            <button
+                                                                key={sc.iso}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setSelectedDate(sc.iso);
+                                                                    playPs5SelectSound();
+                                                                    setIsCalendarOpen(false);
+                                                                }}
+                                                                className={`flex-1 py-1.5 px-1 rounded-xl text-xs font-bold transition-all text-center border cursor-pointer ${
+                                                                    isSelected
+                                                                        ? 'bg-red-600 border-red-600 text-white shadow-xs'
+                                                                        : 'bg-neutral-50 dark:bg-white/[0.04] border-neutral-200/70 dark:border-white/10 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.08]'
+                                                                }`}
+                                                            >
+                                                                {sc.label}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+
+                                                {/* Month header & navigation */}
+                                                <div className="flex items-center justify-between px-1 text-xs">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (canGoPrevMonth) {
+                                                                setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+                                                                playPs5NavigateSound();
+                                                            }
+                                                        }}
+                                                        disabled={!canGoPrevMonth}
+                                                        className="p-1 rounded-lg border border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                                        title="الشهر السابق"
+                                                    >
+                                                        <ChevronRight className="w-3.5 h-3.5" />
+                                                    </button>
+
+                                                    <span className="font-bold text-neutral-900 dark:text-white">
+                                                        {ARABIC_MONTHS[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
+                                                    </span>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
                                                             playPs5NavigateSound();
+                                                        }}
+                                                        className="p-1 rounded-lg border border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                                                        title="الشهر القادم"
+                                                    >
+                                                        <ChevronLeft className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+
+                                                {/* Days of week header */}
+                                                <div className="grid grid-cols-7 gap-1 text-center">
+                                                    {['سبت', 'أحد', 'إثن', 'ثلا', 'أرب', 'خمي', 'جمع'].map((name, idx) => (
+                                                        <div key={idx} className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 py-0.5">
+                                                            {name}
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {/* Calendar Grid of Day Cells */}
+                                                <div className="grid grid-cols-7 gap-1">
+                                                    {monthDaysGrid.map((cell, idx) => {
+                                                        if (!cell) {
+                                                            return <div key={`empty-${idx}`} className="h-7" />;
                                                         }
-                                                    }}
-                                                    disabled={!canGoPrevMonth}
-                                                    className="p-1 rounded-lg border border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                                                    title="الشهر السابق"
-                                                >
-                                                    <ChevronRight className="w-3.5 h-3.5" />
-                                                </button>
-
-                                                <span className="font-bold text-neutral-900 dark:text-white">
-                                                    {ARABIC_MONTHS[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
-                                                </span>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
-                                                        playPs5NavigateSound();
-                                                    }}
-                                                    className="p-1 rounded-lg border border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
-                                                    title="الشهر القادم"
-                                                >
-                                                    <ChevronLeft className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
-
-                                            {/* Days of week header */}
-                                            <div className="grid grid-cols-7 gap-1 text-center">
-                                                {['سبت', 'أحد', 'إثن', 'ثلا', 'أرب', 'خمي', 'جمع'].map((name, idx) => (
-                                                    <div key={idx} className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 py-0.5">
-                                                        {name}
-                                                    </div>
-                                                ))}
-                                            </div>
-
-                                            {/* Calendar Grid of Day Cells */}
-                                            <div className="grid grid-cols-7 gap-1">
-                                                {monthDaysGrid.map((cell, idx) => {
-                                                    if (!cell) {
-                                                        return <div key={`empty-${idx}`} className="h-7" />;
-                                                    }
-                                                    const isSelected = selectedDate === cell.iso;
-                                                    return (
-                                                        <button
-                                                            key={cell.iso}
-                                                            type="button"
-                                                            disabled={cell.isPast}
-                                                            onClick={() => {
-                                                                setSelectedDate(cell.iso);
-                                                                playPs5SelectSound();
-                                                                setIsCalendarOpen(false);
-                                                            }}
-                                                            className={`h-7 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
-                                                                cell.isPast
-                                                                    ? 'text-neutral-300 dark:text-neutral-600 opacity-40 cursor-not-allowed'
-                                                                    : isSelected
-                                                                    ? 'bg-red-600 text-white shadow-xs scale-105 z-10'
-                                                                    : cell.isToday
-                                                                    ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30 hover:bg-red-500/20 cursor-pointer'
-                                                                    : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.08] cursor-pointer'
-                                                            }`}
-                                                        >
-                                                            <span>{cell.dayNumber}</span>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </motion.div>
+                                                        const isSelected = selectedDate === cell.iso;
+                                                        return (
+                                                            <button
+                                                                key={cell.iso}
+                                                                type="button"
+                                                                disabled={cell.isPast}
+                                                                onClick={() => {
+                                                                    setSelectedDate(cell.iso);
+                                                                    playPs5SelectSound();
+                                                                    setIsCalendarOpen(false);
+                                                                }}
+                                                                className={`h-7 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
+                                                                    cell.isPast
+                                                                        ? 'text-neutral-300 dark:text-neutral-600 opacity-40 cursor-not-allowed'
+                                                                        : isSelected
+                                                                        ? 'bg-red-600 text-white shadow-xs scale-105 z-10'
+                                                                        : cell.isToday
+                                                                        ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30 hover:bg-red-500/20 cursor-pointer'
+                                                                        : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.08] cursor-pointer'
+                                                                }`}
+                                                            >
+                                                                <span>{cell.dayNumber}</span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </motion.div>
+                                        </div>
                                     )}
                                 </AnimatePresence>
                             </div>
