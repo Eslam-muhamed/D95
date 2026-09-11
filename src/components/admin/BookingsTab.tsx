@@ -45,6 +45,7 @@ import {
     type RoomRates,
     confirmBookingAndResolveConflicts,
     groupConflictingPendingBookings,
+    getBookingDates,
 } from '@/services/bookingService';
 import type { DBBooking, BookingPolicy } from '@/types/database';
 
@@ -731,14 +732,27 @@ export default function BookingsTab() {
                         const isCancelled = b.status === 'cancelled';
                         const isCompleted = b.status === 'completed';
 
+                        const { start: bStart, end: bEnd } = getBookingDates(b);
+                        const nowMs = Date.now();
+                        const isEnded = bEnd.getTime() <= nowMs;
+                        const isStarted = bStart.getTime() <= nowMs;
+                        const isOngoing = isStarted && !isEnded;
+                        const isUpcoming = !isStarted;
+
                         return (
                             <div
                                 key={b.id}
                                 className={`rounded-2xl border p-4 sm:p-5 flex flex-col justify-between gap-4 transition-all backdrop-blur-md bg-[#140e11]/95 ${
                                     isPending
-                                        ? 'border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.1)]'
+                                        ? isEnded
+                                            ? 'border-neutral-700 opacity-75'
+                                            : 'border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.1)]'
                                         : isConfirmed
-                                        ? 'border-emerald-500/40'
+                                        ? isOngoing
+                                            ? 'border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
+                                            : isEnded
+                                            ? 'border-neutral-800'
+                                            : 'border-emerald-500/40'
                                         : isCancelled
                                         ? 'border-red-500/20 opacity-70'
                                         : 'border-white/10'
@@ -761,28 +775,54 @@ export default function BookingsTab() {
                                         <div className="shrink-0 text-left">
                                             {isPending && (
                                                 <div className="flex flex-col items-end gap-1">
-                                                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1 animate-pulse">
-                                                        <span>طلب معلق</span>
-                                                        <span>⏳</span>
-                                                    </span>
-                                                    {conflictingBookingIds.has(b.id) && (
-                                                        <span className="text-[10px] text-red-300 font-bold bg-red-950/70 px-1.5 py-0.5 rounded border border-red-500/40 animate-pulse">
-                                                            ⚠️ متنافس على الموعد
-                                                        </span>
+                                                    {isEnded || bStart.getTime() <= nowMs - 5 * 60 * 1000 ? (
+                                                        <>
+                                                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-950/80 text-red-300 border border-red-500/40 flex items-center gap-1">
+                                                                <span>فات موعده</span>
+                                                                <AlertCircle className="w-3.5 h-3.5 text-red-400" />
+                                                            </span>
+                                                            <span className="text-[10px] text-neutral-500 font-mono">
+                                                                طلب غير مؤكد
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1 animate-pulse">
+                                                                <span>طلب معلق</span>
+                                                                <span>⏳</span>
+                                                            </span>
+                                                            {conflictingBookingIds.has(b.id) && (
+                                                                <span className="text-[10px] text-red-300 font-bold bg-red-950/70 px-1.5 py-0.5 rounded border border-red-500/40 animate-pulse">
+                                                                    ⚠️ متنافس على الموعد
+                                                                </span>
+                                                            )}
+                                                            <span className="text-[10px] text-amber-400/90 font-mono bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-500/20">
+                                                                {policy?.mode === 'admin_approval_only'
+                                                                    ? 'الموعد متاح حتى تعتمده'
+                                                                    : 'قفل مؤقت 10 د'}
+                                                            </span>
+                                                        </>
                                                     )}
-                                                    <span className="text-[10px] text-amber-400/90 font-mono bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-500/20">
-                                                        {policy?.mode === 'admin_approval_only'
-                                                            ? 'الموعد متاح حتى تعتمده'
-                                                            : 'قفل مؤقت 10 د'}
-                                                    </span>
                                                 </div>
                                             )}
                                             {isConfirmed && (
                                                 <div className="flex flex-col items-end gap-1">
-                                                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
-                                                        <span>مؤكد وقافل للموعد</span>
-                                                        <CheckCircle2 className="w-3.5 h-3.5" />
-                                                    </span>
+                                                    {isOngoing ? (
+                                                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5 shadow-[0_0_12px_rgba(16,185,129,0.3)]">
+                                                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                                                            <span>جاري اللعب الآن 🎮</span>
+                                                        </span>
+                                                    ) : isEnded ? (
+                                                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-neutral-800 text-neutral-400 border border-white/10 flex items-center gap-1">
+                                                            <Clock className="w-3.5 h-3.5 text-neutral-500" />
+                                                            <span>انتهى الموعد ⌛</span>
+                                                        </span>
+                                                    ) : (
+                                                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center gap-1">
+                                                            <span>مؤكد وقافل للموعد</span>
+                                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                                        </span>
+                                                    )}
                                                 </div>
                                             )}
                                             {isCompleted && (
@@ -867,33 +907,57 @@ export default function BookingsTab() {
 
                                 {/* Action Buttons */}
                                 <div className="space-y-2 pt-3 border-t border-white/10">
-                                    {/* Instant Confirm Button (if pending) */}
+                                    {/* Action Buttons */}
                                     {isPending && (
-                                        <button
-                                            type="button"
-                                            onClick={() => handleConfirmBooking(b)}
-                                            className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] cursor-pointer"
-                                        >
-                                            <Check className="w-4 h-4 stroke-[3]" />
-                                            <span>تأكيد الحجز فوراً</span>
-                                        </button>
+                                        isEnded || bStart.getTime() <= nowMs - 5 * 60 * 1000 ? (
+                                            <div className="w-full py-2 px-3 rounded-xl bg-neutral-900 border border-white/10 text-neutral-400 text-xs text-center font-medium flex items-center justify-center gap-1.5">
+                                                <AlertCircle className="w-3.5 h-3.5 text-neutral-500" />
+                                                <span>فات موعد هذا الحجز ولا يمكن تأكيده في الماضي</span>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleConfirmBooking(b)}
+                                                className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] cursor-pointer"
+                                            >
+                                                <Check className="w-4 h-4 stroke-[3]" />
+                                                <span>تأكيد الحجز فوراً</span>
+                                            </button>
+                                        )
                                     )}
 
-                                    {/* Extend Duration Button */}
-                                    {!isCancelled && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setExtendingBooking(b);
-                                                setExtensionMinutes(15);
-                                                setExtraPriceOverride('');
-                                                setAutoShiftConflicting(true);
-                                            }}
-                                            className="w-full py-2 px-3 rounded-xl bg-purple-950/40 hover:bg-purple-900/60 text-purple-300 border border-purple-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98]"
-                                        >
-                                            <Clock className="w-3.5 h-3.5 text-purple-400" />
-                                            <span>تمديد الوقت (+15 دقيقة) ⏱️</span>
-                                        </button>
+                                    {/* Action Buttons for Confirmed Bookings */}
+                                    {isConfirmed && (
+                                        isEnded ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleStatusChange(b.id, 'completed')}
+                                                className="w-full py-2.5 px-3 rounded-xl bg-blue-950/60 hover:bg-blue-900/80 text-blue-300 border border-blue-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                                            >
+                                                <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />
+                                                <span>تسجيل الجلسة كمكتملة (Mark as Completed) ✅</span>
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setExtendingBooking(b);
+                                                    setExtensionMinutes(15);
+                                                    setExtraPriceOverride('');
+                                                    setAutoShiftConflicting(true);
+                                                }}
+                                                className={`w-full py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] ${
+                                                    isOngoing
+                                                        ? 'bg-purple-600 hover:bg-purple-500 text-white border-purple-400/40 shadow-md shadow-purple-900/30'
+                                                        : 'bg-purple-950/40 hover:bg-purple-900/60 text-purple-300 border border-purple-500/30'
+                                                }`}
+                                            >
+                                                <Clock className="w-3.5 h-3.5" />
+                                                <span>
+                                                    {isOngoing ? 'تمديد الجلسة الحالية (+15 دقيقة) ⏱️' : 'تمديد مدة الحجز (+15 دقيقة) ⏱️'}
+                                                </span>
+                                            </button>
+                                        )
                                     )}
 
                                     <div className="flex items-center gap-2">
@@ -1193,8 +1257,18 @@ export default function BookingsTab() {
                             </div>
                         </div>
 
-                        {/* Conflict & Shift Detection Alert */}
-                        {extensionPreview.conflictingBookings.length > 0 ? (
+                        {/* Past-Time Alert / Conflict & Shift Detection Alert */}
+                        {extensionPreview.isNewEndPast ? (
+                            <div className="bg-red-950/40 border border-red-500/50 rounded-xl p-3.5 space-y-1.5 text-xs text-red-200">
+                                <div className="flex items-center gap-2 font-bold text-red-300">
+                                    <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                                    <span>لا يمكن التمديد: وقت الانتهاء المقترح يقع في الماضي بالفعل!</span>
+                                </div>
+                                <p className="text-[11px] text-neutral-300">
+                                    وقت الانتهاء بعد التمديد هو <strong className="text-white font-mono">{extensionPreview.newEndTimeStr}</strong>، بينما الوقت الحالي تجاوز هذا الموعد. لا يمكن تمديد حجز انتهى وقته في الماضي.
+                                </p>
+                            </div>
+                        ) : extensionPreview.conflictingBookings.length > 0 ? (
                             <div className="bg-amber-950/30 border border-amber-500/40 rounded-xl p-3.5 space-y-2 text-xs">
                                 <div className="flex items-center gap-2 text-amber-300 font-bold">
                                     <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
@@ -1262,12 +1336,19 @@ export default function BookingsTab() {
                             </button>
                             <button
                                 type="button"
-                                disabled={isSubmittingExtension || (extensionPreview.conflictingBookings.length > 0 && !autoShiftConflicting)}
+                                disabled={
+                                    isSubmittingExtension ||
+                                    extensionPreview.isNewEndPast ||
+                                    extensionPreview.exceedsClosing ||
+                                    (extensionPreview.conflictingBookings.length > 0 && !autoShiftConflicting)
+                                }
                                 onClick={handleConfirmExtension}
-                                className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                                    extensionPreview.conflictingBookings.length > 0 && !autoShiftConflicting
+                                className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all ${
+                                    extensionPreview.isNewEndPast ||
+                                    extensionPreview.exceedsClosing ||
+                                    (extensionPreview.conflictingBookings.length > 0 && !autoShiftConflicting)
                                         ? 'bg-neutral-800 text-neutral-500 border border-white/5 cursor-not-allowed'
-                                        : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-600/30 active:scale-98'
+                                        : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-600/30 active:scale-98 cursor-pointer'
                                 }`}
                             >
                                 {isSubmittingExtension ? (
@@ -1276,7 +1357,9 @@ export default function BookingsTab() {
                                     <Check className="w-4 h-4" />
                                 )}
                                 <span>
-                                    {extensionPreview.conflictingBookings.length > 0 && autoShiftConflicting
+                                    {extensionPreview.isNewEndPast
+                                        ? 'غير متاح (الوقت انقضى بالفعل)'
+                                        : extensionPreview.conflictingBookings.length > 0 && autoShiftConflicting
                                         ? `تأكيد التمديد وترحيل الحجز التالي (${extensionPreview.conflictingBookings.length})`
                                         : `تأكيد تمديد الحجز (+${extensionMinutes} دقيقة)`}
                                 </span>

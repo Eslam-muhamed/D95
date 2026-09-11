@@ -277,6 +277,8 @@ export interface ExtensionPreviewInfo {
     suggestedExtraPrice: number;
     conflictingBookings: ConflictingBookingShiftInfo[];
     exceedsClosing: boolean;
+    isPastEnd: boolean;
+    isNewEndPast: boolean;
 }
 
 export interface ExtendBookingResult {
@@ -364,6 +366,10 @@ export function calculateBookingExtensionInfo(
         }
     }
 
+    const now = Date.now();
+    const isPastEnd = currentEnd.getTime() <= now;
+    const isNewEndPast = newEnd.getTime() <= now;
+
     return {
         currentStart,
         currentEnd,
@@ -374,6 +380,8 @@ export function calculateBookingExtensionInfo(
         suggestedExtraPrice,
         conflictingBookings,
         exceedsClosing,
+        isPastEnd,
+        isNewEndPast,
     };
 }
 
@@ -408,6 +416,10 @@ export async function extendBookingAndShiftConflicting(
         (sameRoomBookings || []) as DBBooking[],
         extensionMinutes
     );
+
+    if (preview.isNewEndPast) {
+        throw new Error(`تعذر تمديد الحجز: وقت الانتهاء المقترح (${preview.newEndTimeStr}) يقع في الماضي بالفعل! لا يمكن تمديد حجز في الماضي.`);
+    }
 
     if (preview.conflictingBookings.length > 0 && !autoShift) {
         throw new Error('يوجد تعارض مع حجوزات تالية. يرجى تفعيل خيار ترحيل الحجز التالي.');
@@ -583,7 +595,12 @@ export interface ConflictGroup {
 }
 
 export function groupConflictingPendingBookings(allBookings: DBBooking[]): ConflictGroup[] {
-    const pendingList = allBookings.filter((b) => b.status === 'pending');
+    const now = Date.now();
+    const pendingList = allBookings.filter((b) => {
+        if (b.status !== 'pending') return false;
+        const { end } = getBookingDates(b);
+        return end.getTime() > now;
+    });
     if (pendingList.length < 2) return [];
 
     const getRange = (b: DBBooking) => {

@@ -14,7 +14,7 @@ import {
     RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { fetchBookingMetrics, updateBookingStatus } from '@/services/bookingService';
+import { fetchBookingMetrics, updateBookingStatus, getBookingDates } from '@/services/bookingService';
 import { fetchProducts, fetchOffers } from '@/services/menuService';
 import type { DBBooking } from '@/types/database';
 
@@ -57,6 +57,11 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
     }, []);
 
     const handleQuickConfirm = async (b: DBBooking) => {
+        const { end } = getBookingDates(b);
+        if (end.getTime() <= Date.now()) {
+            toast.error('لا يمكن تأكيد هذا الحجز لأن موعده قد انتهى بالفعل');
+            return;
+        }
         try {
             await updateBookingStatus(b.id, 'confirmed');
             toast.success(`تم تأكيد حجز ${b.customer_name}!`);
@@ -218,59 +223,73 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                                {recentBookings.map((b) => (
-                                    <tr key={b.id} className="hover:bg-white/[0.02] transition-colors">
-                                        <td className="py-3 pr-2 font-mono text-neutral-400">#{b.reservation_id}</td>
-                                        <td className="py-3 font-bold text-white">
-                                            <div>{b.customer_name}</div>
-                                            <span className="text-[10px] text-neutral-400 font-mono" dir="ltr">
-                                                {b.customer_phone}
-                                            </span>
-                                        </td>
-                                        <td className="py-3 text-neutral-200">{b.room_name}</td>
-                                        <td className="py-3 text-neutral-300">
-                                            <div>{b.booking_date}</div>
-                                            <div className="text-[10px] text-red-400">{b.start_time} - {b.end_time}</div>
-                                        </td>
-                                        <td className="py-3 font-bold text-emerald-400 font-mono">{b.total_amount} ج.م</td>
-                                        <td className="py-3">
-                                            {b.status === 'pending' && (
-                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
-                                                    معلق ⏳
+                                {recentBookings.map((b) => {
+                                    const { end } = getBookingDates(b);
+                                    const isPast = end.getTime() <= Date.now();
+                                    return (
+                                        <tr key={b.id} className="hover:bg-white/[0.02] transition-colors">
+                                            <td className="py-3 pr-2 font-mono text-neutral-400">#{b.reservation_id}</td>
+                                            <td className="py-3 font-bold text-white">
+                                                <div>{b.customer_name}</div>
+                                                <span className="text-[10px] text-neutral-400 font-mono" dir="ltr">
+                                                    {b.customer_phone}
                                                 </span>
-                                            )}
-                                            {b.status === 'confirmed' && (
-                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                                    مؤكد ✅
-                                                </span>
-                                            )}
-                                            {b.status === 'cancelled' && (
-                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/30">
-                                                    ملغي ❌
-                                                </span>
-                                            )}
-                                            {b.status === 'completed' && (
-                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                                                    مكتمل 🎮
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="py-3 pl-2 text-left">
-                                            {b.status === 'pending' ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleQuickConfirm(b)}
-                                                    className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition-colors cursor-pointer inline-flex items-center gap-1 shadow-sm"
-                                                >
-                                                    <Check className="w-3 h-3 stroke-[3]" />
-                                                    <span>تأكيد الحجز</span>
-                                                </button>
-                                            ) : (
-                                                <span className="text-[11px] text-neutral-500">تم المعالجة</span>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
+                                            </td>
+                                            <td className="py-3 text-neutral-200">{b.room_name}</td>
+                                            <td className="py-3 text-neutral-300">
+                                                <div>{b.booking_date}</div>
+                                                <div className="text-[10px] text-red-400">{b.start_time} - {b.end_time}</div>
+                                            </td>
+                                            <td className="py-3 font-bold text-emerald-400 font-mono">{b.total_amount} ج.م</td>
+                                            <td className="py-3">
+                                                {b.status === 'pending' && (
+                                                    isPast ? (
+                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-800 text-neutral-400 border border-neutral-700">
+                                                            فات موعده ⌛
+                                                        </span>
+                                                    ) : (
+                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
+                                                            معلق ⏳
+                                                        </span>
+                                                    )
+                                                )}
+                                                {b.status === 'confirmed' && (
+                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                                        مؤكد ✅
+                                                    </span>
+                                                )}
+                                                {b.status === 'cancelled' && (
+                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/30">
+                                                        ملغي ❌
+                                                    </span>
+                                                )}
+                                                {b.status === 'completed' && (
+                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                                                        مكتمل 🎮
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="py-3 pl-2 text-left">
+                                                {b.status === 'pending' ? (
+                                                    isPast ? (
+                                                        <span className="text-[11px] text-neutral-500 italic">منتهي الصلاحية</span>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleQuickConfirm(b)}
+                                                            className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition-colors cursor-pointer inline-flex items-center gap-1 shadow-sm"
+                                                        >
+                                                            <Check className="w-3 h-3 stroke-[3]" />
+                                                            <span>تأكيد الحجز</span>
+                                                        </button>
+                                                    )
+                                                ) : (
+                                                    <span className="text-[11px] text-neutral-500">تم المعالجة</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
