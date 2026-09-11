@@ -651,13 +651,17 @@ export default function BookingDetailsPage() {
                                 <button
                                     type="button"
                                     onClick={() => setIsRoomMenuOpen((prev) => !prev)}
-                                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-red-600/10 dark:bg-red-600/15 border border-red-600/20 hover:border-red-600/40 text-red-600 dark:text-red-400 text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-xs font-bold transition-all active:scale-95 cursor-pointer ${
+                                        selectedRoomId === 'room-1'
+                                            ? 'bg-emerald-600/10 dark:bg-emerald-600/15 border-emerald-600/20 hover:border-emerald-600/40 text-emerald-600 dark:text-emerald-400'
+                                            : 'bg-red-600/10 dark:bg-red-600/15 border-red-600/20 hover:border-red-600/40 text-red-600 dark:text-red-400'
+                                    }`}
                                     title="اضغط لتغيير الغرفة"
                                 >
-                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                    <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${selectedRoomId === 'room-1' ? 'bg-emerald-500' : 'bg-red-500'}`} />
                                     <span>{currentRoom.titleAr}</span>
                                     <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-normal">({currentRoom.rate} ج.م/س)</span>
-                                    <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isRoomMenuOpen ? 'rotate-180 text-red-600' : 'text-neutral-400'}`} />
+                                    <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isRoomMenuOpen ? 'rotate-180' : 'text-neutral-400'}`} />
                                 </button>
 
                                 {isRoomMenuOpen && (
@@ -667,6 +671,7 @@ export default function BookingDetailsPage() {
                                         </div>
                                         {AVAILABLE_ROOMS.map((room) => {
                                             const isSelected = selectedRoomId === room.id;
+                                            const isRoomOne = room.id === 'room-1';
                                             return (
                                                 <button
                                                     key={room.id}
@@ -678,12 +683,12 @@ export default function BookingDetailsPage() {
                                                     }}
                                                     className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-right text-xs transition-colors cursor-pointer ${
                                                         isSelected
-                                                            ? 'bg-red-600 text-white font-bold'
+                                                            ? (isRoomOne ? 'bg-emerald-600 text-white font-bold' : 'bg-red-600 text-white font-bold')
                                                             : 'text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/[0.06]'
                                                     }`}
                                                 >
                                                     <div className="flex items-center gap-2">
-                                                        <Gamepad2 className="w-3.5 h-3.5 shrink-0" />
+                                                        <Gamepad2 className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-white' : (isRoomOne ? 'text-emerald-500' : 'text-red-500')}`} />
                                                         <span>{room.titleAr}</span>
                                                     </div>
                                                     <span className={`text-[10px] font-mono ${isSelected ? 'text-white/80' : 'text-neutral-400'}`}>

@@ -54,10 +54,10 @@ const ROOMS: RoomData[] = [
         subtitle: 'أجواء تنافسية حماسية لتحديات ومباريات اللعب الجماعي',
         rate: 100,
         badge: 'Available',
-        accentColor: '#00d2ff',
-        glowColor: 'rgba(0, 210, 255, 0.45)',
-        neonBorder: 'border-[#00d2ff]',
-        neonShadow: 'shadow-[0_0_35px_rgba(0,210,255,0.35)]',
+        accentColor: '#10b981',
+        glowColor: 'rgba(16, 185, 129, 0.45)',
+        neonBorder: 'border-[#10b981]',
+        neonShadow: 'shadow-[0_0_35px_rgba(16,185,129,0.35)]',
         interiorImg: room01InteriorImg,
         features: [
             {
@@ -295,7 +295,7 @@ export default function PlaystationPage() {
                     </span>
                     <h1 className="font-bebas text-3xl sm:text-6xl md:text-7xl font-black text-neutral-900 dark:text-white tracking-wider flex items-center justify-center gap-2 drop-shadow-sm dark:drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
                         <span>GAMING</span>
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 dark:from-cyan-400 dark:via-sky-400 dark:to-blue-500 drop-shadow-[0_0_25px_rgba(6,182,212,0.4)]">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-rose-500 drop-shadow-[0_0_25px_rgba(16,185,129,0.4)]">
                             ROOM
                         </span>
                     </h1>
@@ -318,7 +318,7 @@ export default function PlaystationPage() {
                                     onClick={() => handleDoorEnter(room)}
                                     className={`group relative rounded-2xl sm:rounded-3xl bg-white dark:bg-[#11070a] border-2 transition-all duration-300 ease-out cursor-pointer overflow-hidden flex flex-col justify-between shadow-md sm:shadow-lg active:scale-[0.985] ${
                                         isRoom1
-                                            ? 'border-cyan-500/40 hover:border-cyan-400 shadow-[0_4px_20px_rgba(0,210,255,0.12)] hover:shadow-[0_12px_40px_rgba(0,210,255,0.25)]'
+                                            ? 'border-emerald-500/40 hover:border-emerald-400 shadow-[0_4px_20px_rgba(16,185,129,0.12)] hover:shadow-[0_12px_40px_rgba(16,185,129,0.25)]'
                                             : 'border-rose-500/40 hover:border-rose-400 shadow-[0_4px_20px_rgba(255,0,127,0.12)] hover:shadow-[0_12px_40px_rgba(255,0,127,0.25)]'
                                     }`}
                                 >
@@ -354,7 +354,7 @@ export default function PlaystationPage() {
                                                 <span
                                                     className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
                                                         isRoom1
-                                                            ? 'bg-cyan-400 shadow-[0_0_6px_#00d2ff]'
+                                                            ? 'bg-emerald-400 shadow-[0_0_6px_#10b981]'
                                                             : 'bg-rose-400 shadow-[0_0_6px_#ff007f]'
                                                     }`}
                                                 />
@@ -371,7 +371,7 @@ export default function PlaystationPage() {
                                                     <span
                                                         className={`text-[9px] sm:text-xs font-bebas font-bold uppercase tracking-wider px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded ${
                                                             isRoom1
-                                                                ? 'bg-cyan-950/90 text-cyan-300 border border-cyan-500/40'
+                                                                ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-500/40'
                                                                 : 'bg-rose-950/90 text-rose-300 border border-rose-500/40'
                                                         }`}
                                                     >
@@ -406,7 +406,7 @@ export default function PlaystationPage() {
                                             <div className="flex flex-col items-center justify-center gap-1">
                                                 <Tv
                                                     className={`w-3.5 h-3.5 ${
-                                                        isRoom1 ? 'text-cyan-400' : 'text-rose-400'
+                                                        isRoom1 ? 'text-emerald-400' : 'text-rose-400'
                                                     }`}
                                                 />
                                                 <span className="text-[10px] sm:text-[11px] font-bold text-neutral-800 dark:text-neutral-200 font-mono">
@@ -417,7 +417,7 @@ export default function PlaystationPage() {
                                             <div className="flex flex-col items-center justify-center gap-1 border-r border-neutral-200 dark:border-white/10">
                                                 <Gamepad2
                                                     className={`w-3.5 h-3.5 ${
-                                                        isRoom1 ? 'text-cyan-400' : 'text-rose-400'
+                                                        isRoom1 ? 'text-emerald-400' : 'text-rose-400'
                                                     }`}
                                                 />
                                                 <span className="text-[10px] sm:text-[11px] font-bold text-neutral-800 dark:text-neutral-200">
@@ -428,7 +428,7 @@ export default function PlaystationPage() {
                                             <div className="flex flex-col items-center justify-center gap-1 border-r border-neutral-200 dark:border-white/10">
                                                 <Volume2
                                                     className={`w-3.5 h-3.5 ${
-                                                        isRoom1 ? 'text-cyan-400' : 'text-rose-400'
+                                                        isRoom1 ? 'text-emerald-400' : 'text-rose-400'
                                                     }`}
                                                 />
                                                 <span className="text-[10px] sm:text-[11px] font-bold text-neutral-800 dark:text-neutral-200">
@@ -439,7 +439,7 @@ export default function PlaystationPage() {
                                             <div className="flex flex-col items-center justify-center gap-1 border-r border-neutral-200 dark:border-white/10">
                                                 <Wind
                                                     className={`w-3.5 h-3.5 ${
-                                                        isRoom1 ? 'text-cyan-400' : 'text-rose-400'
+                                                        isRoom1 ? 'text-emerald-400' : 'text-rose-400'
                                                     }`}
                                                 />
                                                 <span className="text-[10px] sm:text-[11px] font-bold text-neutral-800 dark:text-neutral-200">
@@ -472,7 +472,7 @@ export default function PlaystationPage() {
                                                 }}
                                                 className={`w-full xs:w-auto px-2.5 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1 sm:gap-2 transition-all cursor-pointer shadow-md active:scale-95 ${
                                                     isRoom1
-                                                        ? 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-900/30 border border-cyan-400/40'
+                                                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-900/30 border border-emerald-400/40'
                                                         : 'bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-rose-900/30 border border-rose-400/40'
                                                 }`}
                                             >
