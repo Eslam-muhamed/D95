@@ -160,8 +160,11 @@ export default function BookingSuccessPage() {
                                 تأكيد وتذكرة الحجز
                             </h1>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="font-brush text-sm text-red-600 dark:text-red-500 font-bold">D95</span>
-                                <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-semibold tracking-wider">BOARDING PASS</span>
+                                <div dir="ltr" className="flex items-baseline leading-none select-none">
+                                    <span className="font-brush font-black text-xs text-neutral-900 dark:text-neutral-100">D</span>
+                                    <span className="font-brush font-black text-sm text-[#E5252A] -ml-0.5">95</span>
+                                </div>
+                                <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-semibold tracking-wider font-bebas">BOARDING PASS</span>
                             </div>
                         </div>
                     </div>
