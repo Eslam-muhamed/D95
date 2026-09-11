@@ -121,14 +121,14 @@ export default function GatewayPage() {
                         <div className="grid grid-cols-2 divide-x divide-neutral-300 dark:divide-neutral-500/50 text-center" dir="ltr">
                             {/* FROM */}
                             <div className="px-2 sm:px-4 flex flex-col items-center">
-                                <span className="font-brush text-[10px] sm:text-xs text-neutral-500 dark:text-neutral-400 tracking-widest uppercase">
+                                <span className="font-bebas text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 tracking-widest uppercase font-bold">
                                     FROM
                                 </span>
                                 <div className="flex items-baseline gap-1 mt-0.5">
-                                    <span className="font-brush text-xl sm:text-2xl font-black text-neutral-900 dark:text-white">
+                                    <span className="font-bebas text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white">
                                         08:00
                                     </span>
-                                    <span className="font-brush text-xs sm:text-sm font-bold text-red-600">
+                                    <span className="font-bebas text-sm sm:text-base font-bold text-red-600">
                                         AM
                                     </span>
                                 </div>
@@ -136,14 +136,14 @@ export default function GatewayPage() {
 
                             {/* TO */}
                             <div className="px-2 sm:px-4 flex flex-col items-center">
-                                <span className="font-brush text-[10px] sm:text-xs text-neutral-500 dark:text-neutral-400 tracking-widest uppercase">
+                                <span className="font-bebas text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 tracking-widest uppercase font-bold">
                                     TO
                                 </span>
                                 <div className="flex items-baseline gap-1 mt-0.5">
-                                    <span className="font-brush text-xl sm:text-2xl font-black text-neutral-900 dark:text-white">
+                                    <span className="font-bebas text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white">
                                         04:00
                                     </span>
-                                    <span className="font-brush text-xs sm:text-sm font-bold text-red-600">
+                                    <span className="font-bebas text-sm sm:text-base font-bold text-red-600">
                                         AM
                                     </span>
                                 </div>
@@ -182,7 +182,7 @@ export default function GatewayPage() {
 
                         {/* Top tag */}
                         <div className="w-full flex items-center justify-between text-[10px] sm:text-xs">
-                            <span className="font-brush text-neutral-500 dark:text-neutral-400 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors tracking-wider">
+                            <span className="font-bebas text-sm text-neutral-500 dark:text-neutral-400 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors tracking-wider font-bold">
                                 ZONE 01
                             </span>
                             <span className="px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-600/30 text-red-700 dark:text-red-300 font-bold text-[9px] flex items-center gap-1 border border-red-200 dark:border-transparent">
@@ -199,7 +199,7 @@ export default function GatewayPage() {
 
                         {/* Details & Action */}
                         <div className="w-full text-center space-y-1">
-                            <h2 className="font-brush text-sm sm:text-xl uppercase font-bold text-neutral-900 dark:text-white tracking-wide group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors leading-tight">
+                            <h2 className="font-bebas text-lg sm:text-2xl uppercase font-black text-neutral-900 dark:text-white tracking-wide group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors leading-tight">
                                 PLAYSTATION
                             </h2>
                             <div className="font-body text-[11px] sm:text-xs text-neutral-600 dark:text-red-300 font-bold">
@@ -230,7 +230,7 @@ export default function GatewayPage() {
 
                         {/* Top tag */}
                         <div className="w-full flex items-center justify-between text-[10px] sm:text-xs">
-                            <span className="font-brush text-neutral-500 dark:text-neutral-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors tracking-wider">
+                            <span className="font-bebas text-sm text-neutral-500 dark:text-neutral-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors tracking-wider font-bold">
                                 ZONE 02
                             </span>
                             <span className="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-600/30 text-amber-800 dark:text-amber-300 font-bold text-[9px] flex items-center gap-1 border border-amber-200 dark:border-transparent">
@@ -247,7 +247,7 @@ export default function GatewayPage() {
 
                         {/* Details & Action */}
                         <div className="w-full text-center space-y-1">
-                            <h2 className="font-brush text-sm sm:text-xl uppercase font-bold text-neutral-900 dark:text-white tracking-wide group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors leading-tight">
+                            <h2 className="font-bebas text-lg sm:text-2xl uppercase font-black text-neutral-900 dark:text-white tracking-wide group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors leading-tight">
                                 CAFÉ &amp; MENU
                             </h2>
                             <div className="font-body text-[11px] sm:text-xs text-neutral-600 dark:text-amber-300 font-bold">

@@ -75,7 +75,7 @@ const config: Config = {
                 display: ['"Bebas Neue"', 'Changa', 'Cairo', 'sans-serif'],
                 body: ['"Bebas Neue"', 'Cairo', 'Changa', 'system-ui', 'sans-serif'],
                 sans: ['"Bebas Neue"', 'Cairo', 'Changa', 'system-ui', 'sans-serif'],
-                brush: ['"Bebas Neue"', 'Changa', 'Cairo', 'sans-serif'],
+                brush: ['"Permanent Marker"', 'cursive', 'sans-serif'],
                 bebas: ['"Bebas Neue"', 'Changa', 'Cairo', 'sans-serif'],
             },
             keyframes: {
