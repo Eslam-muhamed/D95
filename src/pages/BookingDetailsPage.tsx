@@ -35,10 +35,7 @@ import {
     calculateEndDateTime,
     getBusinessOperatingWindow,
     checkAvailability,
-    generateStartTimeOptions,
-    TimeOption,
     OPERATING_HOURS,
-    formatArabicTime,
 } from '@/lib/bookingDatetime';
 import { fetchRoomOccupiedIntervals } from '@/services/bookingService';
 
@@ -50,13 +47,6 @@ interface Room {
     rate: number;
     specs: string;
     interiorImg: string;
-}
-
-interface DaySegment {
-    type: 'available' | 'occupied';
-    start: Date;
-    end: Date;
-    durationHours: number;
 }
 
 const AVAILABLE_ROOMS: Room[] = [
@@ -184,7 +174,7 @@ function DrumWheelColumn<T extends string | number>({
 
     return (
         <div className="flex-1 flex flex-col items-center min-w-0">
-            <span className="text-[11px] font-bold text-neutral-400 mb-1 select-none">{title}</span>
+            <span className="text-[11px] font-bold text-neutral-500 dark:text-neutral-400 mb-1 select-none">{title}</span>
             <div
                 ref={scrollRef}
                 onScroll={handleScroll}
@@ -210,8 +200,8 @@ function DrumWheelColumn<T extends string | number>({
                             style={{ height: `${itemHeight}px` }}
                             className={`w-full flex items-center justify-center snap-center cursor-pointer transition-all duration-150 font-mono text-center outline-none ${
                                 isSelected
-                                    ? 'text-white text-xl font-black scale-110 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]'
-                                    : 'text-neutral-500 hover:text-neutral-300 text-sm font-medium'
+                                    ? 'text-neutral-900 dark:text-white text-xl font-black scale-110 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]'
+                                    : 'text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 text-sm font-medium'
                             }`}
                         >
                             {item.label}
@@ -424,12 +414,12 @@ export default function BookingDetailsPage() {
     };
 
     // =========================================================================
-    // MOBILE-FIRST STATE: Free, non-forced initial selection
+    // TIME & DURATION STATE: Defaulting to 1h and 05:00 PM
     // =========================================================================
-    const [durationHours, setDurationHours] = useState<number | null>(null);
-    const [selectedHour, setSelectedHour] = useState<number | null>(null);
-    const [selectedMinute, setSelectedMinute] = useState<number | null>(null);
-    const [selectedPeriod, setSelectedPeriod] = useState<'AM' | 'PM' | null>(null);
+    const [durationHours, setDurationHours] = useState<number>(1);
+    const [selectedHour, setSelectedHour] = useState<number>(5);
+    const [selectedMinute, setSelectedMinute] = useState<number>(0);
+    const [selectedPeriod, setSelectedPeriod] = useState<'AM' | 'PM'>('PM');
 
     const [occupiedIntervals, setOccupiedIntervals] = useState<BookingInterval[]>([]);
     const [loadingIntervals, setLoadingIntervals] = useState<boolean>(false);
@@ -445,15 +435,6 @@ export default function BookingDetailsPage() {
         if (selectedPeriod === 'AM' && selectedHour === 12) h24 = 0;
         return `${String(h24).padStart(2, '0')}:${String(selectedMinute).padStart(2, '0')}`;
     }, [hasSelectedTime, selectedHour, selectedMinute, selectedPeriod]);
-
-
-    // Custom Time Modal State
-    const [isCustomTimeModalOpen, setIsCustomTimeModalOpen] = useState(false);
-    const [tempHour, setTempHour] = useState<number>(6);
-    const [tempMinute, setTempMinute] = useState<number>(0);
-    const [tempPeriod, setTempPeriod] = useState<'AM' | 'PM'>('PM');
-
-    const hasCustomMinuteSelected = hasSelectedTime && selectedMinute !== 0;
 
     // Construct start datetime
     const startDateTime = useMemo(() => {
@@ -514,164 +495,7 @@ export default function BookingDetailsPage() {
         return [...effectiveOccupiedIntervals].sort((a, b) => a.start.getTime() - b.start.getTime());
     }, [effectiveOccupiedIntervals]);
 
-    // Time slot picker helper state
-    const [timePeriodTab, setTimePeriodTab] = useState<'evening' | 'morning'>('evening');
-
     const activeDuration = durationHours || 1.0;
-
-    // Temporary modal calculated time and availability
-    const tempH24 = useMemo(() => {
-        let h24 = tempHour;
-        if (tempPeriod === 'PM' && tempHour < 12) h24 += 12;
-        if (tempPeriod === 'AM' && tempHour === 12) h24 = 0;
-        return h24;
-    }, [tempHour, tempPeriod]);
-
-    const tempTime24 = useMemo(() => {
-        return `${String(tempH24).padStart(2, '0')}:${String(tempMinute).padStart(2, '0')}`;
-    }, [tempH24, tempMinute]);
-
-    const tempStartDateTime = useMemo(() => {
-        return createDateTimeFromBusinessDate(selectedDate, tempTime24);
-    }, [selectedDate, tempTime24]);
-
-    const tempAvailability = useMemo(() => {
-        const end = calculateEndDateTime(tempStartDateTime, activeDuration);
-        const result = checkAvailability(
-            tempStartDateTime,
-            activeDuration,
-            selectedDate,
-            effectiveOccupiedIntervals
-        );
-        return {
-            ...result,
-            startDateTime: tempStartDateTime,
-            endDateTime: end,
-            formattedStart: formatArabicTimeDetailed(tempStartDateTime),
-            formattedEnd: formatArabicTimeDetailed(end),
-        };
-    }, [tempStartDateTime, activeDuration, selectedDate, effectiveOccupiedIntervals]);
-
-    // Filter all 15-minute start times across the 20h operating window:
-    // Only display start times that:
-    // 1. Are NOT in the past (for today)
-    // 2. Do NOT exceed the 04:00 AM closing boundary for the selected duration
-    // 3. Do NOT overlap with ANY existing booking interval
-    const allAvailableSlots = useMemo<TimeOption[]>(() => {
-        const rawOptions = generateStartTimeOptions(selectedDate);
-        const now = new Date();
-        return rawOptions.filter((opt) => {
-            const check = checkAvailability(
-                opt.startDateTime,
-                activeDuration,
-                selectedDate,
-                effectiveOccupiedIntervals,
-                now
-            );
-            return check.isAvailable;
-        });
-    }, [selectedDate, activeDuration, effectiveOccupiedIntervals]);
-
-    // Evening & Night: 05:00 PM (17:00) to 03:45 AM (next morning)
-    const eveningAvailableSlots = useMemo(() => {
-        return allAvailableSlots.filter((s) => s.hour24 >= 17 || s.hour24 < 8);
-    }, [allAvailableSlots]);
-
-    // Morning & Afternoon: 08:00 AM to 04:45 PM (16:45)
-    const morningAvailableSlots = useMemo(() => {
-        return allAvailableSlots.filter((s) => s.hour24 >= 8 && s.hour24 < 17);
-    }, [allAvailableSlots]);
-
-    const displayedSlots = timePeriodTab === 'evening' ? eveningAvailableSlots : morningAvailableSlots;
-
-    // Quick shortcut: earliest available slot for the selected business date
-    const nextAvailableSlot = useMemo(() => {
-        if (allAvailableSlots.length === 0) return null;
-        return allAvailableSlots[0];
-    }, [allAvailableSlots]);
-
-    // Handle picking a slot
-    const handleSelectSlot = (slot: TimeOption) => {
-        const h12 = slot.hour24 % 12 === 0 ? 12 : slot.hour24 % 12;
-        const period: 'AM' | 'PM' = slot.hour24 >= 12 && slot.hour24 < 24 ? 'PM' : 'AM';
-        setSelectedHour(h12);
-        setSelectedMinute(slot.minute);
-        setSelectedPeriod(period);
-        if (durationHours === null) {
-            setDurationHours(1);
-        }
-        if (slot.hour24 >= 17 || slot.hour24 < 8) {
-            setTimePeriodTab('evening');
-        } else {
-            setTimePeriodTab('morning');
-        }
-        playPs5SelectSound();
-    };
-
-    const isSlotSelected = (slot: TimeOption) => {
-        if (selectedHour === null || selectedMinute === null || selectedPeriod === null) return false;
-        const h12 = slot.hour24 % 12 === 0 ? 12 : slot.hour24 % 12;
-        const period: 'AM' | 'PM' = slot.hour24 >= 12 && slot.hour24 < 24 ? 'PM' : 'AM';
-        return selectedHour === h12 && selectedMinute === slot.minute && selectedPeriod === period;
-    };
-
-    // =========================================================================
-    // MOBILE EXPERIENCE: Dynamic calculation of all Free vs Occupied segments
-    // =========================================================================
-    const dayScheduleSegments = useMemo<DaySegment[]>(() => {
-        const { opening, closing } = getBusinessOperatingWindow(selectedDate);
-        if (sortedBookings.length === 0) {
-            const diffHours = (closing.getTime() - opening.getTime()) / (3600 * 1000);
-            return [{ type: 'available', start: opening, end: closing, durationHours: diffHours }];
-        }
-
-        const segments: DaySegment[] = [];
-        let currentPointer = opening.getTime();
-
-        for (const b of sortedBookings) {
-            const bStart = Math.max(opening.getTime(), b.start.getTime());
-            const bEnd = Math.min(closing.getTime(), b.end.getTime());
-
-            // Free gap before this booking
-            if (bStart > currentPointer) {
-                const gapHours = Math.round(((bStart - currentPointer) / (3600 * 1000)) * 10) / 10;
-                if (gapHours > 0) {
-                    segments.push({
-                        type: 'available',
-                        start: new Date(currentPointer),
-                        end: new Date(bStart),
-                        durationHours: gapHours,
-                    });
-                }
-            }
-
-            // The occupied booking
-            const occHours = Math.round(((bEnd - bStart) / (3600 * 1000)) * 10) / 10;
-            segments.push({
-                type: 'occupied',
-                start: new Date(bStart),
-                end: new Date(bEnd),
-                durationHours: occHours,
-            });
-
-            currentPointer = Math.max(currentPointer, bEnd);
-        }
-
-        // Free gap after last booking until closing
-        if (currentPointer < closing.getTime()) {
-            const remainingHours = Math.round(((closing.getTime() - currentPointer) / (3600 * 1000)) * 10) / 10;
-            if (remainingHours > 0) {
-                segments.push({
-                    type: 'available',
-                    start: new Date(currentPointer),
-                    end: closing,
-                    durationHours: remainingHours,
-                });
-            }
-        }
-
-        return segments;
-    }, [selectedDate, sortedBookings]);
 
 
     // Real-time availability evaluation
@@ -1208,194 +1032,114 @@ export default function BookingDetailsPage() {
                         </div>
                     </div>
 
-                    {/* Period Switcher Tabs & Quick "أقرب موعد متاح" button */}
-                    <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
-                        <div className="flex items-center p-1 rounded-xl bg-neutral-100 dark:bg-white/[0.05] border border-neutral-200/80 dark:border-white/10 gap-1">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setTimePeriodTab('evening');
-                                    playPs5NavigateSound();
-                                }}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                                    timePeriodTab === 'evening'
-                                        ? 'bg-red-600 text-white shadow-xs'
-                                        : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
-                                }`}
-                            >
-                                <span>🌙 المساء والسهرة</span>
-                                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-semibold ${
-                                    timePeriodTab === 'evening'
-                                        ? 'bg-white/20 text-white'
-                                        : 'bg-neutral-200 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
-                                }`}>
-                                    {eveningAvailableSlots.length}
+                    {/* Time Counter (Start Time) & Calculated End Time (Side by Side) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 items-stretch pt-1">
+                        {/* 1. عداد وقت البدء */}
+                        <div className="relative bg-neutral-50 dark:bg-neutral-950/80 rounded-2xl p-3 border border-neutral-200/80 dark:border-neutral-800/80 overflow-hidden shadow-inner flex flex-col justify-center">
+                            <div className="flex items-center justify-between text-xs px-1 mb-1 text-neutral-500 dark:text-neutral-400">
+                                <span className="font-bold flex items-center gap-1.5 text-neutral-800 dark:text-neutral-200">
+                                    <Clock className="w-3.5 h-3.5 text-red-600 dark:text-red-500" />
+                                    <span>وقت بدء الحجز</span>
                                 </span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setTimePeriodTab('morning');
-                                    playPs5NavigateSound();
-                                }}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                                    timePeriodTab === 'morning'
-                                        ? 'bg-red-600 text-white shadow-xs'
-                                        : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
-                                }`}
-                            >
-                                <span>☀️ الصباح والظهيرة</span>
-                                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-semibold ${
-                                    timePeriodTab === 'morning'
-                                        ? 'bg-white/20 text-white'
-                                        : 'bg-neutral-200 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
-                                }`}>
-                                    {morningAvailableSlots.length}
-                                </span>
-                            </button>
+                                <span className="text-[10px] text-neutral-400">اسحب للأعلى أو الأسفل</span>
+                            </div>
+
+                            <div className="relative overflow-hidden rounded-xl bg-white dark:bg-black/40 border border-neutral-200/60 dark:border-white/[0.06] p-1">
+                                {/* Center Highlight Lens (Across all 3 drums) */}
+                                <div
+                                    className="pointer-events-none absolute inset-x-1 rounded-lg border-y border-red-500/40 bg-gradient-to-r from-red-500/5 via-red-500/15 to-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.15)] z-0"
+                                    style={{
+                                        top: 'calc(1.25rem + 80px)',
+                                        height: '40px',
+                                    }}
+                                />
+
+                                {/* Top and Bottom gradient masks */}
+                                <div className="pointer-events-none absolute inset-x-0 top-5 h-16 bg-gradient-to-b from-white dark:from-[#0d0a0b] via-white/80 dark:via-[#0d0a0b]/80 to-transparent z-10" />
+                                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white dark:from-[#0d0a0b] via-white/80 dark:via-[#0d0a0b]/80 to-transparent z-10" />
+
+                                {/* 3 Drums */}
+                                <div className="flex items-center justify-around gap-1 relative z-20">
+                                    <DrumWheelColumn
+                                        title="الساعة"
+                                        items={HOUR_WHEEL_ITEMS}
+                                        selectedValue={selectedHour}
+                                        onSelect={(h) => {
+                                            setSelectedHour(h);
+                                            playPs5NavigateSound();
+                                        }}
+                                    />
+
+                                    <div className="text-neutral-400 dark:text-neutral-600 font-bold text-xl pt-4">:</div>
+
+                                    <DrumWheelColumn
+                                        title="الدقيقة"
+                                        items={MINUTE_WHEEL_ITEMS}
+                                        selectedValue={selectedMinute}
+                                        onSelect={(m) => {
+                                            setSelectedMinute(m);
+                                            playPs5NavigateSound();
+                                        }}
+                                    />
+
+                                    <DrumWheelColumn
+                                        title="الفترة"
+                                        items={PERIOD_WHEEL_ITEMS}
+                                        selectedValue={selectedPeriod}
+                                        onSelect={(p) => {
+                                            setSelectedPeriod(p);
+                                            playPs5NavigateSound();
+                                        }}
+                                    />
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Quick Shortcut: Next Available Slot */}
-                        {nextAvailableSlot && (
-                            <button
-                                type="button"
-                                onClick={() => handleSelectSlot(nextAvailableSlot)}
-                                className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
-                            >
-                                <Sparkles className="w-3.5 h-3.5" />
-                                <span>أقرب موعد متاح ({nextAvailableSlot.displayTime})</span>
-                            </button>
-                        )}
-                    </div>
+                        {/* 2. وقت نهاية الحجز */}
+                        <div className="relative bg-neutral-50 dark:bg-neutral-950/80 rounded-2xl p-4 sm:p-5 border border-neutral-200/80 dark:border-neutral-800/80 shadow-inner flex flex-col items-center justify-center text-center">
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-500 dark:text-neutral-400 mb-2">
+                                <Timer className="w-3.5 h-3.5 text-red-600 dark:text-red-500" />
+                                <span>وقت نهاية الحجز</span>
+                            </div>
 
-                    {/* Time Slots Grid (Only available slots are displayed) */}
-                    {displayedSlots.length > 0 ? (
-                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                            {displayedSlots.map((slot) => {
-                                const isSelected = isSlotSelected(slot);
-
-                                return (
-                                    <button
-                                        key={slot.time24}
-                                        type="button"
-                                        onClick={() => handleSelectSlot(slot)}
-                                        className={`py-2.5 px-1.5 rounded-xl text-center font-mono text-xs font-bold transition-all cursor-pointer relative border ${
-                                            isSelected
-                                                ? 'bg-red-600 border-red-600 text-white shadow-md shadow-red-600/30 scale-[1.03] z-10'
-                                                : 'bg-neutral-50 dark:bg-white/[0.04] border-neutral-200/80 dark:border-white/10 text-neutral-800 dark:text-neutral-200 hover:border-red-500/40 hover:bg-neutral-100 dark:hover:bg-white/[0.08] active:scale-[0.98]'
-                                        }`}
-                                    >
-                                        <div className="flex items-center justify-center gap-1">
-                                            <span>{slot.displayTime}</span>
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <div className="p-4 rounded-xl bg-neutral-100/70 dark:bg-white/[0.03] border border-neutral-200/80 dark:border-white/10 text-center space-y-2">
-                            <p className="text-xs text-neutral-600 dark:text-neutral-400 font-medium">
-                                لا توجد مواعيد متاحة في هذه الفترة لطلب مدته {activeDuration} {activeDuration === 1 ? 'ساعة' : 'ساعات'}.
-                            </p>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setTimePeriodTab(timePeriodTab === 'evening' ? 'morning' : 'evening');
-                                    playPs5NavigateSound();
-                                }}
-                                className="text-xs font-bold text-red-600 dark:text-red-400 hover:underline cursor-pointer"
-                            >
-                                الانتقال إلى فترة {timePeriodTab === 'evening' ? 'الصباح والظهيرة' : 'المساء والسهرة'} ({timePeriodTab === 'evening' ? morningAvailableSlots.length : eveningAvailableSlots.length} موعد متاح)
-                            </button>
-                        </div>
-                    )}
-
-
-
-                    {/* Custom Time Picker Button */}
-                    <div className="pt-2.5 border-t border-neutral-100 dark:border-white/[0.06] flex items-center justify-between gap-2 text-xs">
-                        <span className="text-neutral-500 dark:text-neutral-400 font-medium text-[11px] sm:text-xs">
-                            تريد وقتاً آخر غير معروض؟
-                        </span>
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setTempHour(selectedHour ?? 6);
-                                setTempMinute(selectedMinute ?? 0);
-                                setTempPeriod(selectedPeriod ?? 'PM');
-                                setIsCustomTimeModalOpen(true);
-                                playPs5NavigateSound();
-                            }}
-                            className={`inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-xs font-bold transition-all active:scale-95 shadow-2xs cursor-pointer ${
-                                hasCustomMinuteSelected
-                                    ? 'bg-red-600 text-white border-red-500 shadow-md shadow-red-600/25'
-                                    : 'bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.05] dark:hover:bg-white/[0.08] text-neutral-800 dark:text-neutral-200 border-neutral-200 dark:border-white/10 hover:border-red-500/40'
-                            }`}
-                        >
-                            <Clock size={13} className={hasCustomMinuteSelected ? 'text-white' : 'text-red-500'} />
-                            <span>وقت مخصص بالدقيقة</span>
-                            {hasCustomMinuteSelected && selectedHour !== null && selectedMinute !== null && (
-                                <span className="font-mono text-[11px] font-bold underline decoration-white/40 mr-0.5" dir="ltr">
-                                    ({formatArabicTime(
-                                        selectedPeriod === 'PM'
-                                            ? (selectedHour < 12 ? selectedHour + 12 : 12)
-                                            : (selectedHour === 12 ? 0 : selectedHour),
-                                        selectedMinute
-                                    )})
-                                </span>
-                            )}
-                        </button>
-                    </div>
-
-                    {/* Real-Time Availability Inline Feedback */}
-                    {hasSelectedTime && hasSelectedDuration ? (
-                        <div
-                            className={`p-3.5 rounded-xl border flex items-center justify-between gap-2 text-xs transition-all ${
-                                currentAvailability.isAvailable
-                                    ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-600/40 text-emerald-950 dark:text-emerald-200'
-                                    : 'bg-red-50 dark:bg-red-950/40 border-red-300 dark:border-red-600/40 text-red-950 dark:text-red-200'
-                            }`}
-                        >
-                            <div className="flex items-center gap-2.5">
-                                {currentAvailability.isAvailable ? (
-                                    <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                                ) : (
-                                    <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" />
-                                )}
-                                <div className="text-right">
-                                    <div className="font-bold text-xs sm:text-sm">
-                                        {currentAvailability.isAvailable
-                                            ? `الموعد متاح للحجز مؤكداً`
-                                            : currentAvailability.reason === 'PAST_TIME'
-                                            ? 'هذا الوقت قد مضى بالفعل، يرجى اختيار موعد قادم'
-                                            : currentAvailability.reason === 'EXCEEDS_CLOSING'
-                                            ? 'يتجاوز موعد إغلاق الصالة (04:00 ص فجراً)'
-                                            : currentAvailability.conflictingInterval
-                                            ? `يتعارض مع حجز قائم من ${formatArabicTimeDetailed(currentAvailability.conflictingInterval.start)} إلى ${formatArabicTimeDetailed(currentAvailability.conflictingInterval.end)}`
-                                            : 'هذا الوقت غير متاح'}
-                                    </div>
-                                    <div className="text-[11px] opacity-80 mt-0.5">
-                                        من {currentAvailability.formattedStart} إلى {currentAvailability.formattedEnd} ({formatDurationLabel(durationHours)})
-                                    </div>
+                            {/* Big End Time Display */}
+                            <div className="my-2">
+                                <div className="text-red-600 dark:text-red-500 font-mono font-black text-3xl sm:text-4xl tracking-tight drop-shadow-xs">
+                                    {currentAvailability.formattedEnd}
+                                </div>
+                                <div className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium mt-1">
+                                    من {currentAvailability.formattedStart} إلى {currentAvailability.formattedEnd}
                                 </div>
                             </div>
 
-                            <span className="font-mono font-bold text-xs sm:text-sm shrink-0" dir="ltr">
-                                {roomSubtotal} ج.م
-                            </span>
-                        </div>
-                    ) : (
-                        <div className="p-3 rounded-xl bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200/80 dark:border-white/10 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
-                            <div className="flex items-center gap-2">
-                                <Clock className="w-4 h-4 text-neutral-400 shrink-0" />
-                                <span>يرجى اختيار وقت بدء الجلسة ومدتها لتأكيد الحجز</span>
+                            <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">
+                                مدة الجلسة: <strong className="text-neutral-900 dark:text-neutral-100 font-bold font-mono">{durationHours} {durationHours === 1 ? 'ساعة' : 'ساعات'}</strong>
+                            </p>
+
+                            {/* Availability Status Badge */}
+                            <div className="mt-3">
+                                {currentAvailability.isAvailable ? (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                        <span>الموعد متاح للحجز</span>
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-bold border border-red-500/20">
+                                        <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                                        <span>
+                                            {currentAvailability.reason === 'PAST_TIME'
+                                                ? 'هذا الوقت قد مضى'
+                                                : currentAvailability.reason === 'EXCEEDS_CLOSING'
+                                                ? 'يتجاوز موعد الإغلاق (04:00 ص)'
+                                                : currentAvailability.conflictingInterval
+                                                ? `يتعارض مع حجز آخر (${formatArabicTimeDetailed(currentAvailability.conflictingInterval.start)})`
+                                                : 'غير متاح'}
+                                        </span>
+                                    </span>
+                                )}
                             </div>
-                            <span className="font-mono text-[11px]">
-                                {currentRoom.rate} ج.م/س
-                            </span>
                         </div>
-                    )}
+                    </div>
                 </div>
 
                 {/* Cafe Cross-sell / Live Cart Status Banner */}
@@ -1519,174 +1263,6 @@ export default function BookingDetailsPage() {
                 </div>
             </div>
 
-            {/* Custom Time Selection Modal */}
-            <AnimatePresence>
-                {isCustomTimeModalOpen && (
-                    <div
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
-                        onClick={() => setIsCustomTimeModalOpen(false)}
-                    >
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 12 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 12 }}
-                            transition={{ duration: 0.2 }}
-                            className="relative w-full max-w-sm rounded-2xl bg-neutral-900 border border-neutral-800 shadow-2xl overflow-hidden text-neutral-100 flex flex-col"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            {/* Header */}
-                            <div className="p-4 border-b border-neutral-800 flex items-center justify-between">
-                                <div className="flex items-center gap-2.5">
-                                    <div className="w-8 h-8 rounded-xl bg-red-600/15 border border-red-500/30 flex items-center justify-center text-red-500">
-                                        <Clock size={16} />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-sm text-white">تحديد وقت مخصص</h3>
-                                        <p className="text-[11px] text-neutral-400 flex items-center gap-1.5 mt-0.5">
-                                            <span>ليوم:</span>
-                                            <span className="text-red-400 font-bold bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20">
-                                                {formattedDate.full}
-                                            </span>
-                                        </p>
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsCustomTimeModalOpen(false)}
-                                    className="w-7 h-7 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-                                >
-                                    <X size={15} />
-                                </button>
-                            </div>
-
-                            {/* Modal Body */}
-                            <div className="p-4 space-y-4 max-h-[75vh] overflow-y-auto">
-                                {/* Mobile Alarm Drum Wheel (Smooth Touch & Wheel Scroll) */}
-                                <div className="space-y-1.5">
-                                    <div className="flex items-center justify-between text-xs px-1 text-neutral-400">
-                                        <span className="text-[11px] flex items-center gap-1.5">
-                                            <Calendar size={12} className="text-red-400" />
-                                            <span>تاريخ الحجز: <strong className="text-neutral-200 font-semibold">{formattedDate.dayName}، {formattedDate.d} {formattedDate.monthName}</strong></span>
-                                        </span>
-                                        <span className="text-[10px] text-neutral-500">اسحب للأعلى أو الأسفل</span>
-                                    </div>
-
-                                    <div className="relative bg-neutral-950/80 rounded-2xl p-2 border border-neutral-800/80 overflow-hidden shadow-inner">
-                                        {/* Center Highlight Lens (Across all 3 drums) */}
-                                        <div
-                                            className="pointer-events-none absolute inset-x-2 rounded-xl border-y border-red-500/40 bg-gradient-to-r from-red-500/5 via-red-500/15 to-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.15)] z-0"
-                                            style={{
-                                                top: 'calc(1.75rem + 80px)',
-                                                height: '40px',
-                                            }}
-                                        />
-
-                                        {/* Top and Bottom gradient masks */}
-                                        <div className="pointer-events-none absolute inset-x-0 top-7 h-16 bg-gradient-to-b from-neutral-950/95 via-neutral-950/70 to-transparent z-10" />
-                                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-neutral-950/95 via-neutral-950/70 to-transparent z-10" />
-
-                                        {/* 3 Drums */}
-                                        <div className="flex items-center justify-around gap-1 relative z-20">
-                                            <DrumWheelColumn
-                                                title="الساعة"
-                                                items={HOUR_WHEEL_ITEMS}
-                                                selectedValue={tempHour}
-                                                onSelect={(h) => {
-                                                    setTempHour(h);
-                                                    playPs5NavigateSound();
-                                                }}
-                                            />
-
-                                            <div className="text-neutral-600 font-bold text-xl pt-4">:</div>
-
-                                            <DrumWheelColumn
-                                                title="الدقيقة"
-                                                items={MINUTE_WHEEL_ITEMS}
-                                                selectedValue={tempMinute}
-                                                onSelect={(m) => {
-                                                    setTempMinute(m);
-                                                    playPs5NavigateSound();
-                                                }}
-                                            />
-
-                                            <DrumWheelColumn
-                                                title="الفترة"
-                                                items={PERIOD_WHEEL_ITEMS}
-                                                selectedValue={tempPeriod}
-                                                onSelect={(p) => {
-                                                    setTempPeriod(p);
-                                                    playPs5NavigateSound();
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Live Availability Status Feedback */}
-                                <div
-                                    className={`p-3 rounded-xl border text-xs transition-all ${
-                                        tempAvailability.isAvailable
-                                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                                            : 'bg-red-500/10 border-red-500/30 text-red-300'
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        {tempAvailability.isAvailable ? (
-                                            <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
-                                        ) : (
-                                            <AlertCircle size={15} className="text-red-400 shrink-0" />
-                                        )}
-                                        <div className="font-semibold text-xs leading-tight">
-                                            {tempAvailability.isAvailable
-                                                ? `الموعد متاح للحجز مؤكداً (${tempAvailability.formattedStart} إلى ${tempAvailability.formattedEnd})`
-                                                : tempAvailability.reason === 'PAST_TIME'
-                                                ? 'هذا الوقت قد مضى بالفعل، يرجى اختيار موعد قادم'
-                                                : tempAvailability.reason === 'EXCEEDS_CLOSING'
-                                                ? 'يتجاوز موعد إغلاق الصالة (04:00 ص فجراً)'
-                                                : tempAvailability.conflictingInterval
-                                                ? `يتعارض مع حجز قائم من ${formatArabicTimeDetailed(tempAvailability.conflictingInterval.start)} إلى ${formatArabicTimeDetailed(tempAvailability.conflictingInterval.end)}`
-                                                : 'هذا الوقت غير متاح'}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Modal Footer */}
-                            <div className="p-4 border-t border-neutral-800 bg-neutral-950/50 flex gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsCustomTimeModalOpen(false)}
-                                    className="px-4 py-2.5 rounded-xl border border-neutral-800 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-bold transition-all cursor-pointer"
-                                >
-                                    إلغاء
-                                </button>
-                                <button
-                                    type="button"
-                                    disabled={!tempAvailability.isAvailable}
-                                    onClick={() => {
-                                        setSelectedHour(tempHour);
-                                        setSelectedMinute(tempMinute);
-                                        setSelectedPeriod(tempPeriod);
-                                        if (durationHours === null) {
-                                            setDurationHours(1);
-                                        }
-                                        setIsCustomTimeModalOpen(false);
-                                        playPs5SelectSound();
-                                    }}
-                                    className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                                        tempAvailability.isAvailable
-                                            ? 'bg-red-600 hover:bg-red-500 text-white shadow-md shadow-red-600/30 active:scale-[0.98]'
-                                            : 'bg-neutral-800 text-neutral-500 border border-neutral-700/50 cursor-not-allowed'
-                                    }`}
-                                >
-                                    <Check size={14} />
-                                    <span>تأكيد الموعد ({tempAvailability.formattedStart})</span>
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
         </div>
     );
 }
