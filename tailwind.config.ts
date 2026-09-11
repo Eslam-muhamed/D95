@@ -72,8 +72,12 @@ const config: Config = {
                 },
             },
             fontFamily: {
-                display: ['"Playfair Display"', '"Bebas Neue"', 'Georgia', 'serif'],
-                body: ['Cairo', 'Inter', 'system-ui', 'sans-serif'],
+                sans: ['"Bebas Neue"', 'Cairo', 'Inter', 'system-ui', 'sans-serif'],
+                display: ['"Bebas Neue"', 'Cairo', 'sans-serif'],
+                body: ['"Bebas Neue"', 'Cairo', 'Inter', 'system-ui', 'sans-serif'],
+                heading: ['"Bebas Neue"', 'Cairo', 'sans-serif'],
+                bebas: ['"Bebas Neue"', 'Cairo', 'sans-serif'],
+                brush: ['"Permanent Marker"', '"Bebas Neue"', 'cursive', 'sans-serif'],
             },
             keyframes: {
                 'fade-up': { from: { opacity: '0', transform: 'translateY(24px)' }, to: { opacity: '1', transform: 'translateY(0)' } },

@@ -39,7 +39,9 @@ export default class ErrorBoundary extends Component<Props, State> {
                         </div>
 
                         <div className="flex items-center justify-center gap-2 mb-2">
-                            <span className="font-brush text-2xl text-red-500 font-bold">D95</span>
+                            <span className="font-brush text-2xl font-bold tracking-tight">
+                                <span className="text-white">D</span><span className="text-red-500">95</span>
+                            </span>
                             <span className="text-xs bg-red-950/80 text-red-400 font-bold px-2.5 py-0.5 rounded-full border border-red-500/30">
                                 SYSTEM NOTICE
                             </span>

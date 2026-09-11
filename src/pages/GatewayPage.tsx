@@ -95,14 +95,14 @@ export default function GatewayPage() {
 
                     <div className="relative text-center px-4">
                         <h1
-                            className="font-brush text-3xl sm:text-4xl md:text-5xl uppercase tracking-wider text-neutral-900 dark:text-neutral-100 drop-shadow-sm dark:drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]"
-                            style={{
-                                transform: 'skewX(-2deg)',
-                            }}
+                            className="font-display font-black text-4xl sm:text-5xl md:text-6xl uppercase tracking-wider text-neutral-900 dark:text-neutral-100 drop-shadow-sm dark:drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]"
                         >
                             WE ARE OPEN
                         </h1>
-                        <div className="w-28 sm:w-36 h-[2px] bg-red-600 mx-auto mt-1 rounded-full opacity-80" />
+                        <div className="w-28 sm:w-40 h-[3px] bg-red-600 mx-auto mt-1 rounded-full shadow-[0_0_10px_#dc2626]" />
+                        <p className="font-display text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 tracking-[0.25em] uppercase mt-1.5 font-bold">
+                            PLAY • COMPETE • RELAX • REPEAT
+                        </p>
                     </div>
 
                     <span
@@ -124,14 +124,14 @@ export default function GatewayPage() {
                         <div className="grid grid-cols-2 divide-x divide-neutral-300 dark:divide-neutral-500/50 text-center" dir="ltr">
                             {/* FROM */}
                             <div className="px-2 sm:px-4 flex flex-col items-center">
-                                <span className="font-brush text-[10px] sm:text-xs text-neutral-500 dark:text-neutral-400 tracking-widest uppercase">
+                                <span className="font-display text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 tracking-widest uppercase">
                                     FROM
                                 </span>
                                 <div className="flex items-baseline gap-1 mt-0.5">
-                                    <span className="font-brush text-xl sm:text-2xl font-black text-neutral-900 dark:text-white">
+                                    <span className="font-display text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white">
                                         08:00
                                     </span>
-                                    <span className="font-brush text-xs sm:text-sm font-bold text-red-600">
+                                    <span className="font-display text-sm sm:text-base font-bold text-red-600">
                                         AM
                                     </span>
                                 </div>
@@ -139,14 +139,14 @@ export default function GatewayPage() {
 
                             {/* TO */}
                             <div className="px-2 sm:px-4 flex flex-col items-center">
-                                <span className="font-brush text-[10px] sm:text-xs text-neutral-500 dark:text-neutral-400 tracking-widest uppercase">
+                                <span className="font-display text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 tracking-widest uppercase">
                                     TO
                                 </span>
                                 <div className="flex items-baseline gap-1 mt-0.5">
-                                    <span className="font-brush text-xl sm:text-2xl font-black text-neutral-900 dark:text-white">
+                                    <span className="font-display text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white">
                                         04:00
                                     </span>
-                                    <span className="font-brush text-xs sm:text-sm font-bold text-red-600">
+                                    <span className="font-display text-sm sm:text-base font-bold text-red-600">
                                         AM
                                     </span>
                                 </div>

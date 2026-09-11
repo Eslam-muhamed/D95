@@ -72,7 +72,9 @@ export default function AdminDashboardPage() {
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
-                            <span className="font-brush text-2xl text-red-500 font-bold leading-none">D95</span>
+                            <span className="font-brush text-2xl font-bold leading-none tracking-tight">
+                                <span className="text-white">D</span><span className="text-red-500">95</span>
+                            </span>
                             <span className="text-[10px] bg-red-950 text-red-400 font-bold px-2 py-0.5 rounded-full border border-red-500/30">
                                 DASHBOARD
                             </span>
