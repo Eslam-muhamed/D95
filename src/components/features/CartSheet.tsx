@@ -1001,7 +1001,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
                               className="font-bold text-sm tracking-widest"
                               style={{ color: 'var(--c-brand-l)', fontFamily: '"Playfair Display", serif', direction: 'ltr' }}
                             >
-                              {selected.account}
+                              {selected.account || 'سيتم إرساله لتأكيد الطلب'}
                             </span>
                           </div>
                           <div

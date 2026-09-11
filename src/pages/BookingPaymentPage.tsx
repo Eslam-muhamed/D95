@@ -508,29 +508,31 @@ export default function BookingPaymentPage() {
                                             <div className="flex flex-col min-w-0">
                                                 <span className="text-xs text-neutral-600 dark:text-neutral-400 font-semibold">رقم المحفظة المعتمد للتحويل:</span>
                                                 <span className="text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400 font-mono tracking-wider select-all" dir="ltr">
-                                                    {CONTACT_INFO.walletNumber}
+                                                    {CONTACT_INFO.walletNumber || 'سيتم إرسال الرقم لتأكيد الحجز'}
                                                 </span>
                                             </div>
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleCopy(CONTACT_INFO.walletNumber, 'wallet');
-                                                }}
-                                                className="shrink-0 flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-sm"
-                                            >
-                                                {copiedKey === 'wallet' ? (
-                                                    <>
-                                                        <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-                                                        <span>تم النسخ</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Copy className="w-4 h-4" />
-                                                        <span>نسخ الرقم</span>
-                                                    </>
-                                                )}
-                                            </button>
+                                            {CONTACT_INFO.walletNumber && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleCopy(CONTACT_INFO.walletNumber, 'wallet');
+                                                    }}
+                                                    className="shrink-0 flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-sm"
+                                                >
+                                                    {copiedKey === 'wallet' ? (
+                                                        <>
+                                                            <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                                                            <span>تم النسخ</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Copy className="w-4 h-4" />
+                                                            <span>نسخ الرقم</span>
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
                                         </div>
                                     </motion.div>
                                 )}

@@ -82,7 +82,9 @@ export default function BookingSuccessPage() {
             ? 'كاش في الصالة عند الوصول'
             : paymentMethod === 'instapay'
             ? `إنستاباي (InstaPay - ${CONTACT_INFO.instapayHandle})`
-            : `محفظة إلكترونية (${CONTACT_INFO.walletNumber})`;
+            : CONTACT_INFO.walletNumber
+            ? `محفظة إلكترونية (${CONTACT_INFO.walletNumber})`
+            : 'محفظة إلكترونية (فودافون كاش)';
 
     const handleSendWhatsApp = () => {
         let snacksListText = '';

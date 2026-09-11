@@ -139,54 +139,50 @@ export default function ContactSection() {
       </motion.div>
 
       {/* Action buttons */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={inView ? { opacity: 1, y: 0 } : {}}
-        transition={{ delay: 0.25, duration: 0.45 }}
-        className="flex gap-3"
-      >
-        <a
-          href={CAFE_PHONE ? `https://wa.me/${CAFE_PHONE}?text=${encodeURIComponent('مرحباً! أريد الاستفسار 🎮☕')}` : '#'}
-          target={CAFE_PHONE ? '_blank' : '_self'}
-          rel="noopener noreferrer"
-          className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm text-white transition-all ${
-            CAFE_PHONE ? 'hover:opacity-90 active:scale-95 cursor-pointer' : 'opacity-50 cursor-not-allowed'
-          }`}
-          style={{
-            background: 'linear-gradient(135deg, #128C7E, #25D366)',
-            fontFamily: 'Cairo, sans-serif',
-            boxShadow: CAFE_PHONE ? '0 3px 16px rgba(37,211,102,0.28)' : 'none',
-            minHeight: 52,
-          }}
-          onClick={(e) => {
-            if (!CAFE_PHONE) e.preventDefault();
-          }}
+      {(CAFE_PHONE || GOOGLE_MAPS_LINK) && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.25, duration: 0.45 }}
+          className="flex gap-3"
         >
-          <span style={{ fontSize: 18 }}>💬</span>
-          واتساب
-        </a>
-        <a
-          href={GOOGLE_MAPS_LINK || '#'}
-          target={GOOGLE_MAPS_LINK ? '_blank' : '_self'}
-          rel="noopener noreferrer"
-          className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm transition-all ${
-            GOOGLE_MAPS_LINK ? 'hover:opacity-90 active:scale-95 cursor-pointer' : 'opacity-50 cursor-not-allowed'
-          }`}
-          style={{
-            background: 'var(--c-card)',
-            color: 'var(--c-text-1)',
-            border: '1px solid rgba(139,26,42,0.28)',
-            fontFamily: 'Cairo, sans-serif',
-            minHeight: 52,
-          }}
-          onClick={(e) => {
-            if (!GOOGLE_MAPS_LINK) e.preventDefault();
-          }}
-        >
-          <MapPin size={16} style={{ color: '#C45C6A' }} />
-          اعثر علينا
-        </a>
-      </motion.div>
+          {CAFE_PHONE && (
+            <a
+              href={`https://wa.me/${CAFE_PHONE}?text=${encodeURIComponent('مرحباً! أريد الاستفسار 🎮☕')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90 active:scale-95 cursor-pointer"
+              style={{
+                background: 'linear-gradient(135deg, #128C7E, #25D366)',
+                fontFamily: 'Cairo, sans-serif',
+                boxShadow: '0 3px 16px rgba(37,211,102,0.28)',
+                minHeight: 52,
+              }}
+            >
+              <span style={{ fontSize: 18 }}>💬</span>
+              واتساب
+            </a>
+          )}
+          {GOOGLE_MAPS_LINK && (
+            <a
+              href={GOOGLE_MAPS_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-95 cursor-pointer"
+              style={{
+                background: 'var(--c-card)',
+                color: 'var(--c-text-1)',
+                border: '1px solid rgba(139,26,42,0.28)',
+                fontFamily: 'Cairo, sans-serif',
+                minHeight: 52,
+              }}
+            >
+              <MapPin size={16} style={{ color: '#C45C6A' }} />
+              اعثر علينا
+            </a>
+          )}
+        </motion.div>
+      )}
     </section>
   );
 }
