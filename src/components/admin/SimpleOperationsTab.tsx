@@ -14,14 +14,13 @@ import {
     ChevronLeft,
     Sparkles,
     Settings2,
-    ArrowUpRight,
     Check,
     X,
-    Layers,
-    DollarSign,
-    SlidersHorizontal,
     List,
-    ShieldCheck,
+    ChevronDown,
+    ChevronUp,
+    Info,
+    ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -46,31 +45,30 @@ import BookingDetailsModal from './BookingDetailsModal';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 
 export default function SimpleOperationsTab() {
-    // Current Business Date (Pinned to Cairo)
+    // Current Business Date (Cairo-pinned)
     const todayStr = useMemo(() => getCairoTodayDateString(), []);
     const [selectedDate, setSelectedDate] = useState<string>(todayStr);
 
-    // Active View Mode: 'today' (Daily Schedule) vs 'archive' (All Bookings Search)
+    // Active View Mode: 'today' (Daily Schedule) vs 'archive' (All Bookings)
     const [activeView, setActiveView] = useState<'today' | 'archive'>('today');
 
     // Data State
     const [loading, setLoading] = useState<boolean>(true);
     const [todayBookings, setTodayBookings] = useState<DBBooking[]>([]);
     const [pendingBookings, setPendingBookings] = useState<DBBooking[]>([]);
-    const [todayCount, setTodayCount] = useState<number>(0);
-    const [confirmedCount, setConfirmedCount] = useState<number>(0);
+    const [showPendingDrawer, setShowPendingDrawer] = useState<boolean>(true);
 
-    // Modal state
+    // Modals
     const [activeDetailBooking, setActiveDetailBooking] = useState<DBBooking | null>(null);
     const [showRatesModal, setShowRatesModal] = useState<boolean>(false);
 
     // Rates State
-    const [roomRates, setRoomRates] = useState<RoomRates>({ 'room-1': 100, 'room-2': 100 });
+    const [, setRoomRates] = useState<RoomRates>({ 'room-1': 100, 'room-2': 100 });
     const [rateRoom1, setRateRoom1] = useState<number>(100);
     const [rateRoom2, setRateRoom2] = useState<number>(100);
     const [savingRates, setSavingRates] = useState<boolean>(false);
 
-    // Filter state for Daily view
+    // Filters for Daily Schedule
     const [roomFilter, setRoomFilter] = useState<string>('all');
     const [dailySearch, setDailySearch] = useState<string>('');
 
@@ -83,7 +81,7 @@ export default function SimpleOperationsTab() {
     const [archiveBookings, setArchiveBookings] = useState<DBBooking[]>([]);
     const [archiveLoading, setArchiveLoading] = useState<boolean>(false);
 
-    // Live Cairo Clock
+    // Live Clock
     const [currentTimeStr, setCurrentTimeStr] = useState<string>('');
     useEffect(() => {
         const updateClock = () => {
@@ -98,7 +96,7 @@ export default function SimpleOperationsTab() {
         return () => clearInterval(timer);
     }, []);
 
-    // 1. Load Daily Operations & Metrics
+    // 1. Load Data
     const loadOperationsData = useCallback(async () => {
         setLoading(true);
         try {
@@ -109,10 +107,7 @@ export default function SimpleOperationsTab() {
             ]);
 
             setPendingBookings(metrics.recentPending);
-            setConfirmedCount(metrics.confirmedCount);
-            setTodayCount(metrics.todayCount);
             setTodayBookings(dayData);
-
             setRoomRates(rates);
             setRateRoom1(rates['room-1'] || 100);
             setRateRoom2(rates['room-2'] || 100);
@@ -127,7 +122,7 @@ export default function SimpleOperationsTab() {
         loadOperationsData();
     }, [loadOperationsData]);
 
-    // 2. Load Archive data on view switch or filter changes
+    // 2. Load Archive data
     const loadArchiveData = useCallback(async (targetPage = archivePage) => {
         if (activeView !== 'archive') return;
         setArchiveLoading(true);
@@ -155,7 +150,7 @@ export default function SimpleOperationsTab() {
         }
     }, [activeView, archivePage, loadArchiveData]);
 
-    // Fast Confirm Booking
+    // Quick Action: Confirm
     const handleQuickConfirm = async (b: DBBooking) => {
         playPs5SelectSound();
         const { end } = getBookingDates(b);
@@ -165,19 +160,18 @@ export default function SimpleOperationsTab() {
         }
         try {
             await updateBookingStatus(b.id, 'confirmed');
-            toast.success(`تم تأكيد حجز ${b.customer_name} بنجاح! 🎮`);
+            toast.success(`تم تأكيد حجز ${b.customer_name} بنجاح! ✅`);
             setPendingBookings(prev => prev.filter(item => item.id !== b.id));
             setTodayBookings(prev => prev.map(item => item.id === b.id ? { ...item, status: 'confirmed' } : item));
-            setConfirmedCount(prev => prev + 1);
         } catch {
             toast.error('تعذر تأكيد الحجز');
         }
     };
 
-    // Fast Reject Booking
+    // Quick Action: Reject
     const handleQuickReject = async (b: DBBooking) => {
         playPs5NavigateSound();
-        if (!confirm(`هل أنت متأكد من رفض حجز ${b.customer_name}؟`)) return;
+        if (!confirm(`هل أنت متأكد من رفض وإلغاء حجز ${b.customer_name}؟`)) return;
         try {
             await updateBookingStatus(b.id, 'cancelled');
             toast.info(`تم إلغاء حجز ${b.customer_name}`);
@@ -198,7 +192,7 @@ export default function SimpleOperationsTab() {
             });
             setRoomRates(updated);
             setShowRatesModal(false);
-            toast.success('تم تحديث وحفظ أسعار ساعات الغرف بنجاح! 🎮');
+            toast.success('تم حفظ وتحديث أسعار الغرف بنجاح!');
         } catch {
             toast.error('تعذر حفظ أسعار الغرف');
         } finally {
@@ -206,7 +200,7 @@ export default function SimpleOperationsTab() {
         }
     };
 
-    // Derived: Active Ongoing Sessions in lounge
+    // Derived: Active Ongoing Sessions
     const ongoingBookings = useMemo(() => {
         const nowMs = Date.now();
         return todayBookings.filter(b => {
@@ -231,29 +225,29 @@ export default function SimpleOperationsTab() {
         });
     }, [todayBookings, roomFilter, dailySearch]);
 
-    // Unique Room Options in today's bookings
+    // Room options
     const roomOptions = useMemo(() => {
         const set = new Set<string>();
         todayBookings.forEach(b => { if (b.room_name) set.add(b.room_name); });
         return Array.from(set);
     }, [todayBookings]);
 
-    // Date title in friendly Arabic
+    // Date formatted
     const formattedDateTitle = useMemo(() => {
         try {
             const [y, m, d] = selectedDate.split('-').map(Number);
             const dateObj = new Date(y, m - 1, d);
             return new Intl.DateTimeFormat('ar-EG', {
                 weekday: 'long',
-                month: 'long',
                 day: 'numeric',
+                month: 'long',
             }).format(dateObj);
         } catch {
             return selectedDate;
         }
     }, [selectedDate]);
 
-    // WhatsApp quick link opener
+    // WhatsApp opener
     const openWhatsAppDirect = (e: React.MouseEvent, b: DBBooking) => {
         e.stopPropagation();
         let phone = b.customer_phone.replace(/\D/g, '');
@@ -263,7 +257,7 @@ export default function SimpleOperationsTab() {
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
     };
 
-    // Calculate 20 Hourly Slots for selected date with minutes precision
+    // Calculate 20 Hourly Slots for selected date
     const timelineSlots = useMemo(() => {
         const slots = [];
         const now = Date.now();
@@ -276,17 +270,12 @@ export default function SimpleOperationsTab() {
             const start = createDateTimeFromBusinessDate(selectedDate, time24);
             const end = new Date(start.getTime() + 60 * 60 * 1000);
 
-            // Period & 12h formatting
             const period = slotHour >= 12 && slotHour < 24 ? 'م' : 'ص';
             const h12 = slotHour % 12 === 0 ? 12 : slotHour % 12;
-            const nextPeriod = endHour >= 12 && endHour < 24 ? 'م' : 'ص';
-            const nextH12 = endHour % 12 === 0 ? 12 : endHour % 12;
-            const label = `${h12} ${period}`;
-            const rangeLabel = `${h12}:00 ${period} - ${nextH12}:00 ${nextPeriod}`;
+            const label = `${h12}${period}`;
 
             const isPast = end.getTime() <= now;
 
-            // Find overlapping confirmed/pending bookings
             const activeBookings = todayBookings.filter(b => {
                 if (b.status !== 'confirmed' && b.status !== 'pending') return false;
                 if (roomFilter !== 'all' && b.room_name !== roomFilter) return false;
@@ -304,33 +293,17 @@ export default function SimpleOperationsTab() {
                 if (isMinuteBooked) bookedMinutes++;
             }
 
-            const freeMinutes = 60 - bookedMinutes;
-            const bookedPercentage = Math.round((bookedMinutes / 60) * 100);
-
             let status: 'available' | 'booked' | 'partial' | 'past' = 'available';
             if (isPast && bookedMinutes === 0) status = 'past';
             else if (bookedMinutes === 60) status = 'booked';
             else if (bookedMinutes > 0) status = 'partial';
 
-            let gradientStyle: React.CSSProperties | undefined;
-            if (status === 'partial') {
-                const redColor = '#dc2626';
-                const emptyColor = isPast ? '#1f191c' : '#140e11';
-                gradientStyle = {
-                    background: `linear-gradient(to left, ${redColor} 0%, ${redColor} ${bookedPercentage}%, ${emptyColor} ${bookedPercentage}%, ${emptyColor} 100%)`,
-                };
-            }
-
             slots.push({
                 index: i,
                 label,
-                rangeLabel,
                 status,
                 bookedMinutes,
-                freeMinutes,
-                bookedPercentage,
                 activeBookings,
-                gradientStyle,
                 isPast,
             });
         }
@@ -338,538 +311,485 @@ export default function SimpleOperationsTab() {
     }, [selectedDate, todayBookings, roomFilter]);
 
     return (
-        <div className="space-y-6" dir="rtl">
-            {/* Top Quick Status & Actions Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#1a1114] via-[#140e11] to-[#120c0f] border border-white/10 rounded-2xl p-4 sm:p-5 shadow-lg backdrop-blur-md">
-                {/* 3 Quick Stat Badges */}
-                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                    {/* Stat 1: Pending Bookings */}
-                    <div
-                        onClick={() => {
-                            if (pendingBookings.length > 0) {
-                                document.getElementById('pending-section')?.scrollIntoView({ behavior: 'smooth' });
-                            }
-                        }}
-                        className={`px-3.5 py-2 rounded-xl border flex items-center gap-2 transition-all cursor-pointer ${
-                            pendingBookings.length > 0
-                                ? 'bg-amber-950/40 border-amber-500/50 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
-                                : 'bg-white/5 border-white/10 text-neutral-400'
-                        }`}
-                        title="حجوزات معلقة تنتظر الموافقة"
-                    >
-                        <AlertCircle className={`w-4 h-4 ${pendingBookings.length > 0 ? 'text-amber-400 animate-pulse' : 'text-neutral-500'}`} />
-                        <div className="text-xs font-bold">
-                            <span className="text-white font-mono font-black text-sm ml-1.5">{pendingBookings.length}</span>
-                            <span>بانتظار الموافقة</span>
+        <div className="space-y-4 max-w-7xl mx-auto" dir="rtl">
+            {/* 1. UNIFIED MINIMAL CONTROL BAR (Replaces 4 stacked rows) */}
+            <div className="bg-[#120d0f] border border-white/10 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                {/* Right: Date Navigator with arrows */}
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-0.5">
+                        <button
+                            type="button"
+                            onClick={() => setSelectedDate(prev => addDaysToDateString(prev, -1))}
+                            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+                            title="اليوم السابق"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+
+                        <div className="relative flex items-center px-3 py-1 cursor-pointer">
+                            <span className="text-xs sm:text-sm font-bold text-white whitespace-nowrap">
+                                {formattedDateTitle}
+                                {selectedDate === todayStr && (
+                                    <span className="mr-1.5 text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded">
+                                        اليوم
+                                    </span>
+                                )}
+                            </span>
+                            <input
+                                type="date"
+                                value={selectedDate}
+                                onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                title="اختر تاريخاً من التقويم"
+                            />
                         </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setSelectedDate(prev => addDaysToDateString(prev, 1))}
+                            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+                            title="اليوم التالي"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
                     </div>
 
-                    {/* Stat 2: Active Ongoing Sessions */}
-                    <div className="px-3.5 py-2 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-emerald-300 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                        <div className="text-xs font-bold">
-                            <span className="text-white font-mono font-black text-sm ml-1.5">{ongoingBookings.length}</span>
-                            <span>شغال الآن بالصالة</span>
-                        </div>
-                    </div>
-
-                    {/* Stat 3: Today's Total Bookings */}
-                    <div className="px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-neutral-300 flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-red-400" />
-                        <div className="text-xs font-bold">
-                            <span className="text-white font-mono font-black text-sm ml-1.5">{todayBookings.length}</span>
-                            <span>حجوزات مسجلة</span>
-                        </div>
-                    </div>
+                    {selectedDate !== todayStr && (
+                        <button
+                            type="button"
+                            onClick={() => setSelectedDate(todayStr)}
+                            className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white text-xs font-bold transition-colors"
+                        >
+                            الرجوع لليوم
+                        </button>
+                    )}
                 </div>
 
-                {/* Right Side: Clock & Quick Settings */}
-                <div className="flex items-center gap-2 justify-between sm:justify-end">
-                    <div className="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs">
-                        <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="font-mono font-bold text-emerald-400">{currentTimeStr}</span>
+                {/* Center: View Switcher (Today vs Archive) & Room Filter */}
+                <div className="flex items-center gap-2">
+                    {/* View Switch */}
+                    <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-0.5 text-xs">
+                        <button
+                            type="button"
+                            onClick={() => { playPs5NavigateSound(); setActiveView('today'); }}
+                            className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                                activeView === 'today'
+                                    ? 'bg-red-600 text-white shadow-sm'
+                                    : 'text-neutral-400 hover:text-white'
+                            }`}
+                        >
+                            مواعيد اليوم
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => { playPs5NavigateSound(); setActiveView('archive'); }}
+                            className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                                activeView === 'archive'
+                                    ? 'bg-red-600 text-white shadow-sm'
+                                    : 'text-neutral-400 hover:text-white'
+                            }`}
+                        >
+                            كل الحجوزات
+                        </button>
                     </div>
 
+                    {/* Room Selector Filter (Only in Today view) */}
+                    {activeView === 'today' && (
+                        <div className="hidden sm:flex items-center bg-white/5 border border-white/10 rounded-xl p-0.5 text-xs">
+                            <button
+                                type="button"
+                                onClick={() => setRoomFilter('all')}
+                                className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all ${
+                                    roomFilter === 'all' ? 'bg-white/15 text-white' : 'text-neutral-400 hover:text-white'
+                                }`}
+                            >
+                                كل الغرف
+                            </button>
+                            {roomOptions.map((r) => (
+                                <button
+                                    key={r}
+                                    type="button"
+                                    onClick={() => setRoomFilter(r)}
+                                    className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all ${
+                                        roomFilter === r ? 'bg-white/15 text-white' : 'text-neutral-400 hover:text-white'
+                                    }`}
+                                >
+                                    {r}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Left: Quick Status Indicators & Settings */}
+                <div className="flex items-center gap-2.5 mr-auto sm:mr-0 text-xs">
+                    {/* Live playing badge */}
+                    <div className="flex items-center gap-1.5 text-neutral-400">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>شغال الآن:</span>
+                        <span className="font-mono font-bold text-white">{ongoingBookings.length}</span>
+                    </div>
+
+                    <span className="text-neutral-600">|</span>
+
+                    {/* Pending badge */}
+                    {pendingBookings.length > 0 ? (
+                        <button
+                            type="button"
+                            onClick={() => setShowPendingDrawer(true)}
+                            className="flex items-center gap-1 text-amber-400 font-bold bg-amber-950/40 hover:bg-amber-900/60 px-2.5 py-1 rounded-lg border border-amber-500/30 transition-colors"
+                        >
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            <span>{pendingBookings.length} معلق</span>
+                        </button>
+                    ) : (
+                        <span className="text-neutral-400 flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>لا معلق</span>
+                        </span>
+                    )}
+
+                    <span className="text-neutral-600">|</span>
+
+                    {/* Room Rates Settings */}
                     <button
                         type="button"
                         onClick={() => setShowRatesModal(true)}
-                        className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-neutral-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/5 transition-colors"
                         title="تعديل أسعار ساعات الغرف"
                     >
-                        <Settings2 className="w-4 h-4 text-amber-400" />
-                        <span className="hidden sm:inline">أسعار الغرف</span>
+                        <Settings2 className="w-4 h-4" />
                     </button>
 
+                    {/* Refresh */}
                     <button
                         type="button"
                         onClick={loadOperationsData}
                         disabled={loading}
-                        className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-neutral-300 hover:text-white transition-colors cursor-pointer"
-                        title="تحديث البيانات"
+                        className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/5 transition-colors"
+                        title="تحديث"
                     >
                         <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-red-500' : ''}`} />
                     </button>
                 </div>
             </div>
 
-            {/* Urgent Pending Bookings Section (Only shown if pending exist) */}
+            {/* 2. COMPACT PENDING BOOKINGS LIST (Replaces giant 6-card grid) */}
             {pendingBookings.length > 0 && (
-                <div id="pending-section" className="bg-gradient-to-br from-amber-950/40 via-[#1c1417] to-[#140e11] border-2 border-amber-500/50 rounded-2xl p-4 sm:p-5 shadow-[0_0_30px_rgba(245,158,11,0.15)] space-y-3">
+                <div className="bg-[#140e11] border border-amber-500/30 rounded-2xl p-3.5 sm:p-4 shadow-sm space-y-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
-                            <h2 className="text-sm sm:text-base font-black text-amber-300">
-                                ⚡ طلبات حجز جديدة تنتظر موافقتك ({pendingBookings.length})
-                            </h2>
+                            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                            <h3 className="text-xs sm:text-sm font-bold text-amber-300">
+                                طلبات حجز معلقة بانتظار الموافقة ({pendingBookings.length})
+                            </h3>
                         </div>
-                        <span className="text-[11px] text-amber-400/80 font-bold">مراجعة فورية</span>
+
+                        <button
+                            type="button"
+                            onClick={() => setShowPendingDrawer(!showPendingDrawer)}
+                            className="text-neutral-400 hover:text-white text-xs font-semibold flex items-center gap-1"
+                        >
+                            <span>{showPendingDrawer ? 'طي القائمة' : 'عرض الطلبات'}</span>
+                            {showPendingDrawer ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
                     </div>
 
-                    {/* Pending Cards Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {pendingBookings.map((b) => (
-                            <div
-                                key={b.id}
-                                className="bg-[#120d0f] border border-amber-500/30 hover:border-amber-400/60 rounded-xl p-3.5 space-y-3 shadow-md transition-all"
-                            >
-                                <div className="flex items-start justify-between gap-2">
-                                    <div>
-                                        <h4 className="text-sm font-bold text-white">{b.customer_name}</h4>
-                                        <div className="flex items-center gap-2 text-xs text-neutral-400 mt-0.5">
-                                            <span dir="ltr" className="font-mono text-neutral-300">{b.customer_phone}</span>
-                                            <button
-                                                type="button"
-                                                onClick={(e) => openWhatsAppDirect(e, b)}
-                                                className="text-emerald-400 hover:text-emerald-300 text-[10px] font-bold inline-flex items-center gap-0.5 cursor-pointer"
-                                            >
-                                                <MessageCircle className="w-3 h-3" />
-                                                <span>واتساب</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                        معلق ⏳
-                                    </span>
-                                </div>
+                    {showPendingDrawer && (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-right text-xs">
+                                <thead>
+                                    <tr className="border-b border-white/10 text-neutral-400">
+                                        <th className="pb-2 font-medium">العميل</th>
+                                        <th className="pb-2 font-medium">الغرفة</th>
+                                        <th className="pb-2 font-medium">التاريخ والتوقيت</th>
+                                        <th className="pb-2 font-medium">المبلغ</th>
+                                        <th className="pb-2 text-left font-medium">الإجراء السريع</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {pendingBookings.map((b) => (
+                                        <tr key={b.id} className="hover:bg-white/[0.03] transition-colors">
+                                            {/* Client */}
+                                            <td className="py-2.5">
+                                                <div className="font-bold text-white flex items-center gap-2">
+                                                    <span>{b.customer_name}</span>
+                                                    <span className="text-[10px] text-neutral-500 font-mono">#{b.reservation_id}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-[11px] text-neutral-400 mt-0.5">
+                                                    <span dir="ltr" className="font-mono">{b.customer_phone}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => openWhatsAppDirect(e, b)}
+                                                        className="text-emerald-400 hover:underline inline-flex items-center gap-0.5"
+                                                    >
+                                                        <MessageCircle className="w-3 h-3" />
+                                                        <span>واتساب</span>
+                                                    </button>
+                                                </div>
+                                            </td>
 
-                                <div className="bg-black/40 rounded-lg p-2 flex items-center justify-between text-xs border border-white/5">
-                                    <div>
-                                        <span className="text-neutral-400 text-[10px] block">الغرفة والموعد:</span>
-                                        <span className="text-white font-bold">{b.room_name}</span>
-                                        <span className="text-red-400 font-mono text-[11px] block">{b.booking_date} • {b.start_time} - {b.end_time}</span>
-                                    </div>
-                                    <div className="text-left">
-                                        <span className="text-neutral-400 text-[10px] block">المبلغ:</span>
-                                        <span className="text-emerald-400 font-bold font-mono text-sm">{b.total_amount} ج.م</span>
-                                    </div>
-                                </div>
+                                            {/* Room */}
+                                            <td className="py-2.5 text-neutral-300 font-medium">
+                                                {b.room_name}
+                                            </td>
 
-                                {/* Action Buttons: Quick Confirm vs Quick Reject */}
-                                <div className="flex items-center gap-2 pt-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => handleQuickConfirm(b)}
-                                        className="flex-1 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-md shadow-emerald-900/30"
-                                    >
-                                        <Check className="w-3.5 h-3.5 stroke-[3]" />
-                                        <span>تأكيد الحجز</span>
-                                    </button>
+                                            {/* Time */}
+                                            <td className="py-2.5">
+                                                <div className="font-mono text-white text-xs">{b.start_time} - {b.end_time}</div>
+                                                <div className="text-[10px] text-neutral-500 font-mono">{b.booking_date} ({b.duration_hours}س)</div>
+                                            </td>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => handleQuickReject(b)}
-                                        className="px-3 py-2 rounded-lg bg-red-950/60 hover:bg-red-900/80 border border-red-500/30 text-red-300 font-bold text-xs flex items-center justify-center transition-colors cursor-pointer"
-                                        title="رفض الحجز"
-                                    >
-                                        <X className="w-3.5 h-3.5" />
-                                    </button>
+                                            {/* Amount */}
+                                            <td className="py-2.5 font-bold font-mono text-emerald-400">
+                                                {b.total_amount} ج.م
+                                            </td>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => setActiveDetailBooking(b)}
-                                        className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-neutral-300 hover:text-white font-bold text-xs transition-colors cursor-pointer"
-                                        title="عرض التفاصيل الكاملة"
-                                    >
-                                        تفاصيل
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                                            {/* Actions */}
+                                            <td className="py-2.5 text-left">
+                                                <div className="flex items-center justify-end gap-1.5">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleQuickConfirm(b)}
+                                                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 transition-colors shadow-sm"
+                                                    >
+                                                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                                        <span>قبول</span>
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleQuickReject(b)}
+                                                        className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-red-950/60 text-neutral-400 hover:text-red-400 border border-white/10 hover:border-red-500/30 transition-colors"
+                                                        title="رفض"
+                                                    >
+                                                        <X className="w-3.5 h-3.5" />
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setActiveDetailBooking(b)}
+                                                        className="px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white transition-colors text-[11px]"
+                                                    >
+                                                        تفاصيل
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
             )}
 
-            {/* Mode Switcher: Daily Schedule vs All Bookings Archive */}
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <div className="flex items-center bg-[#140e11] border border-white/10 rounded-xl p-1 gap-1">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            playPs5NavigateSound();
-                            setActiveView('today');
-                        }}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                            activeView === 'today'
-                                ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md'
-                                : 'text-neutral-400 hover:text-white'
-                        }`}
-                    >
-                        <Clock className="w-4 h-4" />
-                        <span>جدول مواعيد اليوم (التشغيل)</span>
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => {
-                            playPs5NavigateSound();
-                            setActiveView('archive');
-                        }}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                            activeView === 'archive'
-                                ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md'
-                                : 'text-neutral-400 hover:text-white'
-                        }`}
-                    >
-                        <List className="w-4 h-4" />
-                        <span>أرشيف وبحث كل الحجوزات</span>
-                    </button>
-                </div>
-
-                <span className="text-xs text-neutral-400 hidden sm:inline">
-                    {activeView === 'today' ? `مواعيد: ${formattedDateTitle}` : `إجمالي الحجوزات: ${archiveTotalCount}`}
-                </span>
-            </div>
-
-            {/* VIEW 1: DAILY SCHEDULE (TIMELINE & TODAY'S CLIENTS) */}
+            {/* 3. TODAY'S VIEW: SLIM TIMELINE + CLIENTS LIST */}
             {activeView === 'today' && (
-                <div className="space-y-5">
-                    {/* Date Switcher & Room Filter Bar */}
-                    <div className="bg-[#140e11] border border-white/10 rounded-2xl p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-md">
-                        {/* Day switchers */}
-                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-                            <button
-                                type="button"
-                                onClick={() => setSelectedDate(prev => addDaysToDateString(prev, -1))}
-                                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10 text-xs font-semibold cursor-pointer"
-                                title="اليوم السابق"
-                            >
-                                <ChevronRight className="w-4 h-4" />
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setSelectedDate(addDaysToDateString(todayStr, -1))}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                                    selectedDate === addDaysToDateString(todayStr, -1)
-                                        ? 'bg-red-600 text-white shadow-sm'
-                                        : 'bg-white/5 text-neutral-400 hover:text-white'
-                                }`}
-                            >
-                                أمس
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setSelectedDate(todayStr)}
-                                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                                    selectedDate === todayStr
-                                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md'
-                                        : 'bg-white/5 text-neutral-400 hover:text-white'
-                                }`}
-                            >
-                                <Sparkles className="w-3.5 h-3.5" />
-                                <span>اليوم (الحالي)</span>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setSelectedDate(addDaysToDateString(todayStr, 1))}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                                    selectedDate === addDaysToDateString(todayStr, 1)
-                                        ? 'bg-red-600 text-white shadow-sm'
-                                        : 'bg-white/5 text-neutral-400 hover:text-white'
-                                }`}
-                            >
-                                غداً
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setSelectedDate(prev => addDaysToDateString(prev, 1))}
-                                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10 text-xs font-semibold cursor-pointer"
-                                title="اليوم التالي"
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                            </button>
-                        </div>
-
-                        {/* Date Picker & Room Filter */}
-                        <div className="flex items-center gap-3 justify-between md:justify-end">
-                            {/* Room Filter Pills */}
-                            <div className="flex items-center gap-1 bg-[#1a1215] border border-white/10 rounded-xl p-1 text-xs">
-                                <button
-                                    type="button"
-                                    onClick={() => setRoomFilter('all')}
-                                    className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
-                                        roomFilter === 'all' ? 'bg-red-600 text-white' : 'text-neutral-400 hover:text-white'
-                                    }`}
-                                >
-                                    جميع الغرف
-                                </button>
-                                {roomOptions.map((r) => (
-                                    <button
-                                        key={r}
-                                        type="button"
-                                        onClick={() => setRoomFilter(r)}
-                                        className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
-                                            roomFilter === r ? 'bg-red-600 text-white' : 'text-neutral-400 hover:text-white'
-                                        }`}
-                                    >
-                                        {r}
-                                    </button>
-                                ))}
-                            </div>
-
-                            <input
-                                type="date"
-                                value={selectedDate}
-                                onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
-                                className="bg-[#1c1417] text-white text-xs border border-white/15 rounded-xl px-2.5 py-1.5 outline-none focus:border-red-500 cursor-pointer font-mono"
-                            />
-                        </div>
-                    </div>
-
-                    {/* 20-Square Visual Schedule Timeline */}
-                    <div className="bg-[#140e11] border border-white/10 rounded-2xl p-4 sm:p-5 space-y-3">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Clock className="w-4 h-4 text-red-500" />
-                                <h3 className="text-sm font-bold text-white">مخطط ساعات التشغيل اليومية (20 ساعة)</h3>
-                                <span className="text-[10px] text-neutral-400 font-mono">08:00 ص → 04:00 ص</span>
-                            </div>
-                            <div className="flex items-center gap-3 text-[11px] text-neutral-400">
+                <div className="space-y-4">
+                    {/* Slim Timeline Strip (Height reduced from 100px to ~38px) */}
+                    <div className="bg-[#120d0f] border border-white/10 rounded-2xl p-3 space-y-2">
+                        <div className="flex items-center justify-between text-xs text-neutral-400">
+                            <span className="font-bold text-neutral-300">مخطط ساعات اليوم (من 08:00 ص إلى 04:00 ص):</span>
+                            <div className="flex items-center gap-3 text-[11px]">
                                 <span className="flex items-center gap-1">
-                                    <span className="w-2.5 h-2.5 rounded bg-white/10 border border-white/20" />
+                                    <span className="w-2 h-2 rounded-full bg-white/10 border border-white/20" />
                                     <span>متاح</span>
                                 </span>
                                 <span className="flex items-center gap-1">
-                                    <span className="w-2.5 h-2.5 rounded bg-red-600 border border-red-500" />
+                                    <span className="w-2 h-2 rounded-full bg-red-600" />
                                     <span>محجوز</span>
                                 </span>
                             </div>
                         </div>
 
-                        {/* 20 Slots Grid */}
-                        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-10 gap-1.5 sm:gap-2">
+                        {/* 20 Slim Horizontal Segments */}
+                        <div className="grid grid-cols-10 sm:grid-cols-20 gap-1">
                             {timelineSlots.map((slot) => {
-                                const hasBookings = slot.activeBookings.length > 0;
+                                const isBooked = slot.status === 'booked';
+                                const isPartial = slot.status === 'partial';
+                                const hasCustomer = slot.activeBookings.length > 0;
+
                                 return (
                                     <div
                                         key={slot.index}
-                                        title={`${slot.rangeLabel}\n${slot.status === 'booked' ? 'محجوز بالكامل' : slot.status === 'partial' ? `محجوز ${slot.bookedMinutes} دقيقة` : 'متاح'}`}
-                                        className={`relative rounded-xl p-2 flex flex-col justify-between border transition-all text-center min-h-[64px] ${
-                                            slot.status === 'booked'
-                                                ? 'bg-red-950/70 border-red-500 text-white shadow-sm'
-                                                : slot.status === 'partial'
-                                                ? 'border-red-400 text-white'
+                                        title={`${slot.label}: ${isBooked ? 'محجوز' : isPartial ? `${slot.bookedMinutes}د محجوزة` : 'متاح'}${hasCustomer ? ` (${slot.activeBookings[0].customer_name})` : ''}`}
+                                        className={`h-9 rounded-lg border flex flex-col items-center justify-center transition-all cursor-default text-[10px] font-mono select-none ${
+                                            isBooked
+                                                ? 'bg-red-600 border-red-500 text-white font-bold'
+                                                : isPartial
+                                                ? 'bg-gradient-to-l from-red-600 to-[#1e1518] border-red-500/70 text-white'
                                                 : slot.isPast
-                                                ? 'bg-[#120d0f] border-white/5 text-neutral-500'
-                                                : 'bg-[#181114] border-white/10 text-neutral-300 hover:border-white/25'
+                                                ? 'bg-white/[0.02] border-white/5 text-neutral-600'
+                                                : 'bg-white/5 border-white/10 text-neutral-400 hover:border-white/20'
                                         }`}
-                                        style={slot.gradientStyle}
                                     >
-                                        <span className="text-[11px] font-bold font-mono block leading-tight">{slot.label}</span>
-
-                                        <div className="mt-1">
-                                            {slot.status === 'booked' ? (
-                                                <span className="text-[10px] font-bold text-red-200 block">محجوز</span>
-                                            ) : slot.status === 'partial' ? (
-                                                <span className="text-[9px] font-bold text-amber-300 block">{slot.bookedMinutes}د</span>
-                                            ) : (
-                                                <span className="text-[10px] text-neutral-500 block">متاح</span>
-                                            )}
-                                        </div>
-
-                                        {hasBookings && (
-                                            <span className="text-[9px] text-neutral-300 font-mono truncate block mt-0.5">
-                                                {slot.activeBookings[0].customer_name.split(' ')[0]}
-                                            </span>
-                                        )}
+                                        <span className="leading-none">{slot.label}</span>
                                     </div>
                                 );
                             })}
                         </div>
                     </div>
 
-                    {/* Today's Client Bookings List */}
-                    <div className="bg-[#140e11] border border-white/10 rounded-2xl p-4 sm:p-5 space-y-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    {/* Today's Bookings List (Clean Executive Table) */}
+                    <div className="bg-[#120d0f] border border-white/10 rounded-2xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <User className="w-4 h-4 text-red-500" />
                                 <h3 className="text-sm font-bold text-white">
-                                    قائمة حجوزات اليوم ({filteredDailyBookings.length} حجز)
+                                    حجوزات اليوم ({filteredDailyBookings.length})
                                 </h3>
                             </div>
 
-                            {/* Search within today */}
-                            <div className="relative w-full sm:w-64">
-                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
+                            {/* Compact Search */}
+                            <div className="relative w-48 sm:w-60">
+                                <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-500" />
                                 <input
                                     type="text"
                                     placeholder="بحث باسم العميل أو الهاتف..."
                                     value={dailySearch}
                                     onChange={(e) => setDailySearch(e.target.value)}
-                                    className="w-full bg-[#1c1417] text-white text-xs rounded-xl pr-9 pl-3 py-2 border border-white/10 outline-none focus:border-red-500"
+                                    className="w-full bg-[#181114] text-white text-xs rounded-xl pr-8 pl-3 py-1.5 border border-white/10 outline-none focus:border-red-500"
                                 />
                             </div>
                         </div>
 
                         {loading ? (
                             <div className="py-12 flex justify-center">
-                                <RefreshCw className="w-6 h-6 animate-spin text-red-500" />
+                                <RefreshCw className="w-5 h-5 animate-spin text-red-500" />
                             </div>
                         ) : filteredDailyBookings.length === 0 ? (
-                            <div className="py-12 text-center text-xs text-neutral-400 border border-dashed border-white/10 rounded-xl space-y-2">
-                                <div>لا توجد حجوزات مسجلة لهذا التاريخ المطابق للبحث.</div>
-                                <button
-                                    type="button"
-                                    onClick={() => { setSelectedDate(todayStr); setDailySearch(''); setRoomFilter('all'); }}
-                                    className="text-red-400 hover:text-red-300 underline font-bold cursor-pointer"
-                                >
-                                    إعادة ضبط التاريخ والبحث
-                                </button>
+                            <div className="py-10 text-center text-xs text-neutral-400 border border-dashed border-white/10 rounded-xl">
+                                لا توجد حجوزات مسجلة لهذا التاريخ.
                             </div>
                         ) : (
-                            <div className="space-y-2.5">
-                                {filteredDailyBookings.map((b) => {
-                                    const { start: bStart, end: bEnd } = getBookingDates(b);
-                                    const nowMs = Date.now();
-                                    const isEnded = bEnd.getTime() <= nowMs;
-                                    const isStarted = bStart.getTime() <= nowMs;
-                                    const isOngoing = isStarted && !isEnded && b.status === 'confirmed';
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-right text-xs">
+                                    <thead>
+                                        <tr className="border-b border-white/10 text-neutral-400">
+                                            <th className="pb-2.5 font-medium">الموعد</th>
+                                            <th className="pb-2.5 font-medium">العميل</th>
+                                            <th className="pb-2.5 font-medium">الغرفة</th>
+                                            <th className="pb-2.5 font-medium">المبلغ</th>
+                                            <th className="pb-2.5 font-medium">الحالة</th>
+                                            <th className="pb-2.5 text-left font-medium">تفاصيل</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {filteredDailyBookings.map((b) => {
+                                            const { start: bStart, end: bEnd } = getBookingDates(b);
+                                            const nowMs = Date.now();
+                                            const isEnded = bEnd.getTime() <= nowMs;
+                                            const isStarted = bStart.getTime() <= nowMs;
+                                            const isOngoing = isStarted && !isEnded && b.status === 'confirmed';
 
-                                    return (
-                                        <div
-                                            key={b.id}
-                                            onClick={() => setActiveDetailBooking(b)}
-                                            className={`rounded-xl border p-3.5 sm:p-4 transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 group ${
-                                                isOngoing
-                                                    ? 'bg-[#181114] border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.1)] hover:border-emerald-400'
-                                                    : b.status === 'pending'
-                                                    ? 'bg-[#181114] border-amber-500/40 hover:border-amber-400'
-                                                    : isEnded
-                                                    ? 'bg-[#120d0f] border-neutral-800/80 opacity-80 hover:opacity-100'
-                                                    : 'bg-[#181114] border-white/10 hover:border-white/20'
-                                            }`}
-                                        >
-                                            {/* Client Info */}
-                                            <div className="flex items-center gap-3">
-                                                <div
-                                                    className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 border ${
-                                                        isOngoing
-                                                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                                                            : b.status === 'pending'
-                                                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                                                            : 'bg-white/5 text-neutral-300 border-white/10'
-                                                    }`}
+                                            return (
+                                                <tr
+                                                    key={b.id}
+                                                    onClick={() => setActiveDetailBooking(b)}
+                                                    className="hover:bg-white/[0.04] transition-colors cursor-pointer group"
                                                 >
-                                                    <User className="w-4 h-4" />
-                                                </div>
+                                                    {/* Time */}
+                                                    <td className="py-3">
+                                                        <div className="font-bold text-white font-mono text-xs">
+                                                            {b.start_time} - {b.end_time}
+                                                        </div>
+                                                        <span className="text-[10px] text-neutral-400 font-mono">({b.duration_hours} س)</span>
+                                                    </td>
 
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <h4 className="text-sm font-bold text-white group-hover:text-red-400 transition-colors">
+                                                    {/* Client */}
+                                                    <td className="py-3">
+                                                        <div className="font-bold text-white group-hover:text-red-400 transition-colors">
                                                             {b.customer_name}
-                                                        </h4>
-                                                        <span className="text-[10px] font-mono text-neutral-500">#{b.reservation_id}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2.5 text-xs text-neutral-400 mt-0.5">
-                                                        <span dir="ltr" className="font-mono">{b.customer_phone}</span>
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => openWhatsAppDirect(e, b)}
-                                                            className="text-emerald-400 hover:text-emerald-300 text-[10px] font-bold inline-flex items-center gap-0.5 cursor-pointer"
-                                                        >
-                                                            <MessageCircle className="w-3 h-3" />
-                                                            <span>واتساب</span>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-[11px] text-neutral-400 mt-0.5">
+                                                            <span dir="ltr" className="font-mono">{b.customer_phone}</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => openWhatsAppDirect(e, b)}
+                                                                className="text-emerald-400 hover:underline inline-flex items-center gap-0.5"
+                                                            >
+                                                                <MessageCircle className="w-3 h-3" />
+                                                                <span>واتساب</span>
+                                                            </button>
+                                                        </div>
+                                                    </td>
 
-                                            {/* Timing, Room & Status */}
-                                            <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5">
-                                                <div>
-                                                    <span className="text-[10px] text-neutral-500 block">الموعد:</span>
-                                                    <span className="text-xs font-bold font-mono text-white block">
-                                                        {b.start_time} - {b.end_time}
-                                                    </span>
-                                                    <span className="text-[10px] text-neutral-400">({b.duration_hours} س)</span>
-                                                </div>
+                                                    {/* Room */}
+                                                    <td className="py-3 text-neutral-200 font-medium">
+                                                        {b.room_name}
+                                                    </td>
 
-                                                <div>
-                                                    <span className="text-[10px] text-neutral-500 block">الغرفة:</span>
-                                                    <span className="text-xs font-bold text-purple-300 block">{b.room_name}</span>
-                                                    <span className="text-xs font-mono text-emerald-400 font-bold block">{b.total_amount} ج.م</span>
-                                                </div>
+                                                    {/* Amount */}
+                                                    <td className="py-3 font-bold font-mono text-emerald-400">
+                                                        {b.total_amount} ج.م
+                                                    </td>
 
-                                                <div className="text-left shrink-0">
-                                                    {isOngoing ? (
-                                                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 inline-flex items-center gap-1 shadow-sm">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                                                            <span>شغال الآن 🎮</span>
-                                                        </span>
-                                                    ) : b.status === 'confirmed' ? (
-                                                        isEnded ? (
-                                                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-neutral-800 text-neutral-400 border border-white/10">
-                                                                انتهى ⌛
+                                                    {/* Status */}
+                                                    <td className="py-3">
+                                                        {isOngoing ? (
+                                                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 inline-flex items-center gap-1 shadow-sm">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                                                                <span>شغال الآن 🎮</span>
+                                                            </span>
+                                                        ) : b.status === 'confirmed' ? (
+                                                            isEnded ? (
+                                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-800 text-neutral-400">
+                                                                    انتهى ⌛
+                                                                </span>
+                                                            ) : (
+                                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                                                    مؤكد 🔒
+                                                                </span>
+                                                            )
+                                                        ) : b.status === 'pending' ? (
+                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                                                معلق ⏳
                                                             </span>
                                                         ) : (
-                                                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                                                                مؤكد 🔒
+                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-800 text-neutral-400">
+                                                                {b.status === 'completed' ? 'مكتمل' : 'ملغي'}
                                                             </span>
-                                                        )
-                                                    ) : b.status === 'pending' ? (
-                                                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                                            معلق ⏳
+                                                        )}
+                                                    </td>
+
+                                                    {/* Action */}
+                                                    <td className="py-3 text-left">
+                                                        <span className="text-neutral-400 group-hover:text-white underline text-[11px]">
+                                                            عرض
                                                         </span>
-                                                    ) : (
-                                                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-neutral-800 text-neutral-400">
-                                                            {b.status === 'completed' ? 'مكتمل' : 'ملغي'}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
                             </div>
                         )}
                     </div>
                 </div>
             )}
 
-            {/* VIEW 2: ARCHIVE & SEARCH ALL BOOKINGS */}
+            {/* 4. ARCHIVE VIEW: ALL BOOKINGS LIST */}
             {activeView === 'archive' && (
-                <div className="bg-[#140e11] border border-white/10 rounded-2xl p-4 sm:p-5 space-y-4 shadow-md">
-                    {/* Filter & Search Bar */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="bg-[#120d0f] border border-white/10 rounded-2xl p-4 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="relative flex-1">
-                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
                             <input
                                 type="text"
-                                placeholder="ابحث باسم العميل، رقم الهاتف، أو كود الحجز..."
+                                placeholder="ابحث باسم العميل أو الهاتف أو كود الحجز..."
                                 value={archiveSearch}
                                 onChange={(e) => {
                                     setArchiveSearch(e.target.value);
                                     setArchivePage(1);
                                 }}
-                                className="w-full bg-[#1c1417] text-white text-xs rounded-xl pr-10 pl-3 py-2.5 border border-white/10 outline-none focus:border-red-500"
+                                className="w-full bg-[#181114] text-white text-xs rounded-xl pr-9 pl-3 py-2 border border-white/10 outline-none focus:border-red-500"
                             />
                         </div>
 
-                        {/* Status Tabs */}
-                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none text-xs">
+                        {/* Status Filter Pills */}
+                        <div className="flex items-center gap-1 overflow-x-auto text-xs">
                             {[
                                 { id: 'all', label: 'الكل' },
                                 { id: 'confirmed', label: 'مؤكد' },
@@ -884,10 +804,10 @@ export default function SimpleOperationsTab() {
                                         setArchiveStatusFilter(tab.id);
                                         setArchivePage(1);
                                     }}
-                                    className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors cursor-pointer ${
+                                    className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
                                         archiveStatusFilter === tab.id
                                             ? 'bg-red-600 text-white'
-                                            : 'bg-white/5 text-neutral-400 hover:text-white'
+                                            : 'text-neutral-400 hover:text-white hover:bg-white/5'
                                     }`}
                                 >
                                     {tab.label}
@@ -896,68 +816,77 @@ export default function SimpleOperationsTab() {
                         </div>
                     </div>
 
-                    {/* Archive List */}
                     {archiveLoading ? (
-                        <div className="py-16 flex justify-center">
-                            <RefreshCw className="w-6 h-6 animate-spin text-red-500" />
+                        <div className="py-12 flex justify-center">
+                            <RefreshCw className="w-5 h-5 animate-spin text-red-500" />
                         </div>
                     ) : archiveBookings.length === 0 ? (
-                        <div className="py-12 text-center text-xs text-neutral-400 border border-dashed border-white/10 rounded-xl">
-                            لا توجد حجوزات مطابقة لمعايير البحث في الأرشيف.
+                        <div className="py-10 text-center text-xs text-neutral-400 border border-dashed border-white/10 rounded-xl">
+                            لا توجد نتائج في الأرشيف.
                         </div>
                     ) : (
-                        <div className="space-y-2">
-                            {archiveBookings.map((b) => (
-                                <div
-                                    key={b.id}
-                                    onClick={() => setActiveDetailBooking(b)}
-                                    className="bg-[#181114] hover:bg-white/[0.04] border border-white/5 hover:border-white/15 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors cursor-pointer"
-                                >
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold text-sm text-white">{b.customer_name}</span>
-                                            <span className="text-[10px] font-mono text-neutral-400">#{b.reservation_id}</span>
-                                        </div>
-                                        <div className="flex items-center gap-3 text-xs text-neutral-400 mt-0.5">
-                                            <span dir="ltr" className="font-mono">{b.customer_phone}</span>
-                                            <span>•</span>
-                                            <span className="text-purple-300">{b.room_name}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between sm:justify-end gap-4 text-xs">
-                                        <div className="text-right">
-                                            <span className="font-mono text-neutral-300 block">{b.booking_date}</span>
-                                            <span className="font-mono text-red-400 text-[11px] block">{b.start_time} - {b.end_time}</span>
-                                        </div>
-
-                                        <span className="font-bold text-emerald-400 font-mono text-sm">{b.total_amount} ج.م</span>
-
-                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                                            b.status === 'confirmed'
-                                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                                                : b.status === 'pending'
-                                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                                                : 'bg-neutral-800 text-neutral-400 border-neutral-700'
-                                        }`}>
-                                            {b.status === 'confirmed' ? 'مؤكد' : b.status === 'pending' ? 'معلق' : b.status === 'completed' ? 'مكتمل' : 'ملغي'}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-right text-xs">
+                                <thead>
+                                    <tr className="border-b border-white/10 text-neutral-400">
+                                        <th className="pb-2.5 font-medium">كود الحجز</th>
+                                        <th className="pb-2.5 font-medium">العميل</th>
+                                        <th className="pb-2.5 font-medium">الغرفة</th>
+                                        <th className="pb-2.5 font-medium">التاريخ والتوقيت</th>
+                                        <th className="pb-2.5 font-medium">المبلغ</th>
+                                        <th className="pb-2.5 font-medium">الحالة</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {archiveBookings.map((b) => (
+                                        <tr
+                                            key={b.id}
+                                            onClick={() => setActiveDetailBooking(b)}
+                                            className="hover:bg-white/[0.04] transition-colors cursor-pointer group"
+                                        >
+                                            <td className="py-2.5 font-mono text-neutral-400">#{b.reservation_id}</td>
+                                            <td className="py-2.5">
+                                                <div className="font-bold text-white group-hover:text-red-400 transition-colors">
+                                                    {b.customer_name}
+                                                </div>
+                                                <span className="text-[11px] text-neutral-400 font-mono" dir="ltr">
+                                                    {b.customer_phone}
+                                                </span>
+                                            </td>
+                                            <td className="py-2.5 text-neutral-300">{b.room_name}</td>
+                                            <td className="py-2.5 font-mono">
+                                                <div>{b.booking_date}</div>
+                                                <div className="text-neutral-400 text-[10px]">{b.start_time} - {b.end_time}</div>
+                                            </td>
+                                            <td className="py-2.5 font-bold font-mono text-emerald-400">{b.total_amount} ج.م</td>
+                                            <td className="py-2.5">
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                                    b.status === 'confirmed'
+                                                        ? 'bg-emerald-500/20 text-emerald-300'
+                                                        : b.status === 'pending'
+                                                        ? 'bg-amber-500/20 text-amber-300'
+                                                        : 'bg-neutral-800 text-neutral-400'
+                                                }`}>
+                                                    {b.status === 'confirmed' ? 'مؤكد' : b.status === 'pending' ? 'معلق' : b.status === 'completed' ? 'مكتمل' : 'ملغي'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     )}
 
-                    {/* Pagination Controls */}
+                    {/* Pagination */}
                     {archiveTotalPages > 1 && (
-                        <div className="flex items-center justify-between pt-3 border-t border-white/10 text-xs text-neutral-400">
+                        <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs text-neutral-400">
                             <span>صفحة {archivePage} من {archiveTotalPages} ({archiveTotalCount} حجز)</span>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                                 <button
                                     type="button"
                                     onClick={() => setArchivePage(p => Math.max(1, p - 1))}
                                     disabled={archivePage <= 1}
-                                    className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white disabled:opacity-30 cursor-pointer"
+                                    className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white disabled:opacity-30"
                                 >
                                     السابق
                                 </button>
@@ -965,7 +894,7 @@ export default function SimpleOperationsTab() {
                                     type="button"
                                     onClick={() => setArchivePage(p => Math.min(archiveTotalPages, p + 1))}
                                     disabled={archivePage >= archiveTotalPages}
-                                    className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white disabled:opacity-30 cursor-pointer"
+                                    className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white disabled:opacity-30"
                                 >
                                     التالي
                                 </button>
@@ -997,30 +926,26 @@ export default function SimpleOperationsTab() {
                     onClick={() => setShowRatesModal(false)}
                 >
                     <div
-                        className="bg-[#140e11] border border-white/15 rounded-3xl p-5 sm:p-6 w-full max-w-md space-y-4 shadow-2xl"
+                        className="bg-[#140e11] border border-white/15 rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-xl"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                        <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
                             <div className="flex items-center gap-2">
-                                <Settings2 className="w-5 h-5 text-amber-400" />
-                                <h3 className="text-base font-bold text-white">إعدادات أسعار ساعات الغرف</h3>
+                                <Settings2 className="w-4 h-4 text-amber-400" />
+                                <h3 className="text-sm font-bold text-white">أسعار ساعات الغرف</h3>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setShowRatesModal(false)}
                                 className="p-1 rounded-lg text-neutral-400 hover:text-white"
                             >
-                                <X className="w-5 h-5" />
+                                <X className="w-4 h-4" />
                             </button>
                         </div>
 
-                        <p className="text-xs text-neutral-400">
-                            حدد سعر الساعة (ج.م) لكل غرفة. سيتم تطبيق السعر فوراً في الحسابات عند حجز الزبائن.
-                        </p>
-
                         <div className="space-y-3">
                             <div>
-                                <label className="text-xs font-bold text-neutral-300 block mb-1">
+                                <label className="text-xs text-neutral-300 block mb-1">
                                     سعر ساعة الغرفة 1 (Room 1):
                                 </label>
                                 <div className="relative">
@@ -1029,14 +954,14 @@ export default function SimpleOperationsTab() {
                                         min="1"
                                         value={rateRoom1}
                                         onChange={(e) => setRateRoom1(Number(e.target.value))}
-                                        className="w-full bg-[#1c1417] text-white font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-white/15 outline-none focus:border-red-500"
+                                        className="w-full bg-[#1c1417] text-white font-mono font-bold text-sm rounded-xl px-3 py-2 border border-white/15 outline-none focus:border-red-500"
                                     />
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400">ج.م / ساعة</span>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400">ج.م / س</span>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="text-xs font-bold text-neutral-300 block mb-1">
+                                <label className="text-xs text-neutral-300 block mb-1">
                                     سعر ساعة الغرفة 2 (Room 2):
                                 </label>
                                 <div className="relative">
@@ -1045,27 +970,27 @@ export default function SimpleOperationsTab() {
                                         min="1"
                                         value={rateRoom2}
                                         onChange={(e) => setRateRoom2(Number(e.target.value))}
-                                        className="w-full bg-[#1c1417] text-white font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-white/15 outline-none focus:border-red-500"
+                                        className="w-full bg-[#1c1417] text-white font-mono font-bold text-sm rounded-xl px-3 py-2 border border-white/15 outline-none focus:border-red-500"
                                     />
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400">ج.م / ساعة</span>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400">ج.م / س</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 pt-2">
+                        <div className="flex items-center gap-2 pt-1">
                             <button
                                 type="button"
                                 onClick={handleSaveRates}
                                 disabled={savingRates}
-                                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+                                className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md"
                             >
-                                {savingRates ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                                <span>حفظ الأسعار وتطبيقها</span>
+                                {savingRates ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                                <span>حفظ الأسعار</span>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setShowRatesModal(false)}
-                                className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-neutral-300 text-xs font-bold transition-colors cursor-pointer"
+                                className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-neutral-300 text-xs font-semibold"
                             >
                                 إلغاء
                             </button>
