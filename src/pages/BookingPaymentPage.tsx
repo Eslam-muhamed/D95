@@ -275,9 +275,7 @@ export default function BookingPaymentPage() {
                                 طريقة الدفع وتأكيد الحجز
                             </h1>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="font-bebas text-lg font-black tracking-wider leading-none">
-                                    <span className="text-neutral-900 dark:text-white">D</span><span className="text-red-600">95</span>
-                                </span>
+                                <span className="font-brush text-sm text-red-600 dark:text-red-500 font-bold">D95</span>
                                 <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-semibold tracking-wider">SECURE CHECKOUT</span>
                             </div>
                         </div>
@@ -654,7 +652,7 @@ export default function BookingPaymentPage() {
                                 <div className="flex justify-between items-center pt-3 border-t border-neutral-200 dark:border-white/10">
                                     <span className="font-bold text-sm text-neutral-900 dark:text-white">المبلغ النهائي المستحق:</span>
                                     <div className="flex items-baseline gap-1">
-                                        <span className="font-bebas text-3xl sm:text-4xl font-black text-red-600 dark:text-red-500">{netTotal}</span>
+                                        <span className="font-brush text-2xl sm:text-3xl font-black text-red-600 dark:text-red-500">{netTotal}</span>
                                         <span className="text-xs text-neutral-500 dark:text-neutral-400 font-bold">ج.م</span>
                                     </div>
                                 </div>

@@ -122,7 +122,7 @@ html {
 }
 
 body {
-    font-family: 'Bebas Neue', 'Cairo', 'Inter', system-ui, sans-serif;
+    font-family: 'Bebas Neue', 'Changa', 'Cairo', system-ui, sans-serif;
     background: #090707;
     background: var(--bg-main);
     color: var(--text-1);
@@ -137,13 +137,13 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6, .font-heading, .font-display, .font-bebas {
-    font-family: 'Bebas Neue', 'Cairo', sans-serif;
-    letter-spacing: 0.04em;
+    font-family: 'Bebas Neue', 'Changa', 'Cairo', sans-serif;
+    letter-spacing: 0.03em;
 }
 
 .font-brush {
-    font-family: 'Permanent Marker', 'Bebas Neue', 'Cairo', cursive, sans-serif;
-    letter-spacing: 0.05em;
+    font-family: 'Bebas Neue', 'Changa', 'Cairo', sans-serif;
+    letter-spacing: 0.04em;
 }
 
 /* ──────────────────────────────────────────

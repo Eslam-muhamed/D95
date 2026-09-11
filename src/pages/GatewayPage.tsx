@@ -81,15 +81,13 @@ export default function GatewayPage() {
                     <span className="font-body text-[11px] text-red-600 dark:text-red-400 font-bold">مفتوح الآن</span>
                 </div>
 
-                {/* Branded Brush Logo with backdrop for maximum contrast */}
-                <div className="inline-flex flex-col items-center px-6 py-2 rounded-2xl bg-black/80 dark:bg-black/40 backdrop-blur-md border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.35)] my-1">
-                    <D95BrushLogo size="lg" showSubtitle={true} showMotto={false} glow={true} />
-                </div>
+                {/* Branded Brush Logo */}
+                <D95BrushLogo size="lg" showSubtitle={true} showMotto={false} glow={true} />
 
                 {/* Styled WE ARE OPEN Title */}
                 <div className="relative my-2 w-full flex items-center justify-center">
                     <span
-                        className="hidden sm:inline-block font-bebas text-3xl md:text-5xl text-neutral-400 select-none mr-4 opacity-70 -rotate-12"
+                        className="hidden sm:inline-block font-brush text-3xl md:text-5xl text-neutral-400 select-none mr-4 opacity-70 -rotate-12"
                         style={{ WebkitTextStroke: '1px currentColor' }}
                     >
                         ✕
@@ -97,19 +95,15 @@ export default function GatewayPage() {
 
                     <div className="relative text-center px-4">
                         <h1
-                            className="font-bebas text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-[0.06em] text-neutral-900 dark:text-neutral-100 drop-shadow-sm dark:drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)] leading-none"
+                            className="font-bebas text-4xl sm:text-5xl md:text-6xl uppercase tracking-[0.08em] text-neutral-900 dark:text-neutral-100 drop-shadow-sm dark:drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)] font-black leading-none"
                         >
                             WE ARE OPEN
                         </h1>
-                        {/* Red Accent Underline */}
-                        <div className="relative w-36 sm:w-56 h-[3.5px] bg-red-600 mx-auto mt-1.5 rounded-full shadow-[0_0_12px_rgba(220,38,38,0.85)]" />
-                        <p className="font-bebas text-[11px] sm:text-xs tracking-[0.28em] text-neutral-500 dark:text-neutral-400 uppercase mt-1">
-                            PLAY • COMPETE • RELAX • REPEAT
-                        </p>
+                        <div className="w-32 sm:w-44 h-[3px] bg-red-600 mx-auto mt-1.5 rounded-full shadow-[0_0_12px_rgba(220,38,38,0.7)]" />
                     </div>
 
                     <span
-                        className="hidden sm:inline-block font-bebas text-3xl md:text-5xl text-neutral-400 select-none ml-4 opacity-70 rotate-12"
+                        className="hidden sm:inline-block font-brush text-3xl md:text-5xl text-neutral-400 select-none ml-4 opacity-70 rotate-12"
                         style={{ WebkitTextStroke: '1px currentColor' }}
                     >
                         ✕
@@ -160,7 +154,7 @@ export default function GatewayPage() {
 
                 {/* Motto */}
                 <div className="flex flex-col items-center mt-1">
-                    <p className="font-body text-[10px] sm:text-xs text-neutral-600 dark:text-neutral-400 uppercase tracking-[0.28em] font-semibold">
+                    <p className="font-bebas text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 uppercase tracking-[0.25em] font-bold">
                         PLAY • COMPETE • RELAX • REPEAT
                     </p>
                     <span className="text-red-600 font-black text-xs leading-none mt-0.5">✕</span>

@@ -72,11 +72,11 @@ const config: Config = {
                 },
             },
             fontFamily: {
-                display: ['"Bebas Neue"', 'Cairo', 'sans-serif'],
-                bebas: ['"Bebas Neue"', 'Cairo', 'sans-serif'],
-                body: ['"Bebas Neue"', 'Cairo', 'Inter', 'system-ui', 'sans-serif'],
-                sans: ['"Bebas Neue"', 'Cairo', 'Inter', 'system-ui', 'sans-serif'],
-                brush: ['"Permanent Marker"', 'Cairo', 'cursive', 'sans-serif'],
+                display: ['"Bebas Neue"', 'Changa', 'Cairo', 'sans-serif'],
+                body: ['"Bebas Neue"', 'Cairo', 'Changa', 'system-ui', 'sans-serif'],
+                sans: ['"Bebas Neue"', 'Cairo', 'Changa', 'system-ui', 'sans-serif'],
+                brush: ['"Bebas Neue"', 'Changa', 'Cairo', 'sans-serif'],
+                bebas: ['"Bebas Neue"', 'Changa', 'Cairo', 'sans-serif'],
             },
             keyframes: {
                 'fade-up': { from: { opacity: '0', transform: 'translateY(24px)' }, to: { opacity: '1', transform: 'translateY(0)' } },

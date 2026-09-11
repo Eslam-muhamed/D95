@@ -62,43 +62,44 @@ export default function D95BrushLogo({
           />
         )}
 
-        {/* Letter "D" - Pure Chalk White Grunge Brush */}
+        {/* Letter "D" - Distressed Obsidian Ink in Light mode / Chalk Cream in Dark mode */}
         <div className="relative inline-block">
           <span
-            className={`font-brush font-black ${sizeMap.dSize} leading-none text-white drop-shadow-[0_3px_10px_rgba(0,0,0,0.9)]`}
+            className={`font-brush font-black ${sizeMap.dSize} leading-none text-[#141112] dark:text-[#F2EDE8] drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)] dark:drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]`}
             style={{
               display: 'inline-block',
               transform: 'skewX(-4deg) rotate(-1deg)',
-              WebkitTextStroke: '1px rgba(0,0,0,0.4)',
+              WebkitTextStroke: '1px rgba(0,0,0,0.3)',
             }}
           >
             D
           </span>
 
-          {/* Dripping paint trails streaming from D in white */}
-          <div className="absolute -bottom-1 left-2 flex items-start gap-1 pointer-events-none opacity-90">
+          {/* Dripping paint trails streaming from D */}
+          <div className="absolute -bottom-1 left-2 flex items-start gap-1 pointer-events-none opacity-80">
             <span
-              className={`w-[2.5px] ${sizeMap.dripH} bg-white rounded-b-full drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]`}
+              className={`w-[2px] ${sizeMap.dripH} bg-neutral-800 dark:bg-neutral-300 rounded-b-full drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)] dark:drop-shadow-[0_2px_3px_rgba(0,0,0,0.8)]`}
               style={{ animation: 'pulse 2.5s infinite ease-in-out' }}
             />
             <span
-              className={`w-[1.5px] h-2 bg-neutral-200 rounded-b-full ml-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]`}
+              className={`w-[1.5px] h-2 bg-neutral-700 dark:bg-neutral-400 rounded-b-full ml-1`}
             />
             <span
-              className={`w-[1px] h-1.5 bg-neutral-300 rounded-b-full`}
+              className={`w-[1px] h-1.5 bg-neutral-600 dark:bg-neutral-500 rounded-b-full`}
             />
           </div>
         </div>
 
-        {/* Number "95" - Sweeping Japanese / Graffiti Crimson Brush Stroke in Vibrant Red */}
+        {/* Number "95" - Sweeping Japanese / Graffiti Crimson Brush Stroke */}
         <div className="relative inline-block -ml-1 md:-ml-2">
           <span
-            className={`font-brush font-black ${sizeMap.numSize} leading-none tracking-tight text-red-600`}
+            className={`font-brush font-black ${sizeMap.numSize} leading-none tracking-tight`}
             style={{
+              color: '#B51824',
               display: 'inline-block',
               transform: 'skewX(-6deg) rotate(2deg)',
-              textShadow: '0 0 1px #000, 0 3px 12px rgba(220, 38, 38, 0.75), 0 0 28px rgba(220, 38, 38, 0.5)',
-              background: 'linear-gradient(135deg, #FF2633 0%, #DC2626 50%, #991B1B 100%)',
+              textShadow: '0 0 1px #000, 0 2px 10px rgba(181, 24, 36, 0.6), 0 0 25px rgba(181, 24, 36, 0.4)',
+              background: 'linear-gradient(135deg, #CF1F2D 0%, #A3141E 50%, #6E0B12 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}
@@ -108,41 +109,44 @@ export default function D95BrushLogo({
 
           {/* Artistic paint splatters around the 95 */}
           <span
-            className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-[#DC2626] opacity-90 blur-[0.3px]"
+            className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-[#B51824] opacity-80 blur-[0.3px]"
             aria-hidden="true"
           />
           <span
-            className="absolute top-4 -right-3 w-1 h-1 rounded-full bg-[#FF2633] opacity-80"
+            className="absolute top-4 -right-3 w-1 h-1 rounded-full bg-[#CF1F2D] opacity-70"
             aria-hidden="true"
           />
           <span
-            className="absolute -bottom-1 right-1 w-1 h-2 bg-[#991B1B] rounded-full opacity-80 rotate-12"
+            className="absolute -bottom-1 right-1 w-1 h-2 bg-[#8B1119] rounded-full opacity-75 rotate-12"
             aria-hidden="true"
           />
         </div>
       </div>
 
-      {/* Subtitle: — GAMING & CAFÉ — */}
+      {/* Stencil Subtitle: GAMING & CAFÉ */}
       {showSubtitle && (
-        <div className="mt-1.5 flex items-center justify-center gap-2">
-          <span className="w-4 md:w-6 h-[1.5px] bg-red-600 rounded-full" />
+        <div className="mt-1 flex items-center justify-center gap-2">
+          <span className="w-3 md:w-5 h-[1px] bg-red-600/70" />
           <p
-            className={`font-bebas font-bold text-white uppercase ${sizeMap.subSize} tracking-[0.35em] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]`}
+            className={`font-display font-black text-neutral-800 dark:text-neutral-200 uppercase ${sizeMap.subSize} drop-shadow-sm`}
+            style={{ letterSpacing: '0.35em' }}
           >
             GAMING &amp; CAFÉ
           </p>
-          <span className="w-4 md:w-6 h-[1.5px] bg-red-600 rounded-full" />
+          <span className="w-3 md:w-5 h-[1px] bg-red-600/70" />
         </div>
       )}
 
-      {/* Motto: PLAY • COMPETE • RELAX • REPEAT */}
+      {/* Motto: PLAY. COMPETE. RELAX. REPEAT. */}
       {showMotto && (
         <div className="mt-2 flex flex-col items-center">
           <p
-            className={`font-bebas font-bold text-neutral-400 uppercase ${sizeMap.mottoSize} tracking-[0.28em] drop-shadow-sm`}
+            className={`font-body font-bold text-neutral-600 dark:text-neutral-400 uppercase ${sizeMap.mottoSize}`}
+            style={{ letterSpacing: '0.28em' }}
           >
             PLAY • COMPETE • RELAX • REPEAT
           </p>
+          {/* Centered Red Crossmark from the wall */}
           <span className="text-red-600 font-black text-xs md:text-sm mt-0.5 leading-none">
             ✕
           </span>

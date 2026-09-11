@@ -160,9 +160,7 @@ export default function BookingSuccessPage() {
                                 تأكيد وتذكرة الحجز
                             </h1>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="font-bebas text-lg font-black tracking-wider leading-none">
-                                    <span className="text-neutral-900 dark:text-white">D</span><span className="text-red-600">95</span>
-                                </span>
+                                <span className="font-brush text-sm text-red-600 dark:text-red-500 font-bold">D95</span>
                                 <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-semibold tracking-wider">BOARDING PASS</span>
                             </div>
                         </div>
@@ -218,11 +216,11 @@ export default function BookingSuccessPage() {
                         {/* Top Athletic Header */}
                         <div className="p-3.5 sm:p-4 bg-neutral-100 dark:bg-black/60 border-b border-neutral-200 dark:border-white/10 text-neutral-900 dark:text-white flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <span className="bg-neutral-950 text-white font-bebas text-base font-black px-2.5 py-0.5 rounded tracking-wider border border-white/10 flex items-center leading-none">
-                                    <span className="text-white">D</span><span className="text-red-600">95</span>
+                                <span className="bg-red-600 text-white font-brush text-sm font-black px-2 py-0.5 rounded tracking-wider">
+                                    D95
                                 </span>
                                 <div className="flex flex-col">
-                                    <span className="font-bebas text-sm tracking-wider text-neutral-900 dark:text-white">VIP BOARDING PASS</span>
+                                    <span className="font-brush text-sm tracking-wider text-neutral-900 dark:text-white">VIP BOARDING PASS</span>
                                     <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-semibold">ESPORTS &amp; GAMING SUITES</span>
                                 </div>
                             </div>
@@ -322,7 +320,7 @@ export default function BookingSuccessPage() {
                                 </span>
                                 <div className="flex items-baseline gap-1 mt-1">
                                     <span className="text-neutral-500 dark:text-neutral-400 text-xs font-body">الإجمالي:</span>
-                                    <span className="font-bebas font-black text-3xl text-red-600 dark:text-red-400">{netTotal}</span>
+                                    <span className="font-brush font-black text-2xl text-red-600 dark:text-red-400">{netTotal}</span>
                                     <span className="text-xs text-neutral-500 dark:text-neutral-400 font-bold">ج.م</span>
                                 </div>
                             </div>
