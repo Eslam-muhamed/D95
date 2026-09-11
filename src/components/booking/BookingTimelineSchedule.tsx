@@ -66,27 +66,23 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [hoveredSlot, setHoveredSlot] = useState<TimelineSlot | null>(null);
 
-    // Compute all 40 slots (30-minute intervals across the 20 operating hours)
+    // Compute exactly 20 slots (1-hour intervals across the 20 operating hours from 08:00 AM to 04:00 AM)
     const slots = useMemo<TimelineSlot[]>(() => {
         const result: TimelineSlot[] = [];
         const now = Date.now();
 
-        for (let i = 0; i < 40; i++) {
-            const totalMinutes = i * 30;
-            const slotHour = (OPERATING_HOURS.START_HOUR + Math.floor(totalMinutes / 60)) % 24;
-            const slotMinute = totalMinutes % 60;
+        for (let i = 0; i < 20; i++) {
+            const slotHour = (OPERATING_HOURS.START_HOUR + i) % 24;
+            const endHour = (OPERATING_HOURS.START_HOUR + i + 1) % 24;
 
-            const time24 = `${String(slotHour).padStart(2, '0')}:${String(slotMinute).padStart(2, '0')}`;
+            const time24 = `${String(slotHour).padStart(2, '0')}:00`;
             const start = createDateTimeFromBusinessDate(selectedDate, time24);
-            const end = new Date(start.getTime() + 30 * 60 * 1000);
-
-            const endHour = (OPERATING_HOURS.START_HOUR + Math.floor((totalMinutes + 30) / 60)) % 24;
-            const endMinute = (totalMinutes + 30) % 60;
+            const end = new Date(start.getTime() + 60 * 60 * 1000); // 1-hour interval
 
             const hour12 = slotHour % 12 === 0 ? 12 : slotHour % 12;
             const period: 'AM' | 'PM' = slotHour >= 12 && slotHour < 24 ? 'PM' : 'AM';
-            const label = formatArabicTime(slotHour, slotMinute);
-            const endLabel = formatArabicTime(endHour, endMinute);
+            const label = formatArabicTime(slotHour, 0);
+            const endLabel = formatArabicTime(endHour, 0);
             const rangeLabel = `${label} - ${endLabel}`;
 
             // Check if slot has already passed
@@ -123,7 +119,7 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                 index: i,
                 time24,
                 hour24: slotHour,
-                minute: slotMinute,
+                minute: 0,
                 hour12,
                 period,
                 label,
@@ -331,10 +327,10 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                                         )}
                                     </div>
 
-                                    {/* The Horizontal Timeline Track of 40 Rounded Pills */}
+                                    {/* The Horizontal Timeline Track of 20 Rounded Squares (08:00 AM - 04:00 AM) */}
                                     <div className="space-y-1.5">
                                         <div
-                                            className="flex items-center gap-[2px] sm:gap-[3px] p-1.5 sm:p-2 bg-black/60 dark:bg-black/80 rounded-xl border border-white/[0.06] overflow-x-auto select-none"
+                                            className="flex items-center gap-1 sm:gap-1.5 p-1.5 sm:p-2.5 bg-black/60 dark:bg-black/80 rounded-xl border border-white/[0.06] overflow-x-auto select-none"
                                             dir="ltr"
                                         >
                                             {slots.map((slot) => {
@@ -354,14 +350,14 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                                                         title={`${slot.rangeLabel} - ${
                                                             isAvailable ? 'متاح للحجز' : isBooked ? 'محجوز' : 'غير متاح'
                                                         }`}
-                                                        className={`flex-1 min-w-[5px] sm:min-w-[6px] h-7 sm:h-8 rounded-[3px] sm:rounded-sm transition-all duration-150 relative outline-none ${
+                                                        className={`flex-1 min-w-[10px] sm:min-w-[14px] h-7 sm:h-9 rounded-[4px] sm:rounded-md transition-all duration-150 relative outline-none ${
                                                             isPast
                                                                 ? 'bg-neutral-800/90 border border-neutral-700/40 opacity-40 cursor-not-allowed'
                                                                 : isBooked
-                                                                ? 'bg-red-600 border border-red-500/60 shadow-[0_0_6px_rgba(239,68,68,0.45)] cursor-not-allowed hover:opacity-90'
+                                                                ? 'bg-red-600 border border-red-500/60 shadow-[0_0_8px_rgba(239,68,68,0.5)] cursor-not-allowed hover:opacity-90'
                                                                 : slot.isSelected
-                                                                ? 'bg-emerald-400 border-2 border-white shadow-[0_0_12px_rgba(16,185,129,0.9)] scale-110 z-10 animate-pulse'
-                                                                : 'bg-emerald-500 hover:bg-emerald-400 border border-emerald-400/40 shadow-[0_0_5px_rgba(16,185,129,0.3)] hover:scale-115 active:scale-95 cursor-pointer z-0'
+                                                                ? 'bg-emerald-400 border-2 border-white shadow-[0_0_14px_rgba(16,185,129,0.95)] scale-110 z-10 animate-pulse'
+                                                                : 'bg-emerald-500 hover:bg-emerald-400 border border-emerald-400/40 shadow-[0_0_6px_rgba(16,185,129,0.35)] hover:scale-115 active:scale-95 cursor-pointer z-0'
                                                         }`}
                                                     />
                                                 );
