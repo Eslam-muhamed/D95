@@ -48,6 +48,7 @@ import {
     getBookingDates,
 } from '@/services/bookingService';
 import type { DBBooking, BookingPolicy } from '@/types/database';
+import BookingDetailsModal from './BookingDetailsModal';
 
 function formatTimeAgo(dateStr: string): string {
     const diffMs = Date.now() - new Date(dateStr).getTime();
@@ -62,6 +63,7 @@ function formatTimeAgo(dateStr: string): string {
 export default function BookingsTab() {
     const [bookings, setBookings] = useState<DBBooking[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedDetailBooking, setSelectedDetailBooking] = useState<DBBooking | null>(null);
     const [statusFilter, setStatusFilter] = useState('all');
     const [search, setSearch] = useState('');
     const [selectedDate, setSelectedDate] = useState('');
@@ -761,11 +763,15 @@ export default function BookingsTab() {
                                 {/* Card Header */}
                                 <div className="space-y-2">
                                     <div className="flex items-start justify-between gap-2">
-                                        <div>
-                                            <span className="text-[11px] font-mono text-neutral-400 block">
-                                                #{b.reservation_id}
+                                        <div
+                                            onClick={() => setSelectedDetailBooking(b)}
+                                            className="cursor-pointer group/title"
+                                            title="اضغط لعرض كافة تفاصيل الحجز"
+                                        >
+                                            <span className="text-[11px] font-mono text-neutral-400 block group-hover/title:text-red-400 transition-colors">
+                                                #{b.reservation_id} 🔍
                                             </span>
-                                            <h3 className="text-base font-bold text-white flex items-center gap-1.5 mt-0.5">
+                                            <h3 className="text-base font-bold text-white flex items-center gap-1.5 mt-0.5 group-hover/title:text-red-400 transition-colors">
                                                 <User className="w-4 h-4 text-red-500 shrink-0" />
                                                 <span className="truncate">{b.customer_name}</span>
                                             </h3>
@@ -961,6 +967,16 @@ export default function BookingsTab() {
                                     )}
 
                                     <div className="flex items-center gap-2">
+                                        {/* Details Button */}
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedDetailBooking(b)}
+                                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/10 transition-colors cursor-pointer"
+                                            title="عرض كافة تفاصيل الحجز"
+                                        >
+                                            <Info className="w-4 h-4" />
+                                        </button>
+
                                         {/* WhatsApp Quick Message */}
                                         <button
                                             type="button"
@@ -1431,6 +1447,18 @@ export default function BookingsTab() {
                         </button>
                     </div>
                 </div>
+            )}
+
+            {/* Comprehensive Booking Details Modal */}
+            {selectedDetailBooking && (
+                <BookingDetailsModal
+                    booking={selectedDetailBooking}
+                    onClose={() => setSelectedDetailBooking(null)}
+                    onStatusChange={async (id, newStatus) => {
+                        await handleStatusChange(id, newStatus);
+                        setSelectedDetailBooking(null);
+                    }}
+                />
             )}
         </div>
     );

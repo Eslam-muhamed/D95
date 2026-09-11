@@ -227,6 +227,33 @@ export async function fetchBookings(filter?: {
     return res.bookings;
 }
 
+/**
+ * Fetch all bookings for a specific calendar date, chronologically sorted by start time.
+ */
+export async function fetchBookingsForDate(dateStr: string): Promise<DBBooking[]> {
+    try {
+        const { data, error } = await supabase
+            .from('ps_bookings')
+            .select('*')
+            .eq('booking_date', dateStr);
+
+        if (error) {
+            console.error('Error fetching bookings for date:', error);
+            return [];
+        }
+
+        const list = (data || []) as DBBooking[];
+        return list.sort((a, b) => {
+            const timeA = getBookingDates(a).start.getTime();
+            const timeB = getBookingDates(b).start.getTime();
+            return timeA - timeB;
+        });
+    } catch (err) {
+        console.error('Exception in fetchBookingsForDate:', err);
+        return [];
+    }
+}
+
 export async function updateBookingStatus(
     id: string,
     status: 'pending' | 'confirmed' | 'cancelled' | 'completed'

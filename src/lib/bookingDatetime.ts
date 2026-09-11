@@ -59,6 +59,23 @@ export function addDaysToDateString(dateStr: string, days: number): string {
 }
 
 /**
+ * Get today's calendar date string in YYYY-MM-DD pinned to Africa/Cairo timezone.
+ */
+export function getCairoTodayDateString(): string {
+    try {
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Africa/Cairo',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+        });
+        return formatter.format(new Date()); // Outputs "YYYY-MM-DD"
+    } catch {
+        return new Date().toISOString().split('T')[0];
+    }
+}
+
+/**
  * Helper to get the UTC offset in minutes for Africa/Cairo on a specific date.
  * Handles Egypt DST changes accurately.
  */

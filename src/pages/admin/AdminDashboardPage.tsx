@@ -14,9 +14,11 @@ import {
     X,
     Calendar,
     ShoppingBag,
+    Clock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import OverviewTab from '@/components/admin/OverviewTab';
+import DailyScheduleTab from '@/components/admin/DailyScheduleTab';
 import BookingsTab from '@/components/admin/BookingsTab';
 import OrdersTab from '@/components/admin/OrdersTab';
 import ProductsTab from '@/components/admin/ProductsTab';
@@ -25,7 +27,7 @@ import OffersTab from '@/components/admin/OffersTab';
 
 import { supabase } from '@/lib/supabase';
 
-type TabType = 'overview' | 'bookings' | 'orders' | 'products' | 'categories' | 'offers';
+type TabType = 'overview' | 'daily_schedule' | 'bookings' | 'orders' | 'products' | 'categories' | 'offers';
 
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
@@ -55,7 +57,8 @@ export default function AdminDashboardPage() {
 
     const navItems: { id: TabType; label: string; icon: React.ReactNode; badge?: string }[] = [
         { id: 'overview', label: 'نظرة عامة', icon: <LayoutDashboard className="w-4 h-4" /> },
-        { id: 'bookings', label: 'حجوزات البلايستيشن', icon: <Calendar className="w-4 h-4" /> },
+        { id: 'daily_schedule', label: 'جدول مواعيد اليوم', icon: <Clock className="w-4 h-4 text-emerald-400" /> },
+        { id: 'bookings', label: 'إدارة الحجوزات', icon: <Calendar className="w-4 h-4" /> },
         { id: 'orders', label: 'طلبات الكافيه الرقمية', icon: <ShoppingBag className="w-4 h-4 text-amber-400" /> },
         { id: 'products', label: 'المنتجات والأسعار', icon: <UtensilsCrossed className="w-4 h-4" /> },
         { id: 'categories', label: 'أقسام المنيو', icon: <FolderTree className="w-4 h-4" /> },
@@ -178,6 +181,11 @@ export default function AdminDashboardPage() {
             {/* Main Content Area */}
             <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
                 {activeTab === 'overview' && <OverviewTab onSwitchTab={(t: TabType) => setActiveTab(t)} />}
+                {activeTab === 'daily_schedule' && (
+                    <DailyScheduleTab
+                        onSwitchToBookingsTab={() => setActiveTab('bookings')}
+                    />
+                )}
                 {activeTab === 'bookings' && <BookingsTab />}
                 {activeTab === 'orders' && <OrdersTab />}
                 {activeTab === 'products' && <ProductsTab />}

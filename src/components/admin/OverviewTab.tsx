@@ -17,9 +17,10 @@ import { toast } from 'sonner';
 import { fetchBookingMetrics, updateBookingStatus, getBookingDates } from '@/services/bookingService';
 import { fetchProducts, fetchOffers } from '@/services/menuService';
 import type { DBBooking } from '@/types/database';
+import BookingDetailsModal from './BookingDetailsModal';
 
 interface OverviewTabProps {
-    onSwitchTab: (tab: 'bookings' | 'products' | 'categories' | 'offers') => void;
+    onSwitchTab: (tab: 'daily_schedule' | 'bookings' | 'products' | 'categories' | 'offers') => void;
 }
 
 export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
@@ -30,6 +31,7 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
     const [recentBookings, setRecentBookings] = useState<DBBooking[]>([]);
     const [productCount, setProductCount] = useState(0);
     const [offerCount, setOfferCount] = useState(0);
+    const [selectedDetailBooking, setSelectedDetailBooking] = useState<DBBooking | null>(null);
 
     const loadMetrics = async () => {
         setLoading(true);
@@ -101,11 +103,11 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
 
                 {/* 2. Confirmed & Active Bookings */}
                 <div
-                    onClick={() => onSwitchTab('bookings')}
-                    className="bg-[#140e11]/90 border border-white/10 hover:border-white/20 rounded-2xl p-5 shadow-lg backdrop-blur-md cursor-pointer transition-all hover:scale-[1.02] group"
+                    onClick={() => onSwitchTab('daily_schedule')}
+                    className="bg-[#140e11]/90 border border-white/10 hover:border-emerald-500/50 rounded-2xl p-5 shadow-lg backdrop-blur-md cursor-pointer transition-all hover:scale-[1.02] group"
                 >
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-emerald-400">حجوزات مؤكدة</span>
+                        <span className="text-xs font-bold text-emerald-400">حجوزات مؤكدة (جدول اليوم)</span>
                         <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
                             <Gamepad2 className="w-5 h-5" />
                         </div>
@@ -114,8 +116,9 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                         <span className="font-bebas text-5xl font-black text-white tracking-wider">
                             {confirmedCount}
                         </span>
-                        <span className="text-xs text-neutral-400 flex items-center gap-1">
-                            <span>{todayCount} اليوم</span>
+                        <span className="text-xs text-emerald-400/90 flex items-center gap-1 group-hover:translate-x-[-2px] transition-transform">
+                            <span>{todayCount} اليوم • فتح الجدول</span>
+                            <ArrowUpRight className="w-3.5 h-3.5" />
                         </span>
                     </div>
                 </div>
@@ -165,6 +168,35 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                 </div>
             </div>
 
+            {/* Quick Access to Daily Schedule Timeline */}
+            <div className="bg-gradient-to-r from-emerald-950/40 via-[#181114] to-[#140e11] border border-emerald-500/30 rounded-2xl p-5 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0 shadow-inner">
+                        <Clock className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-base font-bold text-white">جدول مواعيد اليوم التفاعلي (Timeline)</h3>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
+                                {todayCount} حجز مسجل اليوم
+                            </span>
+                        </div>
+                        <p className="text-xs text-neutral-300 mt-0.5">
+                            متابعة شاملة لجميع عملاء اليوم بالاسم ورقم الهاتف والميعاد مع استعراض التفاصيل الكاملة بضغطة واحدة.
+                        </p>
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    onClick={() => onSwitchTab('daily_schedule')}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-emerald-900/30 shrink-0"
+                >
+                    <span>فتح جدول مواعيد اليوم</span>
+                    <ArrowUpRight className="w-4 h-4" />
+                </button>
+            </div>
+
             {/* Recent Bookings Attention Section */}
             <div className="bg-[#140e11]/90 border border-white/10 rounded-2xl p-5 backdrop-blur-md space-y-4">
                 <div className="flex items-center justify-between">
@@ -174,7 +206,7 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                             <span>أحدث طلبات الحجز بانتظار التأكيد</span>
                         </h3>
                         <p className="text-xs text-neutral-400 mt-0.5">
-                            آخر الحجوزات الواردة التي تتطلب مراجعة واعتماد الصالة.
+                            آخر الحجوزات الواردة التي تتطلب مراجعة واعتماد الصالة. اضغط على أي حجز لعرض تفاصيله الكاملة.
                         </p>
                     </div>
 
@@ -227,9 +259,14 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                                     const { end } = getBookingDates(b);
                                     const isPast = end.getTime() <= Date.now();
                                     return (
-                                        <tr key={b.id} className="hover:bg-white/[0.02] transition-colors">
-                                            <td className="py-3 pr-2 font-mono text-neutral-400">#{b.reservation_id}</td>
-                                            <td className="py-3 font-bold text-white">
+                                        <tr
+                                            key={b.id}
+                                            onClick={() => setSelectedDetailBooking(b)}
+                                            className="hover:bg-white/[0.04] transition-colors cursor-pointer group"
+                                            title="اضغط لعرض تفاصيل الحجز الكاملة"
+                                        >
+                                            <td className="py-3 pr-2 font-mono text-neutral-400 group-hover:text-white">#{b.reservation_id}</td>
+                                            <td className="py-3 font-bold text-white group-hover:text-red-400 transition-colors">
                                                 <div>{b.customer_name}</div>
                                                 <span className="text-[10px] text-neutral-400 font-mono" dir="ltr">
                                                     {b.customer_phone}
@@ -269,7 +306,7 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="py-3 pl-2 text-left">
+                                            <td className="py-3 pl-2 text-left" onClick={(e) => e.stopPropagation()}>
                                                 {b.status === 'pending' ? (
                                                     isPast ? (
                                                         <span className="text-[11px] text-neutral-500 italic">منتهي الصلاحية</span>
@@ -284,7 +321,13 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                                                         </button>
                                                     )
                                                 ) : (
-                                                    <span className="text-[11px] text-neutral-500">تم المعالجة</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSelectedDetailBooking(b)}
+                                                        className="text-[11px] text-neutral-400 hover:text-white underline cursor-pointer"
+                                                    >
+                                                        التفاصيل
+                                                    </button>
                                                 )}
                                             </td>
                                         </tr>
@@ -295,6 +338,24 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                     </div>
                 )}
             </div>
+
+            {/* Booking Details Modal */}
+            {selectedDetailBooking && (
+                <BookingDetailsModal
+                    booking={selectedDetailBooking}
+                    onClose={() => setSelectedDetailBooking(null)}
+                    onStatusChange={async (id, newStatus) => {
+                        await updateBookingStatus(id, newStatus);
+                        toast.success('تم تحديث حالة الحجز بنجاح');
+                        setSelectedDetailBooking(null);
+                        loadMetrics();
+                    }}
+                    onSwitchToBookingsTab={() => {
+                        setSelectedDetailBooking(null);
+                        onSwitchTab('bookings');
+                    }}
+                />
+            )}
         </div>
     );
 }
