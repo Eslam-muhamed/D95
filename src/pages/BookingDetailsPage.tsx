@@ -38,6 +38,7 @@ import {
     OPERATING_HOURS,
 } from '@/lib/bookingDatetime';
 import { fetchRoomOccupiedIntervals } from '@/services/bookingService';
+import { BookingTimelineSchedule } from '@/components/booking/BookingTimelineSchedule';
 
 interface Room {
     id: string;
@@ -1191,6 +1192,28 @@ export default function BookingDetailsPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* ========================================================= */}
+                {/* COLLAPSIBLE BOOKING TIMELINE SCHEDULE (مخطط المواعيد)      */}
+                {/* ========================================================= */}
+                <BookingTimelineSchedule
+                    selectedDate={selectedDate}
+                    currentRoom={currentRoom}
+                    availableRooms={AVAILABLE_ROOMS}
+                    onSelectRoom={(roomId) => {
+                        setSelectedRoomId(roomId);
+                        playPs5NavigateSound();
+                    }}
+                    occupiedIntervals={effectiveOccupiedIntervals}
+                    userStartDateTime={startDateTime}
+                    userEndDateTime={currentAvailability.endDateTime}
+                    onSelectTimeSlot={(hour12, minute, period) => {
+                        setSelectedHour(hour12);
+                        setSelectedMinute(minute);
+                        setSelectedPeriod(period);
+                        toast.success(`تم اختيار وقت البدء: ${String(hour12).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${period === 'PM' ? 'م' : 'ص'} 🎮`);
+                    }}
+                />
 
                 {/* Cafe Cross-sell / Live Cart Status Banner */}
                 {cartItems.length > 0 ? (
