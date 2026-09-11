@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowRight, Gamepad2, Utensils, Sun, Moon } from 'lucide-react';
+import { ArrowRight, Gamepad2, Coffee, Sun, Moon } from 'lucide-react';
 import D95BrushLogo from '@/components/brand/D95BrushLogo';
 import { playPs5StartupSound, playCafeEntranceSound } from '@/lib/sound';
 import { useTheme } from '@/stores/themeStore';
@@ -242,7 +242,7 @@ export default function GatewayPage() {
                         {/* Center Icon */}
                         <div className="my-auto flex flex-col items-center justify-center relative">
                             <div className={`absolute w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-amber-600/10 dark:bg-amber-600/15 blur-xl transition-all ${isEnteringMenu ? 'scale-125 bg-amber-600/50' : 'group-hover:bg-amber-600/30'}`} />
-                            <Utensils className={`w-12 h-12 sm:w-16 sm:h-16 text-neutral-800 dark:text-white transition-all duration-300 relative z-10 drop-shadow-sm dark:drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] ${isEnteringMenu ? 'scale-110 text-amber-500' : 'group-hover:text-amber-600 dark:group-hover:text-amber-400 group-hover:scale-110'}`} />
+                            <Coffee className={`w-12 h-12 sm:w-16 sm:h-16 text-neutral-800 dark:text-white transition-all duration-300 relative z-10 drop-shadow-sm dark:drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] ${isEnteringMenu ? 'scale-110 text-amber-500' : 'group-hover:text-amber-600 dark:group-hover:text-amber-400 group-hover:scale-110'}`} />
                         </div>
 
                         {/* Details & Action */}
