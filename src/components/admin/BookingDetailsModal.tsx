@@ -77,18 +77,23 @@ export default function BookingDetailsModal({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-150"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-150"
             onClick={onClose}
         >
             <div
-                className="relative w-full max-w-xl rounded-3xl bg-[#140e11] border border-white/15 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col max-h-[92vh]"
+                className="relative w-full max-w-xl rounded-t-3xl sm:rounded-3xl bg-[#140e11] border-t sm:border border-white/15 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[92vh]"
                 onClick={(e) => e.stopPropagation()}
                 dir="rtl"
             >
+                {/* Mobile drag handle indicator */}
+                <div className="sm:hidden pt-2.5 pb-1 flex justify-center bg-[#1c1215]">
+                    <div className="w-12 h-1 bg-white/25 rounded-full" />
+                </div>
+
                 {/* Header */}
-                <div className="bg-gradient-to-r from-red-950/60 via-[#1c1215] to-[#140e11] px-6 py-4 border-b border-white/10 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-red-600/20 text-red-400 border border-red-500/30 flex items-center justify-center shadow-inner">
+                <div className="bg-gradient-to-r from-red-950/60 via-[#1c1215] to-[#140e11] px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/10 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 sm:gap-3">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-red-600/20 text-red-400 border border-red-500/30 flex items-center justify-center shadow-inner shrink-0">
                             <Gamepad2 className="w-5 h-5" />
                         </div>
                         <div>
@@ -350,14 +355,14 @@ export default function BookingDetailsModal({
                 </div>
 
                 {/* Footer Actions */}
-                <div className="bg-[#1c1417] px-5 py-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
+                <div className="bg-[#1c1417] px-4 sm:px-5 py-3 sm:py-4 border-t border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                    <div className="flex flex-wrap items-center gap-2">
                         {booking.status === 'pending' && !isEnded && (
                             <button
                                 type="button"
                                 disabled={actionLoading}
                                 onClick={() => handleAction('confirmed')}
-                                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-md shadow-emerald-900/30"
+                                className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-md shadow-emerald-900/30"
                             >
                                 <CheckCircle2 className="w-4 h-4" />
                                 <span>تأكيد الحجز فوراً</span>
@@ -369,10 +374,10 @@ export default function BookingDetailsModal({
                                 type="button"
                                 disabled={actionLoading}
                                 onClick={() => handleAction('completed')}
-                                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-md shadow-blue-900/30"
+                                className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-md shadow-blue-900/30"
                             >
                                 <CheckCircle2 className="w-4 h-4" />
-                                <span>تسجيل الجلسة كمكتملة ✅</span>
+                                <span>تسجيل كمكتملة ✅</span>
                             </button>
                         )}
 
@@ -381,14 +386,14 @@ export default function BookingDetailsModal({
                                 type="button"
                                 disabled={actionLoading}
                                 onClick={() => handleAction('cancelled')}
-                                className="px-3 py-2 rounded-xl bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-500/20 font-bold text-xs transition-colors cursor-pointer"
+                                className="px-3 py-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-500/20 font-bold text-xs transition-colors cursor-pointer text-center"
                             >
                                 إلغاء الحجز
                             </button>
                         )}
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 pt-1 sm:pt-0 border-t sm:border-t-0 border-white/5">
                         {onSwitchToBookingsTab && (
                             <button
                                 type="button"
@@ -396,17 +401,17 @@ export default function BookingDetailsModal({
                                     onClose();
                                     onSwitchToBookingsTab(booking);
                                 }}
-                                className="px-3.5 py-2 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 text-purple-300 border border-purple-500/30 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                                className="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 text-purple-300 border border-purple-500/30 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                             >
                                 <ExternalLink className="w-3.5 h-3.5" />
-                                <span>فتح في شاشة الحجوزات</span>
+                                <span>فتح بالحجوزات</span>
                             </button>
                         )}
 
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-neutral-300 hover:text-white font-bold text-xs transition-colors cursor-pointer"
+                            className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-neutral-300 hover:text-white font-bold text-xs transition-colors cursor-pointer text-center"
                         >
                             إغلاق
                         </button>

@@ -179,7 +179,7 @@ export default function AdminDashboardPage() {
             )}
 
             {/* Main Content Area */}
-            <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+            <main className="flex-1 max-w-7xl w-full mx-auto p-3.5 sm:p-6 lg:p-8 pb-24 sm:pb-8">
                 {activeTab === 'overview' && <OverviewTab onSwitchTab={(t: TabType) => setActiveTab(t)} />}
                 {activeTab === 'daily_schedule' && (
                     <DailyScheduleTab
@@ -192,6 +192,66 @@ export default function AdminDashboardPage() {
                 {activeTab === 'categories' && <CategoriesTab />}
                 {activeTab === 'offers' && <OffersTab />}
             </main>
+
+            {/* Mobile Bottom Navigation Bar (Optimized for Phones) */}
+            <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#120c0f]/95 backdrop-blur-xl border-t border-white/10 px-2 py-1.5 flex items-center justify-around shadow-[0_-10px_25px_rgba(0,0,0,0.6)]">
+                <button
+                    type="button"
+                    onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }}
+                    className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-xl transition-all cursor-pointer ${
+                        activeTab === 'overview' ? 'text-red-500 font-bold scale-105' : 'text-neutral-400 hover:text-white'
+                    }`}
+                >
+                    <LayoutDashboard className="w-5 h-5" />
+                    <span className="text-[10px]">نظرة عامة</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => { setActiveTab('daily_schedule'); setMobileMenuOpen(false); }}
+                    className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-xl transition-all cursor-pointer ${
+                        activeTab === 'daily_schedule' ? 'text-emerald-400 font-bold scale-105' : 'text-neutral-400 hover:text-white'
+                    }`}
+                >
+                    <Clock className="w-5 h-5" />
+                    <span className="text-[10px]">جدول اليوم</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => { setActiveTab('bookings'); setMobileMenuOpen(false); }}
+                    className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-xl transition-all cursor-pointer ${
+                        activeTab === 'bookings' ? 'text-purple-400 font-bold scale-105' : 'text-neutral-400 hover:text-white'
+                    }`}
+                >
+                    <Calendar className="w-5 h-5" />
+                    <span className="text-[10px]">الحجوزات</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => { setActiveTab('orders'); setMobileMenuOpen(false); }}
+                    className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-xl transition-all cursor-pointer ${
+                        activeTab === 'orders' ? 'text-amber-400 font-bold scale-105' : 'text-neutral-400 hover:text-white'
+                    }`}
+                >
+                    <ShoppingBag className="w-5 h-5" />
+                    <span className="text-[10px]">الطلبات</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-xl transition-all cursor-pointer ${
+                        mobileMenuOpen || ['products', 'categories', 'offers'].includes(activeTab)
+                            ? 'text-white font-bold bg-white/10'
+                            : 'text-neutral-400 hover:text-white'
+                    }`}
+                >
+                    <Menu className="w-5 h-5" />
+                    <span className="text-[10px]">المزيد</span>
+                </button>
+            </nav>
         </div>
     );
 }

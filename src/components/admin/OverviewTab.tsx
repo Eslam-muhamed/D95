@@ -241,44 +241,25 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                         لا توجد طلبات حجز معلقة حالياً. جميع الحجوزات مستقرة.
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-right text-xs">
-                            <thead>
-                                <tr className="border-b border-white/10 text-neutral-400">
-                                    <th className="pb-3 pr-2 font-semibold">كود الحجز</th>
-                                    <th className="pb-3 font-semibold">اسم العميل</th>
-                                    <th className="pb-3 font-semibold">الغرفة</th>
-                                    <th className="pb-3 font-semibold">التاريخ والتوقيت</th>
-                                    <th className="pb-3 font-semibold">المبلغ</th>
-                                    <th className="pb-3 font-semibold">الحالة</th>
-                                    <th className="pb-3 pl-2 text-left font-semibold">إجراء سريع</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5">
-                                {recentBookings.map((b) => {
-                                    const { end } = getBookingDates(b);
-                                    const isPast = end.getTime() <= Date.now();
-                                    return (
-                                        <tr
-                                            key={b.id}
-                                            onClick={() => setSelectedDetailBooking(b)}
-                                            className="hover:bg-white/[0.04] transition-colors cursor-pointer group"
-                                            title="اضغط لعرض تفاصيل الحجز الكاملة"
-                                        >
-                                            <td className="py-3 pr-2 font-mono text-neutral-400 group-hover:text-white">#{b.reservation_id}</td>
-                                            <td className="py-3 font-bold text-white group-hover:text-red-400 transition-colors">
-                                                <div>{b.customer_name}</div>
-                                                <span className="text-[10px] text-neutral-400 font-mono" dir="ltr">
-                                                    {b.customer_phone}
-                                                </span>
-                                            </td>
-                                            <td className="py-3 text-neutral-200">{b.room_name}</td>
-                                            <td className="py-3 text-neutral-300">
-                                                <div>{b.booking_date}</div>
-                                                <div className="text-[10px] text-red-400">{b.start_time} - {b.end_time}</div>
-                                            </td>
-                                            <td className="py-3 font-bold text-emerald-400 font-mono">{b.total_amount} ج.م</td>
-                                            <td className="py-3">
+                    <>
+                        {/* Mobile Cards View (Visible on sm:hidden) */}
+                        <div className="sm:hidden space-y-3">
+                            {recentBookings.map((b) => {
+                                const { end } = getBookingDates(b);
+                                const isPast = end.getTime() <= Date.now();
+                                return (
+                                    <div
+                                        key={b.id}
+                                        onClick={() => setSelectedDetailBooking(b)}
+                                        className="bg-[#181114] border border-white/10 hover:border-white/20 rounded-2xl p-4 space-y-3 cursor-pointer transition-all active:scale-[0.99]"
+                                    >
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div>
+                                                <span className="text-[10px] font-mono text-neutral-400 block">#{b.reservation_id}</span>
+                                                <h4 className="text-sm font-bold text-white mt-0.5">{b.customer_name}</h4>
+                                                <span className="text-xs text-neutral-400 font-mono" dir="ltr">{b.customer_phone}</span>
+                                            </div>
+                                            <div>
                                                 {b.status === 'pending' && (
                                                     isPast ? (
                                                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-800 text-neutral-400 border border-neutral-700">
@@ -295,47 +276,147 @@ export default function OverviewTab({ onSwitchTab }: OverviewTabProps) {
                                                         مؤكد ✅
                                                     </span>
                                                 )}
-                                                {b.status === 'cancelled' && (
-                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/30">
-                                                        ملغي ❌
-                                                    </span>
-                                                )}
                                                 {b.status === 'completed' && (
                                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
                                                         مكتمل 🎮
                                                     </span>
                                                 )}
-                                            </td>
-                                            <td className="py-3 pl-2 text-left" onClick={(e) => e.stopPropagation()}>
-                                                {b.status === 'pending' ? (
-                                                    isPast ? (
-                                                        <span className="text-[11px] text-neutral-500 italic">منتهي الصلاحية</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-[#120d0f] rounded-xl p-2.5 flex items-center justify-between text-xs border border-white/5">
+                                            <div>
+                                                <span className="text-neutral-400 block text-[10px]">الموعد والغرفة:</span>
+                                                <span className="text-white font-bold">{b.room_name}</span>
+                                                <span className="text-red-400 font-mono text-[11px] block">{b.start_time} - {b.end_time}</span>
+                                            </div>
+                                            <div className="text-left">
+                                                <span className="text-neutral-400 block text-[10px]">المبلغ:</span>
+                                                <span className="text-emerald-400 font-bold font-mono text-sm">{b.total_amount} ج.م</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+                                            {b.status === 'pending' && !isPast && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleQuickConfirm(b)}
+                                                    className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-md shadow-emerald-900/30"
+                                                >
+                                                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                                    <span>تأكيد الحجز</span>
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedDetailBooking(b)}
+                                                className="flex-1 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs text-center transition-colors cursor-pointer"
+                                            >
+                                                عرض التفاصيل الكاملة
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Desktop Table View (Hidden on mobile) */}
+                        <div className="hidden sm:block overflow-x-auto">
+                            <table className="w-full text-right text-xs">
+                                <thead>
+                                    <tr className="border-b border-white/10 text-neutral-400">
+                                        <th className="pb-3 pr-2 font-semibold">كود الحجز</th>
+                                        <th className="pb-3 font-semibold">اسم العميل</th>
+                                        <th className="pb-3 font-semibold">الغرفة</th>
+                                        <th className="pb-3 font-semibold">التاريخ والتوقيت</th>
+                                        <th className="pb-3 font-semibold">المبلغ</th>
+                                        <th className="pb-3 font-semibold">الحالة</th>
+                                        <th className="pb-3 pl-2 text-left font-semibold">إجراء سريع</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {recentBookings.map((b) => {
+                                        const { end } = getBookingDates(b);
+                                        const isPast = end.getTime() <= Date.now();
+                                        return (
+                                            <tr
+                                                key={b.id}
+                                                onClick={() => setSelectedDetailBooking(b)}
+                                                className="hover:bg-white/[0.04] transition-colors cursor-pointer group"
+                                                title="اضغط لعرض تفاصيل الحجز الكاملة"
+                                            >
+                                                <td className="py-3 pr-2 font-mono text-neutral-400 group-hover:text-white">#{b.reservation_id}</td>
+                                                <td className="py-3 font-bold text-white group-hover:text-red-400 transition-colors">
+                                                    <div>{b.customer_name}</div>
+                                                    <span className="text-[10px] text-neutral-400 font-mono" dir="ltr">
+                                                        {b.customer_phone}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3 text-neutral-200">{b.room_name}</td>
+                                                <td className="py-3 text-neutral-300">
+                                                    <div>{b.booking_date}</div>
+                                                    <div className="text-[10px] text-red-400">{b.start_time} - {b.end_time}</div>
+                                                </td>
+                                                <td className="py-3 font-bold text-emerald-400 font-mono">{b.total_amount} ج.م</td>
+                                                <td className="py-3">
+                                                    {b.status === 'pending' && (
+                                                        isPast ? (
+                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-800 text-neutral-400 border border-neutral-700">
+                                                                فات موعده ⌛
+                                                            </span>
+                                                        ) : (
+                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
+                                                                معلق ⏳
+                                                            </span>
+                                                        )
+                                                    )}
+                                                    {b.status === 'confirmed' && (
+                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                                            مؤكد ✅
+                                                        </span>
+                                                    )}
+                                                    {b.status === 'cancelled' && (
+                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/30">
+                                                            ملغي ❌
+                                                        </span>
+                                                    )}
+                                                    {b.status === 'completed' && (
+                                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                                                            مكتمل 🎮
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="py-3 pl-2 text-left" onClick={(e) => e.stopPropagation()}>
+                                                    {b.status === 'pending' ? (
+                                                        isPast ? (
+                                                            <span className="text-[11px] text-neutral-500 italic">منتهي الصلاحية</span>
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleQuickConfirm(b)}
+                                                                className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition-colors cursor-pointer inline-flex items-center gap-1 shadow-sm"
+                                                            >
+                                                                <Check className="w-3 h-3 stroke-[3]" />
+                                                                <span>تأكيد الحجز</span>
+                                                            </button>
+                                                        )
                                                     ) : (
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleQuickConfirm(b)}
-                                                            className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition-colors cursor-pointer inline-flex items-center gap-1 shadow-sm"
+                                                            onClick={() => setSelectedDetailBooking(b)}
+                                                            className="text-[11px] text-neutral-400 hover:text-white underline cursor-pointer"
                                                         >
-                                                            <Check className="w-3 h-3 stroke-[3]" />
-                                                            <span>تأكيد الحجز</span>
+                                                            التفاصيل
                                                         </button>
-                                                    )
-                                                ) : (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setSelectedDetailBooking(b)}
-                                                        className="text-[11px] text-neutral-400 hover:text-white underline cursor-pointer"
-                                                    >
-                                                        التفاصيل
-                                                    </button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 )}
             </div>
 

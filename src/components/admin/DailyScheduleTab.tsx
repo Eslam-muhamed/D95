@@ -342,53 +342,53 @@ export default function DailyScheduleTab({ onSwitchToBookingsTab }: DailySchedul
             </div>
 
             {/* Daily Metrics Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                <div className="bg-[#140e11] border border-white/10 rounded-2xl p-4 flex flex-col justify-between">
-                    <span className="text-[11px] font-bold text-neutral-400">إجمالي حجوزات اليوم</span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
+                <div className="bg-[#140e11] border border-white/10 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between">
+                    <span className="text-[10px] sm:text-[11px] font-bold text-neutral-400">إجمالي حجوزات اليوم</span>
                     <div className="mt-2 flex items-baseline justify-between">
-                        <span className="font-bebas text-3xl font-black text-white">{dayMetrics.total}</span>
+                        <span className="font-bebas text-2xl sm:text-3xl font-black text-white">{dayMetrics.total}</span>
                         <Layers className="w-4 h-4 text-neutral-500" />
                     </div>
                 </div>
 
-                <div className="bg-[#140e11] border border-emerald-500/30 rounded-2xl p-4 flex flex-col justify-between shadow-[0_0_15px_rgba(16,185,129,0.08)]">
-                    <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <div className="bg-[#140e11] border border-emerald-500/30 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between shadow-[0_0_15px_rgba(16,185,129,0.08)]">
+                    <span className="text-[10px] sm:text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                         <span>جاري اللعب الآن</span>
                     </span>
                     <div className="mt-2 flex items-baseline justify-between">
-                        <span className="font-bebas text-3xl font-black text-emerald-400">{dayMetrics.ongoing}</span>
+                        <span className="font-bebas text-2xl sm:text-3xl font-black text-emerald-400">{dayMetrics.ongoing}</span>
                         <Gamepad2 className="w-4 h-4 text-emerald-500" />
                     </div>
                 </div>
 
-                <div className="bg-[#140e11] border border-purple-500/30 rounded-2xl p-4 flex flex-col justify-between">
-                    <span className="text-[11px] font-bold text-purple-400">حجوزات قادمة اليوم</span>
+                <div className="bg-[#140e11] border border-purple-500/30 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between">
+                    <span className="text-[10px] sm:text-[11px] font-bold text-purple-400">حجوزات قادمة اليوم</span>
                     <div className="mt-2 flex items-baseline justify-between">
-                        <span className="font-bebas text-3xl font-black text-purple-300">{dayMetrics.upcoming}</span>
+                        <span className="font-bebas text-2xl sm:text-3xl font-black text-purple-300">{dayMetrics.upcoming}</span>
                         <Clock className="w-4 h-4 text-purple-400" />
                     </div>
                 </div>
 
-                <div className="bg-[#140e11] border border-neutral-800 rounded-2xl p-4 flex flex-col justify-between">
-                    <span className="text-[11px] font-bold text-neutral-400">انتهت أو اكتملت</span>
+                <div className="bg-[#140e11] border border-neutral-800 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between">
+                    <span className="text-[10px] sm:text-[11px] font-bold text-neutral-400">انتهت أو اكتملت</span>
                     <div className="mt-2 flex items-baseline justify-between">
-                        <span className="font-bebas text-3xl font-black text-neutral-300">{dayMetrics.ended}</span>
+                        <span className="font-bebas text-2xl sm:text-3xl font-black text-neutral-300">{dayMetrics.ended}</span>
                         <CheckCircle2 className="w-4 h-4 text-neutral-500" />
                     </div>
                 </div>
 
-                <div className="bg-[#140e11] border border-amber-500/30 rounded-2xl p-4 flex flex-col justify-between col-span-2 sm:col-span-1">
-                    <span className="text-[11px] font-bold text-amber-400">إيرادات اليوم المتوقعة</span>
+                <div className="bg-[#140e11] border border-amber-500/30 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between col-span-2 sm:col-span-1">
+                    <span className="text-[10px] sm:text-[11px] font-bold text-amber-400">إيرادات اليوم المتوقعة</span>
                     <div className="mt-2 flex items-baseline justify-between">
-                        <span className="font-bebas text-3xl font-black text-amber-300">{dayMetrics.totalRevenue} <span className="text-xs font-normal font-sans">ج.م</span></span>
+                        <span className="font-bebas text-2xl sm:text-3xl font-black text-amber-300">{dayMetrics.totalRevenue} <span className="text-xs font-normal font-sans">ج.م</span></span>
                         <DollarSign className="w-4 h-4 text-amber-400" />
                     </div>
                 </div>
             </div>
 
             {/* Filter & View Mode Controls */}
-            <div className="bg-[#140e11]/90 border border-white/10 rounded-2xl p-4 space-y-3">
+            <div className="bg-[#140e11]/90 border border-white/10 rounded-2xl p-3.5 sm:p-4 space-y-3">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                     {/* Search Input */}
                     <div className="relative flex-1">
@@ -411,21 +411,23 @@ export default function DailyScheduleTab({ onSwitchToBookingsTab }: DailySchedul
                         )}
                     </div>
 
-                    {/* Room Selector */}
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-neutral-400 shrink-0">الغرفة:</span>
-                        <select
-                            value={roomFilter}
-                            onChange={(e) => setRoomFilter(e.target.value)}
-                            className="bg-[#1c1417] text-white text-xs border border-white/10 rounded-xl px-3 py-2 outline-none cursor-pointer"
-                        >
-                            <option value="all">جميع الغرف</option>
-                            {roomOptions.map((r) => (
-                                <option key={r} value={r}>
-                                    {r}
-                                </option>
-                            ))}
-                        </select>
+                    {/* Room Selector & View Toggle */}
+                    <div className="flex items-center justify-between sm:justify-end gap-2 w-full md:w-auto">
+                        <div className="flex items-center gap-1.5 flex-1 sm:flex-initial">
+                            <span className="text-xs text-neutral-400 shrink-0">الغرفة:</span>
+                            <select
+                                value={roomFilter}
+                                onChange={(e) => setRoomFilter(e.target.value)}
+                                className="w-full sm:w-auto bg-[#1c1417] text-white text-xs border border-white/10 rounded-xl px-3 py-2 outline-none cursor-pointer"
+                            >
+                                <option value="all">جميع الغرف</option>
+                                {roomOptions.map((r) => (
+                                    <option key={r} value={r}>
+                                        {r}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
                         {/* View Mode Toggle */}
                         <div className="flex items-center bg-[#1c1417] border border-white/10 rounded-xl p-1 shrink-0">
@@ -657,11 +659,20 @@ export default function DailyScheduleTab({ onSwitchToBookingsTab }: DailySchedul
                                                 </span>
                                             )}
 
-                                            <span className="text-[10px] text-neutral-500 group-hover:text-red-400 transition-colors flex items-center gap-1">
+                                            <span className="hidden md:flex text-[10px] text-neutral-500 group-hover:text-red-400 transition-colors items-center gap-1">
                                                 <span>عرض التفاصيل</span>
                                                 <ArrowUpRight className="w-3 h-3 group-hover:translate-x-[-2px] transition-transform" />
                                             </span>
                                         </div>
+                                    </div>
+
+                                    {/* Mobile bottom tap prompt */}
+                                    <div className="md:hidden pt-2.5 border-t border-white/5 flex items-center justify-between text-xs">
+                                        <span className="text-[11px] text-neutral-400">اضغط للكشف عن الحسابات وباقي البيانات</span>
+                                        <span className="text-red-400 font-bold flex items-center gap-1 text-[11px]">
+                                            <span>عرض التفاصيل</span>
+                                            <ArrowUpRight className="w-3 h-3" />
+                                        </span>
                                     </div>
                                 </div>
                             );
