@@ -22,6 +22,9 @@ export interface BookingTimelineScheduleProps {
     availableRooms?: RoomOption[];
     onSelectRoom?: (roomId: string) => void;
     occupiedIntervals: BookingInterval[];
+    selectedHour?: number;
+    selectedMinute?: number;
+    selectedPeriod?: 'AM' | 'PM';
     userStartDateTime?: Date | null;
     userEndDateTime?: Date | null;
     onSelectTimeSlot?: (hour12: number, minute: number, period: 'AM' | 'PM') => void;
@@ -38,9 +41,22 @@ export interface TimelineSlot {
     rangeLabel: string;
     start: Date;
     end: Date;
-    status: 'available' | 'booked' | 'past';
+    status: 'available' | 'booked' | 'past' | 'partial';
+    bookedMinutes: number;
+    freeMinutes: number;
+    bookedPercentage: number;
     isSelected: boolean;
-    booking?: BookingInterval;
+    overlappingBookings: BookingInterval[];
+    gradientStyle?: React.CSSProperties;
+}
+
+// Helper to format detailed time with exact minutes (e.g. "05:30 م" or "11:15 ص")
+function formatTimeDetailed(date: Date): string {
+    const hour = date.getHours();
+    const minute = date.getMinutes();
+    const period = hour >= 12 && hour < 24 ? 'م' : 'ص';
+    const h12 = hour % 12 === 0 ? 12 : hour % 12;
+    return `${String(h12).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${period}`;
 }
 
 const TIMELINE_TICKS = [
@@ -58,15 +74,19 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
     availableRooms = [],
     onSelectRoom,
     occupiedIntervals,
+    selectedHour,
+    selectedMinute = 0,
+    selectedPeriod,
     userStartDateTime,
     userEndDateTime,
     onSelectTimeSlot,
 }) => {
-    // Accordion collapse/expand state (open by default so user sees it right away)
+    // Accordion collapse/expand state (open by default)
     const [isOpen, setIsOpen] = useState<boolean>(true);
     const [hoveredSlot, setHoveredSlot] = useState<TimelineSlot | null>(null);
 
     // Compute exactly 20 slots (1-hour intervals across the 20 operating hours from 08:00 AM to 04:00 AM)
+    // with FULL account of minutes for every booking
     const slots = useMemo<TimelineSlot[]>(() => {
         const result: TimelineSlot[] = [];
         const now = Date.now();
@@ -88,21 +108,68 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
             // Check if slot has already passed
             const isPast = end.getTime() <= now;
 
-            // Check if slot overlaps any booked/occupied interval
-            let matchingBooking: BookingInterval | undefined;
+            // Minute-level calculation of occupied intervals within this specific 1-hour slot
+            const slotStartMs = start.getTime();
+            const slotEndMs = end.getTime();
+            let bookedMs = 0;
+            const overlappingBookings: BookingInterval[] = [];
+
+            // Track if the first half or second half is booked for visual gradient
+            let firstHalfBooked = false;
+            let secondHalfBooked = false;
+
             if (!isPast) {
-                matchingBooking = occupiedIntervals.find((inv) => {
-                    const invStart = inv.start.getTime();
-                    const invEnd = inv.end.getTime();
-                    return start.getTime() < invEnd && end.getTime() > invStart;
-                });
+                for (const inv of occupiedIntervals) {
+                    const invStartMs = inv.start.getTime();
+                    const invEndMs = inv.end.getTime();
+
+                    // Check if overlaps: start < invEnd && end > invStart
+                    if (slotStartMs < invEndMs && slotEndMs > invStartMs) {
+                        overlappingBookings.push(inv);
+                        const overlapStart = Math.max(slotStartMs, invStartMs);
+                        const overlapEnd = Math.min(slotEndMs, invEndMs);
+                        bookedMs += Math.max(0, overlapEnd - overlapStart);
+
+                        // Check position inside hour for partial split
+                        const relStartMins = Math.max(0, Math.round((overlapStart - slotStartMs) / 60000));
+                        const relEndMins = Math.min(60, Math.round((overlapEnd - slotStartMs) / 60000));
+
+                        if (relStartMins < 30) firstHalfBooked = true;
+                        if (relEndMins > 30) secondHalfBooked = true;
+                    }
+                }
             }
 
-            let status: 'available' | 'booked' | 'past' = 'available';
+            const bookedMinutes = Math.min(60, Math.round(bookedMs / 60000));
+            const freeMinutes = Math.max(0, 60 - bookedMinutes);
+            const bookedPercentage = Math.round((bookedMinutes / 60) * 100);
+
+            let status: 'available' | 'booked' | 'past' | 'partial' = 'available';
+            let gradientStyle: React.CSSProperties | undefined;
+
             if (isPast) {
                 status = 'past';
-            } else if (matchingBooking) {
+            } else if (bookedMinutes >= 55) {
+                // 55+ minutes booked = fully blocked
                 status = 'booked';
+            } else if (bookedMinutes > 0) {
+                // Partially booked (minute-aware)
+                status = 'partial';
+                if (firstHalfBooked && !secondHalfBooked) {
+                    // First half is booked (red), second half is free (green)
+                    gradientStyle = {
+                        background: 'linear-gradient(to right, #dc2626 50%, #10b981 50%)',
+                    };
+                } else if (!firstHalfBooked && secondHalfBooked) {
+                    // First half is free (green), second half is booked (red)
+                    gradientStyle = {
+                        background: 'linear-gradient(to right, #10b981 50%, #dc2626 50%)',
+                    };
+                } else {
+                    gradientStyle = {
+                        background: `linear-gradient(to right, #dc2626 ${bookedPercentage}%, #10b981 ${bookedPercentage}%)`,
+                    };
+                }
             }
 
             // Check if slot matches current user session selection
@@ -110,7 +177,7 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
             if (userStartDateTime && userEndDateTime && !isPast) {
                 const uStart = userStartDateTime.getTime();
                 const uEnd = userEndDateTime.getTime();
-                if (start.getTime() < uEnd && end.getTime() > uStart) {
+                if (slotStartMs < uEnd && slotEndMs > uStart) {
                     isSelected = true;
                 }
             }
@@ -127,25 +194,36 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                 start,
                 end,
                 status,
+                bookedMinutes,
+                freeMinutes,
+                bookedPercentage,
                 isSelected,
-                booking: matchingBooking,
+                overlappingBookings,
+                gradientStyle,
             });
         }
 
         return result;
     }, [selectedDate, occupiedIntervals, userStartDateTime, userEndDateTime]);
 
+    // Chronologically sorted occupied intervals for detailed minutes list
+    const sortedOccupiedIntervals = useMemo(() => {
+        return [...occupiedIntervals].sort((a, b) => a.start.getTime() - b.start.getTime());
+    }, [occupiedIntervals]);
+
     // Counts for stats
     const stats = useMemo(() => {
         let available = 0;
         let booked = 0;
+        let partial = 0;
         let past = 0;
         slots.forEach((s) => {
             if (s.status === 'available') available++;
             else if (s.status === 'booked') booked++;
+            else if (s.status === 'partial') partial++;
             else past++;
         });
-        return { available, booked, past };
+        return { available, booked, partial, past };
     }, [slots]);
 
     // Friendly room title & English code
@@ -154,44 +232,56 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
             return currentRoom.titleAr.split('•')[0].trim();
         }
         if (currentRoom.id === 'room-1' || currentRoom.name.includes('01')) {
-            return 'الغرفة الأولى';
+            return 'غرفة 01';
         }
         if (currentRoom.id === 'room-2' || currentRoom.name.includes('02')) {
-            return 'غرفة النجوم VIP';
+            return 'غرفة 02 (VIP)';
         }
         return currentRoom.name;
     }, [currentRoom]);
 
     const roomCodeEn = useMemo(() => {
         if (currentRoom.nameEn) return currentRoom.nameEn;
-        if (currentRoom.id === 'room-1' || currentRoom.name.includes('01')) return 'Room 01';
-        if (currentRoom.id === 'room-2' || currentRoom.name.includes('02')) return 'Room 02';
-        return 'Room';
+        if (currentRoom.id === 'room-1' || currentRoom.name.includes('01')) return 'ROOM 01';
+        if (currentRoom.id === 'room-2' || currentRoom.name.includes('02')) return 'ROOM 02';
+        return 'ROOM';
     }, [currentRoom]);
 
     const handleSlotClick = (slot: TimelineSlot) => {
-        if (slot.status !== 'available') return;
+        if (slot.status === 'booked' || slot.status === 'past') return;
         if (onSelectTimeSlot) {
             playPs5SelectSound();
-            onSelectTimeSlot(slot.hour12, slot.minute, slot.period);
+            // Preserve user's chosen minute, or pick the free minute in partial slot
+            let targetMinute = selectedMinute;
+            if (slot.status === 'partial' && slot.overlappingBookings.length > 0) {
+                const firstBooking = slot.overlappingBookings[0];
+                const bStartMins = firstBooking.start.getMinutes();
+                // If booking starts at minute 30, free is 00; otherwise pick 30
+                targetMinute = bStartMins > 0 ? 0 : firstBooking.end.getMinutes();
+            }
+            onSelectTimeSlot(slot.hour12, targetMinute, slot.period);
         }
     };
 
     return (
         <div className="w-full space-y-3" dir="rtl">
             {/* 1. Top Status Legend Bar */}
-            <div className="flex items-center justify-around sm:justify-center sm:gap-10 py-2.5 px-4 rounded-2xl bg-neutral-900/90 dark:bg-[#151013] border border-neutral-800/90 dark:border-white/[0.08] shadow-inner text-xs font-bold select-none">
+            <div className="flex flex-wrap items-center justify-around sm:justify-center sm:gap-8 py-2.5 px-4 rounded-2xl bg-neutral-900/90 dark:bg-[#151013] border border-neutral-800/90 dark:border-white/[0.08] shadow-inner text-xs font-bold select-none gap-y-2">
                 <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.85)] animate-pulse" />
-                    <span className="text-neutral-200 dark:text-neutral-100">متاح</span>
+                    <span className="text-neutral-200 dark:text-neutral-100">متاح بالكامل</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.85)]" />
+                    <span className="text-neutral-200 dark:text-neutral-100">محجوز جزئياً (بالدقائق)</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full bg-red-600 shadow-[0_0_10px_rgba(239,68,68,0.85)]" />
-                    <span className="text-neutral-200 dark:text-neutral-100">محجوز</span>
+                    <span className="text-neutral-200 dark:text-neutral-100">محجوز بالكامل</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full bg-neutral-600 dark:bg-neutral-700" />
-                    <span className="text-neutral-400">غير متاح</span>
+                    <span className="text-neutral-400">غير متاح (مضى)</span>
                 </div>
             </div>
 
@@ -223,15 +313,15 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                                     مخطط المواعيد
                                 </span>
                                 <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
-                                    stats.booked > 0
+                                    sortedOccupiedIntervals.length > 0
                                         ? 'bg-red-500/15 text-red-400 border-red-500/30 font-bold'
                                         : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                                 }`}>
-                                    {stats.booked > 0 ? `${stats.booked} أوقات محجوزة` : 'متاح بالكامل'}
+                                    {sortedOccupiedIntervals.length > 0 ? `${sortedOccupiedIntervals.length} أوقات محجوزة` : 'متاح بالكامل'}
                                 </span>
                             </div>
                             <p className="text-[11px] text-neutral-400 hidden sm:block mt-0.5">
-                                خريطة زمنية مرئية لكافة ساعات العمل وحالة الحجوزات اليومية
+                                خريطة زمنية مرئية لكافة ساعات العمل وحالة الحجوزات اليومية بالدقائق
                             </p>
                         </div>
                     </div>
@@ -335,6 +425,7 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                                         >
                                             {slots.map((slot) => {
                                                 const isAvailable = slot.status === 'available';
+                                                const isPartial = slot.status === 'partial';
                                                 const isBooked = slot.status === 'booked';
                                                 const isPast = slot.status === 'past';
 
@@ -346,15 +437,24 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                                                         onMouseEnter={() => setHoveredSlot(slot)}
                                                         onMouseLeave={() => setHoveredSlot(null)}
                                                         onTouchStart={() => setHoveredSlot(slot)}
-                                                        disabled={!isAvailable}
+                                                        disabled={isPast || isBooked}
+                                                        style={slot.gradientStyle}
                                                         title={`${slot.rangeLabel} - ${
-                                                            isAvailable ? 'متاح للحجز' : isBooked ? 'محجوز' : 'غير متاح'
+                                                            isAvailable
+                                                                ? 'متاح بالكامل'
+                                                                : isPartial
+                                                                ? `محجوز جزئياً (${slot.bookedMinutes} دقيقة محجوزة)`
+                                                                : isBooked
+                                                                ? 'محجوز بالكامل'
+                                                                : 'غير متاح (مضى)'
                                                         }`}
                                                         className={`flex-1 min-w-[10px] sm:min-w-[14px] h-7 sm:h-9 rounded-[4px] sm:rounded-md transition-all duration-150 relative outline-none ${
                                                             isPast
                                                                 ? 'bg-neutral-800/90 border border-neutral-700/40 opacity-40 cursor-not-allowed'
                                                                 : isBooked
                                                                 ? 'bg-red-600 border border-red-500/60 shadow-[0_0_8px_rgba(239,68,68,0.5)] cursor-not-allowed hover:opacity-90'
+                                                                : isPartial
+                                                                ? 'border border-amber-400/60 shadow-[0_0_8px_rgba(245,158,11,0.5)] hover:scale-115 active:scale-95 cursor-pointer z-0'
                                                                 : slot.isSelected
                                                                 ? 'bg-emerald-400 border-2 border-white shadow-[0_0_14px_rgba(16,185,129,0.95)] scale-110 z-10 animate-pulse'
                                                                 : 'bg-emerald-500 hover:bg-emerald-400 border border-emerald-400/40 shadow-[0_0_6px_rgba(16,185,129,0.35)] hover:scale-115 active:scale-95 cursor-pointer z-0'
@@ -364,10 +464,10 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                                             })}
                                         </div>
 
-                                        {/* Status / Hover Bar Info */}
-                                        <div className="min-h-[32px] flex items-center justify-between px-2 py-1 rounded-xl bg-black/40 border border-white/[0.04] text-xs">
+                                        {/* Status / Hover Bar Info with Exact Minutes */}
+                                        <div className="min-h-[32px] flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-black/40 border border-white/[0.04] text-xs">
                                             {hoveredSlot ? (
-                                                <div className="flex items-center gap-2 font-mono">
+                                                <div className="flex items-center gap-2 font-mono flex-wrap">
                                                     <Clock className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                                                     <span className="font-bold text-white">
                                                         {hoveredSlot.rangeLabel}
@@ -376,13 +476,27 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                                                     {hoveredSlot.status === 'available' && (
                                                         <span className="inline-flex items-center gap-1 text-emerald-400 font-bold">
                                                             <CheckCircle2 className="w-3.5 h-3.5" />
-                                                            <span>متاح للحجز (انقر لاختيار هذا الوقت)</span>
+                                                            <span>
+                                                                متاح للحجز (انقر للبدء الساعة {hoveredSlot.hour12}:{String(selectedMinute).padStart(2, '0')} {hoveredSlot.period === 'PM' ? 'م' : 'ص'})
+                                                            </span>
+                                                        </span>
+                                                    )}
+                                                    {hoveredSlot.status === 'partial' && (
+                                                        <span className="inline-flex items-center gap-1 text-amber-400 font-bold">
+                                                            <AlertCircle className="w-3.5 h-3.5" />
+                                                            <span>
+                                                                محجوز جزئياً ({hoveredSlot.bookedMinutes} دقيقة محجوزة، و {hoveredSlot.freeMinutes} دقيقة متاحة)
+                                                            </span>
                                                         </span>
                                                     )}
                                                     {hoveredSlot.status === 'booked' && (
                                                         <span className="inline-flex items-center gap-1 text-red-400 font-bold">
                                                             <Lock className="w-3.5 h-3.5" />
-                                                            <span>محجوز مسبقاً</span>
+                                                            <span>
+                                                                محجوز بالكامل ({hoveredSlot.overlappingBookings.length > 0
+                                                                    ? `${formatTimeDetailed(hoveredSlot.overlappingBookings[0].start)} إلى ${formatTimeDetailed(hoveredSlot.overlappingBookings[0].end)}`
+                                                                    : 'الساعة محجوزة'})
+                                                            </span>
                                                         </span>
                                                     )}
                                                     {hoveredSlot.status === 'past' && (
@@ -396,15 +510,74 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                                                 <div className="flex items-center gap-2 text-[11px] text-neutral-400">
                                                     <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                                                     <span>
-                                                        انقر على أي خانة <strong className="text-emerald-400">خضراء</strong> لتحديد وقت البدء تلقائياً، أو راجع الخانات <strong className="text-red-400">الحمراء</strong> لتجنب المواعيد المحجوزة.
+                                                        انقر على أي خانة <strong className="text-emerald-400">خضراء</strong> لتحديد وقت البدء، وتوضح الخانات <strong className="text-amber-400">الصفراء</strong> الحجوزات الجزئية بالدقائق.
                                                     </span>
                                                 </div>
                                             )}
 
                                             <div className="text-[11px] font-mono text-neutral-400 shrink-0 hidden sm:block">
-                                                {stats.available} فترة متاحة
+                                                {stats.available} ساعة شاغرة
                                             </div>
                                         </div>
+                                    </div>
+
+                                    {/* 3. قائمة المواعيد المحجوزة تفصيلياً بالدقائق (المكان المنظم الجديد) */}
+                                    <div className="pt-3.5 border-t border-neutral-800/80 dark:border-white/[0.08] space-y-2.5">
+                                        <div className="flex items-center justify-between px-1">
+                                            <div className="flex items-center gap-2 text-xs font-bold text-neutral-200">
+                                                <Lock className="w-3.5 h-3.5 text-red-500" />
+                                                <span>المواعيد المحجوزة اليوم ({roomTitleAr})</span>
+                                            </div>
+                                            <span className="text-[11px] font-mono text-neutral-400">
+                                                {sortedOccupiedIntervals.length > 0 ? `${sortedOccupiedIntervals.length} مواعيد مسجلة` : 'متاح بالكامل'}
+                                            </span>
+                                        </div>
+
+                                        {sortedOccupiedIntervals.length > 0 ? (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                                                {sortedOccupiedIntervals.map((b, idx) => {
+                                                    const durationMinutes = Math.round((b.end.getTime() - b.start.getTime()) / 60000);
+                                                    const hours = Math.floor(durationMinutes / 60);
+                                                    const mins = durationMinutes % 60;
+                                                    let durationText = '';
+                                                    if (hours > 0 && mins > 0) durationText = `${hours} س و ${mins} د`;
+                                                    else if (hours > 0) durationText = `${hours} ${hours === 1 ? 'ساعة' : hours === 2 ? 'ساعتان' : 'ساعات'}`;
+                                                    else durationText = `${mins} دقيقة`;
+
+                                                    return (
+                                                        <div
+                                                            key={idx}
+                                                            className="flex items-center justify-between p-2.5 rounded-xl bg-black/40 border border-red-500/25 hover:border-red-500/45 transition-colors text-xs shadow-xs"
+                                                        >
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className="w-7 h-7 rounded-lg bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
+                                                                    <Lock className="w-3.5 h-3.5" />
+                                                                </div>
+                                                                <div>
+                                                                    <div className="font-mono text-neutral-200 font-bold flex items-center gap-1.5 text-xs">
+                                                                        <span>{formatTimeDetailed(b.start)}</span>
+                                                                        <span className="text-neutral-500 font-normal">إلى</span>
+                                                                        <span>{formatTimeDetailed(b.end)}</span>
+                                                                    </div>
+                                                                    <div className="text-[10px] text-neutral-400 font-medium mt-0.5">
+                                                                        المدة: {durationText}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-500/20 text-red-400 border border-red-500/30">
+                                                                محجوز
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2.5 text-emerald-400 text-xs font-semibold">
+                                                <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                                                <span>الغرفة متاحة بالكامل طوال اليوم! لا توجد أي مواعيد محجوزة مسبقاً.</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
