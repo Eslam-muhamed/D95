@@ -1062,7 +1062,9 @@ export default function BookingDetailsPage() {
                         <div className="relative bg-neutral-50 dark:bg-neutral-950/80 rounded-2xl p-3 border border-neutral-200/80 dark:border-neutral-800/80 overflow-hidden shadow-inner flex flex-col justify-center">
                             <div className="flex items-center justify-between text-xs px-1 mb-1 text-neutral-500 dark:text-neutral-400">
                                 <span className="font-bold flex items-center gap-1.5 text-neutral-800 dark:text-neutral-200">
-                                    <Clock className="w-3.5 h-3.5 text-red-600 dark:text-red-500" />
+                                    <Clock className={`w-3.5 h-3.5 transition-colors duration-300 ${
+                                        currentAvailability.isAvailable ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-600 dark:text-red-500'
+                                    }`} />
                                     <span>وقت بدء الحجز</span>
                                 </span>
                                 <span className="text-[10px] text-neutral-400">اسحب للأعلى أو الأسفل</span>
@@ -1071,7 +1073,11 @@ export default function BookingDetailsPage() {
                             <div className="relative overflow-hidden rounded-xl bg-white dark:bg-black/40 border border-neutral-200/60 dark:border-white/[0.06] p-1">
                                 {/* Center Highlight Lens (Across all 3 drums) */}
                                 <div
-                                    className="pointer-events-none absolute inset-x-1 rounded-lg border-y border-red-500/40 bg-gradient-to-r from-red-500/5 via-red-500/15 to-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.15)] z-0"
+                                    className={`pointer-events-none absolute inset-x-1 rounded-lg border-y transition-all duration-300 z-0 ${
+                                        currentAvailability.isAvailable
+                                            ? 'border-emerald-500/40 bg-gradient-to-r from-emerald-500/5 via-emerald-500/15 to-emerald-500/5 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
+                                            : 'border-red-500/40 bg-gradient-to-r from-red-500/5 via-red-500/15 to-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.15)]'
+                                    }`}
                                     style={{
                                         top: 'calc(1.25rem + 80px)',
                                         height: '40px',
@@ -1120,18 +1126,38 @@ export default function BookingDetailsPage() {
                         </div>
 
                         {/* 2. وقت نهاية الحجز */}
-                        <div className="relative bg-neutral-50 dark:bg-neutral-950/80 rounded-2xl p-4 sm:p-5 border border-neutral-200/80 dark:border-neutral-800/80 shadow-inner flex flex-col items-center justify-center text-center">
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-500 dark:text-neutral-400 mb-2">
-                                <Timer className="w-3.5 h-3.5 text-red-600 dark:text-red-500" />
+                        <div className={`relative rounded-2xl p-4 sm:p-5 border shadow-inner flex flex-col items-center justify-center text-center transition-all duration-300 ${
+                            currentAvailability.isAvailable
+                                ? 'bg-emerald-500/[0.04] dark:bg-emerald-950/20 border-emerald-500/40 shadow-[0_0_25px_rgba(16,185,129,0.12)]'
+                                : 'bg-red-500/[0.04] dark:bg-red-950/20 border-red-500/40 shadow-[0_0_25px_rgba(239,68,68,0.12)]'
+                        }`}>
+                            <div className={`flex items-center gap-1.5 text-xs font-bold mb-2 transition-colors duration-300 ${
+                                currentAvailability.isAvailable
+                                    ? 'text-emerald-600 dark:text-emerald-400'
+                                    : 'text-red-600 dark:text-red-400'
+                            }`}>
+                                <Timer className={`w-3.5 h-3.5 transition-colors duration-300 ${
+                                    currentAvailability.isAvailable
+                                        ? 'text-emerald-500 dark:text-emerald-400'
+                                        : 'text-red-500 dark:text-red-400'
+                                }`} />
                                 <span>وقت نهاية الحجز</span>
                             </div>
 
                             {/* Big End Time Display */}
                             <div className="my-2">
-                                <div className="text-red-600 dark:text-red-500 font-mono font-black text-3xl sm:text-4xl tracking-tight drop-shadow-xs">
+                                <div className={`font-mono font-black text-3xl sm:text-4xl tracking-tight transition-all duration-300 ${
+                                    currentAvailability.isAvailable
+                                        ? 'text-emerald-500 dark:text-emerald-400 drop-shadow-[0_0_20px_rgba(16,185,129,0.35)]'
+                                        : 'text-red-600 dark:text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.35)]'
+                                }`}>
                                     {currentAvailability.formattedEnd}
                                 </div>
-                                <div className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium mt-1">
+                                <div className={`text-[11px] font-medium mt-1 transition-colors duration-300 ${
+                                    currentAvailability.isAvailable
+                                        ? 'text-emerald-600/80 dark:text-emerald-400/80'
+                                        : 'text-red-600/80 dark:text-red-400/80'
+                                }`}>
                                     من {currentAvailability.formattedStart} إلى {currentAvailability.formattedEnd}
                                 </div>
                             </div>
@@ -1143,12 +1169,12 @@ export default function BookingDetailsPage() {
                             {/* Availability Status Badge */}
                             <div className="mt-3">
                                 {currentAvailability.isAvailable ? (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/30 shadow-xs">
                                         <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                                         <span>الموعد متاح للحجز</span>
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-bold border border-red-500/20">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-bold border border-red-500/30 shadow-xs">
                                         <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
                                         <span>
                                             {currentAvailability.reason === 'PAST_TIME'
