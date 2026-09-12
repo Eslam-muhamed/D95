@@ -203,7 +203,7 @@ export async function fetchBookingMetrics(): Promise<{
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('status', 'confirmed'),
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('booking_date', todayStr),
-            supabase.from('ps_bookings').select('*').eq('status', 'pending').order('created_at', { ascending: false }).limit(6),
+            supabase.from('ps_bookings').select('*').eq('status', 'pending').order('created_at', { ascending: false }).limit(50),
         ]);
 
         return {

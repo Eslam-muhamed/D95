@@ -1,4 +1,6 @@
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { fetchRoomRates, type RoomRates } from '@/services/bookingService';
 import {
     ArrowRight,
     Gamepad2,
@@ -173,6 +175,27 @@ export default function PlaystationPage() {
     const { theme, toggleTheme } = useTheme();
     const { itemCount, openCart } = useCart();
 
+    const [roomRates, setRoomRates] = useState<RoomRates>({ 'room-1': 100, 'room-2': 100 });
+
+    useEffect(() => {
+        fetchRoomRates().then(rates => {
+            if (rates) setRoomRates(rates);
+        }).catch(() => {
+            // Keep default
+        });
+    }, []);
+
+    const rooms: RoomData[] = useMemo(() => [
+        {
+            ...ROOMS[0],
+            rate: roomRates['room-1'] || 100,
+        },
+        {
+            ...ROOMS[1],
+            rate: roomRates['room-2'] || 100,
+        },
+    ], [roomRates]);
+
     // ─────────────────────────────────────────────────────────────
     // FAST & INSTANT ROOM ENTER (ZERO LAG • 60FPS SMOOTH)
     // ─────────────────────────────────────────────────────────────
@@ -309,7 +332,7 @@ export default function PlaystationPage() {
                    ───────────────────────────────────────────────────────────── */}
                 <section className="mb-8 sm:mb-12">
                     <div className="grid grid-cols-2 gap-2 sm:gap-6 max-w-5xl mx-auto">
-                        {ROOMS.map((room) => {
+                        {rooms.map((room) => {
                             const isRoom1 = room.id === 'room-1';
 
                             return (

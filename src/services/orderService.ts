@@ -100,7 +100,11 @@ export async function fetchOrderMetrics(): Promise<{
 
         const [pendingRes, todayRes] = await Promise.all([
             supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-            supabase.from('orders').select('total_amount').gte('created_at', todayStart.toISOString()),
+            supabase
+                .from('orders')
+                .select('total_amount, status')
+                .gte('created_at', todayStart.toISOString())
+                .neq('status', 'cancelled'),
         ]);
 
         const todayRevenue = (todayRes.data || []).reduce((sum, o) => sum + Number(o.total_amount || 0), 0);

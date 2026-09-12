@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, Search } from 'lucide-react';
 import TopHeader from '@/components/features/TopHeader';
@@ -146,6 +146,16 @@ export default function MenuPage() {
 
   const filteredCategory = categories.find(c => c.id === activeCategory);
   const filteredItems = isFiltered ? allItems.filter(i => i.category === activeCategory) : [];
+
+  const itemsByCategory = useMemo(() => {
+    const map = new Map<string, MenuItem[]>();
+    for (const item of allItems) {
+      const list = map.get(item.category) || [];
+      list.push(item);
+      map.set(item.category, list);
+    }
+    return map;
+  }, [allItems]);
 
   return (
     <div className="min-h-screen pb-32 sm:pb-16 bg-[#F6F5F2] dark:bg-[#080607] text-neutral-900 dark:text-[#e8e4e6] font-body text-sm selection:bg-red-600 selection:text-white select-none transition-colors duration-200" dir="rtl">
@@ -306,7 +316,7 @@ export default function MenuPage() {
                 <MenuSection
                   key={cat.id}
                   category={cat}
-                  items={allItems.filter(i => i.category === cat.id)}
+                  items={itemsByCategory.get(cat.id) || []}
                   onAdd={setSelectedItem}
                 />
               ))}

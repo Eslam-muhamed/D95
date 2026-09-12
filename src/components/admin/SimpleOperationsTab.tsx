@@ -54,6 +54,7 @@ import {
 import type { DBBooking, BookingPolicy } from '@/types/database';
 import BookingDetailsModal from './BookingDetailsModal';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
+import { supabase } from '@/lib/supabase';
 
 type SubTabType = 'dashboard' | 'details' | 'settings';
 
@@ -123,8 +124,9 @@ export default function SimpleOperationsTab() {
     }, []);
 
     // 1. Load Data
-    const loadOperationsData = useCallback(async () => {
-        setLoading(true);
+    const loadOperationsData = useCallback(async (isSilentInput?: boolean | unknown) => {
+        const isSilent = typeof isSilentInput === 'boolean' ? isSilentInput : false;
+        if (!isSilent) setLoading(true);
         try {
             const [metrics, dayData, rates, pol] = await Promise.all([
                 fetchBookingMetrics(),
@@ -140,14 +142,46 @@ export default function SimpleOperationsTab() {
             setRateRoom2(rates['room-2'] || 100);
             setPolicy(pol);
         } catch {
-            toast.error('تعذر جلب بيانات الحجوزات');
+            if (!isSilent) toast.error('تعذر جلب بيانات الحجوزات');
         } finally {
-            setLoading(false);
+            if (!isSilent) setLoading(false);
         }
     }, [selectedDate]);
 
     useEffect(() => {
         loadOperationsData();
+    }, [loadOperationsData]);
+
+    // Realtime channel listener + periodic sync for incoming bookings
+    useEffect(() => {
+        const channel = supabase
+            .channel('realtime_admin_ps_bookings')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'ps_bookings' },
+                (payload) => {
+                    if (payload.eventType === 'INSERT') {
+                        const newBooking = payload.new as DBBooking;
+                        toast.info(`حجز بلايستيشن جديد: #${newBooking.reservation_id}`, {
+                            description: `${newBooking.customer_name} - ${newBooking.room_name}`,
+                            duration: 6000,
+                        });
+                        playPs5SelectSound();
+                    }
+                    loadOperationsData(true);
+                }
+            )
+            .subscribe();
+
+        // 20-second background polling fallback
+        const pollInterval = setInterval(() => {
+            loadOperationsData(true);
+        }, 20000);
+
+        return () => {
+            supabase.removeChannel(channel);
+            clearInterval(pollInterval);
+        };
     }, [loadOperationsData]);
 
     // 2. Load Archive Data

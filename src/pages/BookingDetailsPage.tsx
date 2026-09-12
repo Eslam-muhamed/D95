@@ -35,9 +35,10 @@ import {
     calculateEndDateTime,
     getBusinessOperatingWindow,
     checkAvailability,
+    formatArabicTimeFromDate,
     OPERATING_HOURS,
 } from '@/lib/bookingDatetime';
-import { fetchRoomOccupiedIntervals } from '@/services/bookingService';
+import { fetchRoomOccupiedIntervals, fetchRoomRates, type RoomRates } from '@/services/bookingService';
 import { BookingTimelineSchedule } from '@/components/booking/BookingTimelineSchedule';
 
 interface Room {
@@ -93,13 +94,28 @@ const ARABIC_MONTHS = [
 const ARABIC_DAY_NAMES = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 const WEEK_DAY_NAMES = ['سبت', 'أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة'];
 
-// Helper: Format Arabic time clearly (e.g. "06:00 مساءً" or "01:30 صباحاً")
+// Helper: Format Arabic time clearly pinned to Africa/Cairo (e.g. "06:00 مساءً" or "01:30 صباحاً")
 function formatArabicTimeDetailed(date: Date): string {
-    const hour = date.getHours();
-    const minute = date.getMinutes();
-    const period = hour >= 12 && hour < 24 ? 'مساءً' : 'صباحاً';
-    const h12 = hour % 12 === 0 ? 12 : hour % 12;
-    return `${String(h12).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${period}`;
+    try {
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'Africa/Cairo',
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: false,
+        });
+        const parts = formatter.formatToParts(date);
+        let h = 0;
+        let m = 0;
+        for (const part of parts) {
+            if (part.type === 'hour') h = parseInt(part.value, 10);
+            if (part.type === 'minute') m = parseInt(part.value, 10);
+        }
+        const period = h >= 12 && h < 24 ? 'مساءً' : 'صباحاً';
+        const h12 = h % 12 === 0 ? 12 : h % 12;
+        return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`;
+    } catch {
+        return formatArabicTimeFromDate(date);
+    }
 }
 
 const HOUR_WHEEL_ITEMS = Array.from({ length: 12 }, (_, i) => ({
@@ -250,9 +266,41 @@ export default function BookingDetailsPage() {
         };
     }, [isRoomMenuOpen]);
 
+    // Dynamic room rates from database settings
+    const [roomRates, setRoomRates] = useState<RoomRates>({ 'room-1': 100, 'room-2': 100 });
+
+    useEffect(() => {
+        fetchRoomRates().then(rates => {
+            if (rates) setRoomRates(rates);
+        }).catch(() => {
+            // Keep default
+        });
+    }, []);
+
+    const availableRooms: Room[] = useMemo(() => [
+        {
+            id: 'room-1',
+            name: 'غرفة 01 (Play Room)',
+            nameEn: 'ROOM 01',
+            titleAr: 'غرفة 01 • The Arena',
+            rate: roomRates['room-1'] || 100,
+            specs: 'شاشة 65 بوصة 4K • 4 دراعات PS5 • ساوند بار سينمائي',
+            interiorImg: room01InteriorImg,
+        },
+        {
+            id: 'room-2',
+            name: 'غرفة 02 (Play Room)',
+            nameEn: 'ROOM 02',
+            titleAr: 'غرفة 02 • VIP Suite',
+            rate: roomRates['room-2'] || 100,
+            specs: 'شاشة 65 بوصة 4K • 4 دراعات PS5 • سقف نجوم وعزل تام',
+            interiorImg: room02InteriorImg,
+        },
+    ], [roomRates]);
+
     const currentRoom = useMemo(() => {
-        return AVAILABLE_ROOMS.find((r) => r.id === selectedRoomId) || AVAILABLE_ROOMS[0];
-    }, [selectedRoomId]);
+        return availableRooms.find((r) => r.id === selectedRoomId) || availableRooms[0];
+    }, [selectedRoomId, availableRooms]);
 
     // Calendar state & ref: compact date picker
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -650,7 +698,7 @@ export default function BookingDetailsPage() {
                                         <div className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 px-2 py-1">
                                             اختر الغرفة المراد حجزها:
                                         </div>
-                                        {AVAILABLE_ROOMS.map((room) => {
+                                        {availableRooms.map((room) => {
                                             const isSelected = selectedRoomId === room.id;
                                             const isRoomOne = room.id === 'room-1';
                                             return (
@@ -1101,7 +1149,7 @@ export default function BookingDetailsPage() {
                 <BookingTimelineSchedule
                     selectedDate={selectedDate}
                     currentRoom={currentRoom}
-                    availableRooms={AVAILABLE_ROOMS}
+                    availableRooms={availableRooms}
                     onSelectRoom={(roomId) => {
                         setSelectedRoomId(roomId);
                         playPs5NavigateSound();

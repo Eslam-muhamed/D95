@@ -7,7 +7,8 @@
         "dev": "vite",
         "build": "vite build",
         "preview": "vite preview",
-        "lint": "eslint ."
+        "lint": "eslint .",
+        "test": "npx tsx tests/cart_logic_test.ts && npx tsx tests/booking_edge_cases.ts"
     },
     "dependencies": {
         "@supabase/supabase-js": "^2.116.0",

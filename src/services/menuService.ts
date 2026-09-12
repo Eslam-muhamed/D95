@@ -70,8 +70,8 @@ export async function fetchCategories(forceRefresh = false): Promise<DBCategory[
             .select('*')
             .order('display_order', { ascending: true });
 
-        if (error || !data || data.length === 0) {
-            console.warn('Fallback to local categories:', error?.message);
+        if (error) {
+            console.warn('Fallback to local categories due to error:', error.message);
             const fallback = fallbackCategories.map((c, i) => ({
                 id: c.id,
                 name: c.name,
@@ -84,9 +84,10 @@ export async function fetchCategories(forceRefresh = false): Promise<DBCategory[
             return fallback;
         }
 
-        cachedCategories = data as DBCategory[];
+        const categories = (data || []) as DBCategory[];
+        cachedCategories = categories;
         cachedCategoriesTime = Date.now();
-        return data as DBCategory[];
+        return categories;
     } catch (err) {
         console.error('Error fetching categories:', err);
         const fallback = fallbackCategories.map((c, i) => ({
@@ -162,8 +163,8 @@ export async function fetchProducts(categoryId?: string, forceRefresh = false): 
 
         const { data, error } = await query;
 
-        if (error || !data || data.length === 0) {
-            console.warn('Fallback to local items:', error?.message);
+        if (error) {
+            console.warn('Fallback to local items due to error:', error.message);
             const items = !isAll
                 ? fallbackItems.filter(i => i.category === categoryId)
                 : fallbackItems;
@@ -193,7 +194,7 @@ export async function fetchProducts(categoryId?: string, forceRefresh = false): 
             return mapped;
         }
 
-        const products = data as DBProduct[];
+        const products = (data || []) as DBProduct[];
         if (isAll) {
             cachedProducts = products;
             cachedProductsTime = Date.now();

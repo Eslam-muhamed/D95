@@ -21,11 +21,10 @@ export default function AdminDashboardPage() {
     const [activeTab, setActiveTab] = useState<TabType>('operations');
     const [pendingOrdersCount, setPendingOrdersCount] = useState<number>(0);
 
-    // Auth verification: ensure active Supabase session or authenticated flag
+    // Auth verification: ensure active Supabase session with admin credentials
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
-            const hasLocalAuth = localStorage.getItem('d95_admin_auth') === 'authenticated';
-            if (!session && !hasLocalAuth) {
+            if (!session?.user || session.user.email !== 'admin@d95.com') {
                 navigate('/admin/login');
             }
         });
