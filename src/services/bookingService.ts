@@ -191,22 +191,40 @@ export async function fetchPaginatedBookings(filter?: {
 }
 
 export async function fetchBookingMetrics(): Promise<{
+    totalCount: number;
     pendingCount: number;
     confirmedCount: number;
     todayCount: number;
+    totalRevenue: number;
+    todayRevenue: number;
     recentPending: DBBooking[];
     pendingCountsByDate: Record<string, number>;
 }> {
     try {
         const todayStr = new Date().toISOString().split('T')[0];
 
-        const [pendingRes, confirmedRes, todayRes, recentRes, pendingDatesRes] = await Promise.all([
+        const [
+            totalRes,
+            pendingRes,
+            confirmedRes,
+            todayRes,
+            revenueRes,
+            todayRevenueRes,
+            recentRes,
+            pendingDatesRes,
+        ] = await Promise.all([
+            supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).neq('status', 'cancelled'),
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('status', 'confirmed'),
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('booking_date', todayStr),
+            supabase.from('ps_bookings').select('total_amount').in('status', ['confirmed', 'completed']),
+            supabase.from('ps_bookings').select('total_amount').eq('booking_date', todayStr).in('status', ['confirmed', 'completed']),
             supabase.from('ps_bookings').select('*').eq('status', 'pending').order('created_at', { ascending: false }).limit(50),
             supabase.from('ps_bookings').select('booking_date').eq('status', 'pending'),
         ]);
+
+        const totalRevenue = (revenueRes.data || []).reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
+        const todayRevenue = (todayRevenueRes.data || []).reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
 
         const pendingCountsByDate: Record<string, number> = {};
         (pendingDatesRes.data || []).forEach((item: { booking_date: string }) => {
@@ -216,15 +234,27 @@ export async function fetchBookingMetrics(): Promise<{
         });
 
         return {
+            totalCount: totalRes.count || 0,
             pendingCount: pendingRes.count || 0,
             confirmedCount: confirmedRes.count || 0,
             todayCount: todayRes.count || 0,
+            totalRevenue: Math.round(totalRevenue),
+            todayRevenue: Math.round(todayRevenue),
             recentPending: (recentRes.data || []) as DBBooking[],
             pendingCountsByDate,
         };
     } catch (err) {
         console.error('Error fetching booking metrics:', err);
-        return { pendingCount: 0, confirmedCount: 0, todayCount: 0, recentPending: [], pendingCountsByDate: {} };
+        return {
+            totalCount: 0,
+            pendingCount: 0,
+            confirmedCount: 0,
+            todayCount: 0,
+            totalRevenue: 0,
+            todayRevenue: 0,
+            recentPending: [],
+            pendingCountsByDate: {},
+        };
     }
 }
 

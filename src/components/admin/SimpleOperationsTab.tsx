@@ -79,7 +79,19 @@ export default function SimpleOperationsTab() {
     // Data State
     const [loading, setLoading] = useState<boolean>(true);
     const [todayBookings, setTodayBookings] = useState<DBBooking[]>([]);
+    const [realTodayBookings, setRealTodayBookings] = useState<DBBooking[]>([]);
     const [allPendingBookings, setAllPendingBookings] = useState<DBBooking[]>([]);
+    const [generalStats, setGeneralStats] = useState<{
+        totalBookings: number;
+        totalRevenue: number;
+        pendingCount: number;
+        confirmedCount: number;
+    }>({
+        totalBookings: 0,
+        totalRevenue: 0,
+        pendingCount: 0,
+        confirmedCount: 0,
+    });
 
     // Modals
     const [activeDetailBooking, setActiveDetailBooking] = useState<DBBooking | null>(null);
@@ -134,18 +146,27 @@ export default function SimpleOperationsTab() {
         const isSilent = typeof isSilentInput === 'boolean' ? isSilentInput : false;
         if (!isSilent) setLoading(true);
         try {
-            const [metrics, dayData, rates, pol] = await Promise.all([
+            const isDifferentDate = selectedDate !== todayStr;
+            const [metrics, dayData, rates, pol, realTodayData] = await Promise.all([
                 fetchBookingMetrics(),
                 fetchBookingsForDate(selectedDate),
                 fetchRoomRates(),
                 fetchBookingPolicy(),
+                isDifferentDate ? fetchBookingsForDate(todayStr) : Promise.resolve(null),
             ]);
 
             setAllPendingBookings(metrics.recentPending);
             if (metrics.pendingCountsByDate) {
                 setPendingCountsByDate(metrics.pendingCountsByDate);
             }
+            setGeneralStats({
+                totalBookings: metrics.totalCount,
+                totalRevenue: metrics.totalRevenue,
+                pendingCount: metrics.pendingCount,
+                confirmedCount: metrics.confirmedCount,
+            });
             setTodayBookings(dayData);
+            setRealTodayBookings(isDifferentDate && realTodayData ? realTodayData : dayData);
             setRoomRates(rates);
             setRateRoom1(rates['room-1'] || 100);
             setRateRoom2(rates['room-2'] || 100);
@@ -155,7 +176,7 @@ export default function SimpleOperationsTab() {
         } finally {
             if (!isSilent) setLoading(false);
         }
-    }, [selectedDate]);
+    }, [selectedDate, todayStr]);
 
     useEffect(() => {
         loadOperationsData();
@@ -528,15 +549,15 @@ export default function SimpleOperationsTab() {
         );
     };
 
-    // Active Ongoing Sessions
+    // Active Ongoing Sessions (Always for real-time live lounge now)
     const ongoingBookings = useMemo(() => {
         const nowMs = Date.now();
-        return todayBookings.filter(b => {
+        return realTodayBookings.filter(b => {
             if (b.status !== 'confirmed') return false;
             const { start, end } = getBookingDates(b);
             return start.getTime() <= nowMs && end.getTime() > nowMs;
         });
-    }, [todayBookings]);
+    }, [realTodayBookings]);
 
     // Today's Expected Revenue
     const todayRevenue = useMemo(() => {
@@ -634,7 +655,7 @@ export default function SimpleOperationsTab() {
             {/* SUB-TABS NAVIGATION (Clean Light Executive Style) */}
             <div className="bg-white border border-slate-200/90 rounded-2xl p-2 sm:p-2.5 flex flex-wrap items-center justify-between gap-2 shadow-xs">
                 <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none w-full sm:w-auto">
-                    {/* 1. Dashboard & Today */}
+                    {/* 1. Dashboard & General Overview */}
                     <button
                         type="button"
                         onClick={() => {
@@ -648,7 +669,7 @@ export default function SimpleOperationsTab() {
                         }`}
                     >
                         <LayoutDashboard className="w-4 h-4" />
-                        <span>داشبورد وإحصائيات اليوم</span>
+                        <span>الإحصائيات العامة ومواعيد اليوم</span>
                         {allPendingBookings.length > 0 && (
                             <span className="w-4 h-4 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black flex items-center justify-center">
                                 {allPendingBookings.length}
@@ -715,14 +736,14 @@ export default function SimpleOperationsTab() {
             {/* ========================================================================= */}
             {activeSubTab === 'dashboard' && (
                 <div className="space-y-4">
-                    {/* 4 Professional Executive KPI Cards */}
+                    {/* 4 Professional Executive General KPI Cards */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        {/* 1. Today's Bookings */}
-                        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs">
+                        {/* 1. Total Bookings (General) */}
+                        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs hover:border-blue-200 transition-colors">
                             <div>
-                                <span className="text-xs text-slate-500 font-bold block">حجوزات اليوم</span>
+                                <span className="text-xs text-slate-500 font-bold block">إجمالي الحجوزات</span>
                                 <span className="font-sans text-2xl sm:text-3xl font-black text-slate-900 mt-1 block">
-                                    {todayBookings.length}
+                                    {generalStats.totalBookings || allPendingBookings.length}
                                 </span>
                             </div>
                             <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
@@ -731,7 +752,7 @@ export default function SimpleOperationsTab() {
                         </div>
 
                         {/* 2. Ongoing Gaming Now */}
-                        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs">
+                        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs hover:border-emerald-200 transition-colors">
                             <div>
                                 <span className="text-xs text-emerald-700 font-bold flex items-center gap-1.5">
                                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -746,9 +767,9 @@ export default function SimpleOperationsTab() {
                             </div>
                         </div>
 
-                        {/* 3. Pending Bookings */}
-                        <div className={`border rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs ${
-                            allPendingBookings.length > 0 ? 'border-amber-300 bg-amber-50/40' : 'bg-white border-slate-200/90'
+                        {/* 3. Pending Bookings (General) */}
+                        <div className={`border rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs transition-colors ${
+                            allPendingBookings.length > 0 ? 'border-amber-300 bg-amber-50/40 hover:border-amber-400' : 'bg-white border-slate-200/90'
                         }`}>
                             <div>
                                 <span className="text-xs text-amber-800 font-bold block">بانتظار التأكيد</span>
@@ -761,12 +782,12 @@ export default function SimpleOperationsTab() {
                             </div>
                         </div>
 
-                        {/* 4. Expected Revenue */}
-                        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs">
+                        {/* 4. Total General Revenue */}
+                        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs hover:border-emerald-200 transition-colors">
                             <div>
-                                <span className="text-xs text-slate-500 font-bold block">إيرادات اليوم المتوقعة</span>
+                                <span className="text-xs text-slate-500 font-bold block">إجمالي الإيرادات</span>
                                 <span className="font-sans text-2xl sm:text-3xl font-black text-slate-900 mt-1 block">
-                                    {todayRevenue} <span className="text-xs font-normal text-slate-500">ج.م</span>
+                                    {generalStats.totalRevenue} <span className="text-xs font-normal text-slate-500">ج.م</span>
                                 </span>
                             </div>
                             <div className="w-11 h-11 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center">
@@ -905,8 +926,16 @@ export default function SimpleOperationsTab() {
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                                 <User className="w-4 h-4 text-red-600" />
-                                <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                                    قائمة مواعيد اليوم ({filteredDailyBookings.length})
+                                <h3 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
+                                    <span>{selectedDate === todayStr ? 'قائمة مواعيد اليوم' : `قائمة مواعيد (${formattedDateTitle})`}</span>
+                                    {selectedDate === todayStr && (
+                                        <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-md">
+                                            افتراضية
+                                        </span>
+                                    )}
+                                    <span className="text-xs font-mono font-bold text-slate-500">
+                                        ({filteredDailyBookings.length})
+                                    </span>
                                 </h3>
                             </div>
 
