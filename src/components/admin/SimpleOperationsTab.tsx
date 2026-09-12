@@ -101,8 +101,8 @@ export default function SimpleOperationsTab() {
     const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
     const [pendingCountsByDate, setPendingCountsByDate] = useState<Record<string, number>>({});
 
-    // Accordion for Conflicting Bookings
-    const [expandedConflictIds, setExpandedConflictIds] = useState<Record<string, boolean>>({});
+    // Accordion for Conflicting Bookings inside table/cards
+    const [expandedConflictBookingIds, setExpandedConflictBookingIds] = useState<Record<string, boolean>>({});
 
     // Archive / Details State
     const [archivePage, setArchivePage] = useState<number>(1);
@@ -351,11 +351,181 @@ export default function SimpleOperationsTab() {
         return groupConflictingPendingBookings(allPendingBookings);
     }, [allPendingBookings]);
 
-    const toggleConflictGroup = (groupId: string) => {
-        setExpandedConflictIds(prev => ({
+    const toggleConflictDropdown = (bookingId: string) => {
+        setExpandedConflictBookingIds(prev => ({
             ...prev,
-            [groupId]: prev[groupId] === undefined ? false : !prev[groupId]
+            [bookingId]: !prev[bookingId]
         }));
+    };
+
+    // Find overlapping bookings and conflict group for any booking on this date
+    const getBookingConflictInfo = useCallback((b: DBBooking) => {
+        if (b.status === 'cancelled') return { hasOverlap: false, competitors: [] as DBBooking[], group: null as ConflictGroup | null };
+
+        // 1. Check if it's already in conflictGroups
+        const existingGroup = conflictGroups.find(g => g.bookings.some(item => item.id === b.id));
+        if (existingGroup) {
+            return {
+                hasOverlap: true,
+                competitors: existingGroup.bookings,
+                group: existingGroup,
+            };
+        }
+
+        // 2. Or check overlap against other today bookings in same room
+        const { start: bStart, end: bEnd } = getBookingDates(b);
+        const overlaps = todayBookings.filter(other => {
+            if (other.id === b.id) return false;
+            if (other.status === 'cancelled') return false;
+            if ((other.room_id || 'room-1') !== (b.room_id || 'room-1')) return false;
+            const { start: oStart, end: oEnd } = getBookingDates(other);
+            return bStart < oEnd && bEnd > oStart;
+        });
+
+        if (overlaps.length > 0) {
+            const allInGroup = [b, ...overlaps].sort(
+                (x, y) => new Date(x.created_at).getTime() - new Date(y.created_at).getTime()
+            );
+            const dynamicGroup: ConflictGroup = {
+                id: `conflict-${b.id}`,
+                roomId: b.room_id || 'room-1',
+                roomName: b.room_name || 'غرفة اللعب',
+                bookingDate: b.booking_date,
+                formattedTimeRange: `${b.start_time} - ${b.end_time}`,
+                bookings: allInGroup,
+            };
+            return {
+                hasOverlap: true,
+                competitors: allInGroup,
+                group: dynamicGroup,
+            };
+        }
+
+        return { hasOverlap: false, competitors: [] as DBBooking[], group: null as ConflictGroup | null };
+    }, [conflictGroups, todayBookings]);
+
+    // Renders the conflict resolution dropdown content for a booking
+    const renderConflictDropdownContent = (b: DBBooking, competitors: DBBooking[], group: ConflictGroup) => {
+        return (
+            <div className="space-y-3 bg-amber-50/70 border border-amber-300 rounded-2xl p-3.5 sm:p-4 shadow-sm text-right">
+                <div className="flex items-center justify-between border-b border-amber-200 pb-2.5">
+                    <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-amber-500 text-slate-950 font-black flex items-center justify-center text-xs shadow-2xs">
+                            ⚠️
+                        </div>
+                        <div>
+                            <h5 className="text-xs sm:text-sm font-bold text-amber-950">
+                                تداخل مواعيد على نفس الغرفة ({b.room_name})
+                            </h5>
+                            <p className="text-[11px] text-amber-800/80">
+                                الطلبات المتنافسة على هذا الموعد. تأكيد أي حجز يعتمده فوراً ويلغي المتنافس الآخر تلقائياً.
+                            </p>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            toggleConflictDropdown(b.id);
+                        }}
+                        className="p-1 rounded-lg text-amber-800 hover:bg-amber-200/60 transition-colors cursor-pointer"
+                        title="إغلاق القائمة المنسدلة"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+
+                <div className="space-y-2">
+                    {competitors.map((item, idx) => {
+                        const isCurrent = item.id === b.id;
+                        const isFirst = idx === 0;
+                        const timeAgo = formatTimeAgo(item.created_at);
+
+                        return (
+                            <div
+                                key={item.id}
+                                className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                                    isCurrent
+                                        ? 'bg-white border-amber-300 shadow-2xs'
+                                        : 'bg-white/80 border-slate-200'
+                                }`}
+                            >
+                                <div className="flex items-start sm:items-center gap-2.5">
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                                        isFirst ? 'bg-amber-400 text-slate-950' : 'bg-slate-100 text-slate-700'
+                                    }`}>
+                                        {isFirst ? '🥇 الأسبق طلباً' : `🥈 متنافس #${idx + 1}`}
+                                    </span>
+
+                                    <div>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="font-bold text-slate-900 text-xs sm:text-sm">{item.customer_name}</span>
+                                            {isCurrent && (
+                                                <span className="text-[10px] bg-red-50 text-red-700 border border-red-200 px-1.5 py-0.2 rounded font-bold">
+                                                    هذا الحجز
+                                                </span>
+                                            )}
+                                            <span className="text-[11px] text-slate-500">({timeAgo})</span>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 text-xs text-slate-600 mt-1 flex-wrap">
+                                            <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
+                                                ⏰ {item.start_time} - {item.end_time} ({item.duration_hours} س)
+                                            </span>
+                                            <span dir="ltr" className="font-mono text-slate-600 text-[11px]">{item.customer_phone}</span>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => openWhatsAppDirect(e, item)}
+                                                className="text-emerald-600 hover:underline text-[11px] inline-flex items-center gap-0.5 font-bold cursor-pointer"
+                                            >
+                                                <MessageCircle className="w-3 h-3" />
+                                                <span>واتساب</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200">
+                                    <span className="font-bold text-emerald-700 text-sm whitespace-nowrap">
+                                        {item.total_amount} ج.م
+                                    </span>
+
+                                    <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                        {item.status === 'pending' && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleConfirmConflictWinner(item, group)}
+                                                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 transition-colors shadow-xs cursor-pointer whitespace-nowrap"
+                                                title="تأكيد واعتماد هذا الحجز وإلغاء المتنافسين"
+                                            >
+                                                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                                <span>تأكيد واعتماد</span>
+                                            </button>
+                                        )}
+
+                                        {item.status === 'confirmed' && (
+                                            <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
+                                                مؤكد مسبقاً 🔒
+                                            </span>
+                                        )}
+
+                                        <button
+                                            type="button"
+                                            onClick={() => handleQuickReject(item)}
+                                            className="px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 text-xs font-bold transition-colors cursor-pointer"
+                                            title="إلغاء هذا الحجز"
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
     };
 
     // Active Ongoing Sessions
@@ -605,146 +775,6 @@ export default function SimpleOperationsTab() {
                         </div>
                     </div>
 
-                    {/* CONFLICT DROPDOWN LIST (نظام الـ 10 دقائق وتنافس المواعيد) */}
-                    {conflictGroups.length > 0 && (
-                        <div className="space-y-3 bg-amber-50/60 border border-amber-200 rounded-2xl p-4 sm:p-5 shadow-xs">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2.5">
-                                    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
-                                    <div>
-                                        <h3 className="text-sm sm:text-base font-bold text-amber-900">
-                                            مواعيد بها طلبات حجز متنافسة في نفس الوقت ({conflictGroups.length})
-                                        </h3>
-                                        <p className="text-xs text-amber-800/80 mt-0.5">
-                                            حجز أكثر من عميل نفس الموعد خلال نظام الـ 10 دقائق. اضغط على الموعد لاختيار العميل المعتمد.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Dropdown Accordions for each conflict slot */}
-                            <div className="space-y-2.5 pt-1">
-                                {conflictGroups.map((group) => {
-                                    const isExpanded = expandedConflictIds[group.id] ?? true;
-
-                                    return (
-                                        <div
-                                            key={group.id}
-                                            className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs"
-                                        >
-                                            {/* Trigger Header */}
-                                            <div
-                                                onClick={() => toggleConflictGroup(group.id)}
-                                                className="p-3.5 bg-slate-50/80 hover:bg-slate-100/80 flex items-center justify-between gap-3 cursor-pointer transition-colors"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 border border-amber-200 flex items-center justify-center font-bold text-xs">
-                                                        <Users className="w-3.5 h-3.5" />
-                                                    </div>
-                                                    <div className="flex items-center gap-2.5 flex-wrap">
-                                                        <span className="font-bold text-slate-900 text-sm">{group.roomName}</span>
-                                                        <span className="text-xs font-bold text-amber-800 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded">
-                                                            ⏰ {group.formattedTimeRange}
-                                                        </span>
-                                                        <span className="text-xs text-slate-500">
-                                                            📅 {group.bookingDate}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-2">
-                                                    <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-400 text-slate-950">
-                                                        {group.bookings.length} متنافسين
-                                                    </span>
-                                                    {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
-                                                </div>
-                                            </div>
-
-                                            {/* Dropdown Content */}
-                                            {isExpanded && (
-                                                <div className="p-3 sm:p-4 border-t border-slate-200 space-y-2 bg-slate-50/50">
-                                                    <div className="text-[11px] text-slate-600 flex items-center gap-1.5 pb-1">
-                                                        <Info className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                                                        <span>الطلبات مرتبة حسب أسبقية وقت الإرسال. تأكيد أحد الحجزين يقفل الموعد لصالحه ويلغي المتنافس الآخر تلقائياً.</span>
-                                                    </div>
-
-                                                    <div className="space-y-2">
-                                                        {group.bookings.map((b, idx) => {
-                                                            const isFirst = idx === 0;
-                                                            const timeAgo = formatTimeAgo(b.created_at);
-
-                                                            return (
-                                                                <div
-                                                                    key={b.id}
-                                                                    className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                                                                        isFirst
-                                                                            ? 'bg-amber-50/60 border-amber-300'
-                                                                            : 'bg-white border-slate-200'
-                                                                    }`}
-                                                                >
-                                                                    <div className="flex items-center gap-3">
-                                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                                                                            isFirst ? 'bg-amber-400 text-slate-950' : 'bg-slate-100 text-slate-700'
-                                                                        }`}>
-                                                                            {isFirst ? '🥇 الأسبق' : `🥈 متنافس #${idx + 1}`}
-                                                                        </span>
-
-                                                                        <div>
-                                                                            <div className="flex items-center gap-2">
-                                                                                <h4 className="text-sm font-bold text-slate-900">{b.customer_name}</h4>
-                                                                                <span className="text-[11px] text-slate-500">({timeAgo})</span>
-                                                                            </div>
-                                                                            <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                                                                                <span dir="ltr" className="font-mono text-slate-600">{b.customer_phone}</span>
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={(e) => openWhatsAppDirect(e, b)}
-                                                                                    className="text-emerald-600 hover:underline text-[11px] inline-flex items-center gap-0.5 font-bold"
-                                                                                >
-                                                                                    <MessageCircle className="w-3 h-3" />
-                                                                                    <span>واتساب</span>
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200">
-                                                                        <span className="font-bold text-emerald-700 text-sm">
-                                                                            {b.total_amount} ج.م
-                                                                        </span>
-
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => handleConfirmConflictWinner(b, group)}
-                                                                                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 transition-colors shadow-xs cursor-pointer"
-                                                                            >
-                                                                                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                                                                                <span>تأكيد واعتماد الحجز</span>
-                                                                            </button>
-
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => handleQuickReject(b)}
-                                                                                className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 text-xs font-bold transition-colors cursor-pointer"
-                                                                            >
-                                                                                <X className="w-3.5 h-3.5" />
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-
                     {/* Date Navigator Bar & Room Filter */}
                     <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                         {/* Date Selector */}
@@ -976,125 +1006,165 @@ export default function SimpleOperationsTab() {
                                                 const isStarted = bStart.getTime() <= nowMs;
                                                 const isOngoing = isStarted && !isEnded && b.status === 'confirmed';
 
+                                                const { hasOverlap, competitors, group } = getBookingConflictInfo(b);
+                                                const isConflictExpanded = !!expandedConflictBookingIds[b.id];
+
                                                 return (
-                                                    <tr
-                                                        key={b.id}
-                                                        onClick={() => setActiveDetailBooking(b)}
-                                                        className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
-                                                    >
-                                                        {/* Time */}
-                                                        <td className="py-3.5 px-3">
-                                                            <div className="font-bold text-slate-900 text-xs">
-                                                                {b.start_time} - {b.end_time}
-                                                            </div>
-                                                            <span className="text-[11px] text-slate-500">({b.duration_hours} س)</span>
-                                                        </td>
+                                                    <React.Fragment key={b.id}>
+                                                        <tr
+                                                            onClick={() => setActiveDetailBooking(b)}
+                                                            className={`hover:bg-slate-50/80 transition-colors cursor-pointer group ${
+                                                                hasOverlap ? 'bg-amber-50/30 hover:bg-amber-50/60' : ''
+                                                            }`}
+                                                        >
+                                                            {/* Time */}
+                                                            <td className="py-3.5 px-3">
+                                                                <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                                                                    <span>{b.start_time} - {b.end_time}</span>
+                                                                    {hasOverlap && (
+                                                                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" title="يوجد تداخل في هذا الموعد" />
+                                                                    )}
+                                                                </div>
+                                                                <span className="text-[11px] text-slate-500">({b.duration_hours} س)</span>
+                                                            </td>
 
-                                                        {/* Client */}
-                                                        <td className="py-3.5 px-3">
-                                                            <div className="font-bold text-slate-900 group-hover:text-red-600 transition-colors">
-                                                                {b.customer_name}
-                                                            </div>
-                                                            <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
-                                                                <span dir="ltr" className="font-mono text-slate-600">{b.customer_phone}</span>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={(e) => openWhatsAppDirect(e, b)}
-                                                                    className="text-emerald-600 hover:underline inline-flex items-center gap-0.5 font-bold"
-                                                                >
-                                                                    <MessageCircle className="w-3 h-3" />
-                                                                    <span>واتساب</span>
-                                                                </button>
-                                                            </div>
-                                                        </td>
-
-                                                        {/* Room */}
-                                                        <td className="py-3.5 px-3 text-slate-700 font-medium">
-                                                            {b.room_name}
-                                                        </td>
-
-                                                        {/* Amount */}
-                                                        <td className="py-3.5 px-3 font-bold text-emerald-700">
-                                                            {b.total_amount} ج.م
-                                                        </td>
-
-                                                        {/* Status */}
-                                                        <td className="py-3.5 px-3">
-                                                            {isOngoing ? (
-                                                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1.5">
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                                                    <span>شغال الآن 🎮</span>
-                                                                </span>
-                                                            ) : b.status === 'confirmed' ? (
-                                                                isEnded ? (
-                                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                                                                        انتهى ⌛
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                                                                        مؤكد 🔒
-                                                                    </span>
-                                                                )
-                                                            ) : b.status === 'pending' ? (
-                                                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                                                    معلق ⏳
-                                                                </span>
-                                                            ) : (
-                                                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                                                                    {b.status === 'completed' ? 'مكتمل' : 'ملغي'}
-                                                                </span>
-                                                            )}
-                                                        </td>
-
-                                                        {/* Immediate Shortcuts */}
-                                                        <td className="py-3.5 px-3 text-left" onClick={(e) => e.stopPropagation()}>
-                                                            <div className="flex items-center justify-end gap-1.5">
-                                                                {b.status === 'pending' && (
-                                                                    <>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleQuickConfirm(b)}
-                                                                            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 transition-colors shadow-xs cursor-pointer"
-                                                                            title="تأكيد الحجز فوراً"
-                                                                        >
-                                                                            <Check className="w-3.5 h-3.5 stroke-[3]" />
-                                                                            <span>تأكيد</span>
-                                                                        </button>
-
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleQuickReject(b)}
-                                                                            className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 text-xs font-bold transition-colors cursor-pointer"
-                                                                            title="إلغاء الحجز"
-                                                                        >
-                                                                            <X className="w-3.5 h-3.5" />
-                                                                            <span>إلغاء</span>
-                                                                        </button>
-                                                                    </>
-                                                                )}
-
-                                                                {isOngoing && (
+                                                            {/* Client */}
+                                                            <td className="py-3.5 px-3">
+                                                                <div className="font-bold text-slate-900 group-hover:text-red-600 transition-colors">
+                                                                    {b.customer_name}
+                                                                </div>
+                                                                <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
+                                                                    <span dir="ltr" className="font-mono text-slate-600">{b.customer_phone}</span>
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => handleQuickFinish(b)}
-                                                                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
-                                                                        title="إنهاء الجلسة الآن"
+                                                                        onClick={(e) => openWhatsAppDirect(e, b)}
+                                                                        className="text-emerald-600 hover:underline inline-flex items-center gap-0.5 font-bold cursor-pointer"
                                                                     >
-                                                                        <Square className="w-3 h-3 text-emerald-600 fill-emerald-600" />
-                                                                        <span>إنهاء الجلسة</span>
+                                                                        <MessageCircle className="w-3 h-3" />
+                                                                        <span>واتساب</span>
                                                                     </button>
-                                                                )}
+                                                                </div>
 
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setActiveDetailBooking(b)}
-                                                                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-medium transition-colors cursor-pointer"
-                                                                >
-                                                                    تفاصيل
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
+                                                                {/* Dropdown trigger button inside table row */}
+                                                                {hasOverlap && (
+                                                                    <div className="mt-1.5" onClick={(e) => e.stopPropagation()}>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => toggleConflictDropdown(b.id)}
+                                                                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border shadow-2xs cursor-pointer ${
+                                                                                isConflictExpanded
+                                                                                    ? 'bg-amber-500 text-slate-950 border-amber-600'
+                                                                                    : 'bg-amber-100 text-amber-950 hover:bg-amber-200 border-amber-300'
+                                                                            }`}
+                                                                        >
+                                                                            <AlertCircle className="w-3 h-3 text-amber-800 shrink-0" />
+                                                                            <span>متداخل مع حجز آخر ({competitors.length})</span>
+                                                                            <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isConflictExpanded ? 'rotate-180' : ''}`} />
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </td>
+
+                                                            {/* Room */}
+                                                            <td className="py-3.5 px-3 text-slate-700 font-medium">
+                                                                {b.room_name}
+                                                            </td>
+
+                                                            {/* Amount */}
+                                                            <td className="py-3.5 px-3 font-bold text-emerald-700">
+                                                                {b.total_amount} ج.م
+                                                            </td>
+
+                                                            {/* Status */}
+                                                            <td className="py-3.5 px-3">
+                                                                {hasOverlap && b.status === 'pending' ? (
+                                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 inline-flex items-center gap-1">
+                                                                        <AlertCircle className="w-2.5 h-2.5 text-amber-700" />
+                                                                        <span>معلق (تنافس)</span>
+                                                                    </span>
+                                                                ) : isOngoing ? (
+                                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1.5">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                                        <span>شغال الآن 🎮</span>
+                                                                    </span>
+                                                                ) : b.status === 'confirmed' ? (
+                                                                    isEnded ? (
+                                                                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                                                            انتهى ⌛
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                                            مؤكد 🔒
+                                                                        </span>
+                                                                    )
+                                                                ) : b.status === 'pending' ? (
+                                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                                                        معلق ⏳
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                                                        {b.status === 'completed' ? 'مكتمل' : 'ملغي'}
+                                                                    </span>
+                                                                )}
+                                                            </td>
+
+                                                            {/* Actions */}
+                                                            <td className="py-3.5 px-3 text-left">
+                                                                <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                                                    {b.status === 'pending' && (
+                                                                        <>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => handleQuickConfirm(b)}
+                                                                                className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
+                                                                                title="تأكيد الحجز"
+                                                                            >
+                                                                                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                                                                <span>تأكيد</span>
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => handleQuickReject(b)}
+                                                                                className="px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 text-xs font-medium transition-colors cursor-pointer"
+                                                                                title="إلغاء الحجز"
+                                                                            >
+                                                                                إلغاء
+                                                                            </button>
+                                                                        </>
+                                                                    )}
+
+                                                                    {isOngoing && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleQuickFinish(b)}
+                                                                            className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-emerald-50 text-slate-800 hover:text-emerald-700 border border-slate-200 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                                                                            title="إنهاء الجلسة الآن"
+                                                                        >
+                                                                            <Square className="w-3 h-3 text-emerald-600 fill-emerald-600" />
+                                                                            <span>إنهاء</span>
+                                                                        </button>
+                                                                    )}
+
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setActiveDetailBooking(b)}
+                                                                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-medium transition-colors cursor-pointer"
+                                                                    >
+                                                                        تفاصيل
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+
+                                                        {/* Conflict Dropdown Accordion Row */}
+                                                        {hasOverlap && isConflictExpanded && group && (
+                                                            <tr className="bg-amber-50/40 border-b-2 border-amber-200" onClick={(e) => e.stopPropagation()}>
+                                                                <td colSpan={6} className="p-3 sm:p-4">
+                                                                    {renderConflictDropdownContent(b, competitors, group)}
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </React.Fragment>
                                                 );
                                             })}
                                         </tbody>
@@ -1110,15 +1180,25 @@ export default function SimpleOperationsTab() {
                                         const isStarted = bStart.getTime() <= nowMs;
                                         const isOngoing = isStarted && !isEnded && b.status === 'confirmed';
 
+                                        const { hasOverlap, competitors, group } = getBookingConflictInfo(b);
+                                        const isConflictExpanded = !!expandedConflictBookingIds[b.id];
+
                                         return (
                                             <div
                                                 key={b.id}
                                                 onClick={() => setActiveDetailBooking(b)}
-                                                className="bg-slate-50/80 border border-slate-200 rounded-xl p-3.5 space-y-3 cursor-pointer shadow-xs"
+                                                className={`border rounded-xl p-3.5 space-y-3 cursor-pointer shadow-xs transition-colors ${
+                                                    hasOverlap ? 'bg-amber-50/30 border-amber-300' : 'bg-slate-50/80 border-slate-200'
+                                                }`}
                                             >
                                                 <div className="flex items-start justify-between gap-2">
                                                     <div>
-                                                        <h4 className="text-sm font-bold text-slate-900">{b.customer_name}</h4>
+                                                        <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                                                            <span>{b.customer_name}</span>
+                                                            {hasOverlap && (
+                                                                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                                                            )}
+                                                        </h4>
                                                         <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
                                                             <span dir="ltr" className="font-mono text-slate-600">{b.customer_phone}</span>
                                                             <button
@@ -1132,7 +1212,12 @@ export default function SimpleOperationsTab() {
                                                     </div>
 
                                                     <div>
-                                                        {isOngoing ? (
+                                                        {hasOverlap && b.status === 'pending' ? (
+                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 inline-flex items-center gap-1">
+                                                                <AlertCircle className="w-2.5 h-2.5 text-amber-700" />
+                                                                <span>معلق (تنافس)</span>
+                                                            </span>
+                                                        ) : isOngoing ? (
                                                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                                                 شغال الآن 🎮
                                                             </span>
@@ -1146,7 +1231,7 @@ export default function SimpleOperationsTab() {
                                                             </span>
                                                         ) : (
                                                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                                                                {b.status}
+                                                                {b.status === 'completed' ? 'مكتمل' : 'ملغي'}
                                                             </span>
                                                         )}
                                                     </div>
@@ -1163,6 +1248,34 @@ export default function SimpleOperationsTab() {
                                                         <span className="text-emerald-700 font-bold text-sm">{b.total_amount} ج.م</span>
                                                     </div>
                                                 </div>
+
+                                                {/* Mobile Conflict Dropdown Trigger */}
+                                                {hasOverlap && (
+                                                    <div className="pt-1" onClick={(e) => e.stopPropagation()}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleConflictDropdown(b.id)}
+                                                            className={`w-full py-1.5 px-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-between cursor-pointer ${
+                                                                isConflictExpanded
+                                                                    ? 'bg-amber-500 text-slate-950 border-amber-600'
+                                                                    : 'bg-amber-100 text-amber-950 hover:bg-amber-200 border-amber-300'
+                                                            }`}
+                                                        >
+                                                            <span className="flex items-center gap-1.5">
+                                                                <AlertCircle className="w-3.5 h-3.5 text-amber-800 shrink-0" />
+                                                                <span>متداخل مع حجز آخر ({competitors.length})</span>
+                                                            </span>
+                                                            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isConflictExpanded ? 'rotate-180' : ''}`} />
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                {/* Mobile Conflict Dropdown Content */}
+                                                {hasOverlap && isConflictExpanded && group && (
+                                                    <div onClick={(e) => e.stopPropagation()} className="pt-1">
+                                                        {renderConflictDropdownContent(b, competitors, group)}
+                                                    </div>
+                                                )}
 
                                                 {/* Mobile Action Buttons */}
                                                 <div className="flex items-center gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
