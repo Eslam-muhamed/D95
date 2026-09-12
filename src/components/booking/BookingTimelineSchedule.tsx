@@ -81,8 +81,8 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
     userEndDateTime,
     onSelectTimeSlot,
 }) => {
-    // Accordion collapse/expand state (open by default)
-    const [isOpen, setIsOpen] = useState<boolean>(true);
+    // Accordion collapse/expand state (collapsed by default)
+    const [isOpen, setIsOpen] = useState<boolean>(false);
     const [hoveredSlot, setHoveredSlot] = useState<TimelineSlot | null>(null);
 
     // Compute exactly 20 slots (1-hour intervals across the 20 operating hours from 08:00 AM to 04:00 AM)
@@ -264,85 +264,82 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
     };
 
     return (
-        <div className="w-full space-y-3" dir="rtl">
-            {/* 1. Top Status Legend Bar */}
-            <div className="flex flex-wrap items-center justify-around sm:justify-center sm:gap-8 py-2.5 px-4 rounded-2xl bg-neutral-900/90 dark:bg-[#151013] border border-neutral-800/90 dark:border-white/[0.08] shadow-inner text-xs font-bold select-none gap-y-2">
-                <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.85)] animate-pulse" />
-                    <span className="text-neutral-200 dark:text-neutral-100">متاح بالكامل</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.85)]" />
-                    <span className="text-neutral-200 dark:text-neutral-100">محجوز جزئياً (بالدقائق)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-red-600 shadow-[0_0_10px_rgba(239,68,68,0.85)]" />
-                    <span className="text-neutral-200 dark:text-neutral-100">محجوز بالكامل</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-neutral-600 dark:bg-neutral-700" />
-                    <span className="text-neutral-400">غير متاح (مضى)</span>
-                </div>
-            </div>
-
-            {/* 2. Collapsible Schedule Card */}
-            <div className="rounded-2xl bg-neutral-950/95 dark:bg-[#120d10] border border-neutral-800/90 dark:border-white/[0.08] overflow-hidden shadow-xl transition-all">
-                {/* Header / Toggle Trigger */}
-                <button
-                    type="button"
-                    onClick={() => {
-                        setIsOpen((prev) => !prev);
-                        playPs5NavigateSound();
-                    }}
-                    className="w-full flex items-center justify-between p-3 sm:p-4 hover:bg-white/[0.03] transition-colors cursor-pointer group select-none text-right"
-                >
-                    <div className="flex items-center gap-2.5">
-                        {/* Red Circular Icon with Arrow */}
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-red-500/15 border border-red-500/40 text-red-500 flex items-center justify-center shadow-[0_0_12px_rgba(239,68,68,0.3)] transition-transform duration-300 group-hover:scale-110 shrink-0">
-                            <motion.div
-                                animate={{ rotate: isOpen ? 180 : 0 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                <ChevronDown className="w-4 h-4" />
-                            </motion.div>
-                        </div>
-
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <span className="font-bold text-sm sm:text-base text-white">
-                                    مخطط المواعيد
-                                </span>
-                                <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
-                                    sortedOccupiedIntervals.length > 0
-                                        ? 'bg-red-500/15 text-red-400 border-red-500/30 font-bold'
-                                        : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                                }`}>
-                                    {sortedOccupiedIntervals.length > 0 ? `${sortedOccupiedIntervals.length} أوقات محجوزة` : 'متاح بالكامل'}
-                                </span>
-                            </div>
-                            <p className="text-[11px] text-neutral-400 hidden sm:block mt-0.5">
-                                خريطة زمنية مرئية لكافة ساعات العمل وحالة الحجوزات اليومية بالدقائق
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 group-hover:text-neutral-200 transition-colors">
-                        <span className="hidden xs:inline">{isOpen ? 'إخفاء المخطط' : 'عرض المخطط'}</span>
-                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180 text-red-500' : ''}`} />
-                    </div>
-                </button>
-
-                {/* Collapsible Content */}
-                <AnimatePresence initial={false}>
-                    {isOpen && (
+        <div className="w-full rounded-2xl bg-neutral-950/95 dark:bg-[#120d10] border border-neutral-800/90 dark:border-white/[0.08] overflow-hidden shadow-xl transition-all" dir="rtl">
+            {/* Header / Toggle Trigger */}
+            <button
+                type="button"
+                onClick={() => {
+                    setIsOpen((prev) => !prev);
+                    playPs5NavigateSound();
+                }}
+                className="w-full flex items-center justify-between p-3 sm:p-4 hover:bg-white/[0.03] transition-colors cursor-pointer group select-none text-right"
+            >
+                <div className="flex items-center gap-2.5">
+                    {/* Red Circular Icon with Arrow */}
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-red-500/15 border border-red-500/40 text-red-500 flex items-center justify-center shadow-[0_0_12px_rgba(239,68,68,0.3)] transition-transform duration-300 group-hover:scale-110 shrink-0">
                         <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.25, ease: 'easeInOut' }}
-                            className="overflow-hidden border-t border-neutral-800/80 dark:border-white/[0.06]"
+                            animate={{ rotate: isOpen ? 180 : 0 }}
+                            transition={{ duration: 0.2 }}
                         >
-                            <div className="p-3.5 sm:p-5 space-y-4">
+                            <ChevronDown className="w-4 h-4" />
+                        </motion.div>
+                    </div>
+
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm sm:text-base text-white">
+                                مخطط المواعيد
+                            </span>
+                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+                                sortedOccupiedIntervals.length > 0
+                                    ? 'bg-red-500/15 text-red-400 border-red-500/30 font-bold'
+                                    : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                            }`}>
+                                {sortedOccupiedIntervals.length > 0 ? `${sortedOccupiedIntervals.length} أوقات محجوزة` : 'متاح بالكامل'}
+                            </span>
+                        </div>
+                        <p className="text-[11px] text-neutral-400 hidden sm:block mt-0.5">
+                            خريطة زمنية مرئية لكافة ساعات العمل وحالة الحجوزات اليومية بالدقائق
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs font-semibold text-neutral-400 group-hover:text-neutral-200 transition-colors">
+                    <span className="hidden xs:inline">{isOpen ? 'إخفاء المخطط' : 'عرض المخطط'}</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180 text-red-500' : ''}`} />
+                </div>
+            </button>
+
+            {/* Collapsible Content */}
+            <AnimatePresence initial={false}>
+                {isOpen && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: 'easeInOut' }}
+                        className="overflow-hidden border-t border-neutral-800/80 dark:border-white/[0.06]"
+                    >
+                        <div className="p-3.5 sm:p-5 space-y-4">
+                            {/* Integrated Status Legend Bar */}
+                            <div className="flex flex-wrap items-center justify-around sm:justify-center sm:gap-8 py-2.5 px-4 rounded-xl bg-neutral-900/80 dark:bg-[#161114] border border-neutral-800/80 dark:border-white/[0.06] shadow-inner text-xs font-bold select-none gap-y-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.85)] animate-pulse" />
+                                    <span className="text-neutral-200 dark:text-neutral-100">متاح بالكامل</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.85)]" />
+                                    <span className="text-neutral-200 dark:text-neutral-100">محجوز جزئياً (بالدقائق)</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-red-600 shadow-[0_0_10px_rgba(239,68,68,0.85)]" />
+                                    <span className="text-neutral-200 dark:text-neutral-100">محجوز بالكامل</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-neutral-600 dark:bg-neutral-700" />
+                                    <span className="text-neutral-400">غير متاح (مضى)</span>
+                                </div>
+                            </div>
                                 {/* Time Axis / Ruler with Ticks (Left-to-Right progression) */}
                                 <div className="relative pt-1 pb-1 px-1 sm:px-2 select-none" dir="ltr">
                                     {/* Tick Labels */}
@@ -390,31 +387,7 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                                             </div>
                                         </div>
 
-                                        {/* Multi-Room Switcher Tabs (if available) */}
-                                        {availableRooms.length > 1 && onSelectRoom && (
-                                            <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/5 text-xs">
-                                                {availableRooms.map((room) => {
-                                                    const isCurrent = room.id === currentRoom.id;
-                                                    return (
-                                                        <button
-                                                            key={room.id}
-                                                            type="button"
-                                                            onClick={() => {
-                                                                onSelectRoom(room.id);
-                                                                playPs5NavigateSound();
-                                                            }}
-                                                            className={`px-2 sm:px-2.5 py-1 rounded-lg font-bold transition-all text-[11px] cursor-pointer ${
-                                                                isCurrent
-                                                                    ? 'bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]'
-                                                                    : 'text-neutral-400 hover:text-neutral-200'
-                                                            }`}
-                                                        >
-                                                            {room.nameEn || room.name}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
+
                                     </div>
 
                                     {/* The Horizontal Timeline Track of 20 Rounded Squares (08:00 AM - 04:00 AM) */}
@@ -584,7 +557,6 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </div>
         </div>
     );
 };
