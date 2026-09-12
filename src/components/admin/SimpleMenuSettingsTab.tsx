@@ -3,7 +3,6 @@ import {
     UtensilsCrossed,
     FolderTree,
     Flame,
-    Gamepad2,
     Search,
     Plus,
     Edit3,
@@ -12,8 +11,6 @@ import {
     XCircle,
     RefreshCw,
     ImageIcon,
-    Check,
-    Settings2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -26,7 +23,6 @@ import {
     deleteOffer,
     updateOffer,
 } from '@/services/menuService';
-import { fetchRoomRates, updateRoomRates, type RoomRates } from '@/services/bookingService';
 import ProductModal from './ProductModal';
 import CategoryModal from './CategoryModal';
 import OfferModal from './OfferModal';
@@ -34,7 +30,7 @@ import CategoryIcon from '@/components/features/CategoryIcon';
 import type { DBCategory, DBProduct, DBOffer } from '@/types/database';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 
-type SubSection = 'products' | 'categories' | 'offers' | 'room_rates';
+type SubSection = 'products' | 'categories' | 'offers';
 
 export default function SimpleMenuSettingsTab() {
     const [activeSection, setActiveSection] = useState<SubSection>('products');
@@ -54,30 +50,20 @@ export default function SimpleMenuSettingsTab() {
     const [activeModalCategory, setActiveModalCategory] = useState<DBCategory | null | 'new'>(null);
     const [activeModalOffer, setActiveModalOffer] = useState<DBOffer | null | 'new'>(null);
 
-    // Room Rates
-    const [roomRates, setRoomRates] = useState<RoomRates>({ 'room-1': 100, 'room-2': 100 });
-    const [rateRoom1, setRateRoom1] = useState<number>(100);
-    const [rateRoom2, setRateRoom2] = useState<number>(100);
-    const [savingRates, setSavingRates] = useState<boolean>(false);
-
-    // Load All Menu & Rates Data
+    // Load All Menu Data
     const loadAllData = async () => {
         setLoading(true);
         try {
-            const [cats, prods, offs, rates] = await Promise.all([
+            const [cats, prods, offs] = await Promise.all([
                 fetchCategories(),
                 fetchProducts('all'),
                 fetchOffers(),
-                fetchRoomRates(),
             ]);
             setCategories(cats);
             setProducts(prods);
             setOffers(offs);
-            setRoomRates(rates);
-            setRateRoom1(rates['room-1'] || 100);
-            setRateRoom2(rates['room-2'] || 100);
         } catch {
-            toast.error('تعذر جلب بيانات المنيو والأسعار');
+            toast.error('تعذر جلب بيانات المنيو');
         } finally {
             setLoading(false);
         }
@@ -204,23 +190,6 @@ export default function SimpleMenuSettingsTab() {
         setActiveModalOffer(null);
     };
 
-    // Save Room Rates
-    const handleSaveRoomRates = async () => {
-        setSavingRates(true);
-        try {
-            const updated = await updateRoomRates({
-                'room-1': Number(rateRoom1) || 100,
-                'room-2': Number(rateRoom2) || 100,
-            });
-            setRoomRates(updated);
-            toast.success('تم تحديث وحفظ أسعار ساعات الغرف بنجاح! 🎮');
-        } catch {
-            toast.error('تعذر حفظ أسعار الغرف');
-        } finally {
-            setSavingRates(false);
-        }
-    };
-
     return (
         <div className="space-y-6" dir="rtl">
             {/* Top Navigation / Section Switcher */}
@@ -263,19 +232,6 @@ export default function SimpleMenuSettingsTab() {
                     >
                         <Flame className="w-4 h-4" />
                         <span>العروض الترويجية ({offers.length})</span>
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => { playPs5NavigateSound(); setActiveSection('room_rates'); }}
-                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
-                            activeSection === 'room_rates'
-                                ? 'bg-red-600 text-white shadow-xs'
-                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                        }`}
-                    >
-                        <Gamepad2 className="w-4 h-4" />
-                        <span>أسعار ساعات الغرف</span>
                     </button>
                 </div>
 
@@ -554,66 +510,6 @@ export default function SimpleMenuSettingsTab() {
                                 </div>
                             </div>
                         ))}
-                    </div>
-                </div>
-            )}
-
-            {/* SECTION 4: ROOM RATES */}
-            {activeSection === 'room_rates' && (
-                <div className="max-w-xl bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
-                    <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
-                        <Gamepad2 className="w-5 h-5 text-red-600" />
-                        <h3 className="text-base font-bold text-slate-900">أسعار ساعات اللعب في غرف البلايستيشن</h3>
-                    </div>
-
-                    <p className="text-xs text-slate-500 leading-relaxed">
-                        يتم استخدام هذه الأسعار تلقائياً لحساب تكلفة الحجز عند اختيار الزبون للغرفة والمدة.
-                    </p>
-
-                    <div className="space-y-4 pt-2">
-                        <div>
-                            <label className="text-xs font-bold text-slate-700 block mb-1">
-                                سعر ساعة الغرفة 1 (Room 1):
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={rateRoom1}
-                                    onChange={(e) => setRateRoom1(Number(e.target.value))}
-                                    className="w-full bg-slate-50 text-slate-900 font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
-                                />
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">ج.م / ساعة</span>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="text-xs font-bold text-slate-700 block mb-1">
-                                سعر ساعة الغرفة 2 (Room 2):
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={rateRoom2}
-                                    onChange={(e) => setRateRoom2(Number(e.target.value))}
-                                    className="w-full bg-slate-50 text-slate-900 font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
-                                />
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">ج.م / ساعة</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="pt-3">
-                        <button
-                            type="button"
-                            onClick={handleSaveRoomRates}
-                            disabled={savingRates}
-                            className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
-                        >
-                            {savingRates ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                            <span>حفظ الأسعار وتطبيقها فوراً</span>
-                        </button>
                     </div>
                 </div>
             )}

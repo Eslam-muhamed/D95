@@ -195,26 +195,59 @@ export async function fetchBookingMetrics(): Promise<{
     confirmedCount: number;
     todayCount: number;
     recentPending: DBBooking[];
+    pendingCountsByDate: Record<string, number>;
 }> {
     try {
         const todayStr = new Date().toISOString().split('T')[0];
 
-        const [pendingRes, confirmedRes, todayRes, recentRes] = await Promise.all([
+        const [pendingRes, confirmedRes, todayRes, recentRes, pendingDatesRes] = await Promise.all([
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('status', 'confirmed'),
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('booking_date', todayStr),
             supabase.from('ps_bookings').select('*').eq('status', 'pending').order('created_at', { ascending: false }).limit(50),
+            supabase.from('ps_bookings').select('booking_date').eq('status', 'pending'),
         ]);
+
+        const pendingCountsByDate: Record<string, number> = {};
+        (pendingDatesRes.data || []).forEach((item: { booking_date: string }) => {
+            if (item.booking_date) {
+                pendingCountsByDate[item.booking_date] = (pendingCountsByDate[item.booking_date] || 0) + 1;
+            }
+        });
 
         return {
             pendingCount: pendingRes.count || 0,
             confirmedCount: confirmedRes.count || 0,
             todayCount: todayRes.count || 0,
             recentPending: (recentRes.data || []) as DBBooking[],
+            pendingCountsByDate,
         };
     } catch (err) {
         console.error('Error fetching booking metrics:', err);
-        return { pendingCount: 0, confirmedCount: 0, todayCount: 0, recentPending: [] };
+        return { pendingCount: 0, confirmedCount: 0, todayCount: 0, recentPending: [], pendingCountsByDate: {} };
+    }
+}
+
+export async function fetchPendingCountsByDate(): Promise<Record<string, number>> {
+    try {
+        const { data, error } = await supabase
+            .from('ps_bookings')
+            .select('booking_date')
+            .eq('status', 'pending');
+        if (error) {
+            console.error('Error fetching pending counts by date:', error);
+            return {};
+        }
+        const counts: Record<string, number> = {};
+        (data || []).forEach((item: { booking_date: string }) => {
+            if (item.booking_date) {
+                counts[item.booking_date] = (counts[item.booking_date] || 0) + 1;
+            }
+        });
+        return counts;
+    } catch (err) {
+        console.error('Exception in fetchPendingCountsByDate:', err);
+        return {};
     }
 }
 

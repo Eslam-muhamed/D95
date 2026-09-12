@@ -74,7 +74,7 @@ export default function AdminDashboardPage() {
         },
         {
             id: 'menu_settings',
-            label: 'المنيو والأسعار',
+            label: 'منيو وأسعار الكافيه',
             icon: <UtensilsCrossed className="w-4 h-4" />,
         },
     ];

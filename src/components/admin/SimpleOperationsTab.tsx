@@ -53,6 +53,7 @@ import {
 } from '@/lib/bookingDatetime';
 import type { DBBooking, BookingPolicy } from '@/types/database';
 import BookingDetailsModal from './BookingDetailsModal';
+import AdminCalendarPopover from './AdminCalendarPopover';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 import { supabase } from '@/lib/supabase';
 
@@ -93,7 +94,12 @@ export default function SimpleOperationsTab() {
 
     // Filters for Daily Schedule
     const [roomFilter, setRoomFilter] = useState<string>('all');
+    const [dailyStatusFilter, setDailyStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'cancelled' | 'completed'>('all');
     const [dailySearch, setDailySearch] = useState<string>('');
+
+    // Calendar Popover & Pending Counts per Date
+    const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
+    const [pendingCountsByDate, setPendingCountsByDate] = useState<Record<string, number>>({});
 
     // Accordion for Conflicting Bookings
     const [expandedConflictIds, setExpandedConflictIds] = useState<Record<string, boolean>>({});
@@ -136,6 +142,9 @@ export default function SimpleOperationsTab() {
             ]);
 
             setAllPendingBookings(metrics.recentPending);
+            if (metrics.pendingCountsByDate) {
+                setPendingCountsByDate(metrics.pendingCountsByDate);
+            }
             setTodayBookings(dayData);
             setRoomRates(rates);
             setRateRoom1(rates['room-1'] || 100);
@@ -366,10 +375,38 @@ export default function SimpleOperationsTab() {
             .reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
     }, [todayBookings]);
 
+    // Status counts for selected date (taking into account roomFilter)
+    const dailyStatusCounts = useMemo(() => {
+        const counts = { all: 0, pending: 0, confirmed: 0, cancelled: 0, completed: 0 };
+        todayBookings.forEach((b) => {
+            if (roomFilter !== 'all' && b.room_name !== roomFilter) return;
+            counts.all += 1;
+            if (b.status === 'pending') counts.pending += 1;
+            else if (b.status === 'confirmed') counts.confirmed += 1;
+            else if (b.status === 'cancelled') counts.cancelled += 1;
+            else if (b.status === 'completed') counts.completed += 1;
+        });
+        return counts;
+    }, [todayBookings, roomFilter]);
+
+    const dailyStatusOptions = useMemo(() => {
+        const list: { id: 'all' | 'pending' | 'confirmed' | 'cancelled' | 'completed'; label: string; count: number }[] = [
+            { id: 'all', label: 'الكل', count: dailyStatusCounts.all },
+            { id: 'pending', label: 'معلق', count: dailyStatusCounts.pending },
+            { id: 'confirmed', label: 'مؤكد', count: dailyStatusCounts.confirmed },
+            { id: 'cancelled', label: 'ملغي', count: dailyStatusCounts.cancelled },
+        ];
+        if (dailyStatusCounts.completed > 0) {
+            list.push({ id: 'completed', label: 'مكتمل', count: dailyStatusCounts.completed });
+        }
+        return list;
+    }, [dailyStatusCounts]);
+
     // Filtered Daily Bookings
     const filteredDailyBookings = useMemo(() => {
         return todayBookings.filter(b => {
             if (roomFilter !== 'all' && b.room_name !== roomFilter) return false;
+            if (dailyStatusFilter !== 'all' && b.status !== dailyStatusFilter) return false;
             if (dailySearch.trim()) {
                 const s = dailySearch.toLowerCase();
                 const matchName = b.customer_name?.toLowerCase().includes(s);
@@ -379,7 +416,7 @@ export default function SimpleOperationsTab() {
             }
             return true;
         });
-    }, [todayBookings, roomFilter, dailySearch]);
+    }, [todayBookings, roomFilter, dailyStatusFilter, dailySearch]);
 
     // Room options
     const roomOptions = useMemo(() => {
@@ -402,6 +439,15 @@ export default function SimpleOperationsTab() {
             return selectedDate;
         }
     }, [selectedDate]);
+
+    // Calendar notification calculations
+    const totalPendingCount = useMemo(() => {
+        return Object.values(pendingCountsByDate).reduce((sum, count) => sum + count, 0);
+    }, [pendingCountsByDate]);
+
+    const selectedDatePendingCount = pendingCountsByDate[selectedDate] || 0;
+    const tomorrowDateStr = useMemo(() => addDaysToDateString(todayStr, 1), [todayStr]);
+    const tomorrowPendingCount = pendingCountsByDate[tomorrowDateStr] || 0;
 
     // WhatsApp opener
     const openWhatsAppDirect = (e: React.MouseEvent, b: DBBooking) => {
@@ -713,21 +759,67 @@ export default function SimpleOperationsTab() {
                                     <ChevronRight className="w-4 h-4" />
                                 </button>
 
-                                <div className="relative flex items-center px-3 py-1 cursor-pointer">
-                                    <span className="text-xs sm:text-sm font-bold text-slate-900 whitespace-nowrap">
-                                        {formattedDateTitle}
+                                <div className="relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsCalendarOpen(prev => !prev);
+                                            playPs5NavigateSound();
+                                        }}
+                                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-white transition-all cursor-pointer group"
+                                        title="اضغط لفتح تقويم الحجوزات والمواعيد"
+                                    >
+                                        <div className="relative">
+                                            <Calendar className="w-3.5 h-3.5 text-red-600 group-hover:scale-110 transition-transform shrink-0" />
+                                            {/* Notification badge on calendar icon if any pending bookings exist */}
+                                            {totalPendingCount > 0 && (
+                                                <span
+                                                    className="absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-0.5 bg-amber-500 text-slate-950 font-black text-[9px] rounded-full flex items-center justify-center border border-white shadow-2xs animate-pulse"
+                                                    title={`يوجد ${totalPendingCount} حجز معلق`}
+                                                >
+                                                    {totalPendingCount}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <span className="text-xs sm:text-sm font-bold text-slate-900 whitespace-nowrap">
+                                            {formattedDateTitle}
+                                        </span>
+
                                         {selectedDate === todayStr && (
-                                            <span className="mr-1.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded">
+                                            <span className="mr-1 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded">
                                                 اليوم
                                             </span>
                                         )}
-                                    </span>
-                                    <input
-                                        type="date"
-                                        value={selectedDate}
-                                        onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
-                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                        title="اختر تاريخاً من التقويم"
+
+                                        {/* Status badge if selected date has pending bookings */}
+                                        {selectedDatePendingCount > 0 && (
+                                            <span className="mr-1 text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse" />
+                                                <span>{selectedDatePendingCount} معلق</span>
+                                            </span>
+                                        )}
+
+                                        {/* Notice if tomorrow has pending bookings and user is currently on today */}
+                                        {selectedDate === todayStr && tomorrowPendingCount > 0 && (
+                                            <span className="hidden sm:inline-flex items-center gap-1 mr-1 text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded-full">
+                                                <AlertCircle className="w-2.5 h-2.5 text-amber-600" />
+                                                <span>غداً: {tomorrowPendingCount} معلق</span>
+                                            </span>
+                                        )}
+
+                                        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${isCalendarOpen ? 'rotate-180 text-red-600' : ''}`} />
+                                    </button>
+
+                                    <AdminCalendarPopover
+                                        isOpen={isCalendarOpen}
+                                        onClose={() => setIsCalendarOpen(false)}
+                                        selectedDate={selectedDate}
+                                        onSelectDate={(newDate) => {
+                                            setSelectedDate(newDate);
+                                            setIsCalendarOpen(false);
+                                        }}
+                                        pendingCountsByDate={pendingCountsByDate}
                                     />
                                 </div>
 
@@ -780,7 +872,7 @@ export default function SimpleOperationsTab() {
 
                     {/* Today's Bookings Section */}
                     <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                                 <User className="w-4 h-4 text-red-600" />
                                 <h3 className="text-sm sm:text-base font-bold text-slate-900">
@@ -788,16 +880,55 @@ export default function SimpleOperationsTab() {
                                 </h3>
                             </div>
 
-                            {/* Search */}
-                            <div className="relative w-48 sm:w-64">
-                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                                <input
-                                    type="text"
-                                    placeholder="بحث بالاسم أو الهاتف..."
-                                    value={dailySearch}
-                                    onChange={(e) => setDailySearch(e.target.value)}
-                                    className="w-full bg-slate-50 text-slate-900 text-xs rounded-xl pr-9 pl-3 py-2 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
-                                />
+                            <div className="flex flex-wrap items-center gap-2.5">
+                                {/* Status Filter Pills */}
+                                <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-0.5 text-xs overflow-x-auto scrollbar-none">
+                                    {dailyStatusOptions.map((opt) => (
+                                        <button
+                                            key={opt.id}
+                                            type="button"
+                                            onClick={() => setDailyStatusFilter(opt.id)}
+                                            className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                                                dailyStatusFilter === opt.id
+                                                    ? 'bg-red-600 text-white shadow-xs'
+                                                    : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                                            }`}
+                                        >
+                                            <span>{opt.label}</span>
+                                            <span
+                                                className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold leading-none ${
+                                                    dailyStatusFilter === opt.id
+                                                        ? 'bg-white/20 text-white'
+                                                        : 'bg-slate-200/90 text-slate-600'
+                                                }`}
+                                            >
+                                                {opt.count}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Search */}
+                                <div className="relative w-full sm:w-56">
+                                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="بحث بالاسم أو الهاتف..."
+                                        value={dailySearch}
+                                        onChange={(e) => setDailySearch(e.target.value)}
+                                        className="w-full bg-slate-50 text-slate-900 text-xs rounded-xl pr-9 pl-8 py-2 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
+                                    />
+                                    {dailySearch && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setDailySearch('')}
+                                            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                                            title="مسح البحث"
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
@@ -806,8 +937,21 @@ export default function SimpleOperationsTab() {
                                 <RefreshCw className="w-5 h-5 animate-spin text-red-600" />
                             </div>
                         ) : filteredDailyBookings.length === 0 ? (
-                            <div className="py-12 text-center text-xs text-slate-500 border border-dashed border-slate-200 rounded-xl">
-                                لا توجد حجوزات مسجلة لهذا التاريخ.
+                            <div className="py-12 text-center text-xs text-slate-500 border border-dashed border-slate-200 rounded-xl space-y-2">
+                                <p>لا توجد حجوزات تطابق الفلتر أو البحث المحدد.</p>
+                                {(dailyStatusFilter !== 'all' || dailySearch || roomFilter !== 'all') && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setDailyStatusFilter('all');
+                                            setDailySearch('');
+                                            setRoomFilter('all');
+                                        }}
+                                        className="text-red-600 hover:underline font-bold text-xs cursor-pointer"
+                                    >
+                                        إعادة ضبط جميع الفلاتر
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             <>
