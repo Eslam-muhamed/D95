@@ -3,6 +3,7 @@ import { Flame } from 'lucide-react';
 import { categories } from '@/constants/menuMetadata';
 import { useScrollSpy } from '@/hooks/useScrollSpy';
 import CategoryIcon from './CategoryIcon';
+import { playPaperFlipSound } from '@/lib/sound';
 
 import type { MenuCategory } from '@/types/menu';
 import type { DBCategory } from '@/types/database';
@@ -25,6 +26,7 @@ export default function CategoryNav({ activeCategory, onCategoryChange, categori
   const isAllActive = activeCategory === 'all';
 
   const scrollToOffers = () => {
+    playPaperFlipSound();
     const el = document.getElementById('offers-section');
     el?.scrollIntoView({ behavior: 'smooth' });
   };

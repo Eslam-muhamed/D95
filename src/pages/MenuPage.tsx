@@ -15,6 +15,7 @@ import { allItems as defaultItems } from '@/constants/menuData';
 import type { MenuItem, MenuCategory } from '@/types/menu';
 import { fetchCategories, fetchProducts, fetchOffers, getCachedCategories, getCachedProducts, getCachedOffers } from '@/services/menuService';
 import type { DBOffer } from '@/types/database';
+import { playPaperFlipSound } from '@/lib/sound';
 
 function ScrollToTop() {
   const [visible, setVisible] = useState(false);
@@ -124,6 +125,7 @@ export default function MenuPage() {
   }, []);
 
   const handleCategoryChange = (id: string) => {
+    playPaperFlipSound();
     setActiveCategory(id);
     setSearch('');
     if (id !== 'all') {

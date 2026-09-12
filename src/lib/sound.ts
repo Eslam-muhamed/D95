@@ -458,4 +458,149 @@ export function playPs5SelectSound(): void {
     }
 }
 
+/**
+ * Plays an authentic, crisp paper page-turn / menu flip sound effect.
+ * Synthesized via Web Audio API:
+ * 1. Initial fingertip friction transient across paper texture (high-frequency filtered micro-scratch)
+ * 2. Aerodynamic sheet whoosh/flutter as the page turns through the air (swept resonant bandpass)
+ * 3. Delicate paper body snap / thwack (low-mid physical resonance as the sheet settles)
+ * 4. Crisp cardstock edge rustle (fine inharmonic settlement)
+ * 5. Organic micro-variations for repeated browsing without repetitive fatigue
+ */
+export function playPaperFlipSound(): void {
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        // Subtle organic pitch / frequency variation (±6%)
+        const variation = 0.94 + Math.random() * 0.12;
+
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0.75, now);
+        masterGain.connect(ctx.destination);
+
+        // --- 1. FINGERTIP FRICTION / SLIDE (Initial touch on page) ---
+        const frictionDur = 0.035;
+        const frictionBufSize = Math.floor(ctx.sampleRate * frictionDur);
+        const frictionBuffer = ctx.createBuffer(1, frictionBufSize, ctx.sampleRate);
+        const frictionData = frictionBuffer.getChannelData(0);
+        for (let i = 0; i < frictionBufSize; i++) {
+            frictionData[i] = Math.random() * 2 - 1;
+        }
+
+        const frictionSource = ctx.createBufferSource();
+        frictionSource.buffer = frictionBuffer;
+
+        const frictionFilter = ctx.createBiquadFilter();
+        frictionFilter.type = 'bandpass';
+        frictionFilter.frequency.setValueAtTime(3600 * variation, now);
+        frictionFilter.frequency.exponentialRampToValueAtTime(2400 * variation, now + frictionDur);
+        frictionFilter.Q.setValueAtTime(2.2, now);
+
+        const frictionGain = ctx.createGain();
+        frictionGain.gain.setValueAtTime(0, now);
+        frictionGain.gain.linearRampToValueAtTime(0.25, now + 0.003);
+        frictionGain.gain.exponentialRampToValueAtTime(0.0001, now + frictionDur);
+
+        frictionSource.connect(frictionFilter);
+        frictionFilter.connect(frictionGain);
+        frictionGain.connect(masterGain);
+
+        frictionSource.start(now);
+        frictionSource.stop(now + frictionDur);
+
+        // --- 2. AERODYNAMIC SHEET FLUTTER & SWOOSH (The turning page in motion) ---
+        const swishDur = 0.18;
+        const swishBufSize = Math.floor(ctx.sampleRate * swishDur);
+        const swishBuffer = ctx.createBuffer(1, swishBufSize, ctx.sampleRate);
+        const swishData = swishBuffer.getChannelData(0);
+        for (let i = 0; i < swishBufSize; i++) {
+            swishData[i] = Math.random() * 2 - 1;
+        }
+
+        const swishSource = ctx.createBufferSource();
+        swishSource.buffer = swishBuffer;
+
+        const swishFilter = ctx.createBiquadFilter();
+        swishFilter.type = 'bandpass';
+        // Downward sweep mimicking aerodynamic air drag as the page flips from vertical to horizontal
+        swishFilter.frequency.setValueAtTime(2200 * variation, now + 0.01);
+        swishFilter.frequency.exponentialRampToValueAtTime(750 * variation, now + swishDur);
+        swishFilter.Q.setValueAtTime(1.8, now);
+
+        const swishGain = ctx.createGain();
+        const tSwishStart = now + 0.008;
+        swishGain.gain.setValueAtTime(0, tSwishStart);
+        // Swell up as page catches air
+        swishGain.gain.linearRampToValueAtTime(0.38, tSwishStart + 0.035);
+        // Slight flutter dip in the middle
+        swishGain.gain.linearRampToValueAtTime(0.22, tSwishStart + 0.075);
+        // Second flutter ripple as the corner turns
+        swishGain.gain.linearRampToValueAtTime(0.32, tSwishStart + 0.10);
+        swishGain.gain.exponentialRampToValueAtTime(0.0001, tSwishStart + swishDur);
+
+        swishSource.connect(swishFilter);
+        swishFilter.connect(swishGain);
+        swishGain.connect(masterGain);
+
+        swishSource.start(tSwishStart);
+        swishSource.stop(tSwishStart + swishDur);
+
+        // --- 3. PAPER BODY SNAP / DAMPED THUMP (Weight of the cardstock turning over) ---
+        const snapDelay = 0.055;
+        const snapTime = now + snapDelay;
+        const snapOsc = ctx.createOscillator();
+        const snapGain = ctx.createGain();
+
+        snapOsc.type = 'triangle';
+        snapOsc.frequency.setValueAtTime(210 * variation, snapTime);
+        snapOsc.frequency.exponentialRampToValueAtTime(65, snapTime + 0.045);
+
+        snapGain.gain.setValueAtTime(0, snapTime);
+        snapGain.gain.linearRampToValueAtTime(0.22, snapTime + 0.003);
+        snapGain.gain.exponentialRampToValueAtTime(0.0001, snapTime + 0.05);
+
+        snapOsc.connect(snapGain);
+        snapGain.connect(masterGain);
+
+        snapOsc.start(snapTime);
+        snapOsc.stop(snapTime + 0.055);
+
+        // --- 4. CRISP PAPER EDGE SETTLE / RUSTLE (The page landing flat) ---
+        const settleDelay = 0.07;
+        const settleDur = 0.10;
+        const settleTime = now + settleDelay;
+        const settleBufSize = Math.floor(ctx.sampleRate * settleDur);
+        const settleBuffer = ctx.createBuffer(1, settleBufSize, ctx.sampleRate);
+        const settleData = settleBuffer.getChannelData(0);
+        for (let i = 0; i < settleBufSize; i++) {
+            settleData[i] = Math.random() * 2 - 1;
+        }
+
+        const settleSource = ctx.createBufferSource();
+        settleSource.buffer = settleBuffer;
+
+        const settleFilter = ctx.createBiquadFilter();
+        settleFilter.type = 'bandpass';
+        settleFilter.frequency.setValueAtTime(2800 * variation, settleTime);
+        settleFilter.frequency.exponentialRampToValueAtTime(1600 * variation, settleTime + settleDur);
+        settleFilter.Q.setValueAtTime(2.5, settleTime);
+
+        const settleGain = ctx.createGain();
+        settleGain.gain.setValueAtTime(0, settleTime);
+        settleGain.gain.linearRampToValueAtTime(0.20, settleTime + 0.008);
+        settleGain.gain.exponentialRampToValueAtTime(0.0001, settleTime + settleDur);
+
+        settleSource.connect(settleFilter);
+        settleFilter.connect(settleGain);
+        settleGain.connect(masterGain);
+
+        settleSource.start(settleTime);
+        settleSource.stop(settleTime + settleDur);
+    } catch {
+        // Silently fail if audio not supported
+    }
+}
+
+
 
