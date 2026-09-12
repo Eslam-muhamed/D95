@@ -15,6 +15,9 @@ import {
     FileText,
     Sun,
     Moon,
+    PhoneCall,
+    AlertCircle,
+    ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -26,6 +29,7 @@ import { CONTACT_INFO } from '@/constants/contactInfo';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 import { createBooking } from '@/services/bookingService';
 import { createDateTimeFromBusinessDate, calculateEndDateTime } from '@/lib/bookingDatetime';
+import { fetchPaymentSettings, PaymentSettings } from '@/services/paymentSettingsService';
 
 type PaymentMethod = 'instapay' | 'wallet' | 'cash';
 
@@ -74,6 +78,20 @@ export default function BookingPaymentPage() {
     const [notes, setNotes] = useState('');
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
+
+    const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
+        walletNumber: CONTACT_INFO.walletNumber,
+        instapayHandle: CONTACT_INFO.instapayHandle,
+        instapayLink: '',
+    });
+
+    useEffect(() => {
+        fetchPaymentSettings().then((res) => {
+            if (res) {
+                setPaymentSettings(res);
+            }
+        });
+    }, []);
 
     useEffect(() => {
         if (!bookingState || !bookingState.room) {
@@ -125,6 +143,16 @@ export default function BookingPaymentPage() {
 
     // Net total calculation
     const netTotal = (roomSubtotal || 200) + (effectiveSnacksTotal || 0);
+
+    const activeWalletNumber = paymentSettings.walletNumber || CONTACT_INFO.walletNumber;
+    const cleanWalletNumber = activeWalletNumber.replace(/\D/g, '');
+    const activeInstapayHandle = paymentSettings.instapayHandle || CONTACT_INFO.instapayHandle;
+    const activeInstapayLink = paymentSettings.instapayLink;
+
+    // USSD quick transfer code for Vodafone Cash: *9*7*الرقم*المبلغ#
+    // Encoded for tel: protocol as *9*7*PHONE*AMOUNT%23
+    const ussdTransferCode = `*9*7*${cleanWalletNumber}*${netTotal}#`;
+    const ussdTelUri = `tel:*9*7*${cleanWalletNumber}*${netTotal}%23`;
 
     const handleConfirm = async () => {
         if (!name.trim() || name.trim().length < 3) {
@@ -376,20 +404,21 @@ export default function BookingPaymentPage() {
                                     <motion.div
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
-                                        className="overflow-hidden pt-3 border-t border-neutral-200 dark:border-white/10 flex flex-col gap-2.5"
+                                        className="overflow-hidden pt-3 border-t border-neutral-200 dark:border-white/10 flex flex-col gap-3"
                                     >
+                                        {/* InstaPay Handle & Copy */}
                                         <div className="bg-neutral-100 dark:bg-black/60 p-3 rounded-xl flex items-center justify-between border border-neutral-200 dark:border-white/10 shadow-sm">
                                             <div className="flex flex-col min-w-0">
                                                 <span className="text-xs text-neutral-600 dark:text-neutral-400 font-semibold">معرف إنستاباي المعتمد (IPA):</span>
                                                 <span className="text-sm sm:text-base font-bold text-red-600 dark:text-red-400 font-mono tracking-wider select-all" dir="ltr">
-                                                    {CONTACT_INFO.instapayHandle}
+                                                    {activeInstapayHandle}
                                                 </span>
                                             </div>
                                             <button
                                                 type="button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleCopy(CONTACT_INFO.instapayHandle, 'instapay');
+                                                    handleCopy(activeInstapayHandle, 'instapay');
                                                 }}
                                                 className="shrink-0 flex items-center gap-1.5 bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-sm"
                                             >
@@ -407,11 +436,57 @@ export default function BookingPaymentPage() {
                                             </button>
                                         </div>
 
+                                        {/* ONE-TAP QUICK INSTAPAY TRANSFER ACTION */}
+                                        <div className="p-3 bg-red-500/10 dark:bg-red-950/40 rounded-xl border border-red-500/30 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-xs font-bold text-red-700 dark:text-red-300">
+                                                        ⚡ تحويل فوري عبر إنستاباي:
+                                                    </span>
+                                                    <span className="text-[10px] font-mono font-bold bg-red-500/20 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded">
+                                                        {netTotal} ج.م
+                                                    </span>
+                                                </div>
+                                                <span className="text-[11px] text-neutral-600 dark:text-neutral-400 mt-0.5">
+                                                    يتم نسخ المعرف والمبلغ تلقائياً والانتقال لتطبيق إنستاباي
+                                                </span>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleCopy(activeInstapayHandle, 'instapay');
+                                                    playPs5SelectSound();
+                                                    toast.success(`تم نسخ معرف إنستاباي (${activeInstapayHandle}) والمبلغ (${netTotal} ج.م)!`);
+                                                    if (activeInstapayLink) {
+                                                        window.open(activeInstapayLink, '_blank');
+                                                    } else {
+                                                        // Attempt deep link to InstaPay application
+                                                        window.location.href = 'instapay://';
+                                                    }
+                                                }}
+                                                className="flex items-center justify-center gap-1.5 bg-red-600 hover:bg-red-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer shrink-0"
+                                            >
+                                                <ExternalLink className="w-4 h-4" />
+                                                <span>فتح تطبيق InstaPay للتحويل</span>
+                                            </button>
+                                        </div>
+
+                                        {/* USER VERIFICATION NOTICE (ملحوظة مراجعة المعرف والمبلغ) */}
+                                        <div className="p-3 rounded-xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/30 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2 leading-relaxed">
+                                            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                                            <div>
+                                                <span className="font-bold text-amber-700 dark:text-amber-300">ملاحظة هامة: </span>
+                                                يرجى مراجعة معرف / حساب إنستاباي بدقة للتأكد قبل إتمام العملية: (<span className="font-mono font-bold text-neutral-900 dark:text-white select-all">{activeInstapayHandle}</span>) وقيمة المبلغ المطلوب (<span className="font-bold text-red-600 dark:text-red-400 font-mono">{netTotal} ج.م</span>).
+                                            </div>
+                                        </div>
+
                                         <div className="bg-red-50 dark:bg-[#1c1417]/80 p-3 rounded-xl border border-red-200 dark:border-white/10 text-xs text-neutral-700 dark:text-neutral-300 font-medium space-y-1">
                                             <p className="text-red-600 dark:text-red-400 font-bold">⚡ خطوات بسيطة وسريعة:</p>
-                                            <p>١. افتح تطبيق إنستاباي ➔ تحويل إلى عنوان دفع لحظي (IPA).</p>
-                                            <p>٢. الصق المعرف المنسوخ أعلاه وحوّل المبلغ المطلوب ({netTotal} ج.م).</p>
-                                            <p>٣. اضغط بالأسفل لإرسال سكرين شوت الإيصال عبر واتساب لتأكيد الغرفة فوراً.</p>
+                                            <p>١. اضغط على "فتح تطبيق InstaPay" أعلاه (سيتم نسخ المعرف تلقائياً).</p>
+                                            <p>٢. في التطبيق اختر: تحويل إلى عنوان دفع لحظي (IPA) أو رقم الهاتف.</p>
+                                            <p>٣. الصق المعرف المنسوخ وحوّل المبلغ المطلوب ({netTotal} ج.م).</p>
                                         </div>
                                     </motion.div>
                                 )}
@@ -502,37 +577,99 @@ export default function BookingPaymentPage() {
                                     <motion.div
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
-                                        className="overflow-hidden pt-3 border-t border-neutral-200 dark:border-white/10 flex flex-col gap-2"
+                                        className="overflow-hidden pt-3 border-t border-neutral-200 dark:border-white/10 flex flex-col gap-3"
                                     >
+                                        {/* Wallet Number Display & Copy */}
                                         <div className="bg-neutral-100 dark:bg-black/60 p-3 rounded-xl flex items-center justify-between border border-neutral-200 dark:border-white/10 shadow-sm">
                                             <div className="flex flex-col min-w-0">
                                                 <span className="text-xs text-neutral-600 dark:text-neutral-400 font-semibold">رقم المحفظة المعتمد للتحويل:</span>
                                                 <span className="text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400 font-mono tracking-wider select-all" dir="ltr">
-                                                    {CONTACT_INFO.walletNumber || 'سيتم إرسال الرقم لتأكيد الحجز'}
+                                                    {activeWalletNumber}
                                                 </span>
                                             </div>
-                                            {CONTACT_INFO.walletNumber && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleCopy(activeWalletNumber, 'wallet');
+                                                }}
+                                                className="shrink-0 flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-sm"
+                                            >
+                                                {copiedKey === 'wallet' ? (
+                                                    <>
+                                                        <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                                                        <span>تم النسخ</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Copy className="w-4 h-4" />
+                                                        <span>نسخ الرقم</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+
+                                        {/* ONE-TAP USSD QUICK PAYMENT ACTION (كود التحويل المباشر من الموبايل) */}
+                                        <div className="p-3 bg-emerald-500/10 dark:bg-emerald-950/40 rounded-xl border border-emerald-500/30 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                                                        ⚡ كود تحويل فودافون كاش السريع:
+                                                    </span>
+                                                    <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">
+                                                        {netTotal} ج.م
+                                                    </span>
+                                                </div>
+                                                <span className="font-mono font-bold text-xs sm:text-sm text-neutral-800 dark:text-neutral-200 mt-0.5" dir="ltr">
+                                                    {ussdTransferCode}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <a
+                                                    href={ussdTelUri}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        playPs5SelectSound();
+                                                    }}
+                                                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+                                                >
+                                                    <PhoneCall className="w-4 h-4" />
+                                                    <span>اتصال وتحويل فوري</span>
+                                                </a>
+
                                                 <button
                                                     type="button"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        handleCopy(CONTACT_INFO.walletNumber, 'wallet');
+                                                        handleCopy(ussdTransferCode, 'ussd');
                                                     }}
-                                                    className="shrink-0 flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-sm"
+                                                    className="flex items-center gap-1 bg-white dark:bg-black/60 hover:bg-neutral-50 border border-neutral-300 dark:border-white/15 text-neutral-700 dark:text-neutral-200 px-2.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95"
+                                                    title="نسخ كود التحويل بالكامل"
                                                 >
-                                                    {copiedKey === 'wallet' ? (
-                                                        <>
-                                                            <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-                                                            <span>تم النسخ</span>
-                                                        </>
+                                                    {copiedKey === 'ussd' ? (
+                                                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                                                     ) : (
-                                                        <>
-                                                            <Copy className="w-4 h-4" />
-                                                            <span>نسخ الرقم</span>
-                                                        </>
+                                                        <Copy className="w-4 h-4" />
                                                     )}
+                                                    <span className="hidden xs:inline">نسخ الكود</span>
                                                 </button>
-                                            )}
+                                            </div>
+                                        </div>
+
+                                        {/* USER VERIFICATION NOTICE (ملحوظة مراجعة الرقم والمبلغ) */}
+                                        <div className="p-3 rounded-xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/30 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2 leading-relaxed">
+                                            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                                            <div>
+                                                <span className="font-bold text-amber-700 dark:text-amber-300">ملاحظة هامة: </span>
+                                                يرجى مراجعة رقم المحفظة المحول إليه بدقة للتأكد قبل تأكيد العملية: (<span className="font-mono font-bold text-neutral-900 dark:text-white select-all">{activeWalletNumber}</span>) وقيمة المبلغ المطلوب (<span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">{netTotal} ج.م</span>).
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-neutral-50 dark:bg-[#1c1417]/80 p-3 rounded-xl border border-neutral-200 dark:border-white/10 text-xs text-neutral-700 dark:text-neutral-300 font-medium space-y-1">
+                                            <p className="text-emerald-600 dark:text-emerald-400 font-bold">💡 طريقة التحويل من أي محفظة:</p>
+                                            <p>• فودافون كاش: اضغط على زر "اتصال وتحويل فوري" أعلاه مباشرةً وأدخل الرقم السري.</p>
+                                            <p>• المحافظ الأخرى (أورنج/اتصالات/تيلدا/وي/البنوك): افتح تطبيق محفظتك واختر تحويل إلى الرقم ({activeWalletNumber}).</p>
                                         </div>
                                     </motion.div>
                                 )}

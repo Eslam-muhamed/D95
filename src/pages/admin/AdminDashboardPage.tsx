@@ -4,6 +4,7 @@ import {
     Gamepad2,
     UtensilsCrossed,
     ShoppingBag,
+    Wallet,
     ExternalLink,
     LogOut,
 } from 'lucide-react';
@@ -11,10 +12,11 @@ import { toast } from 'sonner';
 import SimpleOperationsTab from '@/components/admin/SimpleOperationsTab';
 import OrdersTab from '@/components/admin/OrdersTab';
 import SimpleMenuSettingsTab from '@/components/admin/SimpleMenuSettingsTab';
+import PaymentSettingsTab from '@/components/admin/PaymentSettingsTab';
 import { supabase } from '@/lib/supabase';
 import { playPs5NavigateSound } from '@/lib/sound';
 
-type TabType = 'operations' | 'orders' | 'menu_settings';
+type TabType = 'operations' | 'orders' | 'menu_settings' | 'payment_settings';
 
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
@@ -76,6 +78,11 @@ export default function AdminDashboardPage() {
             id: 'menu_settings',
             label: 'منيو وأسعار الكافيه',
             icon: <UtensilsCrossed className="w-4 h-4" />,
+        },
+        {
+            id: 'payment_settings',
+            label: 'إعدادات الدفع والمحافظ',
+            icon: <Wallet className="w-4 h-4" />,
         },
     ];
 
@@ -158,7 +165,7 @@ export default function AdminDashboardPage() {
 
             {/* Mobile Top Sub-Header: Segmented Bar */}
             <div className="md:hidden bg-white border-b border-slate-200 px-3 py-2">
-                <div className="grid grid-cols-3 gap-1.5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                     {navItems.map((item) => {
                         const isActive = activeTab === item.id;
                         return (
@@ -193,6 +200,7 @@ export default function AdminDashboardPage() {
                 {activeTab === 'operations' && <SimpleOperationsTab />}
                 {activeTab === 'orders' && <OrdersTab />}
                 {activeTab === 'menu_settings' && <SimpleMenuSettingsTab />}
+                {activeTab === 'payment_settings' && <PaymentSettingsTab />}
             </main>
 
             {/* Mobile Bottom Navigation Bar */}
@@ -208,7 +216,7 @@ export default function AdminDashboardPage() {
                     }`}
                 >
                     <Gamepad2 className="w-5 h-5" />
-                    <span className="text-[11px]">الحجوزات</span>
+                    <span className="text-[10px]">الحجوزات</span>
                 </button>
 
                 <button
@@ -227,7 +235,7 @@ export default function AdminDashboardPage() {
                             <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 animate-ping" />
                         )}
                     </div>
-                    <span className="text-[11px]">الكافيه</span>
+                    <span className="text-[10px]">الكافيه</span>
                 </button>
 
                 <button
@@ -241,7 +249,21 @@ export default function AdminDashboardPage() {
                     }`}
                 >
                     <UtensilsCrossed className="w-5 h-5" />
-                    <span className="text-[11px]">المنيو والأسعار</span>
+                    <span className="text-[10px]">المنيو</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => {
+                        playPs5NavigateSound();
+                        setActiveTab('payment_settings');
+                    }}
+                    className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-xl transition-all cursor-pointer ${
+                        activeTab === 'payment_settings' ? 'text-emerald-600 font-bold' : 'text-slate-500'
+                    }`}
+                >
+                    <Wallet className="w-5 h-5" />
+                    <span className="text-[10px]">المحافظ والدفع</span>
                 </button>
             </nav>
         </div>
