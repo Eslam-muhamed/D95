@@ -71,6 +71,33 @@ function formatTimeAgo(dateStr: string): string {
     return `منذ ${Math.floor(hours / 24)} يوم`;
 }
 
+const LOUNGE_ROOM_FILTERS = [
+    { id: 'all', label: 'كل الغرف' },
+    { id: 'room-1', label: 'غرفة 01 (PLAY ROOM)' },
+    { id: 'room-2', label: 'غرفة 02 (PLAY ROOM)' },
+] as const;
+
+function getNormalizedRoomName(b: DBBooking | null | undefined): string {
+    if (!b) return 'غرفة اللعب';
+    const text = `${b.room_id || ''} ${b.room_name || ''}`.toLowerCase();
+    if (text.includes('02') || text.includes('station b') || text.includes('غرفة 2') || text.includes('room 2') || text.includes('room-2')) {
+        return 'غرفة 02 (PLAY ROOM)';
+    }
+    return 'غرفة 01 (PLAY ROOM)';
+}
+
+function isBookingMatchingRoom(b: DBBooking, roomFilterId: string): boolean {
+    if (roomFilterId === 'all') return true;
+    const normalized = getNormalizedRoomName(b);
+    if (roomFilterId === 'room-1') {
+        return normalized === 'غرفة 01 (PLAY ROOM)';
+    }
+    if (roomFilterId === 'room-2') {
+        return normalized === 'غرفة 02 (PLAY ROOM)';
+    }
+    return false;
+}
+
 export default function SimpleOperationsTab() {
     const [activeSubTab, setActiveSubTab] = useState<SubTabType>('dashboard');
 
@@ -82,7 +109,7 @@ export default function SimpleOperationsTab() {
     const [todayBookings, setTodayBookings] = useState<DBBooking[]>([]);
     const [recentBookings, setRecentBookings] = useState<DBBooking[]>([]);
     const [allPendingBookings, setAllPendingBookings] = useState<DBBooking[]>([]);
-    const [, setGeneralStats] = useState<{
+    const [generalStats, setGeneralStats] = useState<{
         totalBookings: number;
         totalRevenue: number;
         pendingCount: number;
@@ -111,10 +138,9 @@ export default function SimpleOperationsTab() {
     const [todayStatusFilter, setTodayStatusFilter] = useState<'all' | 'confirmed' | 'ongoing'>('confirmed');
     const [todaySearch, setTodaySearch] = useState<string>('');
 
-    // Filters for Section 2: Recent & Incoming Bookings with Calendar
-    const [recentDateFilter, setRecentDateFilter] = useState<string>(''); // empty = all dates
+    // Filters for Section 2: Incoming Pending Bookings with Calendar
+    const [recentDateFilter, setRecentDateFilter] = useState<string>(''); // empty = all upcoming dates
     const [recentRoomFilter, setRecentRoomFilter] = useState<string>('all');
-    const [recentStatusFilter, setRecentStatusFilter] = useState<'all' | 'pending' | 'confirmed'>('all');
     const [recentSearch, setRecentSearch] = useState<string>('');
     const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
     const [pendingCountsByDate, setPendingCountsByDate] = useState<Record<string, number>>({});
@@ -198,7 +224,7 @@ export default function SimpleOperationsTab() {
                     if (payload.eventType === 'INSERT') {
                         const newBooking = payload.new as DBBooking;
                         toast.info(`حجز بلايستيشن جديد: #${newBooking.reservation_id}`, {
-                            description: `${newBooking.customer_name} - ${newBooking.room_name}`,
+                            description: `${newBooking.customer_name} - ${getNormalizedRoomName(newBooking)}`,
                             duration: 6000,
                         });
                         playPs5SelectSound();
@@ -260,8 +286,20 @@ export default function SimpleOperationsTab() {
             await updateBookingStatus(b.id, 'confirmed');
             toast.success(`تم تأكيد حجز ${b.customer_name} بنجاح! ✅`);
             setAllPendingBookings(prev => prev.filter(item => item.id !== b.id));
-            setTodayBookings(prev => prev.map(item => item.id === b.id ? { ...item, status: 'confirmed' } : item));
-            setRecentBookings(prev => prev.map(item => item.id === b.id ? { ...item, status: 'confirmed' } : item));
+            setRecentBookings(prev => prev.filter(item => item.id !== b.id));
+            if (b.booking_date === todayStr) {
+                setTodayBookings(prev => {
+                    const exists = prev.some(item => item.id === b.id);
+                    if (exists) return prev.map(item => item.id === b.id ? { ...item, status: 'confirmed' } : item);
+                    return [{ ...b, status: 'confirmed' }, ...prev];
+                });
+            }
+            setGeneralStats(prev => ({
+                ...prev,
+                confirmedCount: prev.confirmedCount + 1,
+                pendingCount: Math.max(0, prev.pendingCount - 1),
+            }));
+            loadOperationsData(true);
         } catch {
             toast.error('تعذر تأكيد الحجز');
         }
@@ -275,8 +313,14 @@ export default function SimpleOperationsTab() {
             await updateBookingStatus(b.id, 'cancelled');
             toast.info(`تم إلغاء حجز ${b.customer_name}`);
             setAllPendingBookings(prev => prev.filter(item => item.id !== b.id));
+            setRecentBookings(prev => prev.filter(item => item.id !== b.id));
             setTodayBookings(prev => prev.map(item => item.id === b.id ? { ...item, status: 'cancelled' } : item));
-            setRecentBookings(prev => prev.map(item => item.id === b.id ? { ...item, status: 'cancelled' } : item));
+            setGeneralStats(prev => ({
+                ...prev,
+                confirmedCount: b.status === 'confirmed' ? Math.max(0, prev.confirmedCount - 1) : prev.confirmedCount,
+                pendingCount: b.status === 'pending' ? Math.max(0, prev.pendingCount - 1) : prev.pendingCount,
+            }));
+            loadOperationsData(true);
         } catch {
             toast.error('تعذر إلغاء الحجز');
         }
@@ -290,7 +334,7 @@ export default function SimpleOperationsTab() {
             await updateBookingStatus(b.id, 'completed');
             toast.success(`تم إنهاء جلسة ${b.customer_name} بنجاح ✅`);
             setTodayBookings(prev => prev.map(item => item.id === b.id ? { ...item, status: 'completed' } : item));
-            setRecentBookings(prev => prev.map(item => item.id === b.id ? { ...item, status: 'completed' } : item));
+            setRecentBookings(prev => prev.filter(item => item.id !== b.id));
         } catch {
             toast.error('تعذر إنهاء الجلسة');
         }
@@ -306,20 +350,26 @@ export default function SimpleOperationsTab() {
             setAllPendingBookings(prev =>
                 prev.filter(b => b.id !== winnerBooking.id && !cancelledIds.includes(b.id))
             );
-            setTodayBookings(prev =>
-                prev.map(b => {
-                    if (b.id === winnerBooking.id) return { ...b, status: 'confirmed' };
-                    if (cancelledIds.includes(b.id)) return { ...b, status: 'cancelled' };
-                    return b;
-                })
-            );
             setRecentBookings(prev =>
-                prev.map(b => {
-                    if (b.id === winnerBooking.id) return { ...b, status: 'confirmed' };
-                    if (cancelledIds.includes(b.id)) return { ...b, status: 'cancelled' };
-                    return b;
-                })
+                prev.filter(b => b.id !== winnerBooking.id && !cancelledIds.includes(b.id))
             );
+            if (winnerBooking.booking_date === todayStr) {
+                setTodayBookings(prev => {
+                    const exists = prev.some(item => item.id === winnerBooking.id);
+                    const mapped = prev.map(b => {
+                        if (b.id === winnerBooking.id) return { ...b, status: 'confirmed' as const };
+                        if (cancelledIds.includes(b.id)) return { ...b, status: 'cancelled' as const };
+                        return b;
+                    });
+                    if (exists) return mapped;
+                    return [{ ...winnerBooking, status: 'confirmed' as const }, ...mapped];
+                });
+            }
+            setGeneralStats(prev => ({
+                ...prev,
+                confirmedCount: prev.confirmedCount + 1,
+                pendingCount: Math.max(0, prev.pendingCount - 1 - cancelledIds.length),
+            }));
             loadOperationsData(true);
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'تعذر اعتماد الحجز';
@@ -414,7 +464,7 @@ export default function SimpleOperationsTab() {
             if (other.id === b.id) return false;
             if (other.status === 'cancelled') return false;
             if (other.booking_date !== b.booking_date) return false;
-            if ((other.room_id || 'room-1') !== (b.room_id || 'room-1')) return false;
+            if (getNormalizedRoomName(other) !== getNormalizedRoomName(b)) return false;
             const { start: oStart, end: oEnd } = getBookingDates(other);
             return bStart < oEnd && bEnd > oStart;
         });
@@ -423,10 +473,11 @@ export default function SimpleOperationsTab() {
             const allInGroup = [b, ...overlaps].sort(
                 (x, y) => new Date(x.created_at).getTime() - new Date(y.created_at).getTime()
             );
+            const normName = getNormalizedRoomName(b);
             const dynamicGroup: ConflictGroup = {
                 id: `conflict-${b.id}`,
-                roomId: b.room_id || 'room-1',
-                roomName: b.room_name || 'غرفة اللعب',
+                roomId: normName === 'غرفة 02 (PLAY ROOM)' ? 'room-2' : 'room-1',
+                roomName: normName,
                 bookingDate: b.booking_date,
                 formattedTimeRange: `${b.start_time} - ${b.end_time}`,
                 bookings: allInGroup,
@@ -452,7 +503,7 @@ export default function SimpleOperationsTab() {
                         </div>
                         <div>
                             <h5 className="text-xs sm:text-sm font-bold text-amber-950">
-                                تداخل مواعيد على نفس الغرفة ({b.room_name})
+                                تداخل مواعيد على نفس الغرفة ({getNormalizedRoomName(b)})
                             </h5>
                             <p className="text-[11px] text-amber-800/80">
                                 الطلبات المتنافسة على هذا الموعد. تأكيد أي حجز يعتمده فوراً ويلغي المتنافس الآخر تلقائياً.
@@ -613,7 +664,7 @@ export default function SimpleOperationsTab() {
     const filteredTodayBookings = useMemo(() => {
         const nowMs = Date.now();
         return todayBookings.filter(b => {
-            if (todayRoomFilter !== 'all' && b.room_name !== todayRoomFilter) return false;
+            if (!isBookingMatchingRoom(b, todayRoomFilter)) return false;
 
             const { start, end } = getBookingDates(b);
             const isOngoing = b.status === 'confirmed' && start.getTime() <= nowMs && end.getTime() > nowMs;
@@ -637,33 +688,24 @@ export default function SimpleOperationsTab() {
         });
     }, [todayBookings, todayRoomFilter, todayStatusFilter, todaySearch]);
 
-    // Room options for today
-    const todayRoomOptions = useMemo(() => {
-        const set = new Set<string>();
-        todayBookings.forEach(b => { if (b.room_name) set.add(b.room_name); });
-        return Array.from(set);
-    }, [todayBookings]);
-
     // Counts for recent bookings
     const recentPendingCount = useMemo(() => {
         const nowMs = Date.now();
         return recentBookings.filter(b => getEffectiveStatus(b, nowMs) === 'pending').length;
     }, [recentBookings, getEffectiveStatus]);
 
-    const recentConfirmedCount = useMemo(() => {
-        return recentBookings.filter(b => b.status === 'confirmed').length;
-    }, [recentBookings]);
-
-    // Filtered Recent & Incoming Bookings
+    // Filtered Incoming Pending Requests (Inbox strictly from today onwards)
     const filteredRecentBookings = useMemo(() => {
         const nowMs = Date.now();
         return recentBookings.filter(b => {
-            if (recentRoomFilter !== 'all' && b.room_name !== recentRoomFilter) return false;
-            if (recentDateFilter && b.booking_date !== recentDateFilter) return false;
+            // Strictly only pending requests that have not expired and are for today or future
+            if (b.status !== 'pending') return false;
+            if (b.booking_date < todayStr) return false;
+            const { end } = getBookingDates(b);
+            if (end.getTime() <= nowMs) return false;
 
-            const effective = getEffectiveStatus(b, nowMs);
-            if (recentStatusFilter === 'pending' && effective !== 'pending') return false;
-            if (recentStatusFilter === 'confirmed' && b.status !== 'confirmed') return false;
+            if (!isBookingMatchingRoom(b, recentRoomFilter)) return false;
+            if (recentDateFilter && b.booking_date !== recentDateFilter) return false;
 
             if (recentSearch.trim()) {
                 const s = recentSearch.toLowerCase();
@@ -674,14 +716,7 @@ export default function SimpleOperationsTab() {
             }
             return true;
         });
-    }, [recentBookings, recentRoomFilter, recentDateFilter, recentStatusFilter, recentSearch, getEffectiveStatus]);
-
-    // Room options for recent bookings
-    const recentRoomOptions = useMemo(() => {
-        const set = new Set<string>();
-        recentBookings.forEach(b => { if (b.room_name) set.add(b.room_name); });
-        return Array.from(set);
-    }, [recentBookings]);
+    }, [recentBookings, recentRoomFilter, recentDateFilter, recentSearch, todayStr]);
 
     // Date formatted for today
     const formattedTodayTitle = useMemo(() => {
@@ -699,7 +734,7 @@ export default function SimpleOperationsTab() {
 
     // Date formatted for recent date filter
     const formattedRecentDateTitle = useMemo(() => {
-        if (!recentDateFilter) return 'كل الأيام';
+        if (!recentDateFilter) return 'كل الأيام القادمة';
         try {
             const [y, m, d] = recentDateFilter.split('-').map(Number);
             return new Intl.DateTimeFormat('ar-EG', {
@@ -741,7 +776,7 @@ export default function SimpleOperationsTab() {
         let phone = b.customer_phone.replace(/\D/g, '');
         if (phone.startsWith('0')) phone = '2' + phone;
         else if (!phone.startsWith('20')) phone = '20' + phone;
-        const text = `أهلاً بحضرتك يا أستاذ ${b.customer_name} 👋\nمعاك إدارة D95 Gaming Lounge 🎮\n\nبخصوص حجزك (${b.reservation_id}):\n📍 الغرفة: ${b.room_name}\n📅 التاريخ: ${b.booking_date}\n⏰ التوقيت: ${b.start_time} - ${b.end_time} (${b.duration_hours} س)\n\nفي انتظارك تنورنا!`;
+        const text = `أهلاً بحضرتك يا أستاذ ${b.customer_name} 👋\nمعاك إدارة D95 Gaming Lounge 🎮\n\nبخصوص حجزك (${b.reservation_id}):\n📍 الغرفة: ${getNormalizedRoomName(b)}\n📅 التاريخ: ${b.booking_date}\n⏰ التوقيت: ${b.start_time} - ${b.end_time} (${b.duration_hours} س)\n\nفي انتظارك تنورنا!`;
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
     };
 
@@ -833,14 +868,14 @@ export default function SimpleOperationsTab() {
                 <div className="space-y-6">
                     {/* 4 Executive KPI Cards */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        {/* 1. Confirmed Today */}
+                        {/* 1. All Confirmed Bookings */}
                         <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs hover:border-blue-200 transition-colors">
                             <div>
                                 <span className="text-xs text-slate-500 font-bold block">
-                                    حجوزات اليوم المؤكدة
+                                    الحجوزات المؤكدة
                                 </span>
                                 <span className="font-sans text-2xl sm:text-3xl font-black text-slate-900 mt-1 block">
-                                    {todayStatusCounts.confirmed}
+                                    {generalStats.confirmedCount}
                                 </span>
                             </div>
                             <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
@@ -979,32 +1014,21 @@ export default function SimpleOperationsTab() {
                                     )}
                                 </div>
 
-                                {/* Room Filter Pills */}
-                                {todayRoomOptions.length > 0 && (
-                                    <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-0.5 text-xs">
+                                {/* Room Filter Pills - Exactly 2 Rooms */}
+                                <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-0.5 text-xs">
+                                    {LOUNGE_ROOM_FILTERS.map((r) => (
                                         <button
+                                            key={r.id}
                                             type="button"
-                                            onClick={() => setTodayRoomFilter('all')}
+                                            onClick={() => setTodayRoomFilter(r.id)}
                                             className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                                                todayRoomFilter === 'all' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                                                todayRoomFilter === r.id ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                                             }`}
                                         >
-                                            كل الغرف
+                                            {r.label}
                                         </button>
-                                        {todayRoomOptions.map((r) => (
-                                            <button
-                                                key={r}
-                                                type="button"
-                                                onClick={() => setTodayRoomFilter(r)}
-                                                className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                                                    todayRoomFilter === r ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-                                                }`}
-                                            >
-                                                {r}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
+                                    ))}
+                                </div>
 
                                 {/* Search */}
                                 <div className="relative w-full sm:w-52">
@@ -1111,7 +1135,7 @@ export default function SimpleOperationsTab() {
 
                                                         {/* Room */}
                                                         <td className="py-3.5 px-3 text-slate-700 font-medium">
-                                                            {b.room_name}
+                                                            {getNormalizedRoomName(b)}
                                                         </td>
 
                                                         {/* Amount */}
@@ -1233,7 +1257,7 @@ export default function SimpleOperationsTab() {
                                                 <div className="bg-white rounded-lg p-2.5 flex items-center justify-between text-xs border border-slate-200">
                                                     <div>
                                                         <span className="text-slate-500 text-[10px] block">الموعد والغرفة:</span>
-                                                        <span className="text-slate-900 font-bold">{b.room_name}</span>
+                                                        <span className="text-slate-900 font-bold">{getNormalizedRoomName(b)}</span>
                                                         <span className="text-slate-600 text-[11px] block">{b.start_time} - {b.end_time} ({b.duration_hours} س)</span>
                                                     </div>
                                                     <div className="text-left">
@@ -1282,14 +1306,14 @@ export default function SimpleOperationsTab() {
                                 <div>
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                                            أحدث الحجوزات والطلبات الواردة
+                                            الطلبات الواردة وبانتظار القرار
                                         </h3>
-                                        <span className="text-xs font-mono font-bold text-slate-500">
-                                            ({filteredRecentBookings.length} طلب)
+                                        <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                                            {filteredRecentBookings.length} طلب معلق
                                         </span>
                                     </div>
                                     <p className="text-xs text-slate-500 mt-0.5">
-                                        جميع الطلبات الجديدة، المواعيد المتنافسة (وضع الـ 10 دقائق)، وتقويم الحجوزات بالأيام.
+                                        طلبات الحجز الجديدة لليوم والأيام القادمة. تأكيد الحجز أو إلغاؤه ينقله تلقائياً إلى تفاصيل الحجوزات.
                                     </p>
                                 </div>
                             </div>
@@ -1357,76 +1381,21 @@ export default function SimpleOperationsTab() {
                                     </button>
                                 )}
 
-                                {/* Status Filters */}
+                                {/* Room Filter Pills - Exactly 2 Rooms */}
                                 <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-0.5 text-xs">
-                                    <button
-                                        type="button"
-                                        onClick={() => setRecentStatusFilter('all')}
-                                        className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
-                                            recentStatusFilter === 'all'
-                                                ? 'bg-red-600 text-white shadow-xs'
-                                                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-                                        }`}
-                                    >
-                                        الكل
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => setRecentStatusFilter('pending')}
-                                        className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                                            recentStatusFilter === 'pending'
-                                                ? 'bg-amber-500 text-slate-950 shadow-xs'
-                                                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-                                        }`}
-                                    >
-                                        <span>معلقة</span>
-                                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                                            recentStatusFilter === 'pending' ? 'bg-black/20 text-slate-950' : 'bg-slate-200 text-slate-600'
-                                        }`}>
-                                            {recentPendingCount}
-                                        </span>
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => setRecentStatusFilter('confirmed')}
-                                        className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
-                                            recentStatusFilter === 'confirmed'
-                                                ? 'bg-red-600 text-white shadow-xs'
-                                                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-                                        }`}
-                                    >
-                                        مؤكدة
-                                    </button>
-                                </div>
-
-                                {/* Room Filters */}
-                                {recentRoomOptions.length > 0 && (
-                                    <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-0.5 text-xs">
+                                    {LOUNGE_ROOM_FILTERS.map((r) => (
                                         <button
+                                            key={r.id}
                                             type="button"
-                                            onClick={() => setRecentRoomFilter('all')}
+                                            onClick={() => setRecentRoomFilter(r.id)}
                                             className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                                                recentRoomFilter === 'all' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                                                recentRoomFilter === r.id ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                                             }`}
                                         >
-                                            كل الغرف
+                                            {r.label}
                                         </button>
-                                        {recentRoomOptions.map((r) => (
-                                            <button
-                                                key={r}
-                                                type="button"
-                                                onClick={() => setRecentRoomFilter(r)}
-                                                className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                                                    recentRoomFilter === r ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-                                                }`}
-                                            >
-                                                {r}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
+                                    ))}
+                                </div>
 
                                 {/* Search */}
                                 <div className="relative w-full sm:w-48">
@@ -1459,19 +1428,24 @@ export default function SimpleOperationsTab() {
                             </div>
                         ) : filteredRecentBookings.length === 0 ? (
                             <div className="py-12 text-center text-xs text-slate-500 border border-dashed border-slate-200 rounded-xl space-y-2">
-                                <p className="font-medium">لا توجد طلبات حجز تطابق الفلتر أو البحث المحدد.</p>
-                                {(recentStatusFilter !== 'all' || recentSearch || recentRoomFilter !== 'all' || recentDateFilter) && (
+                                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-2 font-black text-base">
+                                    ✓
+                                </div>
+                                <p className="font-bold text-slate-800 text-sm">لا توجد طلبات حجز معلقة بانتظار اتخاذ قرار</p>
+                                <p className="text-slate-500 max-w-sm mx-auto">
+                                    جميع طلبات الحجز تم اتخاذ قرار بشأنها (مؤكدة أو ملغية) أو لا توجد طلبات واردة جديدة للأيام القادمة. يمكنك مراجعة كافة الحجوزات وسجلاتها من تاب "تفاصيل الحجوزات".
+                                </p>
+                                {(recentSearch || recentRoomFilter !== 'all' || recentDateFilter) && (
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            setRecentStatusFilter('all');
                                             setRecentSearch('');
                                             setRecentRoomFilter('all');
                                             setRecentDateFilter('');
                                         }}
-                                        className="text-red-600 hover:underline font-bold text-xs cursor-pointer"
+                                        className="text-red-600 hover:underline font-bold text-xs cursor-pointer inline-block mt-2"
                                     >
-                                        إعادة ضبط الفلاتر وعرض الكل
+                                        إعادة ضبط الفلاتر والبحث ✕
                                     </button>
                                 )}
                             </div>
@@ -1561,7 +1535,7 @@ export default function SimpleOperationsTab() {
 
                                                             {/* Room */}
                                                             <td className="py-3.5 px-3 text-slate-700 font-medium">
-                                                                {b.room_name}
+                                                                {getNormalizedRoomName(b)}
                                                             </td>
 
                                                             {/* Amount */}
@@ -1721,7 +1695,7 @@ export default function SimpleOperationsTab() {
                                                 <div className="bg-white rounded-lg p-2.5 flex items-center justify-between text-xs border border-slate-200">
                                                     <div>
                                                         <span className="text-slate-500 text-[10px] block">الموعد والتاريخ:</span>
-                                                        <span className="text-slate-900 font-bold">{b.room_name} - {b.booking_date}</span>
+                                                        <span className="text-slate-900 font-bold">{getNormalizedRoomName(b)} - {b.booking_date}</span>
                                                         <span className="text-slate-600 text-[11px] block">{b.start_time} - {b.end_time} ({b.duration_hours} س)</span>
                                                     </div>
                                                     <div className="text-left">
@@ -1849,7 +1823,7 @@ export default function SimpleOperationsTab() {
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                                 <div className="bg-white/80 border border-slate-200 rounded-xl p-3">
                                     <span className="text-slate-500 text-[11px] block mb-0.5">الغرفة والجهاز:</span>
-                                    <span className="font-bold text-slate-900 text-sm block">{focusedBookingBrief.room_name}</span>
+                                    <span className="font-bold text-slate-900 text-sm block">{getNormalizedRoomName(focusedBookingBrief)}</span>
                                 </div>
 
                                 <div className="bg-white/80 border border-slate-200 rounded-xl p-3">
@@ -2016,7 +1990,7 @@ export default function SimpleOperationsTab() {
                                                         {b.customer_phone}
                                                     </span>
                                                 </td>
-                                                <td className="py-3.5 px-3 text-slate-700">{b.room_name}</td>
+                                                <td className="py-3.5 px-3 text-slate-700">{getNormalizedRoomName(b)}</td>
                                                 <td className="py-3.5 px-3">
                                                     <div className="text-slate-900">{b.booking_date}</div>
                                                     <div className="text-slate-500 text-[11px]">{b.start_time} - {b.end_time}</div>

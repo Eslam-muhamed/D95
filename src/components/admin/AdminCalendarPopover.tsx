@@ -109,6 +109,7 @@ export default function AdminCalendarPopover({
             iso: string;
             dayNumber: number;
             isToday: boolean;
+            isPast: boolean;
             pendingCount: number;
         } | null> = [];
 
@@ -118,16 +119,24 @@ export default function AdminCalendarPopover({
 
         for (let d = 1; d <= totalDays; d++) {
             const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const isPast = iso < todayStr;
             cells.push({
                 iso,
                 dayNumber: d,
                 isToday: iso === todayStr,
-                pendingCount: pendingCountsByDate[iso] || 0,
+                isPast,
+                pendingCount: isPast ? 0 : (pendingCountsByDate[iso] || 0),
             });
         }
 
         return cells;
     }, [calendarMonth, todayStr, pendingCountsByDate]);
+
+    // Check if current calendar month is at or before today's month
+    const isAtOrBeforeCurrentMonth = useMemo(() => {
+        return calendarMonth.getFullYear() < todayObj.getFullYear() ||
+            (calendarMonth.getFullYear() === todayObj.getFullYear() && calendarMonth.getMonth() <= todayObj.getMonth());
+    }, [calendarMonth, todayObj]);
 
     // Calculate total pending bookings in the currently viewed month
     const monthPendingTotal = useMemo(() => {
@@ -224,11 +233,17 @@ export default function AdminCalendarPopover({
                     <div className="flex items-center justify-between px-1 text-xs">
                         <button
                             type="button"
+                            disabled={isAtOrBeforeCurrentMonth}
                             onClick={() => {
+                                if (isAtOrBeforeCurrentMonth) return;
                                 setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
                                 playPs5NavigateSound();
                             }}
-                            className="p-1 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                            className={`p-1 rounded-lg border text-xs transition-colors ${
+                                isAtOrBeforeCurrentMonth
+                                    ? 'border-slate-100 text-slate-300 opacity-40 cursor-not-allowed pointer-events-none'
+                                    : 'border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 cursor-pointer'
+                            }`}
                             title="الشهر السابق"
                         >
                             <ChevronRight className="w-3.5 h-3.5" />
@@ -268,26 +283,37 @@ export default function AdminCalendarPopover({
                             }
                             const isSelected = selectedDate === cell.iso;
                             const hasPending = cell.pendingCount > 0;
+                            const isPast = cell.isPast;
 
                             return (
                                 <button
                                     key={cell.iso}
                                     type="button"
+                                    disabled={isPast}
                                     onClick={() => {
+                                        if (isPast) return;
                                         onSelectDate(cell.iso);
                                         playPs5SelectSound();
                                         onClose();
                                     }}
-                                    className={`relative h-8 rounded-xl flex items-center justify-center text-xs font-bold transition-all cursor-pointer ${
-                                        isSelected
-                                            ? 'bg-red-600 text-white shadow-xs z-10'
+                                    className={`relative h-8 rounded-xl flex items-center justify-center text-xs transition-all ${
+                                        isPast
+                                            ? 'text-slate-300 opacity-30 cursor-not-allowed pointer-events-none'
+                                            : isSelected
+                                            ? 'bg-red-600 text-white shadow-xs z-10 cursor-pointer font-bold'
                                             : hasPending
-                                            ? 'bg-amber-100/70 text-amber-950 border border-amber-300 hover:bg-amber-200/80 font-black'
+                                            ? 'bg-amber-100/70 text-amber-950 border border-amber-300 hover:bg-amber-200/80 font-black cursor-pointer'
                                             : cell.isToday
-                                            ? 'bg-red-50 text-red-600 border border-red-300 hover:bg-red-100'
-                                            : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                                            ? 'bg-red-50 text-red-600 border border-red-300 hover:bg-red-100 font-bold cursor-pointer'
+                                            : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-bold cursor-pointer'
                                     }`}
-                                    title={hasPending ? `${cell.dayNumber} - يوجد ${cell.pendingCount} حجز معلق` : `${cell.dayNumber}`}
+                                    title={
+                                        isPast
+                                            ? `${cell.dayNumber} - تاريخ منتهي`
+                                            : hasPending
+                                            ? `${cell.dayNumber} - يوجد ${cell.pendingCount} حجز معلق`
+                                            : `${cell.dayNumber}`
+                                    }
                                 >
                                     <span>{cell.dayNumber}</span>
 
