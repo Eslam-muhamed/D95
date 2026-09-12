@@ -2,42 +2,19 @@ import { motion } from 'framer-motion';
 import { Star } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 
-const GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJZ0PtcgDx9xQRJkjGI5wc6tU';
+// ضع رابط التقييم الخاص بك هنا لاحقاً
+const GOOGLE_REVIEW_URL = '';
 
-const reviews = [
-  {
-    name: 'Mohamed Salama',
-    initial: 'M',
-    accent: '#C45C6A',
-    time: 'منذ ٣ أيام',
-    stars: 5,
-    text: 'تجربة رائعة صور جميلة ومشروبات ممتازة جداً وأجهزة البلايستيشن أحدث موديل وشاشات احترافية، أحسن مكان تجمع فيه مع صحابك.',
-  },
-  {
-    name: 'عمر خالد',
-    initial: 'ع',
-    accent: '#8B1A2A',
-    time: 'منذ أسبوع',
-    stars: 5,
-    text: 'جو هادي ومريح جداً للاسترخاء، القهوة والمشروبات الباردة من أحلى اللي جربتها، وتنظيم بطولات البلايستيشن فوق الممتاز.',
-  },
-  {
-    name: 'سارة علي',
-    initial: 'س',
-    accent: '#C45C6A',
-    time: 'منذ أسبوعين',
-    stars: 5,
-    text: 'الموكتيل والحلويات استثنائية، الخدمة سريعة جداً وخدمة الويتر الذكي من الموبايل مريحة لأقصى درجة.',
-  },
-  {
-    name: 'كريم محمود',
-    initial: 'ك',
-    accent: '#8B1A2A',
-    time: 'منذ ٣ أسابيع',
-    stars: 5,
-    text: 'تجربة ١٠ على ١٠! قعدة الكافيه رايقة جداً وغرف الـ VIP مجهزة بأعلى مستوى من الراحة وأجهزة PS5 حديثة.',
-  },
-];
+interface ReviewItem {
+  name: string;
+  initial: string;
+  accent: string;
+  time: string;
+  stars: number;
+  text: string;
+}
+
+const reviews: ReviewItem[] = [];
 
 function GoogleIcon({ size = 16, white = false }: { size?: number; white?: boolean }) {
   const c = white ? 'rgba(255,255,255,0.92)' : undefined;
@@ -112,80 +89,87 @@ export default function ReviewsSection() {
       </motion.div>
 
       {/* Review cards — horizontal scroll */}
-      <div
-        className="flex gap-3 overflow-x-auto scrollbar-hide pb-3"
-        style={{ direction: 'rtl' }}
-      >
-        {reviews.map((review, i) => (
-          <motion.div
-            key={review.name}
-            initial={{ opacity: 0, x: 24 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ delay: i * 0.1 + 0.2, duration: 0.5 }}
-            className="flex-shrink-0 rounded-2xl p-4"
-            style={{
-              width: 250,
-              background: 'var(--c-card)',
-              border: '1px solid rgba(139,26,42,0.18)',
-              boxShadow: '0 2px 18px rgba(139,26,42,0.07)',
-            }}
-          >
-            {/* Reviewer row */}
-            <div className="flex items-center gap-3 mb-3">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-white"
-                style={{
-                  background: `linear-gradient(135deg, ${review.accent}, #8B1A2A)`,
-                  fontSize: 16,
-                }}
-              >
-                {review.initial}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p
-                  className="font-semibold text-sm truncate"
-                  style={{ color: 'var(--c-text-1)', fontFamily: 'Cairo, sans-serif' }}
-                >
-                  {review.name}
-                </p>
-                <p className="text-xs" style={{ color: 'var(--c-text-4)', fontFamily: 'Cairo, sans-serif' }}>
-                  {review.time}
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <GoogleIcon size={14} />
-              </div>
-            </div>
-
-            {/* Stars */}
-            <div className="flex gap-0.5 mb-2">
-              {[1, 2, 3, 4, 5].map(s => (
-                <Star key={s} size={12} fill="#C45C6A" color="#C45C6A" />
-              ))}
-            </div>
-
-            {/* Review text */}
-            <p
-              className="text-xs leading-relaxed"
-              style={{ color: 'var(--c-text-2)', fontFamily: 'Cairo, sans-serif' }}
+      {reviews.length > 0 && (
+        <div
+          className="flex gap-3 overflow-x-auto scrollbar-hide pb-3"
+          style={{ direction: 'rtl' }}
+        >
+          {reviews.map((review, i) => (
+            <motion.div
+              key={review.name}
+              initial={{ opacity: 0, x: 24 }}
+              animate={inView ? { opacity: 1, x: 0 } : {}}
+              transition={{ delay: i * 0.1 + 0.2, duration: 0.5 }}
+              className="flex-shrink-0 rounded-2xl p-4"
+              style={{
+                width: 250,
+                background: 'var(--c-card)',
+                border: '1px solid rgba(139,26,42,0.18)',
+                boxShadow: '0 2px 18px rgba(139,26,42,0.07)',
+              }}
             >
-              {review.text}
-            </p>
-          </motion.div>
-        ))}
-      </div>
+              {/* Reviewer row */}
+              <div className="flex items-center gap-3 mb-3">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-white"
+                  style={{
+                    background: `linear-gradient(135deg, ${review.accent}, #8B1A2A)`,
+                    fontSize: 16,
+                  }}
+                >
+                  {review.initial}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p
+                    className="font-semibold text-sm truncate"
+                    style={{ color: 'var(--c-text-1)', fontFamily: 'Cairo, sans-serif' }}
+                  >
+                    {review.name}
+                  </p>
+                  <p className="text-xs" style={{ color: 'var(--c-text-4)', fontFamily: 'Cairo, sans-serif' }}>
+                    {review.time}
+                  </p>
+                </div>
+                <div className="flex-shrink-0">
+                  <GoogleIcon size={14} />
+                </div>
+              </div>
+
+              {/* Stars */}
+              <div className="flex gap-0.5 mb-2">
+                {[1, 2, 3, 4, 5].map(s => (
+                  <Star key={s} size={12} fill="#C45C6A" color="#C45C6A" />
+                ))}
+              </div>
+
+              {/* Review text */}
+              <p
+                className="text-xs leading-relaxed"
+                style={{ color: 'var(--c-text-2)', fontFamily: 'Cairo, sans-serif' }}
+              >
+                {review.text}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       {/* CTA */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={inView ? { opacity: 1, y: 0 } : {}}
-        transition={{ delay: 0.55, duration: 0.4 }}
+        transition={{ delay: 0.25, duration: 0.4 }}
         className="mt-8 flex flex-col items-center gap-3"
       >
         <a
-          href={GOOGLE_REVIEW_URL}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={GOOGLE_REVIEW_URL || '#'}
+          target={GOOGLE_REVIEW_URL ? '_blank' : undefined}
+          rel={GOOGLE_REVIEW_URL ? 'noopener noreferrer' : undefined}
+          onClick={(e) => {
+            if (!GOOGLE_REVIEW_URL) {
+              e.preventDefault();
+            }
+          }}
           className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-95 cursor-pointer"
           style={{
             background: 'linear-gradient(135deg, #8B1A2A, #C45C6A)',
