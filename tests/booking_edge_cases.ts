@@ -470,6 +470,13 @@ async function runAllTests() {
         assert(error !== null, 'Edge Case 20: Manipulated frontend request is strictly caught and rejected by backend RPC');
     }
 
+    // Clean up any test database records
+    try {
+        await supabase.rpc('cleanup_test_bookings');
+    } catch {
+        // Ignore silent cleanup failure
+    }
+
     console.log('\n====================================================');
     console.log(`TEST RESULTS SUMMARY: ${passedCount} PASSED, ${failedCount} FAILED`);
     console.log('====================================================');

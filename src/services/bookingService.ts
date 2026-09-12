@@ -149,6 +149,11 @@ export async function fetchPaginatedBookings(filter?: {
     const to = from + pageSize - 1;
 
     try {
+        // Automatically auto-cancel any expired pending bookings first
+        if (!filter?.status || filter.status === 'pending' || filter.status === 'all') {
+            await autoCancelExpiredPendingBookings();
+        }
+
         let query = supabase
             .from('ps_bookings')
             .select('*', { count: 'exact' })
@@ -156,6 +161,10 @@ export async function fetchPaginatedBookings(filter?: {
 
         if (filter?.status && filter.status !== 'all') {
             query = query.eq('status', filter.status);
+            // If filtering specifically by pending, only include future appointments
+            if (filter.status === 'pending') {
+                query = query.gt('end_datetime', new Date().toISOString());
+            }
         }
 
         if (filter?.date) {
@@ -190,6 +199,37 @@ export async function fetchPaginatedBookings(filter?: {
     }
 }
 
+export async function autoCancelExpiredPendingBookings(): Promise<number> {
+    try {
+        const { data, error } = await supabase.rpc('auto_cancel_expired_pending_bookings');
+        if (error) {
+            console.warn('RPC auto_cancel_expired_pending_bookings error, running fallback:', error);
+            const nowIso = new Date().toISOString();
+            const { data: expired } = await supabase
+                .from('ps_bookings')
+                .select('id')
+                .eq('status', 'pending')
+                .lte('end_datetime', nowIso);
+            if (expired && expired.length > 0) {
+                const ids = expired.map(x => x.id);
+                await supabase
+                    .from('ps_bookings')
+                    .update({
+                        status: 'cancelled',
+                        notes: 'تم الإلغاء تلقائياً لانتهاء وقت الموعد دون اعتماد',
+                    })
+                    .in('id', ids);
+                return ids.length;
+            }
+            return 0;
+        }
+        return Number(data || 0);
+    } catch (e) {
+        console.warn('Exception in autoCancelExpiredPendingBookings:', e);
+        return 0;
+    }
+}
+
 export async function fetchBookingMetrics(): Promise<{
     totalCount: number;
     pendingCount: number;
@@ -201,7 +241,11 @@ export async function fetchBookingMetrics(): Promise<{
     pendingCountsByDate: Record<string, number>;
 }> {
     try {
+        // Automatically auto-cancel any expired pending bookings first
+        await autoCancelExpiredPendingBookings();
+
         const todayStr = new Date().toISOString().split('T')[0];
+        const nowIso = new Date().toISOString();
 
         const [
             totalRes,
@@ -214,13 +258,13 @@ export async function fetchBookingMetrics(): Promise<{
             pendingDatesRes,
         ] = await Promise.all([
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).neq('status', 'cancelled'),
-            supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+            supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('status', 'pending').gt('end_datetime', nowIso),
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('status', 'confirmed'),
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('booking_date', todayStr),
-            supabase.from('ps_bookings').select('total_amount').in('status', ['confirmed', 'completed']),
-            supabase.from('ps_bookings').select('total_amount').eq('booking_date', todayStr).in('status', ['confirmed', 'completed']),
-            supabase.from('ps_bookings').select('*').eq('status', 'pending').order('created_at', { ascending: false }).limit(50),
-            supabase.from('ps_bookings').select('booking_date').eq('status', 'pending'),
+            supabase.from('ps_bookings').select('total_amount').eq('status', 'confirmed'),
+            supabase.from('ps_bookings').select('total_amount').eq('booking_date', todayStr).eq('status', 'confirmed'),
+            supabase.from('ps_bookings').select('*').eq('status', 'pending').gt('end_datetime', nowIso).order('created_at', { ascending: false }).limit(50),
+            supabase.from('ps_bookings').select('booking_date').eq('status', 'pending').gt('end_datetime', nowIso),
         ]);
 
         const totalRevenue = (revenueRes.data || []).reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
@@ -260,10 +304,12 @@ export async function fetchBookingMetrics(): Promise<{
 
 export async function fetchPendingCountsByDate(): Promise<Record<string, number>> {
     try {
+        const nowIso = new Date().toISOString();
         const { data, error } = await supabase
             .from('ps_bookings')
             .select('booking_date')
-            .eq('status', 'pending');
+            .eq('status', 'pending')
+            .gt('end_datetime', nowIso);
         if (error) {
             console.error('Error fetching pending counts by date:', error);
             return {};
@@ -313,6 +359,44 @@ export async function fetchBookingsForDate(dateStr: string): Promise<DBBooking[]
         });
     } catch (err) {
         console.error('Exception in fetchBookingsForDate:', err);
+        return [];
+    }
+}
+
+/**
+ * Fetch recent incoming bookings, optionally filtered by date or status, ordered by created_at DESC.
+ */
+export async function fetchRecentBookings(options?: {
+    date?: string;
+    status?: string;
+    limit?: number;
+}): Promise<DBBooking[]> {
+    try {
+        await autoCancelExpiredPendingBookings();
+        let query = supabase
+            .from('ps_bookings')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (options?.date) {
+            query = query.eq('booking_date', options.date);
+        }
+        if (options?.status && options.status !== 'all') {
+            query = query.eq('status', options.status);
+            if (options.status === 'pending') {
+                query = query.gt('end_datetime', new Date().toISOString());
+            }
+        }
+        query = query.limit(options?.limit || 50);
+
+        const { data, error } = await query;
+        if (error) {
+            console.error('Error fetching recent bookings:', error);
+            return [];
+        }
+        return (data || []) as DBBooking[];
+    } catch (err) {
+        console.error('Exception in fetchRecentBookings:', err);
         return [];
     }
 }

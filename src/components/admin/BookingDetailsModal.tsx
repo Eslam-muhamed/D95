@@ -139,9 +139,16 @@ export default function BookingDetailsModal({
                         <span className="text-slate-600 font-medium">حالة الحجز الحالية:</span>
                         <div>
                             {booking.status === 'pending' && (
-                                <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse flex items-center gap-1.5">
-                                    <span>⏳ بانتظار موافقة الأدمن</span>
-                                </span>
+                                isEnded ? (
+                                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1.5">
+                                        <Clock className="w-3.5 h-3.5 text-rose-500" />
+                                        <span>⌛ ملغي تلقائياً (انتهى وقت الموعد)</span>
+                                    </span>
+                                ) : (
+                                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse flex items-center gap-1.5">
+                                        <span>⏳ بانتظار موافقة الأدمن</span>
+                                    </span>
+                                )
                             )}
                             {booking.status === 'confirmed' && (
                                 isOngoing ? (

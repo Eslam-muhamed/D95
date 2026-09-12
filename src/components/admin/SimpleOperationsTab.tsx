@@ -28,10 +28,12 @@ import {
     Unlock,
     Users,
     Square,
+    Eye,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     fetchBookingsForDate,
+    fetchRecentBookings,
     fetchPaginatedBookings,
     fetchBookingMetrics,
     updateBookingStatus,
@@ -72,16 +74,15 @@ function formatTimeAgo(dateStr: string): string {
 export default function SimpleOperationsTab() {
     const [activeSubTab, setActiveSubTab] = useState<SubTabType>('dashboard');
 
-    // Cairo-pinned Date
+    // Cairo-pinned Date for Today
     const todayStr = useMemo(() => getCairoTodayDateString(), []);
-    const [selectedDate, setSelectedDate] = useState<string>(todayStr);
 
     // Data State
     const [loading, setLoading] = useState<boolean>(true);
     const [todayBookings, setTodayBookings] = useState<DBBooking[]>([]);
-    const [realTodayBookings, setRealTodayBookings] = useState<DBBooking[]>([]);
+    const [recentBookings, setRecentBookings] = useState<DBBooking[]>([]);
     const [allPendingBookings, setAllPendingBookings] = useState<DBBooking[]>([]);
-    const [generalStats, setGeneralStats] = useState<{
+    const [, setGeneralStats] = useState<{
         totalBookings: number;
         totalRevenue: number;
         pendingCount: number;
@@ -93,8 +94,9 @@ export default function SimpleOperationsTab() {
         confirmedCount: 0,
     });
 
-    // Modals
+    // Modals & Focused Detail Preview
     const [activeDetailBooking, setActiveDetailBooking] = useState<DBBooking | null>(null);
+    const [focusedBookingBrief, setFocusedBookingBrief] = useState<DBBooking | null>(null);
 
     // Policy & Rates
     const [policy, setPolicy] = useState<BookingPolicy | null>(null);
@@ -104,16 +106,20 @@ export default function SimpleOperationsTab() {
     const [rateRoom2, setRateRoom2] = useState<number>(100);
     const [savingRates, setSavingRates] = useState<boolean>(false);
 
-    // Filters for Daily Schedule
-    const [roomFilter, setRoomFilter] = useState<string>('all');
-    const [dailyStatusFilter, setDailyStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'cancelled' | 'completed'>('all');
-    const [dailySearch, setDailySearch] = useState<string>('');
+    // Filters for Section 1: Today's Confirmed Schedule
+    const [todayRoomFilter, setTodayRoomFilter] = useState<string>('all');
+    const [todayStatusFilter, setTodayStatusFilter] = useState<'all' | 'confirmed' | 'ongoing'>('confirmed');
+    const [todaySearch, setTodaySearch] = useState<string>('');
 
-    // Calendar Popover & Pending Counts per Date
+    // Filters for Section 2: Recent & Incoming Bookings with Calendar
+    const [recentDateFilter, setRecentDateFilter] = useState<string>(''); // empty = all dates
+    const [recentRoomFilter, setRecentRoomFilter] = useState<string>('all');
+    const [recentStatusFilter, setRecentStatusFilter] = useState<'all' | 'pending' | 'confirmed'>('all');
+    const [recentSearch, setRecentSearch] = useState<string>('');
     const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
     const [pendingCountsByDate, setPendingCountsByDate] = useState<Record<string, number>>({});
 
-    // Accordion for Conflicting Bookings inside table/cards
+    // Accordion for Conflicting Bookings inside Recent section
     const [expandedConflictBookingIds, setExpandedConflictBookingIds] = useState<Record<string, boolean>>({});
 
     // Archive / Details State
@@ -146,13 +152,12 @@ export default function SimpleOperationsTab() {
         const isSilent = typeof isSilentInput === 'boolean' ? isSilentInput : false;
         if (!isSilent) setLoading(true);
         try {
-            const isDifferentDate = selectedDate !== todayStr;
-            const [metrics, dayData, rates, pol, realTodayData] = await Promise.all([
+            const [metrics, dayData, recentData, rates, pol] = await Promise.all([
                 fetchBookingMetrics(),
-                fetchBookingsForDate(selectedDate),
+                fetchBookingsForDate(todayStr), // ALWAYS strictly for today!
+                fetchRecentBookings({ date: recentDateFilter || undefined, limit: 50 }),
                 fetchRoomRates(),
                 fetchBookingPolicy(),
-                isDifferentDate ? fetchBookingsForDate(todayStr) : Promise.resolve(null),
             ]);
 
             setAllPendingBookings(metrics.recentPending);
@@ -166,7 +171,7 @@ export default function SimpleOperationsTab() {
                 confirmedCount: metrics.confirmedCount,
             });
             setTodayBookings(dayData);
-            setRealTodayBookings(isDifferentDate && realTodayData ? realTodayData : dayData);
+            setRecentBookings(recentData);
             setRoomRates(rates);
             setRateRoom1(rates['room-1'] || 100);
             setRateRoom2(rates['room-2'] || 100);
@@ -176,7 +181,7 @@ export default function SimpleOperationsTab() {
         } finally {
             if (!isSilent) setLoading(false);
         }
-    }, [selectedDate, todayStr]);
+    }, [todayStr, recentDateFilter]);
 
     useEffect(() => {
         loadOperationsData();
@@ -241,7 +246,7 @@ export default function SimpleOperationsTab() {
         if (activeSubTab === 'details') {
             loadArchiveData(archivePage);
         }
-    }, [activeSubTab, archivePage, archiveDateFilter, loadArchiveData]);
+    }, [activeSubTab, archivePage, archiveDateFilter, archiveSearch, archiveStatusFilter, loadArchiveData]);
 
     // Fast Shortcut: Confirm Booking
     const handleQuickConfirm = async (b: DBBooking) => {
@@ -256,6 +261,7 @@ export default function SimpleOperationsTab() {
             toast.success(`تم تأكيد حجز ${b.customer_name} بنجاح! ✅`);
             setAllPendingBookings(prev => prev.filter(item => item.id !== b.id));
             setTodayBookings(prev => prev.map(item => item.id === b.id ? { ...item, status: 'confirmed' } : item));
+            setRecentBookings(prev => prev.map(item => item.id === b.id ? { ...item, status: 'confirmed' } : item));
         } catch {
             toast.error('تعذر تأكيد الحجز');
         }
@@ -270,6 +276,7 @@ export default function SimpleOperationsTab() {
             toast.info(`تم إلغاء حجز ${b.customer_name}`);
             setAllPendingBookings(prev => prev.filter(item => item.id !== b.id));
             setTodayBookings(prev => prev.map(item => item.id === b.id ? { ...item, status: 'cancelled' } : item));
+            setRecentBookings(prev => prev.map(item => item.id === b.id ? { ...item, status: 'cancelled' } : item));
         } catch {
             toast.error('تعذر إلغاء الحجز');
         }
@@ -283,6 +290,7 @@ export default function SimpleOperationsTab() {
             await updateBookingStatus(b.id, 'completed');
             toast.success(`تم إنهاء جلسة ${b.customer_name} بنجاح ✅`);
             setTodayBookings(prev => prev.map(item => item.id === b.id ? { ...item, status: 'completed' } : item));
+            setRecentBookings(prev => prev.map(item => item.id === b.id ? { ...item, status: 'completed' } : item));
         } catch {
             toast.error('تعذر إنهاء الجلسة');
         }
@@ -305,7 +313,14 @@ export default function SimpleOperationsTab() {
                     return b;
                 })
             );
-            loadOperationsData();
+            setRecentBookings(prev =>
+                prev.map(b => {
+                    if (b.id === winnerBooking.id) return { ...b, status: 'confirmed' };
+                    if (cancelledIds.includes(b.id)) return { ...b, status: 'cancelled' };
+                    return b;
+                })
+            );
+            loadOperationsData(true);
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'تعذر اعتماد الحجز';
             toast.error(msg);
@@ -367,10 +382,10 @@ export default function SimpleOperationsTab() {
         }
     };
 
-    // Conflict Groups (overlapping pending bookings)
+    // Conflict Groups (overlapping pending bookings in recent bookings)
     const conflictGroups = useMemo(() => {
-        return groupConflictingPendingBookings(allPendingBookings);
-    }, [allPendingBookings]);
+        return groupConflictingPendingBookings(recentBookings);
+    }, [recentBookings]);
 
     const toggleConflictDropdown = (bookingId: string) => {
         setExpandedConflictBookingIds(prev => ({
@@ -379,7 +394,7 @@ export default function SimpleOperationsTab() {
         }));
     };
 
-    // Find overlapping bookings and conflict group for any booking on this date
+    // Find overlapping bookings and conflict group for any booking
     const getBookingConflictInfo = useCallback((b: DBBooking) => {
         if (b.status === 'cancelled') return { hasOverlap: false, competitors: [] as DBBooking[], group: null as ConflictGroup | null };
 
@@ -393,11 +408,12 @@ export default function SimpleOperationsTab() {
             };
         }
 
-        // 2. Or check overlap against other today bookings in same room
+        // 2. Or check overlap against other recent bookings in same room on same date
         const { start: bStart, end: bEnd } = getBookingDates(b);
-        const overlaps = todayBookings.filter(other => {
+        const overlaps = recentBookings.filter(other => {
             if (other.id === b.id) return false;
             if (other.status === 'cancelled') return false;
+            if (other.booking_date !== b.booking_date) return false;
             if ((other.room_id || 'room-1') !== (b.room_id || 'room-1')) return false;
             const { start: oStart, end: oEnd } = getBookingDates(other);
             return bStart < oEnd && bEnd > oStart;
@@ -423,7 +439,7 @@ export default function SimpleOperationsTab() {
         }
 
         return { hasOverlap: false, competitors: [] as DBBooking[], group: null as ConflictGroup | null };
-    }, [conflictGroups, todayBookings]);
+    }, [conflictGroups, recentBookings]);
 
     // Renders the conflict resolution dropdown content for a booking
     const renderConflictDropdownContent = (b: DBBooking, competitors: DBBooking[], group: ConflictGroup) => {
@@ -549,57 +565,108 @@ export default function SimpleOperationsTab() {
         );
     };
 
-    // Active Ongoing Sessions (Always for real-time live lounge now)
+    // Active Ongoing Sessions (Live in lounge now)
     const ongoingBookings = useMemo(() => {
         const nowMs = Date.now();
-        return realTodayBookings.filter(b => {
+        return todayBookings.filter(b => {
             if (b.status !== 'confirmed') return false;
             const { start, end } = getBookingDates(b);
             return start.getTime() <= nowMs && end.getTime() > nowMs;
         });
-    }, [realTodayBookings]);
+    }, [todayBookings]);
 
-    // Today's Expected Revenue
+    // Expected Revenue for Today (Strictly confirmed bookings)
     const todayRevenue = useMemo(() => {
         return todayBookings
-            .filter(b => b.status === 'confirmed' || b.status === 'completed')
+            .filter(b => b.status === 'confirmed')
             .reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
     }, [todayBookings]);
 
-    // Status counts for selected date (taking into account roomFilter)
-    const dailyStatusCounts = useMemo(() => {
-        const counts = { all: 0, pending: 0, confirmed: 0, cancelled: 0, completed: 0 };
-        todayBookings.forEach((b) => {
-            if (roomFilter !== 'all' && b.room_name !== roomFilter) return;
-            counts.all += 1;
-            if (b.status === 'pending') counts.pending += 1;
-            else if (b.status === 'confirmed') counts.confirmed += 1;
-            else if (b.status === 'cancelled') counts.cancelled += 1;
-            else if (b.status === 'completed') counts.completed += 1;
-        });
-        return counts;
-    }, [todayBookings, roomFilter]);
-
-    const dailyStatusOptions = useMemo(() => {
-        const list: { id: 'all' | 'pending' | 'confirmed' | 'cancelled' | 'completed'; label: string; count: number }[] = [
-            { id: 'all', label: 'الكل', count: dailyStatusCounts.all },
-            { id: 'pending', label: 'معلق', count: dailyStatusCounts.pending },
-            { id: 'confirmed', label: 'مؤكد', count: dailyStatusCounts.confirmed },
-            { id: 'cancelled', label: 'ملغي', count: dailyStatusCounts.cancelled },
-        ];
-        if (dailyStatusCounts.completed > 0) {
-            list.push({ id: 'completed', label: 'مكتمل', count: dailyStatusCounts.completed });
+    // Helper to determine effective status (expired pending is considered cancelled)
+    const getEffectiveStatus = useCallback((b: DBBooking, nowMs: number) => {
+        if (b.status === 'pending') {
+            const { end } = getBookingDates(b);
+            if (end.getTime() <= nowMs) {
+                return 'cancelled';
+            }
         }
-        return list;
-    }, [dailyStatusCounts]);
+        return b.status;
+    }, []);
 
-    // Filtered Daily Bookings
-    const filteredDailyBookings = useMemo(() => {
+    // Status counts for today
+    const todayStatusCounts = useMemo(() => {
+        const confirmed = todayBookings.filter(b => b.status === 'confirmed').length;
+        const nowMs = Date.now();
+        const ongoing = todayBookings.filter(b => {
+            if (b.status !== 'confirmed') return false;
+            const { start, end } = getBookingDates(b);
+            return start.getTime() <= nowMs && end.getTime() > nowMs;
+        }).length;
+        return {
+            confirmed,
+            ongoing,
+            all: todayBookings.length,
+        };
+    }, [todayBookings]);
+
+    // Filtered Today's Confirmed Schedule Bookings
+    const filteredTodayBookings = useMemo(() => {
+        const nowMs = Date.now();
         return todayBookings.filter(b => {
-            if (roomFilter !== 'all' && b.room_name !== roomFilter) return false;
-            if (dailyStatusFilter !== 'all' && b.status !== dailyStatusFilter) return false;
-            if (dailySearch.trim()) {
-                const s = dailySearch.toLowerCase();
+            if (todayRoomFilter !== 'all' && b.room_name !== todayRoomFilter) return false;
+
+            const { start, end } = getBookingDates(b);
+            const isOngoing = b.status === 'confirmed' && start.getTime() <= nowMs && end.getTime() > nowMs;
+
+            if (todayStatusFilter === 'confirmed') {
+                if (b.status !== 'confirmed') return false;
+            } else if (todayStatusFilter === 'ongoing') {
+                if (!isOngoing) return false;
+            }
+
+            if (todaySearch.trim()) {
+                const s = todaySearch.toLowerCase();
+                const matchName = b.customer_name?.toLowerCase().includes(s);
+                const matchPhone = b.customer_phone?.includes(s);
+                const matchCode = b.reservation_id?.toLowerCase().includes(s);
+                if (!matchName && !matchPhone && !matchCode) return false;
+            }
+            return true;
+        }).sort((a, b) => {
+            return getBookingDates(a).start.getTime() - getBookingDates(b).start.getTime();
+        });
+    }, [todayBookings, todayRoomFilter, todayStatusFilter, todaySearch]);
+
+    // Room options for today
+    const todayRoomOptions = useMemo(() => {
+        const set = new Set<string>();
+        todayBookings.forEach(b => { if (b.room_name) set.add(b.room_name); });
+        return Array.from(set);
+    }, [todayBookings]);
+
+    // Counts for recent bookings
+    const recentPendingCount = useMemo(() => {
+        const nowMs = Date.now();
+        return recentBookings.filter(b => getEffectiveStatus(b, nowMs) === 'pending').length;
+    }, [recentBookings, getEffectiveStatus]);
+
+    const recentConfirmedCount = useMemo(() => {
+        return recentBookings.filter(b => b.status === 'confirmed').length;
+    }, [recentBookings]);
+
+    // Filtered Recent & Incoming Bookings
+    const filteredRecentBookings = useMemo(() => {
+        const nowMs = Date.now();
+        return recentBookings.filter(b => {
+            if (recentRoomFilter !== 'all' && b.room_name !== recentRoomFilter) return false;
+            if (recentDateFilter && b.booking_date !== recentDateFilter) return false;
+
+            const effective = getEffectiveStatus(b, nowMs);
+            if (recentStatusFilter === 'pending' && effective !== 'pending') return false;
+            if (recentStatusFilter === 'confirmed' && b.status !== 'confirmed') return false;
+
+            if (recentSearch.trim()) {
+                const s = recentSearch.toLowerCase();
                 const matchName = b.customer_name?.toLowerCase().includes(s);
                 const matchPhone = b.customer_phone?.includes(s);
                 const matchCode = b.reservation_id?.toLowerCase().includes(s);
@@ -607,38 +674,66 @@ export default function SimpleOperationsTab() {
             }
             return true;
         });
-    }, [todayBookings, roomFilter, dailyStatusFilter, dailySearch]);
+    }, [recentBookings, recentRoomFilter, recentDateFilter, recentStatusFilter, recentSearch, getEffectiveStatus]);
 
-    // Room options
-    const roomOptions = useMemo(() => {
+    // Room options for recent bookings
+    const recentRoomOptions = useMemo(() => {
         const set = new Set<string>();
-        todayBookings.forEach(b => { if (b.room_name) set.add(b.room_name); });
+        recentBookings.forEach(b => { if (b.room_name) set.add(b.room_name); });
         return Array.from(set);
-    }, [todayBookings]);
+    }, [recentBookings]);
 
-    // Date formatted in clear Arabic
-    const formattedDateTitle = useMemo(() => {
+    // Date formatted for today
+    const formattedTodayTitle = useMemo(() => {
         try {
-            const [y, m, d] = selectedDate.split('-').map(Number);
-            const dateObj = new Date(y, m - 1, d);
+            const [y, m, d] = todayStr.split('-').map(Number);
             return new Intl.DateTimeFormat('ar-EG', {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',
-            }).format(dateObj);
+            }).format(new Date(y, m - 1, d));
         } catch {
-            return selectedDate;
+            return todayStr;
         }
-    }, [selectedDate]);
+    }, [todayStr]);
 
-    // Calendar notification calculations
+    // Date formatted for recent date filter
+    const formattedRecentDateTitle = useMemo(() => {
+        if (!recentDateFilter) return 'كل الأيام';
+        try {
+            const [y, m, d] = recentDateFilter.split('-').map(Number);
+            return new Intl.DateTimeFormat('ar-EG', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+            }).format(new Date(y, m - 1, d));
+        } catch {
+            return recentDateFilter;
+        }
+    }, [recentDateFilter]);
+
+    // Total pending count across all dates
     const totalPendingCount = useMemo(() => {
         return Object.values(pendingCountsByDate).reduce((sum, count) => sum + count, 0);
     }, [pendingCountsByDate]);
 
-    const selectedDatePendingCount = pendingCountsByDate[selectedDate] || 0;
-    const tomorrowDateStr = useMemo(() => addDaysToDateString(todayStr, 1), [todayStr]);
-    const tomorrowPendingCount = pendingCountsByDate[tomorrowDateStr] || 0;
+    // Navigation to Booking Details (pre-filtered)
+    const navigateToBookingDetails = (b: DBBooking) => {
+        playPs5SelectSound();
+        setFocusedBookingBrief(b);
+        setArchiveSearch(b.reservation_id);
+        setArchiveStatusFilter('all');
+        setArchiveDateFilter('');
+        setArchivePage(1);
+        setActiveSubTab('details');
+    };
+
+    const clearFocusedBookingBrief = () => {
+        playPs5NavigateSound();
+        setFocusedBookingBrief(null);
+        setArchiveSearch('');
+        setArchivePage(1);
+    };
 
     // WhatsApp opener
     const openWhatsAppDirect = (e: React.MouseEvent, b: DBBooking) => {
@@ -655,7 +750,7 @@ export default function SimpleOperationsTab() {
             {/* SUB-TABS NAVIGATION (Clean Light Executive Style) */}
             <div className="bg-white border border-slate-200/90 rounded-2xl p-2 sm:p-2.5 flex flex-wrap items-center justify-between gap-2 shadow-xs">
                 <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none w-full sm:w-auto">
-                    {/* 1. Dashboard & General Overview */}
+                    {/* 1. Dashboard & Schedule */}
                     <button
                         type="button"
                         onClick={() => {
@@ -669,7 +764,7 @@ export default function SimpleOperationsTab() {
                         }`}
                     >
                         <LayoutDashboard className="w-4 h-4" />
-                        <span>الإحصائيات العامة ومواعيد اليوم</span>
+                        <span>الداشبورد والمواعيد</span>
                         {allPendingBookings.length > 0 && (
                             <span className="w-4 h-4 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black flex items-center justify-center">
                                 {allPendingBookings.length}
@@ -735,15 +830,17 @@ export default function SimpleOperationsTab() {
             {/* SUB-TAB 1: DASHBOARD & TODAY'S OPERATIONS */}
             {/* ========================================================================= */}
             {activeSubTab === 'dashboard' && (
-                <div className="space-y-4">
-                    {/* 4 Professional Executive General KPI Cards */}
+                <div className="space-y-6">
+                    {/* 4 Executive KPI Cards */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        {/* 1. Total Bookings (General) */}
+                        {/* 1. Confirmed Today */}
                         <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs hover:border-blue-200 transition-colors">
                             <div>
-                                <span className="text-xs text-slate-500 font-bold block">إجمالي الحجوزات</span>
+                                <span className="text-xs text-slate-500 font-bold block">
+                                    حجوزات اليوم المؤكدة
+                                </span>
                                 <span className="font-sans text-2xl sm:text-3xl font-black text-slate-900 mt-1 block">
-                                    {generalStats.totalBookings || allPendingBookings.length}
+                                    {todayStatusCounts.confirmed}
                                 </span>
                             </div>
                             <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
@@ -767,14 +864,14 @@ export default function SimpleOperationsTab() {
                             </div>
                         </div>
 
-                        {/* 3. Pending Bookings (General) */}
+                        {/* 3. Pending Requests */}
                         <div className={`border rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs transition-colors ${
-                            allPendingBookings.length > 0 ? 'border-amber-300 bg-amber-50/40 hover:border-amber-400' : 'bg-white border-slate-200/90'
+                            totalPendingCount > 0 ? 'border-amber-300 bg-amber-50/40 hover:border-amber-400' : 'bg-white border-slate-200/90'
                         }`}>
                             <div>
-                                <span className="text-xs text-amber-800 font-bold block">بانتظار التأكيد</span>
+                                <span className="text-xs text-amber-800 font-bold block">طلبات بانتظار التأكيد</span>
                                 <span className="font-sans text-2xl sm:text-3xl font-black text-amber-600 mt-1 block">
-                                    {allPendingBookings.length}
+                                    {totalPendingCount}
                                 </span>
                             </div>
                             <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center">
@@ -782,12 +879,14 @@ export default function SimpleOperationsTab() {
                             </div>
                         </div>
 
-                        {/* 4. Total General Revenue */}
+                        {/* 4. Confirmed Revenue Today */}
                         <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs hover:border-emerald-200 transition-colors">
                             <div>
-                                <span className="text-xs text-slate-500 font-bold block">إجمالي الإيرادات</span>
+                                <span className="text-xs text-slate-500 font-bold block">
+                                    إيراد اليوم المؤكد
+                                </span>
                                 <span className="font-sans text-2xl sm:text-3xl font-black text-slate-900 mt-1 block">
-                                    {generalStats.totalRevenue} <span className="text-xs font-normal text-slate-500">ج.م</span>
+                                    {todayRevenue} <span className="text-xs font-normal text-slate-500">ج.م</span>
                                 </span>
                             </div>
                             <div className="w-11 h-11 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center">
@@ -796,191 +895,131 @@ export default function SimpleOperationsTab() {
                         </div>
                     </div>
 
-                    {/* Date Navigator Bar & Room Filter */}
-                    <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-                        {/* Date Selector */}
-                        <div className="flex items-center gap-2">
-                            <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl p-0.5">
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedDate(prev => addDaysToDateString(prev, -1))}
-                                    className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white transition-colors"
-                                    title="اليوم السابق"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
+                    {/* ========================================================================= */}
+                    {/* SECTION 1 (TOP): TODAY'S CONFIRMED SCHEDULE (مواعيد اليوم المؤكدة) */}
+                    {/* ========================================================================= */}
+                    <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
+                        {/* Section Header & Filters */}
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-red-50 text-red-600 border border-red-200 flex items-center justify-center shrink-0">
+                                    <Clock className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                                            جدول مواعيد وتشغيل اليوم (المؤكدة)
+                                        </h3>
+                                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                            {formattedTodayTitle}
+                                        </span>
+                                        <span className="text-xs font-mono font-bold text-slate-500">
+                                            ({filteredTodayBookings.length} موعد)
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        استعراض الأوقات المحجوزة اليوم وأسماء العملاء المؤكدين لكل غرفة بالصالة.
+                                    </p>
+                                </div>
+                            </div>
 
-                                <div className="relative">
+                            <div className="flex flex-wrap items-center gap-2">
+                                {/* Status Filter Pills */}
+                                <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-0.5 text-xs">
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            setIsCalendarOpen(prev => !prev);
-                                            playPs5NavigateSound();
-                                        }}
-                                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-white transition-all cursor-pointer group"
-                                        title="اضغط لفتح تقويم الحجوزات والمواعيد"
+                                        onClick={() => setTodayStatusFilter('confirmed')}
+                                        className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                            todayStatusFilter === 'confirmed'
+                                                ? 'bg-red-600 text-white shadow-xs'
+                                                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                                        }`}
                                     >
-                                        <div className="relative">
-                                            <Calendar className="w-3.5 h-3.5 text-red-600 group-hover:scale-110 transition-transform shrink-0" />
-                                            {/* Notification badge on calendar icon if any pending bookings exist */}
-                                            {totalPendingCount > 0 && (
-                                                <span
-                                                    className="absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-0.5 bg-amber-500 text-slate-950 font-black text-[9px] rounded-full flex items-center justify-center border border-white shadow-2xs animate-pulse"
-                                                    title={`يوجد ${totalPendingCount} حجز معلق`}
-                                                >
-                                                    {totalPendingCount}
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        <span className="text-xs sm:text-sm font-bold text-slate-900 whitespace-nowrap">
-                                            {formattedDateTitle}
+                                        <span>المؤكدة</span>
+                                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                                            todayStatusFilter === 'confirmed' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
+                                        }`}>
+                                            {todayStatusCounts.confirmed}
                                         </span>
-
-                                        {selectedDate === todayStr && (
-                                            <span className="mr-1 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded">
-                                                اليوم
-                                            </span>
-                                        )}
-
-                                        {/* Status badge if selected date has pending bookings */}
-                                        {selectedDatePendingCount > 0 && (
-                                            <span className="mr-1 text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse" />
-                                                <span>{selectedDatePendingCount} معلق</span>
-                                            </span>
-                                        )}
-
-                                        {/* Notice if tomorrow has pending bookings and user is currently on today */}
-                                        {selectedDate === todayStr && tomorrowPendingCount > 0 && (
-                                            <span className="hidden sm:inline-flex items-center gap-1 mr-1 text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded-full">
-                                                <AlertCircle className="w-2.5 h-2.5 text-amber-600" />
-                                                <span>غداً: {tomorrowPendingCount} معلق</span>
-                                            </span>
-                                        )}
-
-                                        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${isCalendarOpen ? 'rotate-180 text-red-600' : ''}`} />
                                     </button>
 
-                                    <AdminCalendarPopover
-                                        isOpen={isCalendarOpen}
-                                        onClose={() => setIsCalendarOpen(false)}
-                                        selectedDate={selectedDate}
-                                        onSelectDate={(newDate) => {
-                                            setSelectedDate(newDate);
-                                            setIsCalendarOpen(false);
-                                        }}
-                                        pendingCountsByDate={pendingCountsByDate}
-                                    />
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedDate(prev => addDaysToDateString(prev, 1))}
-                                    className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white transition-colors"
-                                    title="اليوم التالي"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                </button>
-                            </div>
-
-                            {selectedDate !== todayStr && (
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedDate(todayStr)}
-                                    className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
-                                >
-                                    الرجوع لليوم
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Room Filter Pills */}
-                        <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-0.5 text-xs">
-                            <button
-                                type="button"
-                                onClick={() => setRoomFilter('all')}
-                                className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all ${
-                                    roomFilter === 'all' ? 'bg-red-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-                                }`}
-                            >
-                                كل الغرف
-                            </button>
-                            {roomOptions.map((r) => (
-                                <button
-                                    key={r}
-                                    type="button"
-                                    onClick={() => setRoomFilter(r)}
-                                    className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all ${
-                                        roomFilter === r ? 'bg-red-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-                                    }`}
-                                >
-                                    {r}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Today's Bookings Section */}
-                    <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                            <div className="flex items-center gap-2">
-                                <User className="w-4 h-4 text-red-600" />
-                                <h3 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
-                                    <span>{selectedDate === todayStr ? 'قائمة مواعيد اليوم' : `قائمة مواعيد (${formattedDateTitle})`}</span>
-                                    {selectedDate === todayStr && (
-                                        <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-md">
-                                            افتراضية
+                                    <button
+                                        type="button"
+                                        onClick={() => setTodayStatusFilter('all')}
+                                        className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                            todayStatusFilter === 'all'
+                                                ? 'bg-red-600 text-white shadow-xs'
+                                                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                                        }`}
+                                    >
+                                        <span>الكل</span>
+                                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                                            todayStatusFilter === 'all' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
+                                        }`}>
+                                            {todayStatusCounts.all}
                                         </span>
-                                    )}
-                                    <span className="text-xs font-mono font-bold text-slate-500">
-                                        ({filteredDailyBookings.length})
-                                    </span>
-                                </h3>
-                            </div>
+                                    </button>
 
-                            <div className="flex flex-wrap items-center gap-2.5">
-                                {/* Status Filter Pills */}
-                                <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-0.5 text-xs overflow-x-auto scrollbar-none">
-                                    {dailyStatusOptions.map((opt) => (
+                                    {todayStatusCounts.ongoing > 0 && (
                                         <button
-                                            key={opt.id}
                                             type="button"
-                                            onClick={() => setDailyStatusFilter(opt.id)}
-                                            className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                                                dailyStatusFilter === opt.id
-                                                    ? 'bg-red-600 text-white shadow-xs'
+                                            onClick={() => setTodayStatusFilter('ongoing')}
+                                            className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                                todayStatusFilter === 'ongoing'
+                                                    ? 'bg-emerald-600 text-white shadow-xs'
                                                     : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                                             }`}
                                         >
-                                            <span>{opt.label}</span>
-                                            <span
-                                                className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold leading-none ${
-                                                    dailyStatusFilter === opt.id
-                                                        ? 'bg-white/20 text-white'
-                                                        : 'bg-slate-200/90 text-slate-600'
-                                                }`}
-                                            >
-                                                {opt.count}
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                            <span>شغال الآن</span>
+                                            <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-white/20">
+                                                {todayStatusCounts.ongoing}
                                             </span>
                                         </button>
-                                    ))}
+                                    )}
                                 </div>
 
+                                {/* Room Filter Pills */}
+                                {todayRoomOptions.length > 0 && (
+                                    <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-0.5 text-xs">
+                                        <button
+                                            type="button"
+                                            onClick={() => setTodayRoomFilter('all')}
+                                            className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                                                todayRoomFilter === 'all' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                                            }`}
+                                        >
+                                            كل الغرف
+                                        </button>
+                                        {todayRoomOptions.map((r) => (
+                                            <button
+                                                key={r}
+                                                type="button"
+                                                onClick={() => setTodayRoomFilter(r)}
+                                                className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                                                    todayRoomFilter === r ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                                                }`}
+                                            >
+                                                {r}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
                                 {/* Search */}
-                                <div className="relative w-full sm:w-56">
+                                <div className="relative w-full sm:w-52">
                                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                                     <input
                                         type="text"
-                                        placeholder="بحث بالاسم أو الهاتف..."
-                                        value={dailySearch}
-                                        onChange={(e) => setDailySearch(e.target.value)}
+                                        placeholder="بحث في مواعيد اليوم..."
+                                        value={todaySearch}
+                                        onChange={(e) => setTodaySearch(e.target.value)}
                                         className="w-full bg-slate-50 text-slate-900 text-xs rounded-xl pr-9 pl-8 py-2 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
                                     />
-                                    {dailySearch && (
+                                    {todaySearch && (
                                         <button
                                             type="button"
-                                            onClick={() => setDailySearch('')}
+                                            onClick={() => setTodaySearch('')}
                                             className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
                                             title="مسح البحث"
                                         >
@@ -991,24 +1030,25 @@ export default function SimpleOperationsTab() {
                             </div>
                         </div>
 
+                        {/* Schedule Content */}
                         {loading ? (
                             <div className="py-12 flex justify-center">
                                 <RefreshCw className="w-5 h-5 animate-spin text-red-600" />
                             </div>
-                        ) : filteredDailyBookings.length === 0 ? (
+                        ) : filteredTodayBookings.length === 0 ? (
                             <div className="py-12 text-center text-xs text-slate-500 border border-dashed border-slate-200 rounded-xl space-y-2">
-                                <p>لا توجد حجوزات تطابق الفلتر أو البحث المحدد.</p>
-                                {(dailyStatusFilter !== 'all' || dailySearch || roomFilter !== 'all') && (
+                                <p className="font-medium">لا توجد مواعيد محجوزة تطابق الفلتر أو البحث المحدد لليوم.</p>
+                                {(todayStatusFilter !== 'confirmed' || todaySearch || todayRoomFilter !== 'all') && (
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            setDailyStatusFilter('all');
-                                            setDailySearch('');
-                                            setRoomFilter('all');
+                                            setTodayStatusFilter('confirmed');
+                                            setTodaySearch('');
+                                            setTodayRoomFilter('all');
                                         }}
                                         className="text-red-600 hover:underline font-bold text-xs cursor-pointer"
                                     >
-                                        إعادة ضبط جميع الفلاتر
+                                        إعادة ضبط الفلاتر وعرض المؤكدة
                                     </button>
                                 )}
                             </div>
@@ -1019,21 +1059,443 @@ export default function SimpleOperationsTab() {
                                     <table className="w-full text-right text-xs">
                                         <thead>
                                             <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/80">
-                                                <th className="py-3 px-3 font-semibold">الموعد والمدة</th>
-                                                <th className="py-3 px-3 font-semibold">العميل</th>
+                                                <th className="py-3 px-3 font-semibold">الموعد المحجوز والمدة</th>
+                                                <th className="py-3 px-3 font-semibold">اسم العميل ورقم الهاتف</th>
                                                 <th className="py-3 px-3 font-semibold">الغرفة</th>
                                                 <th className="py-3 px-3 font-semibold">المبلغ</th>
-                                                <th className="py-3 px-3 font-semibold">الحالة</th>
-                                                <th className="py-3 px-3 text-left font-semibold">إجراء فوري (تأكيد / إلغاء)</th>
+                                                <th className="py-3 px-3 font-semibold">الحالة التشغيلية</th>
+                                                <th className="py-3 px-3 text-left font-semibold">الإجراءات</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {filteredDailyBookings.map((b) => {
+                                            {filteredTodayBookings.map((b) => {
                                                 const { start: bStart, end: bEnd } = getBookingDates(b);
                                                 const nowMs = Date.now();
                                                 const isEnded = bEnd.getTime() <= nowMs;
                                                 const isStarted = bStart.getTime() <= nowMs;
                                                 const isOngoing = isStarted && !isEnded && b.status === 'confirmed';
+
+                                                return (
+                                                    <tr
+                                                        key={b.id}
+                                                        onClick={() => navigateToBookingDetails(b)}
+                                                        className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                                                        title="اضغط للانتقال إلى صفحة تفاصيل هذا الحجز"
+                                                    >
+                                                        {/* Time Slot */}
+                                                        <td className="py-3.5 px-3">
+                                                            <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                                                                <Clock className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                                                                <span>{b.start_time} - {b.end_time}</span>
+                                                            </div>
+                                                            <span className="text-[11px] text-slate-500 font-mono">({b.duration_hours} س)</span>
+                                                        </td>
+
+                                                        {/* Client */}
+                                                        <td className="py-3.5 px-3">
+                                                            <div className="font-bold text-slate-900 group-hover:text-red-600 transition-colors">
+                                                                {b.customer_name}
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
+                                                                <span dir="ltr" className="font-mono text-slate-600">{b.customer_phone}</span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => openWhatsAppDirect(e, b)}
+                                                                    className="text-emerald-600 hover:underline inline-flex items-center gap-0.5 font-bold cursor-pointer"
+                                                                >
+                                                                    <MessageCircle className="w-3 h-3" />
+                                                                    <span>واتساب</span>
+                                                                </button>
+                                                            </div>
+                                                        </td>
+
+                                                        {/* Room */}
+                                                        <td className="py-3.5 px-3 text-slate-700 font-medium">
+                                                            {b.room_name}
+                                                        </td>
+
+                                                        {/* Amount */}
+                                                        <td className="py-3.5 px-3 font-bold text-emerald-700">
+                                                            {b.total_amount} ج.م
+                                                        </td>
+
+                                                        {/* Status */}
+                                                        <td className="py-3.5 px-3">
+                                                            {isOngoing ? (
+                                                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1.5">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                                    <span>شغال الآن 🎮</span>
+                                                                </span>
+                                                            ) : b.status === 'confirmed' ? (
+                                                                isEnded ? (
+                                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                                                        انتهى موعده ⌛
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                                        مؤكد 🔒
+                                                                    </span>
+                                                                )
+                                                            ) : b.status === 'pending' ? (
+                                                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                                                    معلق ⏳
+                                                                </span>
+                                                            ) : (
+                                                                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                                                    {b.status === 'completed' ? 'مكتمل' : 'ملغي'}
+                                                                </span>
+                                                            )}
+                                                        </td>
+
+                                                        {/* Actions */}
+                                                        <td className="py-3.5 px-3 text-left" onClick={(e) => e.stopPropagation()}>
+                                                            <div className="flex items-center justify-end gap-1.5">
+                                                                {isOngoing && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleQuickFinish(b)}
+                                                                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-emerald-50 text-slate-800 hover:text-emerald-700 border border-slate-200 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                                                                        title="إنهاء الجلسة الآن"
+                                                                    >
+                                                                        <Square className="w-3 h-3 text-emerald-600 fill-emerald-600" />
+                                                                        <span>إنهاء</span>
+                                                                    </button>
+                                                                )}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => navigateToBookingDetails(b)}
+                                                                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-medium transition-colors cursor-pointer"
+                                                                >
+                                                                    تفاصيل الحجز
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Mobile Cards View */}
+                                <div className="md:hidden space-y-3">
+                                    {filteredTodayBookings.map((b) => {
+                                        const { start: bStart, end: bEnd } = getBookingDates(b);
+                                        const nowMs = Date.now();
+                                        const isEnded = bEnd.getTime() <= nowMs;
+                                        const isStarted = bStart.getTime() <= nowMs;
+                                        const isOngoing = isStarted && !isEnded && b.status === 'confirmed';
+
+                                        return (
+                                            <div
+                                                key={b.id}
+                                                onClick={() => navigateToBookingDetails(b)}
+                                                className="border border-slate-200 bg-slate-50/80 rounded-xl p-3.5 space-y-3 cursor-pointer shadow-xs hover:border-red-300 transition-colors"
+                                            >
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div>
+                                                        <h4 className="text-sm font-bold text-slate-900">{b.customer_name}</h4>
+                                                        <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                                                            <span dir="ltr" className="font-mono text-slate-600">{b.customer_phone}</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => openWhatsAppDirect(e, b)}
+                                                                className="text-emerald-600 text-[11px] font-bold"
+                                                            >
+                                                                واتساب
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        {isOngoing ? (
+                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                                شغال الآن 🎮
+                                                            </span>
+                                                        ) : b.status === 'confirmed' ? (
+                                                            isEnded ? (
+                                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                                                    انتهى ⌛
+                                                                </span>
+                                                            ) : (
+                                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                                    مؤكد 🔒
+                                                                </span>
+                                                            )
+                                                        ) : (
+                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                                                {b.status === 'completed' ? 'مكتمل' : 'ملغي'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-white rounded-lg p-2.5 flex items-center justify-between text-xs border border-slate-200">
+                                                    <div>
+                                                        <span className="text-slate-500 text-[10px] block">الموعد والغرفة:</span>
+                                                        <span className="text-slate-900 font-bold">{b.room_name}</span>
+                                                        <span className="text-slate-600 text-[11px] block">{b.start_time} - {b.end_time} ({b.duration_hours} س)</span>
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <span className="text-slate-500 text-[10px] block">المبلغ:</span>
+                                                        <span className="text-emerald-700 font-bold text-sm">{b.total_amount} ج.م</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+                                                    {isOngoing && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleQuickFinish(b)}
+                                                            className="flex-1 py-2 rounded-lg bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5"
+                                                        >
+                                                            <Square className="w-3 h-3 text-emerald-600 fill-emerald-600" />
+                                                            <span>إنهاء الجلسة</span>
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => navigateToBookingDetails(b)}
+                                                        className="flex-1 py-2 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold text-center"
+                                                    >
+                                                        عرض التفاصيل
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    {/* ========================================================================= */}
+                    {/* SECTION 2 (BOTTOM): RECENT & INCOMING BOOKINGS WITH CALENDAR POPOVER */}
+                    {/* ========================================================================= */}
+                    <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
+                        {/* Section Header & Calendar Popover Integration */}
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center shrink-0">
+                                    <AlertCircle className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                                            أحدث الحجوزات والطلبات الواردة
+                                        </h3>
+                                        <span className="text-xs font-mono font-bold text-slate-500">
+                                            ({filteredRecentBookings.length} طلب)
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        جميع الطلبات الجديدة، المواعيد المتنافسة (وضع الـ 10 دقائق)، وتقويم الحجوزات بالأيام.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Calendar Popover + Quick Filters */}
+                            <div className="flex flex-wrap items-center gap-2">
+                                {/* CALENDAR BUTTON WITH NOTIFICATION BADGE */}
+                                <div className="relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsCalendarOpen(prev => !prev);
+                                            playPs5NavigateSound();
+                                        }}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs group ${
+                                            recentDateFilter
+                                                ? 'bg-red-50 text-red-700 border-red-200'
+                                                : 'bg-slate-100 hover:bg-white text-slate-700 border-slate-200'
+                                        }`}
+                                        title="فتح تقويم الأيام واكتشاف الطلبات المعلقة"
+                                    >
+                                        <div className="relative">
+                                            <Calendar className="w-4 h-4 text-red-600 group-hover:scale-110 transition-transform" />
+                                            {totalPendingCount > 0 && (
+                                                <span
+                                                    className="absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-0.5 bg-amber-500 text-slate-950 font-black text-[9px] rounded-full flex items-center justify-center border border-white shadow-2xs animate-pulse"
+                                                    title={`يوجد ${totalPendingCount} حجز معلق`}
+                                                >
+                                                    {totalPendingCount}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <span>{formattedRecentDateTitle}</span>
+
+                                        {recentDateFilter && (
+                                            <span className="text-[10px] font-medium bg-red-600 text-white px-1.5 py-0.2 rounded-md">
+                                                مفلتر
+                                            </span>
+                                        )}
+
+                                        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isCalendarOpen ? 'rotate-180 text-red-600' : ''}`} />
+                                    </button>
+
+                                    <AdminCalendarPopover
+                                        isOpen={isCalendarOpen}
+                                        onClose={() => setIsCalendarOpen(false)}
+                                        selectedDate={recentDateFilter || todayStr}
+                                        onSelectDate={(newDate) => {
+                                            setRecentDateFilter(newDate);
+                                            setIsCalendarOpen(false);
+                                        }}
+                                        pendingCountsByDate={pendingCountsByDate}
+                                    />
+                                </div>
+
+                                {recentDateFilter && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setRecentDateFilter('')}
+                                        className="px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-colors cursor-pointer"
+                                        title="عرض طلبات كل الأيام"
+                                    >
+                                        عرض كل الأيام ✕
+                                    </button>
+                                )}
+
+                                {/* Status Filters */}
+                                <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-0.5 text-xs">
+                                    <button
+                                        type="button"
+                                        onClick={() => setRecentStatusFilter('all')}
+                                        className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                                            recentStatusFilter === 'all'
+                                                ? 'bg-red-600 text-white shadow-xs'
+                                                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                                        }`}
+                                    >
+                                        الكل
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setRecentStatusFilter('pending')}
+                                        className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                            recentStatusFilter === 'pending'
+                                                ? 'bg-amber-500 text-slate-950 shadow-xs'
+                                                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                                        }`}
+                                    >
+                                        <span>معلقة</span>
+                                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                                            recentStatusFilter === 'pending' ? 'bg-black/20 text-slate-950' : 'bg-slate-200 text-slate-600'
+                                        }`}>
+                                            {recentPendingCount}
+                                        </span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setRecentStatusFilter('confirmed')}
+                                        className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                                            recentStatusFilter === 'confirmed'
+                                                ? 'bg-red-600 text-white shadow-xs'
+                                                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                                        }`}
+                                    >
+                                        مؤكدة
+                                    </button>
+                                </div>
+
+                                {/* Room Filters */}
+                                {recentRoomOptions.length > 0 && (
+                                    <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-0.5 text-xs">
+                                        <button
+                                            type="button"
+                                            onClick={() => setRecentRoomFilter('all')}
+                                            className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                                                recentRoomFilter === 'all' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                                            }`}
+                                        >
+                                            كل الغرف
+                                        </button>
+                                        {recentRoomOptions.map((r) => (
+                                            <button
+                                                key={r}
+                                                type="button"
+                                                onClick={() => setRecentRoomFilter(r)}
+                                                className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                                                    recentRoomFilter === r ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                                                }`}
+                                            >
+                                                {r}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Search */}
+                                <div className="relative w-full sm:w-48">
+                                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="بحث في الطلبات..."
+                                        value={recentSearch}
+                                        onChange={(e) => setRecentSearch(e.target.value)}
+                                        className="w-full bg-slate-50 text-slate-900 text-xs rounded-xl pr-9 pl-8 py-2 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
+                                    />
+                                    {recentSearch && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setRecentSearch('')}
+                                            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                                            title="مسح البحث"
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Recent Bookings List */}
+                        {loading ? (
+                            <div className="py-12 flex justify-center">
+                                <RefreshCw className="w-5 h-5 animate-spin text-red-600" />
+                            </div>
+                        ) : filteredRecentBookings.length === 0 ? (
+                            <div className="py-12 text-center text-xs text-slate-500 border border-dashed border-slate-200 rounded-xl space-y-2">
+                                <p className="font-medium">لا توجد طلبات حجز تطابق الفلتر أو البحث المحدد.</p>
+                                {(recentStatusFilter !== 'all' || recentSearch || recentRoomFilter !== 'all' || recentDateFilter) && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setRecentStatusFilter('all');
+                                            setRecentSearch('');
+                                            setRecentRoomFilter('all');
+                                            setRecentDateFilter('');
+                                        }}
+                                        className="text-red-600 hover:underline font-bold text-xs cursor-pointer"
+                                    >
+                                        إعادة ضبط الفلاتر وعرض الكل
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            <>
+                                {/* Desktop Table View */}
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="w-full text-right text-xs">
+                                        <thead>
+                                            <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/80">
+                                                <th className="py-3 px-3 font-semibold">تاريخ وموعد الحجز</th>
+                                                <th className="py-3 px-3 font-semibold">العميل</th>
+                                                <th className="py-3 px-3 font-semibold">الغرفة</th>
+                                                <th className="py-3 px-3 font-semibold">المبلغ</th>
+                                                <th className="py-3 px-3 font-semibold">الحالة</th>
+                                                <th className="py-3 px-3 text-left font-semibold">إجراء سريع / تنافس</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {filteredRecentBookings.map((b) => {
+                                                const { end: bEnd } = getBookingDates(b);
+                                                const nowMs = Date.now();
+                                                const isEnded = bEnd.getTime() <= nowMs;
+                                                const timeAgo = formatTimeAgo(b.created_at);
 
                                                 const { hasOverlap, competitors, group } = getBookingConflictInfo(b);
                                                 const isConflictExpanded = !!expandedConflictBookingIds[b.id];
@@ -1041,20 +1503,23 @@ export default function SimpleOperationsTab() {
                                                 return (
                                                     <React.Fragment key={b.id}>
                                                         <tr
-                                                            onClick={() => setActiveDetailBooking(b)}
+                                                            onClick={() => navigateToBookingDetails(b)}
                                                             className={`hover:bg-slate-50/80 transition-colors cursor-pointer group ${
                                                                 hasOverlap ? 'bg-amber-50/30 hover:bg-amber-50/60' : ''
                                                             }`}
+                                                            title="اضغط للانتقال إلى صفحة تفاصيل هذا الحجز"
                                                         >
-                                                            {/* Time */}
+                                                            {/* Date & Time */}
                                                             <td className="py-3.5 px-3">
-                                                                <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
-                                                                    <span>{b.start_time} - {b.end_time}</span>
-                                                                    {hasOverlap && (
-                                                                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" title="يوجد تداخل في هذا الموعد" />
-                                                                    )}
+                                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                                    <span className="font-bold text-slate-900 text-xs">{b.booking_date}</span>
+                                                                    <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded font-mono">
+                                                                        {timeAgo}
+                                                                    </span>
                                                                 </div>
-                                                                <span className="text-[11px] text-slate-500">({b.duration_hours} س)</span>
+                                                                <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                                                                    {b.start_time} - {b.end_time} ({b.duration_hours} س)
+                                                                </div>
                                                             </td>
 
                                                             {/* Client */}
@@ -1074,7 +1539,7 @@ export default function SimpleOperationsTab() {
                                                                     </button>
                                                                 </div>
 
-                                                                {/* Dropdown trigger button inside table row */}
+                                                                {/* Dropdown trigger button inside table row if overlapping */}
                                                                 {hasOverlap && (
                                                                     <div className="mt-1.5" onClick={(e) => e.stopPropagation()}>
                                                                         <button
@@ -1111,25 +1576,20 @@ export default function SimpleOperationsTab() {
                                                                         <AlertCircle className="w-2.5 h-2.5 text-amber-700" />
                                                                         <span>معلق (تنافس)</span>
                                                                     </span>
-                                                                ) : isOngoing ? (
-                                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1.5">
-                                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                                                        <span>شغال الآن 🎮</span>
-                                                                    </span>
                                                                 ) : b.status === 'confirmed' ? (
+                                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                                        مؤكد 🔒
+                                                                    </span>
+                                                                ) : b.status === 'pending' ? (
                                                                     isEnded ? (
-                                                                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                                                                            انتهى ⌛
+                                                                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                                                            ملغي (انتهى وقته) ⌛
                                                                         </span>
                                                                     ) : (
-                                                                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                                                                            مؤكد 🔒
+                                                                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                                                            معلق ⏳
                                                                         </span>
                                                                     )
-                                                                ) : b.status === 'pending' ? (
-                                                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                                                        معلق ⏳
-                                                                    </span>
                                                                 ) : (
                                                                     <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
                                                                         {b.status === 'completed' ? 'مكتمل' : 'ملغي'}
@@ -1137,20 +1597,22 @@ export default function SimpleOperationsTab() {
                                                                 )}
                                                             </td>
 
-                                                            {/* Actions */}
+                                                            {/* Quick Actions & Details */}
                                                             <td className="py-3.5 px-3 text-left">
                                                                 <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                                                                     {b.status === 'pending' && (
                                                                         <>
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => handleQuickConfirm(b)}
-                                                                                className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
-                                                                                title="تأكيد الحجز"
-                                                                            >
-                                                                                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                                                                                <span>تأكيد</span>
-                                                                            </button>
+                                                                            {!isEnded && (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => handleQuickConfirm(b)}
+                                                                                    className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
+                                                                                    title="تأكيد الحجز فوراً"
+                                                                                >
+                                                                                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                                                                    <span>تأكيد</span>
+                                                                                </button>
+                                                                            )}
                                                                             <button
                                                                                 type="button"
                                                                                 onClick={() => handleQuickReject(b)}
@@ -1162,21 +1624,9 @@ export default function SimpleOperationsTab() {
                                                                         </>
                                                                     )}
 
-                                                                    {isOngoing && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleQuickFinish(b)}
-                                                                            className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-emerald-50 text-slate-800 hover:text-emerald-700 border border-slate-200 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
-                                                                            title="إنهاء الجلسة الآن"
-                                                                        >
-                                                                            <Square className="w-3 h-3 text-emerald-600 fill-emerald-600" />
-                                                                            <span>إنهاء</span>
-                                                                        </button>
-                                                                    )}
-
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => setActiveDetailBooking(b)}
+                                                                        onClick={() => navigateToBookingDetails(b)}
                                                                         className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-medium transition-colors cursor-pointer"
                                                                     >
                                                                         تفاصيل
@@ -1202,12 +1652,11 @@ export default function SimpleOperationsTab() {
 
                                 {/* Mobile Responsive Cards View */}
                                 <div className="md:hidden space-y-3">
-                                    {filteredDailyBookings.map((b) => {
-                                        const { start: bStart, end: bEnd } = getBookingDates(b);
+                                    {filteredRecentBookings.map((b) => {
+                                        const { end: bEnd } = getBookingDates(b);
                                         const nowMs = Date.now();
                                         const isEnded = bEnd.getTime() <= nowMs;
-                                        const isStarted = bStart.getTime() <= nowMs;
-                                        const isOngoing = isStarted && !isEnded && b.status === 'confirmed';
+                                        const timeAgo = formatTimeAgo(b.created_at);
 
                                         const { hasOverlap, competitors, group } = getBookingConflictInfo(b);
                                         const isConflictExpanded = !!expandedConflictBookingIds[b.id];
@@ -1215,7 +1664,7 @@ export default function SimpleOperationsTab() {
                                         return (
                                             <div
                                                 key={b.id}
-                                                onClick={() => setActiveDetailBooking(b)}
+                                                onClick={() => navigateToBookingDetails(b)}
                                                 className={`border rounded-xl p-3.5 space-y-3 cursor-pointer shadow-xs transition-colors ${
                                                     hasOverlap ? 'bg-amber-50/30 border-amber-300' : 'bg-slate-50/80 border-slate-200'
                                                 }`}
@@ -1240,24 +1689,27 @@ export default function SimpleOperationsTab() {
                                                         </div>
                                                     </div>
 
-                                                    <div>
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        <span className="text-[10px] text-slate-500 font-mono">{timeAgo}</span>
                                                         {hasOverlap && b.status === 'pending' ? (
                                                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 inline-flex items-center gap-1">
                                                                 <AlertCircle className="w-2.5 h-2.5 text-amber-700" />
                                                                 <span>معلق (تنافس)</span>
-                                                            </span>
-                                                        ) : isOngoing ? (
-                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                                شغال الآن 🎮
                                                             </span>
                                                         ) : b.status === 'confirmed' ? (
                                                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                                                                 مؤكد 🔒
                                                             </span>
                                                         ) : b.status === 'pending' ? (
-                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                                                معلق ⏳
-                                                            </span>
+                                                            isEnded ? (
+                                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                                                    ملغي (انتهى) ⌛
+                                                                </span>
+                                                            ) : (
+                                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                                                    معلق ⏳
+                                                                </span>
+                                                            )
                                                         ) : (
                                                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
                                                                 {b.status === 'completed' ? 'مكتمل' : 'ملغي'}
@@ -1268,8 +1720,8 @@ export default function SimpleOperationsTab() {
 
                                                 <div className="bg-white rounded-lg p-2.5 flex items-center justify-between text-xs border border-slate-200">
                                                     <div>
-                                                        <span className="text-slate-500 text-[10px] block">الموعد والغرفة:</span>
-                                                        <span className="text-slate-900 font-bold">{b.room_name}</span>
+                                                        <span className="text-slate-500 text-[10px] block">الموعد والتاريخ:</span>
+                                                        <span className="text-slate-900 font-bold">{b.room_name} - {b.booking_date}</span>
                                                         <span className="text-slate-600 text-[11px] block">{b.start_time} - {b.end_time} ({b.duration_hours} س)</span>
                                                     </div>
                                                     <div className="text-left">
@@ -1310,14 +1762,16 @@ export default function SimpleOperationsTab() {
                                                 <div className="flex items-center gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
                                                     {b.status === 'pending' && (
                                                         <>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleQuickConfirm(b)}
-                                                                className="flex-1 py-2 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-xs"
-                                                            >
-                                                                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                                                                <span>تأكيد الحجز</span>
-                                                            </button>
+                                                            {!isEnded && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleQuickConfirm(b)}
+                                                                    className="flex-1 py-2 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-xs"
+                                                                >
+                                                                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                                                    <span>تأكيد الحجز</span>
+                                                                </button>
+                                                            )}
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleQuickReject(b)}
@@ -1328,20 +1782,9 @@ export default function SimpleOperationsTab() {
                                                         </>
                                                     )}
 
-                                                    {isOngoing && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleQuickFinish(b)}
-                                                            className="flex-1 py-2 rounded-lg bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5"
-                                                        >
-                                                            <Square className="w-3 h-3 text-emerald-600 fill-emerald-600" />
-                                                            <span>إنهاء الجلسة</span>
-                                                        </button>
-                                                    )}
-
                                                     <button
                                                         type="button"
-                                                        onClick={() => setActiveDetailBooking(b)}
+                                                        onClick={() => navigateToBookingDetails(b)}
                                                         className="flex-1 py-2 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold text-center"
                                                     >
                                                         عرض التفاصيل
@@ -1361,7 +1804,103 @@ export default function SimpleOperationsTab() {
             {/* SUB-TAB 2: DETAILED BOOKINGS ARCHIVE */}
             {/* ========================================================================= */}
             {activeSubTab === 'details' && (
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
+                <div className="space-y-4">
+                    {/* Focused Booking Quick Brief Card */}
+                    {focusedBookingBrief && (
+                        <div className="bg-gradient-to-r from-red-50/90 via-white to-slate-50 border-2 border-red-200 rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-red-100 pb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center font-bold shadow-xs">
+                                        <Gamepad2 className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold text-red-600">بريف الحجز المحدد</span>
+                                            <span className="font-mono text-xs font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200">
+                                                #{focusedBookingBrief.reservation_id}
+                                            </span>
+                                        </div>
+                                        <h3 className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
+                                            {focusedBookingBrief.customer_name}
+                                        </h3>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    {focusedBookingBrief.status === 'confirmed' ? (
+                                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1">
+                                            <span>مؤكد</span>
+                                            <span>🔒</span>
+                                        </span>
+                                    ) : focusedBookingBrief.status === 'pending' ? (
+                                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
+                                            <span>معلق</span>
+                                            <span>⏳</span>
+                                        </span>
+                                    ) : (
+                                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                            {focusedBookingBrief.status === 'completed' ? 'مكتمل' : 'ملغي'}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Info Grid */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                                <div className="bg-white/80 border border-slate-200 rounded-xl p-3">
+                                    <span className="text-slate-500 text-[11px] block mb-0.5">الغرفة والجهاز:</span>
+                                    <span className="font-bold text-slate-900 text-sm block">{focusedBookingBrief.room_name}</span>
+                                </div>
+
+                                <div className="bg-white/80 border border-slate-200 rounded-xl p-3">
+                                    <span className="text-slate-500 text-[11px] block mb-0.5">الموعد والتاريخ:</span>
+                                    <span className="font-bold text-slate-900 block">{focusedBookingBrief.booking_date}</span>
+                                    <span className="text-slate-600 font-mono text-[11px]">{focusedBookingBrief.start_time} - {focusedBookingBrief.end_time} ({focusedBookingBrief.duration_hours} س)</span>
+                                </div>
+
+                                <div className="bg-white/80 border border-slate-200 rounded-xl p-3">
+                                    <span className="text-slate-500 text-[11px] block mb-0.5">رقم الهاتف:</span>
+                                    <span className="font-mono font-bold text-slate-900 block" dir="ltr">{focusedBookingBrief.customer_phone}</span>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => openWhatsAppDirect(e, focusedBookingBrief)}
+                                        className="text-emerald-600 hover:underline text-[11px] inline-flex items-center gap-1 font-bold mt-0.5 cursor-pointer"
+                                    >
+                                        <MessageCircle className="w-3 h-3" />
+                                        <span>مراسلة واتساب</span>
+                                    </button>
+                                </div>
+
+                                <div className="bg-white/80 border border-slate-200 rounded-xl p-3">
+                                    <span className="text-slate-500 text-[11px] block mb-0.5">المبلغ الإجمالي:</span>
+                                    <span className="font-black text-emerald-700 text-base">{focusedBookingBrief.total_amount} ج.م</span>
+                                </div>
+                            </div>
+
+                            {/* Buttons */}
+                            <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveDetailBooking(focusedBookingBrief)}
+                                    className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+                                >
+                                    <Eye className="w-4 h-4" />
+                                    <span>عرض كامل تفاصيل الحجز 🔍</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={clearFocusedBookingBrief}
+                                    className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                    <span>عرض كل سجل الحجوزات بالأرشيف</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
                     {/* Search & Filters */}
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                         <div className="relative flex-1 max-w-md">
@@ -1459,59 +1998,73 @@ export default function SimpleOperationsTab() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {archiveBookings.map((b) => (
-                                        <tr
-                                            key={b.id}
-                                            onClick={() => setActiveDetailBooking(b)}
-                                            className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
-                                        >
-                                            <td className="py-3.5 px-3 font-mono text-slate-500">#{b.reservation_id}</td>
-                                            <td className="py-3.5 px-3">
-                                                <div className="font-bold text-slate-900 group-hover:text-red-600 transition-colors">
-                                                    {b.customer_name}
-                                                </div>
-                                                <span className="text-[11px] text-slate-500 font-mono" dir="ltr">
-                                                    {b.customer_phone}
-                                                </span>
-                                            </td>
-                                            <td className="py-3.5 px-3 text-slate-700">{b.room_name}</td>
-                                            <td className="py-3.5 px-3">
-                                                <div className="text-slate-900">{b.booking_date}</div>
-                                                <div className="text-slate-500 text-[11px]">{b.start_time} - {b.end_time}</div>
-                                            </td>
-                                            <td className="py-3.5 px-3 font-bold text-emerald-700">{b.total_amount} ج.م</td>
-                                            <td className="py-3.5 px-3">
-                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                                    b.status === 'confirmed'
-                                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                                        : b.status === 'pending'
-                                                        ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                                                        : 'bg-slate-100 text-slate-600 border border-slate-200'
-                                                }`}>
-                                                    {b.status === 'confirmed' ? 'مؤكد' : b.status === 'pending' ? 'معلق' : b.status === 'completed' ? 'مكتمل' : 'ملغي'}
-                                                </span>
-                                            </td>
-                                            <td className="py-3.5 px-3 text-left" onClick={(e) => e.stopPropagation()}>
-                                                <div className="flex items-center justify-end gap-1.5">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setActiveDetailBooking(b)}
-                                                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs"
-                                                    >
-                                                        تفاصيل
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleDeleteBooking(b.id, b.customer_name)}
-                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                                                        title="حذف الحجز"
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {archiveBookings.map((b) => {
+                                        const { end: dEnd } = getBookingDates(b);
+                                        const isPastPending = b.status === 'pending' && dEnd.getTime() <= Date.now();
+                                        return (
+                                            <tr
+                                                key={b.id}
+                                                onClick={() => setActiveDetailBooking(b)}
+                                                className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                                            >
+                                                <td className="py-3.5 px-3 font-mono text-slate-500">#{b.reservation_id}</td>
+                                                <td className="py-3.5 px-3">
+                                                    <div className="font-bold text-slate-900 group-hover:text-red-600 transition-colors">
+                                                        {b.customer_name}
+                                                    </div>
+                                                    <span className="text-[11px] text-slate-500 font-mono" dir="ltr">
+                                                        {b.customer_phone}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3.5 px-3 text-slate-700">{b.room_name}</td>
+                                                <td className="py-3.5 px-3">
+                                                    <div className="text-slate-900">{b.booking_date}</div>
+                                                    <div className="text-slate-500 text-[11px]">{b.start_time} - {b.end_time}</div>
+                                                </td>
+                                                <td className="py-3.5 px-3 font-bold text-emerald-700">{b.total_amount} ج.م</td>
+                                                <td className="py-3.5 px-3">
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                                        b.status === 'confirmed'
+                                                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                                            : isPastPending
+                                                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                                            : b.status === 'pending'
+                                                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                                            : 'bg-slate-100 text-slate-600 border border-slate-200'
+                                                    }`}>
+                                                        {b.status === 'confirmed'
+                                                            ? 'مؤكد'
+                                                            : isPastPending
+                                                            ? 'ملغي (انتهى وقته)'
+                                                            : b.status === 'pending'
+                                                            ? 'معلق'
+                                                            : b.status === 'completed'
+                                                            ? 'مكتمل'
+                                                            : 'ملغي'}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3.5 px-3 text-left" onClick={(e) => e.stopPropagation()}>
+                                                    <div className="flex items-center justify-end gap-1.5">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setActiveDetailBooking(b)}
+                                                            className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs"
+                                                        >
+                                                            تفاصيل
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteBooking(b.id, b.customer_name)}
+                                                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                                                            title="حذف الحجز"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
@@ -1541,6 +2094,7 @@ export default function SimpleOperationsTab() {
                             </div>
                         </div>
                     )}
+                    </div>
                 </div>
             )}
 
