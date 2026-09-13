@@ -1,11 +1,10 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/stores/themeStore';
 import { CartProvider } from '@/stores/cartStore';
 import CartSheet from '@/components/features/CartSheet';
 import BottomNav from '@/components/layout/BottomNav';
-import SplashScreen from '@/components/splash/SplashScreen';
 import ErrorBoundary from '@/components/features/ErrorBoundary';
 import AdminProtectedRoute from '@/components/admin/AdminProtectedRoute';
 import { preloadMenuData } from '@/services/menuService';
@@ -81,15 +80,6 @@ function AppRoutes() {
 }
 
 export default function App() {
-    // Check sessionStorage to only show splash once per session
-    const [splashDone, setSplashDone] = useState(() => {
-        try {
-            return !!sessionStorage.getItem('d95_splash_shown');
-        } catch {
-            return true;
-        }
-    });
-
     useEffect(() => {
         // Warm up menu cache during idle time so first menu visit is instant 0ms
         const timer = setTimeout(() => {
@@ -102,7 +92,6 @@ export default function App() {
         <ErrorBoundary>
             <ThemeProvider>
                 <CartProvider>
-                    {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
                     <AppContent />
                 </CartProvider>
             </ThemeProvider>
