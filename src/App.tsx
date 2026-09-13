@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/stores/themeStore';
@@ -8,7 +8,6 @@ import BottomNav from '@/components/layout/BottomNav';
 import ErrorBoundary from '@/components/features/ErrorBoundary';
 import AdminProtectedRoute from '@/components/admin/AdminProtectedRoute';
 import { preloadMenuData } from '@/services/menuService';
-import { SplashScreen } from '@/components/splash';
 
 // Statically import primary public tabs for 0ms instantaneous bottom bar navigation
 import GatewayPage from '@/pages/GatewayPage';
@@ -81,14 +80,6 @@ function AppRoutes() {
 }
 
 export default function App() {
-    const [splashFinished, setSplashFinished] = useState(() => {
-        try {
-            return !!sessionStorage.getItem('d95_splash_shown');
-        } catch {
-            return true;
-        }
-    });
-
     useEffect(() => {
         // Warm up menu cache during idle time so first menu visit is instant 0ms
         const timer = setTimeout(() => {
@@ -101,9 +92,6 @@ export default function App() {
         <ErrorBoundary>
             <ThemeProvider>
                 <CartProvider>
-                    {!splashFinished && (
-                        <SplashScreen onComplete={() => setSplashFinished(true)} />
-                    )}
                     <AppContent />
                 </CartProvider>
             </ThemeProvider>
