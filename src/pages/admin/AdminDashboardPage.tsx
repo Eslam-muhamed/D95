@@ -22,15 +22,27 @@ export default function AdminDashboardPage() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<TabType>('operations');
     const [pendingOrdersCount, setPendingOrdersCount] = useState<number>(0);
+    const [userEmail, setUserEmail] = useState<string>('admin@d95.com');
+    const isCashier = userEmail === 'cashier@d95.com';
 
-    // Auth verification: ensure active Supabase session with admin credentials
+    // Auth verification: ensure active Supabase session with admin or cashier credentials
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
-            if (!session?.user || session.user.email !== 'admin@d95.com') {
+            const email = session?.user?.email;
+            if (!session?.user || (email !== 'admin@d95.com' && email !== 'cashier@d95.com')) {
                 navigate('/admin/login');
+            } else if (email) {
+                setUserEmail(email);
             }
         });
     }, [navigate]);
+
+    // Ensure cashier cannot remain on admin-only tabs
+    useEffect(() => {
+        if (isCashier && (activeTab === 'menu_settings' || activeTab === 'payment_settings')) {
+            setActiveTab('operations');
+        }
+    }, [isCashier, activeTab]);
 
     // Check pending orders count for badge
     useEffect(() => {
@@ -62,7 +74,7 @@ export default function AdminDashboardPage() {
         navigate('/admin/login');
     };
 
-    const navItems: { id: TabType; label: string; icon: React.ReactNode; badgeCount?: number }[] = [
+    const allNavItems: { id: TabType; label: string; icon: React.ReactNode; badgeCount?: number; adminOnly?: boolean }[] = [
         {
             id: 'operations',
             label: 'الحجوزات والتشغيل',
@@ -78,13 +90,17 @@ export default function AdminDashboardPage() {
             id: 'menu_settings',
             label: 'منيو وأسعار الكافيه',
             icon: <UtensilsCrossed className="w-4 h-4" />,
+            adminOnly: true,
         },
         {
             id: 'payment_settings',
             label: 'إعدادات الدفع والمحافظ',
             icon: <Wallet className="w-4 h-4" />,
+            adminOnly: true,
         },
     ];
+
+    const navItems = isCashier ? allNavItems.filter(item => !item.adminOnly) : allNavItems;
 
     return (
         <div className="min-h-screen w-full bg-slate-100/70 text-slate-900 font-body selection:bg-red-600 selection:text-white flex flex-col" dir="rtl">
@@ -98,8 +114,12 @@ export default function AdminDashboardPage() {
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="text-base font-bold text-slate-900 tracking-wide">D95 Lounge</span>
-                            <span className="text-[10px] bg-slate-100 text-slate-700 font-semibold px-2 py-0.5 rounded-full border border-slate-200">
-                                لوحة التحكم
+                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                                isCashier 
+                                    ? 'bg-amber-100 text-amber-800 border-amber-300' 
+                                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                            }`}>
+                                {isCashier ? 'كاشير الصالة' : 'لوحة التحكم'}
                             </span>
                         </div>
                         <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 font-medium mt-0.5">
@@ -238,33 +258,37 @@ export default function AdminDashboardPage() {
                     <span className="text-[10px]">الكافيه</span>
                 </button>
 
-                <button
-                    type="button"
-                    onClick={() => {
-                        playPs5NavigateSound();
-                        setActiveTab('menu_settings');
-                    }}
-                    className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-xl transition-all cursor-pointer ${
-                        activeTab === 'menu_settings' ? 'text-purple-600 font-bold' : 'text-slate-500'
-                    }`}
-                >
-                    <UtensilsCrossed className="w-5 h-5" />
-                    <span className="text-[10px]">المنيو</span>
-                </button>
+                {!isCashier && (
+                    <>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                playPs5NavigateSound();
+                                setActiveTab('menu_settings');
+                            }}
+                            className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-xl transition-all cursor-pointer ${
+                                activeTab === 'menu_settings' ? 'text-purple-600 font-bold' : 'text-slate-500'
+                            }`}
+                        >
+                            <UtensilsCrossed className="w-5 h-5" />
+                            <span className="text-[10px]">المنيو</span>
+                        </button>
 
-                <button
-                    type="button"
-                    onClick={() => {
-                        playPs5NavigateSound();
-                        setActiveTab('payment_settings');
-                    }}
-                    className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-xl transition-all cursor-pointer ${
-                        activeTab === 'payment_settings' ? 'text-emerald-600 font-bold' : 'text-slate-500'
-                    }`}
-                >
-                    <Wallet className="w-5 h-5" />
-                    <span className="text-[10px]">المحافظ والدفع</span>
-                </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                playPs5NavigateSound();
+                                setActiveTab('payment_settings');
+                            }}
+                            className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-xl transition-all cursor-pointer ${
+                                activeTab === 'payment_settings' ? 'text-emerald-600 font-bold' : 'text-slate-500'
+                            }`}
+                        >
+                            <Wallet className="w-5 h-5" />
+                            <span className="text-[10px]">المحافظ والدفع</span>
+                        </button>
+                    </>
+                )}
             </nav>
         </div>
     );

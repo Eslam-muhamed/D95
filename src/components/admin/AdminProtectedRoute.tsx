@@ -22,8 +22,9 @@ export default function AdminProtectedRoute({ children }: Props) {
                     console.warn('Auth session error:', error.message);
                 }
                 if (mounted) {
-                    const isAdmin = !!session?.user && session?.user?.email === 'admin@d95.com';
-                    setIsAuthenticated(isAdmin);
+                    const email = session?.user?.email;
+                    const isStaff = !!session?.user && (email === 'admin@d95.com' || email === 'cashier@d95.com');
+                    setIsAuthenticated(isStaff);
                     setLoading(false);
                 }
             } catch (err) {
@@ -39,8 +40,9 @@ export default function AdminProtectedRoute({ children }: Props) {
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             if (mounted) {
-                const isAdmin = !!session?.user && session?.user?.email === 'admin@d95.com';
-                setIsAuthenticated(isAdmin);
+                const email = session?.user?.email;
+                const isStaff = !!session?.user && (email === 'admin@d95.com' || email === 'cashier@d95.com');
+                setIsAuthenticated(isStaff);
                 setLoading(false);
             }
         });
