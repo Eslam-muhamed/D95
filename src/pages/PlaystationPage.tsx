@@ -17,6 +17,7 @@ import {
     Moon,
     Sparkles,
     ShoppingBag,
+    Instagram,
     type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -26,6 +27,7 @@ import room02InteriorImg from '@/assets/doors/room-02-interior.jpg';
 import { useTheme } from '@/stores/themeStore';
 import { useCart } from '@/stores/cartStore';
 import { BeinSportsIcon, NetflixIcon } from '@/components/brand/EntertainmentIcons';
+import { CONTACT_INFO } from '@/constants/contactInfo';
 
 interface RoomData {
     id: string;
@@ -650,6 +652,20 @@ export default function PlaystationPage() {
                         <Clock className="w-4 h-4 text-red-600 dark:text-red-500" />
                         <span>مواعيد العمل المعتمدة: يومياً من <strong>08:00 صباحاً</strong> حتى <strong>04:00 فجراً</strong></span>
                     </div>
+
+                    {CONTACT_INFO.instagramUrl && (
+                        <div>
+                            <a
+                                href={CONTACT_INFO.instagramUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold bg-pink-500/10 hover:bg-pink-500/20 text-pink-600 dark:text-pink-400 border border-pink-500/30 transition-all hover:scale-105"
+                            >
+                                <Instagram className="w-3.5 h-3.5" />
+                                <span>تابعنا على إنستجرام {CONTACT_INFO.instagramHandle}</span>
+                            </a>
+                        </div>
+                    )}
 
                     <div className="flex flex-col items-center justify-center space-y-1 pt-2">
                         <p className="font-bebas text-sm sm:text-base text-red-600 dark:text-red-500/90 tracking-[0.25em] font-bold">

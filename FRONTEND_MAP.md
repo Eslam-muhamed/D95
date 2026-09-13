@@ -417,6 +417,8 @@ export const CONTACT_INFO = {
     address: 'D95 Gaming Lounge & Café',
     googleMapsLink: 'https://maps.google.com',
     mapsEmbedSrc: '',
+    instagramHandle: '@daboor_1995',
+    instagramUrl: 'https://www.instagram.com/daboor_1995/',
 };
 ```
 

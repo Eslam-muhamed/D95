@@ -1,4 +1,4 @@
-import { MapPin, Phone, Clock } from 'lucide-react';
+import { MapPin, Phone, Clock, Instagram } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useInView } from '@/hooks/useInView';
 import { CONTACT_INFO } from '@/constants/contactInfo';
@@ -12,6 +12,7 @@ const INFO_ROWS = [
   { Icon: MapPin, label: 'العنوان', value: CONTACT_INFO.address || '—', href: GOOGLE_MAPS_LINK || null },
   { Icon: Phone, label: 'التليفون', value: CAFE_PHONE_DISPLAY || '—', href: CAFE_PHONE ? `tel:+${CAFE_PHONE}` : null },
   { Icon: Clock, label: 'مواعيد العمل', value: CONTACT_INFO.workingHours || '—', href: null },
+  { Icon: Instagram, label: 'إنستجرام', value: CONTACT_INFO.instagramHandle || '—', href: CONTACT_INFO.instagramUrl || null },
 ];
 
 export default function ContactSection() {
