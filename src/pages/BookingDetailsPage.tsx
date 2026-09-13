@@ -781,7 +781,7 @@ export default function BookingDetailsPage() {
                             </div>
                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/50 border border-purple-200/80 dark:border-purple-800/40 text-purple-700 dark:text-purple-300 text-[9px] font-bold">
-                                    <BeinSportsIcon className="w-3 h-3 shrink-0" />
+                                    <BeinSportsIcon className="w-3.5 h-3.5 shrink-0 object-contain" />
                                     <span>beIN SPORTS 4K</span>
                                 </span>
                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-950/50 border border-red-200/80 dark:border-red-800/40 text-red-700 dark:text-red-300 text-[9px] font-bold">

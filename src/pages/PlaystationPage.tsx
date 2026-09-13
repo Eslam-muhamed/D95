@@ -497,7 +497,7 @@ export default function PlaystationPage() {
                                         {/* Entertainment Badges (beIN SPORTS & NETFLIX 4K) */}
                                         <div className="flex items-center gap-1.5 flex-wrap">
                                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/40 text-purple-700 dark:text-purple-300 text-[10px] font-bold">
-                                                <BeinSportsIcon className="w-3.5 h-3.5 shrink-0 rounded-xs" />
+                                                <BeinSportsIcon className="w-4 h-4 shrink-0 object-contain" />
                                                 <span>beIN SPORTS</span>
                                             </span>
                                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 text-red-700 dark:text-red-300 text-[10px] font-bold">

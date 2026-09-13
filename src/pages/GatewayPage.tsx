@@ -269,7 +269,7 @@ export default function GatewayPage() {
                 <div className="grid grid-cols-2 gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-2xl bg-white/75 dark:bg-[#150f11]/85 border border-neutral-300/80 dark:border-white/10 backdrop-blur-md shadow-sm">
                     {/* beIN SPORTS */}
                     <div className="flex items-center gap-2.5 p-2 sm:p-2.5 rounded-xl bg-neutral-50/90 dark:bg-white/[0.04] border border-neutral-200/70 dark:border-white/5">
-                        <BeinSportsIcon className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 rounded-lg shadow-xs" />
+                        <BeinSportsIcon className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 object-contain drop-shadow-xs" />
                         <div className="flex flex-col text-right min-w-0">
                             <div className="flex items-center gap-1.5">
                                 <span className="font-bebas text-xs sm:text-sm font-black tracking-wider text-neutral-900 dark:text-white">
