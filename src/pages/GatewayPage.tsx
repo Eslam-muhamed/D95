@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowRight, Gamepad2, Coffee, Sun, Moon } from 'lucide-react';
+import { ArrowRight, Gamepad2, Coffee, Sun, Moon, ExternalLink } from 'lucide-react';
 import D95BrushLogo from '@/components/brand/D95BrushLogo';
 import { playPs5StartupSound, playCafeEntranceSound } from '@/lib/sound';
 import { useTheme } from '@/stores/themeStore';
+import { CONTACT_INFO } from '@/constants/contactInfo';
+import { BeinSportsIcon, NetflixIcon, InstagramGradientIcon } from '@/components/brand/EntertainmentIcons';
 
 export default function GatewayPage() {
     const navigate = useNavigate();
@@ -261,6 +263,80 @@ export default function GatewayPage() {
                     </Link>
                 </div>
             </section>
+
+            {/* VIP Entertainment Features (beIN SPORTS & Netflix 4K) */}
+            <section className="relative z-10 w-full max-w-2xl mx-auto my-2 px-2 shrink-0">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-2xl bg-white/75 dark:bg-[#150f11]/85 border border-neutral-300/80 dark:border-white/10 backdrop-blur-md shadow-sm">
+                    {/* beIN SPORTS */}
+                    <div className="flex items-center gap-2.5 p-2 sm:p-2.5 rounded-xl bg-neutral-50/90 dark:bg-white/[0.04] border border-neutral-200/70 dark:border-white/5">
+                        <BeinSportsIcon className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 rounded-lg shadow-xs" />
+                        <div className="flex flex-col text-right min-w-0">
+                            <div className="flex items-center gap-1.5">
+                                <span className="font-bebas text-xs sm:text-sm font-black tracking-wider text-neutral-900 dark:text-white">
+                                    beIN SPORTS
+                                </span>
+                                <span className="text-[9px] font-bold px-1 rounded bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50">
+                                    4K
+                                </span>
+                            </div>
+                            <span className="text-[10px] sm:text-[11px] text-neutral-600 dark:text-neutral-400 font-body truncate">
+                                بث مباشر لكافة البطولات
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* NETFLIX */}
+                    <div className="flex items-center gap-2.5 p-2 sm:p-2.5 rounded-xl bg-neutral-50/90 dark:bg-white/[0.04] border border-neutral-200/70 dark:border-white/5">
+                        <NetflixIcon className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 rounded-lg shadow-xs" />
+                        <div className="flex flex-col text-right min-w-0">
+                            <div className="flex items-center gap-1.5">
+                                <span className="font-bebas text-xs sm:text-sm font-black tracking-wider text-neutral-900 dark:text-white">
+                                    NETFLIX
+                                </span>
+                                <span className="text-[9px] font-bold px-1 rounded bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/50">
+                                    PREMIUM
+                                </span>
+                            </div>
+                            <span className="text-[10px] sm:text-[11px] text-neutral-600 dark:text-neutral-400 font-body truncate">
+                                سينما وترفيه متواصل
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Official Instagram Showcase Card */}
+            <div className="relative z-10 w-full max-w-md mx-auto my-1.5 px-2 shrink-0">
+                <a
+                    href={CONTACT_INFO.instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative flex items-center justify-between p-2.5 sm:p-3 rounded-2xl bg-white/80 dark:bg-[#160e11]/90 hover:bg-white dark:hover:bg-[#1e1317] border border-neutral-300/80 dark:border-white/10 hover:border-pink-500/50 dark:hover:border-pink-500/40 backdrop-blur-md shadow-sm hover:shadow-[0_4px_20px_rgba(225,48,108,0.2)] transition-all active:scale-[0.98]"
+                    aria-label="صفحة إنستجرام الرسمية"
+                >
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <InstagramGradientIcon className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl shadow-sm shrink-0 group-hover:scale-105 transition-transform" />
+                        <div className="flex flex-col text-right min-w-0">
+                            <div className="flex items-center gap-1.5">
+                                <span className="font-body text-xs sm:text-sm font-bold text-neutral-900 dark:text-white">
+                                    تابعنا على إنستجرام
+                                </span>
+                                <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-pink-100 dark:bg-pink-950/60 text-pink-700 dark:text-pink-300 border border-pink-200 dark:border-pink-800/40">
+                                    {CONTACT_INFO.instagramHandle}
+                                </span>
+                            </div>
+                            <span className="text-[10px] sm:text-[11px] text-neutral-500 dark:text-neutral-400 font-body truncate">
+                                كواليس الصالة، مواعيد البطولات وأجدد العروض 📸
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-neutral-100 group-hover:bg-pink-50 dark:bg-white/10 dark:group-hover:bg-pink-950/50 text-neutral-700 group-hover:text-pink-600 dark:text-neutral-200 dark:group-hover:text-pink-300 text-xs font-bold transition-colors shrink-0">
+                        <span className="hidden xs:inline">زيارة</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                    </div>
+                </a>
+            </div>
 
             {/* Bottom Signoff */}
             <footer className="relative z-10 w-full max-w-xl mx-auto flex flex-col items-center text-center space-y-1.5 shrink-0">

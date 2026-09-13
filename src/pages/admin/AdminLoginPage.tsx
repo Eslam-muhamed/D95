@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
                         <Gamepad2 className="w-9 h-9" />
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="font-brush text-3xl text-red-500 font-bold">D95</span>
+                        <span className="font-bebas text-4xl text-red-500 font-black tracking-wider">D95</span>
                         <span className="text-xs bg-red-950 text-red-400 font-bold px-2.5 py-0.5 rounded-full border border-red-500/30">
                             ADMIN PORTAL
                         </span>

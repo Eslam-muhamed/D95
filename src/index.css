@@ -145,10 +145,16 @@ h1, h2, h3, h4, h5, h6, .font-heading, .font-display, .font-bebas {
     letter-spacing: 0.03em;
 }
 
-/* Strict D95 Logo brush font mark */
-.font-brush, .font-logo-brush {
+/* D95 Decorative brush marks (e.g. crossmarks ✕) */
+.font-brush {
     font-family: 'Permanent Marker', 'Cairo', cursive, sans-serif;
     letter-spacing: 0.05em;
+}
+
+/* Official D95 Logo font mark (Bebas Neue condensed bold display) */
+.font-logo-brush, .font-d95-logo {
+    font-family: 'Bebas Neue', 'Changa', 'Cairo', sans-serif;
+    letter-spacing: 0.06em;
 }
 
 /* ──────────────────────────────────────────

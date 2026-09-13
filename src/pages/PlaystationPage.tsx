@@ -25,6 +25,7 @@ import room01InteriorImg from '@/assets/doors/room-01-interior.jpg';
 import room02InteriorImg from '@/assets/doors/room-02-interior.jpg';
 import { useTheme } from '@/stores/themeStore';
 import { useCart } from '@/stores/cartStore';
+import { BeinSportsIcon, NetflixIcon } from '@/components/brand/EntertainmentIcons';
 
 interface RoomData {
     id: string;
@@ -40,7 +41,7 @@ interface RoomData {
     neonShadow: string;
     interiorImg: string;
     features: {
-        icon: LucideIcon;
+        icon: LucideIcon | React.ComponentType<{ className?: string }>;
         label: string;
         desc: string;
     }[];
@@ -66,6 +67,16 @@ const ROOMS: RoomData[] = [
                 icon: Tv,
                 label: 'شاشة 65" 4K 120Hz',
                 desc: 'معدل تحديث فائق مع دعم HDR الكامل وسرعة استجابة 1ms',
+            },
+            {
+                icon: BeinSportsIcon,
+                label: 'beIN SPORTS 4K',
+                desc: 'بث مباشر لكافة البطولات والمباريات بأعلى جودة فائقة',
+            },
+            {
+                icon: NetflixIcon,
+                label: 'NETFLIX Premium 4K',
+                desc: 'مكتبة أفلام ومسلسلات عالمية متاحة مجاناً خلال جلستك',
             },
             {
                 icon: Gamepad2,
@@ -103,6 +114,16 @@ const ROOMS: RoomData[] = [
                 icon: Tv,
                 label: 'شاشة 65" 4K 120Hz',
                 desc: 'أعلى دقة وضوح وألوان سينمائية نابضة بالحياة',
+            },
+            {
+                icon: BeinSportsIcon,
+                label: 'beIN SPORTS 4K',
+                desc: 'بث مباشر لكافة البطولات والمباريات بأعلى جودة فائقة',
+            },
+            {
+                icon: NetflixIcon,
+                label: 'NETFLIX Premium 4K',
+                desc: 'مكتبة أفلام ومسلسلات عالمية متاحة مجاناً خلال جلستك',
             },
             {
                 icon: Gamepad2,
@@ -242,9 +263,9 @@ export default function PlaystationPage() {
                         </Link>
                         <div className="flex flex-col text-right">
                             <div className="flex items-center gap-2">
-                                <div dir="ltr" className="flex items-baseline leading-none">
-                                    <span className="font-brush font-black text-xl text-neutral-900 dark:text-neutral-100">D</span>
-                                    <span className="font-brush font-black text-2xl text-[#E5252A] -ml-0.5">95</span>
+                                <div dir="ltr" className="flex items-baseline leading-none select-none tracking-wider">
+                                    <span className="font-bebas font-black text-2xl text-neutral-900 dark:text-neutral-100">D</span>
+                                    <span className="font-bebas font-black text-2xl text-[#E5252A] -ml-0.5">95</span>
                                 </div>
                                 <span className="h-1.5 w-1.5 bg-red-600 rounded-full inline-block shadow-[0_0_8px_#c41e3a]" />
                                 <span className="text-xs font-bold bg-red-100 dark:bg-red-600/20 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full font-bebas tracking-wider border border-red-200 dark:border-red-600/30">
@@ -469,6 +490,18 @@ export default function PlaystationPage() {
                                                     تكييف VIP
                                                 </span>
                                             </div>
+                                        </div>
+
+                                        {/* Entertainment Badges (beIN SPORTS & NETFLIX 4K) */}
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/40 text-purple-700 dark:text-purple-300 text-[10px] font-bold">
+                                                <BeinSportsIcon className="w-3.5 h-3.5 shrink-0 rounded-xs" />
+                                                <span>beIN SPORTS</span>
+                                            </span>
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 text-red-700 dark:text-red-300 text-[10px] font-bold">
+                                                <NetflixIcon className="w-3.5 h-3.5 shrink-0 rounded-xs" />
+                                                <span>NETFLIX 4K</span>
+                                            </span>
                                         </div>
 
                                         {/* 3. FOOTER: RATE & PRIMARY CTA */}

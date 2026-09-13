@@ -15,4 +15,6 @@ export const CONTACT_INFO = {
     address: 'D95 Gaming Lounge & Café',
     googleMapsLink: 'https://maps.google.com',
     mapsEmbedSrc: '',
+    instagramHandle: '@d95_lounge',
+    instagramUrl: 'https://instagram.com/d95_lounge',
 } as const;

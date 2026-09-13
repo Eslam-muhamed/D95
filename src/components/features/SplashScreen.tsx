@@ -185,10 +185,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
                         {/* Master Brand Typography */}
                         <div className="flex items-baseline justify-center select-none" dir="ltr">
-                            <span className="font-brush font-black text-7xl sm:text-9xl text-white tracking-tight drop-shadow-[0_6px_25px_rgba(0,0,0,0.95)]">
+                            <span className="font-bebas font-black text-8xl sm:text-[10rem] text-white tracking-wider drop-shadow-[0_6px_25px_rgba(0,0,0,0.95)]">
                                 D
                             </span>
-                            <span className="font-brush font-black text-7xl sm:text-9xl text-[#E5252A] -ml-1 drop-shadow-[0_0_40px_rgba(229,37,42,0.75)]">
+                            <span className="font-bebas font-black text-8xl sm:text-[10rem] text-[#E5252A] -ml-1 tracking-wider drop-shadow-[0_0_40px_rgba(229,37,42,0.75)]">
                                 95
                             </span>
                             <span className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full bg-red-500 shadow-[0_0_14px_#ef4444] mb-2 sm:mb-4 ml-1.5 animate-pulse" />

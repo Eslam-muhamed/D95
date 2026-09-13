@@ -280,9 +280,9 @@ export default function BookingPaymentPage() {
                                 طريقة الدفع وتأكيد الحجز
                             </h1>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                <div dir="ltr" className="flex items-baseline leading-none select-none">
-                                    <span className="font-brush font-black text-xs text-neutral-900 dark:text-neutral-100">D</span>
-                                    <span className="font-brush font-black text-sm text-[#E5252A] -ml-0.5">95</span>
+                                <div dir="ltr" className="flex items-baseline leading-none select-none tracking-wider">
+                                    <span className="font-bebas font-black text-sm text-neutral-900 dark:text-neutral-100">D</span>
+                                    <span className="font-bebas font-black text-sm text-[#E5252A] -ml-0.5">95</span>
                                 </div>
                                 <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-semibold tracking-wider font-bebas">SECURE CHECKOUT</span>
                             </div>
@@ -313,6 +313,21 @@ export default function BookingPaymentPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start mt-2">
                     {/* RIGHT COLUMN: CONTACT & PAYMENT SELECTION (7 of 12) */}
                     <div className="lg:col-span-7 space-y-4">
+                        {/* 10-Minute Hold Policy Alert Banner */}
+                        <div className="bg-amber-500/10 dark:bg-amber-500/[0.08] border border-amber-500/30 dark:border-amber-500/30 rounded-2xl p-3.5 sm:p-4 flex items-start gap-3 text-right shadow-xs backdrop-blur-md">
+                            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                                <Clock className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm text-amber-900 dark:text-amber-300">
+                                    <span>تنبيه حجز الغرفة المؤقت (مهلة 10 دقائق)</span>
+                                </div>
+                                <p className="text-[11px] sm:text-xs text-amber-800/90 dark:text-amber-200/80 font-body leading-relaxed mt-1">
+                                    تم تثبيت موعد الغرفة باسمك مؤقتاً لمدة <strong>10 دقائق</strong> لإتمام التحويل. يرجى تأكيد الدفع قبل انتهاء المهلة لتجنب إلغاء الحجز تلقائياً وإتاحة الغرفة للآخرين.
+                                </p>
+                            </div>
+                        </div>
+
                         {/* CUSTOMER CONTACT INFORMATION */}
                         <section className="bg-white dark:bg-[#140e10]/95 border border-neutral-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-sm dark:shadow-xl backdrop-blur-md transition-colors">
                             <div className="flex items-center gap-2 mb-3 text-neutral-900 dark:text-white font-bold text-sm">
