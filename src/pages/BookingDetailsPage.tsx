@@ -29,7 +29,6 @@ import { useTheme } from '@/stores/themeStore';
 import { useCart } from '@/stores/cartStore';
 import { getItemUnitPrice } from '@/lib/cartUtils';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
-import { BeinSportsIcon, NetflixIcon } from '@/components/brand/EntertainmentIcons';
 import {
     BookingInterval,
     createDateTimeFromBusinessDate,
@@ -762,37 +761,21 @@ export default function BookingDetailsPage() {
             {/* Main Content */}
             <main className="flex-1 flex flex-col relative z-10 w-full pt-4 pb-32 px-4 sm:px-6 max-w-2xl mx-auto space-y-4" dir="rtl">
 
-                {/* Room Overview & VIP Entertainment Strip */}
-                <div className="bg-white dark:bg-[#120e10] border border-neutral-200/80 dark:border-white/[0.08] rounded-2xl p-3 sm:p-3.5 shadow-xs flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                        <img
-                            src={currentRoom.interiorImg}
-                            alt={currentRoom.name}
-                            className="w-12 h-12 rounded-xl object-cover border border-neutral-200 dark:border-white/10 shrink-0"
-                        />
-                        <div className="flex flex-col text-right min-w-0">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="font-bold text-xs sm:text-sm text-neutral-900 dark:text-white truncate">
-                                    {currentRoom.titleAr}
-                                </span>
-                                <span className="font-mono text-[10px] font-black px-1.5 py-0.2 rounded bg-neutral-100 dark:bg-white/10 text-neutral-700 dark:text-neutral-300">
-                                    {currentRoom.rate} ج.م/س
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/50 border border-purple-200/80 dark:border-purple-800/40 text-purple-700 dark:text-purple-300 text-[9px] font-bold">
-                                    <BeinSportsIcon className="w-3.5 h-3.5 shrink-0 object-contain" />
-                                    <span>beIN SPORTS 4K</span>
-                                </span>
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-950/50 border border-red-200/80 dark:border-red-800/40 text-red-700 dark:text-red-300 text-[9px] font-bold">
-                                    <NetflixIcon className="w-3 h-3 shrink-0" />
-                                    <span>NETFLIX 4K</span>
-                                </span>
-                                <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-medium hidden sm:inline truncate">
-                                    شاشة 65" • عزل صوتي • 4 دراعات PS5
-                                </span>
-                            </div>
+                {/* 10-Minute Hold Cancellation Policy Notice */}
+                <div className="bg-amber-500/10 dark:bg-amber-500/[0.08] border border-amber-500/30 dark:border-amber-500/25 rounded-2xl p-3.5 sm:p-4 flex items-start gap-3 text-right shadow-2xs">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                        <Timer className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm text-amber-900 dark:text-amber-300">
+                            <span>تنبيه هام بشأن تأكيد الحجز</span>
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-800 dark:text-amber-200">
+                                مهلة 10 دقائق
+                            </span>
                         </div>
+                        <p className="text-[11px] sm:text-xs text-amber-800/90 dark:text-amber-200/80 font-body leading-relaxed mt-1">
+                            عند المتابعة لصفحة الدفع، يتم حجز وقت الغرفة مؤقتاً لمدة <strong>10 دقائق</strong> فقط لإتمام السداد، وفي حال عدم إتمام الدفع خلال هذه المدة يُلغى الحجز تلقائياً لإتاحة الموعد للعملاء الآخرين.
+                        </p>
                     </div>
                 </div>
 
@@ -1254,23 +1237,6 @@ export default function BookingDetailsPage() {
                     </div>
                 )}
 
-                {/* 10-Minute Hold Cancellation Policy Notice */}
-                <div className="bg-amber-500/10 dark:bg-amber-500/[0.08] border border-amber-500/30 dark:border-amber-500/25 rounded-2xl p-3.5 sm:p-4 flex items-start gap-3 text-right shadow-2xs">
-                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
-                        <Timer className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm text-amber-900 dark:text-amber-300">
-                            <span>تنبيه هام بشأن تأكيد الحجز</span>
-                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-800 dark:text-amber-200">
-                                مهلة 10 دقائق
-                            </span>
-                        </div>
-                        <p className="text-[11px] sm:text-xs text-amber-800/90 dark:text-amber-200/80 font-body leading-relaxed mt-1">
-                            عند المتابعة لصفحة الدفع، يتم حجز وقت الغرفة مؤقتاً لمدة <strong>10 دقائق</strong> فقط لإتمام السداد، وفي حال عدم إتمام الدفع خلال هذه المدة يُلغى الحجز تلقائياً لإتاحة الموعد للعملاء الآخرين.
-                        </p>
-                    </div>
-                </div>
             </main>
 
             {/* Sticky Mobile-First Bottom Bar */}
