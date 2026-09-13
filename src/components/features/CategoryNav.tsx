@@ -12,9 +12,10 @@ interface Props {
   activeCategory: string;
   onCategoryChange: (id: string) => void;
   categoriesList?: (MenuCategory | DBCategory)[];
+  onOffersClick?: () => void;
 }
 
-export default function CategoryNav({ activeCategory, onCategoryChange, categoriesList }: Props) {
+export default function CategoryNav({ activeCategory, onCategoryChange, categoriesList, onOffersClick }: Props) {
   const list = categoriesList && categoriesList.length > 0 ? categoriesList : categories;
   const categoryIds = list.map(c => c.id);
   const scrollSpyId = useScrollSpy(categoryIds);
@@ -27,8 +28,25 @@ export default function CategoryNav({ activeCategory, onCategoryChange, categori
 
   const scrollToOffers = () => {
     playPaperFlipSound();
-    const el = document.getElementById('offers-section');
-    el?.scrollIntoView({ behavior: 'smooth' });
+    scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
+    if (onOffersClick) {
+      onOffersClick();
+      return;
+    }
+    if (activeCategory !== 'all') {
+      onCategoryChange('all');
+    }
+    let attempts = 0;
+    const interval = setInterval(() => {
+      attempts++;
+      const el = document.getElementById('offers-section');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+        clearInterval(interval);
+      } else if (attempts > 25) {
+        clearInterval(interval);
+      }
+    }, 20);
   };
 
   return (

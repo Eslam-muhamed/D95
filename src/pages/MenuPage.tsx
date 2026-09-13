@@ -139,6 +139,36 @@ export default function MenuPage() {
     }
   };
 
+  const handleOffersClick = () => {
+    playPaperFlipSound();
+    setSearch('');
+
+    const scrollToOffersTarget = () => {
+      const el = document.getElementById('offers-section');
+      if (el) {
+        const nav = document.getElementById('menu-nav-sticky');
+        const offset = nav ? nav.getBoundingClientRect().height + 16 : 110;
+        const top = el.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+        return true;
+      }
+      return false;
+    };
+
+    if (activeCategory !== 'all' || search.trim().length > 0) {
+      setActiveCategory('all');
+      let attempts = 0;
+      const interval = setInterval(() => {
+        attempts++;
+        if (scrollToOffersTarget() || attempts > 25) {
+          clearInterval(interval);
+        }
+      }, 20);
+    } else {
+      scrollToOffersTarget();
+    }
+  };
+
   const hasSearch = search.trim().length > 0;
   const isFiltered = !hasSearch && activeCategory !== 'all';
 
@@ -197,7 +227,12 @@ export default function MenuPage() {
       </div>
 
       {/* Sticky Category Navigator */}
-      <CategoryNav activeCategory={activeCategory} onCategoryChange={handleCategoryChange} categoriesList={categories} />
+      <CategoryNav
+        activeCategory={activeCategory}
+        onCategoryChange={handleCategoryChange}
+        categoriesList={categories}
+        onOffersClick={handleOffersClick}
+      />
 
       {/* Modern Search Bar */}
       <SearchBar value={search} onChange={setSearch} />

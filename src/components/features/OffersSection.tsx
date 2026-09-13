@@ -78,7 +78,7 @@ export default function OffersSection({ liveOffers }: OffersSectionProps) {
     : offers;
 
   return (
-    <section id="offers-section" className="px-4 py-8 max-w-4xl mx-auto" ref={ref} dir="rtl">
+    <section id="offers-section" className="px-4 py-8 max-w-4xl mx-auto scroll-mt-28" ref={ref} dir="rtl">
       {/* Section Divider */}
       <div className="flex items-center gap-3 mb-6">
         <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent to-red-600/40" />
