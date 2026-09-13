@@ -235,7 +235,7 @@ export default function BookingPaymentPage() {
             setSubmitting(false);
         }
 
-        navigate('/playstation/success', {
+        navigate(`/playstation/success?id=${encodeURIComponent(reservationId)}`, {
             state: {
                 reservationId,
                 room,

@@ -19,10 +19,11 @@ import {
   Sparkles,
   ShoppingBag
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useCart } from '@/stores/cartStore';
 import { getItemUnitPrice } from '@/lib/cartUtils';
 import { CONTACT_INFO } from '@/constants/contactInfo';
-import { supabase } from '@/lib/supabase';
+import { createOrder } from '@/services/orderService';
 
 const CAFE_NAME = CONTACT_INFO.fullName;
 const WHATSAPP_PHONE = CONTACT_INFO.whatsappNumber;
@@ -104,6 +105,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
 
   // Waiter modal for Café Checkout
   const [showWaiter, setShowWaiter] = useState(false);
+  const [submittingCafeOrder, setSubmittingCafeOrder] = useState(false);
   const [showSplitter, setShowSplitter] = useState(false);
   const [orderType, setOrderType] = useState<'dine' | 'delivery'>('dine');
   const [tableNo, setTableNo] = useState('');
@@ -178,11 +180,21 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
   };
 
   const sendCafeOrder = async () => {
+    if (items.length === 0) {
+      toast.error('سلة الكافيه فارغة');
+      return;
+    }
+
+    if (orderType === 'delivery' && !delivPhone.trim()) {
+      toast.error('يرجى كتابة رقم الموبايل للتوصيل');
+      return;
+    }
+
+    setSubmittingCafeOrder(true);
     const orderNumber = `D95-ORD-${Date.now().toString(36).slice(-4).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // Asynchronously save order to database
     try {
-      await supabase.from('orders').insert({
+      await createOrder({
         order_number: orderNumber,
         customer_name: orderType === 'delivery' ? (delivName.trim() || 'عميل دليفري') : `طاولة ${tableNo || 'صالة'}`,
         customer_phone: orderType === 'delivery' ? delivPhone.trim() : null,
@@ -195,17 +207,23 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
           name: i.name,
           price: getItemUnitPrice(i),
           quantity: i.customization.quantity,
-          customization: i.customization,
+          customization: i.customization as unknown as Record<string, unknown>,
         })),
-        subtotal: cafeTotal,
-        total_amount: cafeTotal,
-        status: 'pending',
       });
-    } catch (err) {
-      console.warn('Could not persist cafe order to database:', err);
-    }
 
-    window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${buildCafeWhatsAppMsg(orderNumber)}`, '_blank');
+      toast.success(`تم تسجيل الطلب #${orderNumber} بنجاح!`);
+      clearCafe();
+      setShowWaiter(false);
+      handleClose();
+
+      window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${buildCafeWhatsAppMsg(orderNumber)}`, '_blank');
+    } catch (err) {
+      console.error('Could not persist cafe order:', err);
+      const msg = err instanceof Error ? err.message : 'حدث خطأ أثناء حفظ الطلب، يرجى المحاولة مرة أخرى';
+      toast.error(msg);
+    } finally {
+      setSubmittingCafeOrder(false);
+    }
   };
 
   const sendPsOrder = () => {
@@ -1043,15 +1061,25 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={sendCafeOrder}
-                className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2 cursor-pointer"
+                disabled={submittingCafeOrder}
+                className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 style={{
                   background: 'linear-gradient(135deg, #128C7E, #25D366)',
                   boxShadow: '0 4px 20px rgba(37,211,102,0.3)',
                   fontFamily: 'Cairo, sans-serif',
                 }}
               >
-                <Send size={18} />
-                إرسال الطلب عبر واتساب
+                {submittingCafeOrder ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    جاري إرسال وتأكيد الطلب...
+                  </span>
+                ) : (
+                  <>
+                    <Send size={18} />
+                    إرسال الطلب عبر واتساب
+                  </>
+                )}
               </motion.button>
             </div>
           </motion.div>

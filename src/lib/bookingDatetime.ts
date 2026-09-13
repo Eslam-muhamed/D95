@@ -154,9 +154,19 @@ export function createDateTimeFromBusinessDate(businessDate: string, time24: str
     const [y, m, d] = targetDateStr.split('-').map(Number);
     const approx = new Date(Date.UTC(y, m - 1, d, hour, minute));
     const offsetMins = getCairoOffsetMinutes(approx);
-    const utcTimestamp = Date.UTC(y, m - 1, d, hour, minute, 0, 0) - (offsetMins * 60 * 1000);
-    return new Date(utcTimestamp);
+    let utcTimestamp = Date.UTC(y, m - 1, d, hour, minute, 0, 0) - (offsetMins * 60 * 1000);
+    let result = new Date(utcTimestamp);
+
+    // Re-verify offset on calculated timestamp to handle DST transition boundary hours perfectly
+    const refinedOffset = getCairoOffsetMinutes(result);
+    if (refinedOffset !== offsetMins) {
+        utcTimestamp = Date.UTC(y, m - 1, d, hour, minute, 0, 0) - (refinedOffset * 60 * 1000);
+        result = new Date(utcTimestamp);
+    }
+
+    return result;
 }
+
 
 /**
  * Get opening and closing Date objects for a business date pinned to Cairo time.

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import {
     ArrowRight,
     CheckCircle2,
@@ -16,6 +16,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useTheme } from '@/stores/themeStore';
 import { CONTACT_INFO } from '@/constants/contactInfo';
+import { fetchBookingByReservationId } from '@/services/bookingService';
 
 interface SnackAddon {
     id: string;
@@ -29,9 +30,11 @@ const WHATSAPP_NUMBER = CONTACT_INFO.whatsappNumber;
 export default function BookingSuccessPage() {
     const navigate = useNavigate();
     const location = useLocation();
+    const [searchParams] = useSearchParams();
+    const idFromParam = searchParams.get('id');
     const { theme, toggleTheme } = useTheme();
 
-    const [bookingData] = useState(() => {
+    const [bookingData, setBookingData] = useState(() => {
         if (location.state && location.state.reservationId) {
             try {
                 sessionStorage.setItem('d95_last_confirmed_booking', JSON.stringify(location.state));
@@ -43,7 +46,12 @@ export default function BookingSuccessPage() {
 
         try {
             const cached = sessionStorage.getItem('d95_last_confirmed_booking');
-            if (cached) return JSON.parse(cached);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (!idFromParam || parsed.reservationId === idFromParam) {
+                    return parsed;
+                }
+            }
         } catch (e) {
             console.warn('Could not read cached booking:', e);
         }
@@ -51,12 +59,67 @@ export default function BookingSuccessPage() {
         return null;
     });
 
+    const [isLoading, setIsLoading] = useState(!bookingData && !!idFromParam);
+
     useEffect(() => {
-        if (!bookingData) {
+        if (bookingData) return;
+
+        if (idFromParam) {
+            setIsLoading(true);
+            fetchBookingByReservationId(idFromParam)
+                .then(b => {
+                    if (b) {
+                        const normalized = {
+                            reservationId: b.reservation_id,
+                            room: { name: b.room_name, id: b.room_id },
+                            date: b.booking_date,
+                            startTime: b.start_time,
+                            endTime: b.end_time,
+                            durationHours: b.duration_hours,
+                            roomSubtotal: b.subtotal,
+                            snacks: b.snacks || [],
+                            snacksTotal: b.snacks_total || 0,
+                            netTotal: b.total_amount,
+                            paymentMethod: b.payment_method,
+                            name: b.customer_name,
+                            phone: b.customer_phone,
+                            notes: b.notes || '',
+                            status: b.status,
+                        };
+                        setBookingData(normalized);
+                        try {
+                            sessionStorage.setItem('d95_last_confirmed_booking', JSON.stringify(normalized));
+                        } catch (e) {
+                            console.warn('Could not cache booking:', e);
+                        }
+                    } else {
+                        toast.error('لم يتم العثور على تذكرة بهذا الرقم أو انتهت صلاحيتها');
+                        navigate('/playstation', { replace: true });
+                    }
+                })
+                .catch(() => {
+                    toast.error('حدث خطأ في جلب بيانات التذكرة');
+                    navigate('/playstation', { replace: true });
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
+        } else {
             toast.info('لا يوجد حجز نشط لعرضه، يمكنك حجز جلستك الآن 🎮');
             navigate('/playstation', { replace: true });
         }
-    }, [bookingData, navigate]);
+    }, [bookingData, idFromParam, navigate]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen w-full bg-[#F6F5F2] dark:bg-[#0a0809] flex flex-col items-center justify-center p-4">
+                <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="text-neutral-700 dark:text-neutral-300 font-bold text-sm font-body">
+                    جاري جلب تفاصيل التذكرة...
+                </p>
+            </div>
+        );
+    }
 
     if (!bookingData) {
         return null;
@@ -75,6 +138,7 @@ export default function BookingSuccessPage() {
         name,
         phone,
         notes,
+        status = 'pending',
     } = bookingData;
 
     const paymentLabel =
@@ -119,19 +183,20 @@ export default function BookingSuccessPage() {
     };
 
     const handleShare = () => {
+        const shareUrl = `${window.location.origin}/playstation/success?id=${encodeURIComponent(reservationId)}`;
         if (navigator.share) {
             navigator
                 .share({
                     title: `تذكرة حجز D95 - ${reservationId}`,
                     text: `حجزت في صالة D95 Gaming - ${room.name} يوم ${date} من ${startTime} إلى ${endTime}`,
-                    url: window.location.href,
+                    url: shareUrl,
                 })
                 .catch(() => {});
         } else {
             navigator.clipboard.writeText(
-                `تذكرة حجز D95 (${reservationId}) - ${room.name} في ${date} (${startTime})`
+                `تذكرة حجز D95 (${reservationId}) - ${room.name} في ${date} (${startTime})\nرابط التذكرة: ${shareUrl}`
             );
-            toast.success('تم نسخ بيانات التذكرة!');
+            toast.success('تم نسخ بيانات ورابط التذكرة!');
         }
     };
 
@@ -229,8 +294,22 @@ export default function BookingSuccessPage() {
                             </div>
                             <div className="flex flex-col items-end">
                                 <span className="font-mono text-xs font-bold text-red-600 dark:text-red-400">{reservationId}</span>
-                                <span className="text-[10px] bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 px-2.5 py-0.5 rounded-full font-bold border border-amber-500/30">
-                                    بانتظار تأكيد الإدارة ⏳
+                                <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${
+                                    status === 'confirmed'
+                                        ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                                        : status === 'completed'
+                                        ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-500/30'
+                                        : status === 'cancelled'
+                                        ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/30'
+                                        : 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30'
+                                }`}>
+                                    {status === 'confirmed'
+                                        ? 'حجز مؤكد ومضمون ✅'
+                                        : status === 'completed'
+                                        ? 'جلسة مكتملة ✅'
+                                        : status === 'cancelled'
+                                        ? 'حجز ملغي ❌'
+                                        : 'بانتظار تأكيد الإدارة ⏳'}
                                 </span>
                             </div>
                         </div>

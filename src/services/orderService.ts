@@ -89,12 +89,51 @@ export async function deleteOrder(id: string): Promise<void> {
     }
 }
 
+export async function createOrder(orderData: {
+    order_number?: string;
+    customer_name?: string | null;
+    customer_phone?: string | null;
+    order_type?: string;
+    table_number?: string | null;
+    delivery_address?: string | null;
+    payment_method?: string | null;
+    items: Array<{
+        id: string;
+        name: string;
+        price: number;
+        quantity: number;
+        customization?: Record<string, unknown>;
+    }>;
+    notes?: string | null;
+}): Promise<DBOrder> {
+    const { data, error } = await supabase.rpc('create_order_atomic', {
+        p_order: orderData,
+    });
+
+    if (error) {
+        console.error('Error creating order atomic:', error);
+        throw new Error(error.message || 'فشل تسجيل الطلب');
+    }
+
+    return data as DBOrder;
+}
+
 export async function fetchOrderMetrics(): Promise<{
     pendingOrdersCount: number;
     todayOrdersCount: number;
     todayOrdersRevenue: number;
 }> {
     try {
+        const { data, error } = await supabase.rpc('get_order_metrics_v2');
+        if (!error && data) {
+            return {
+                pendingOrdersCount: Number(data.pendingOrdersCount) || 0,
+                todayOrdersCount: Number(data.todayOrdersCount) || 0,
+                todayOrdersRevenue: Number(data.todayOrdersRevenue) || 0,
+            };
+        }
+
+        // Fallback in case RPC is unavailable
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 

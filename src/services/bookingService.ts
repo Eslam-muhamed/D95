@@ -241,7 +241,21 @@ export async function fetchBookingMetrics(): Promise<{
     pendingCountsByDate: Record<string, number>;
 }> {
     try {
-        // Automatically auto-cancel any expired pending bookings first
+        const { data, error } = await supabase.rpc('get_booking_metrics_v2');
+        if (!error && data) {
+            return {
+                totalCount: Number(data.totalCount) || 0,
+                pendingCount: Number(data.pendingCount) || 0,
+                confirmedCount: Number(data.confirmedCount) || 0,
+                todayCount: Number(data.todayCount) || 0,
+                totalRevenue: Number(data.totalRevenue) || 0,
+                todayRevenue: Number(data.todayRevenue) || 0,
+                recentPending: (data.recentPending || []) as DBBooking[],
+                pendingCountsByDate: (data.pendingCountsByDate || {}) as Record<string, number>,
+            };
+        }
+
+        // Fallback: in case RPC is unavailable, run direct query safely
         await autoCancelExpiredPendingBookings();
 
         const todayStr = new Date().toISOString().split('T')[0];
@@ -261,8 +275,8 @@ export async function fetchBookingMetrics(): Promise<{
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('status', 'pending').gt('end_datetime', nowIso).gte('booking_date', todayStr),
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('status', 'confirmed'),
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('booking_date', todayStr),
-            supabase.from('ps_bookings').select('total_amount').eq('status', 'confirmed'),
-            supabase.from('ps_bookings').select('total_amount').eq('booking_date', todayStr).eq('status', 'confirmed'),
+            supabase.from('ps_bookings').select('total_amount').eq('status', 'confirmed').limit(1000),
+            supabase.from('ps_bookings').select('total_amount').eq('booking_date', todayStr).eq('status', 'confirmed').limit(1000),
             supabase.from('ps_bookings').select('*').eq('status', 'pending').gt('end_datetime', nowIso).gte('booking_date', todayStr).order('created_at', { ascending: false }).limit(50),
             supabase.from('ps_bookings').select('booking_date').eq('status', 'pending').gt('end_datetime', nowIso).gte('booking_date', todayStr),
         ]);
@@ -895,3 +909,28 @@ export async function updateRoomRates(rates: RoomRates): Promise<RoomRates> {
     }
     return rates;
 }
+
+/**
+ * Fetch booking details by public ticket / reservation ID
+ * Uses secure get_booking_by_reservation_id RPC (accessible by customer & admin)
+ */
+export async function fetchBookingByReservationId(reservationId: string): Promise<DBBooking | null> {
+    if (!reservationId || !reservationId.trim()) return null;
+    try {
+        const cleanId = reservationId.trim().toUpperCase();
+        const { data, error } = await supabase.rpc('get_booking_by_reservation_id', {
+            p_reservation_id: cleanId,
+        });
+
+        if (error) {
+            console.warn('Error fetching booking by reservation id:', error.message);
+            return null;
+        }
+
+        return data ? (data as DBBooking) : null;
+    } catch (err) {
+        console.error('Exception in fetchBookingByReservationId:', err);
+        return null;
+    }
+}
+
