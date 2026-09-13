@@ -84,7 +84,9 @@ export default function GatewayPage() {
                 </div>
 
                 {/* Branded Brush Logo */}
-                <D95BrushLogo size="lg" showSubtitle={true} showMotto={false} glow={true} />
+                <div id="home-brand-logo" className="w-full flex justify-center">
+                    <D95BrushLogo size="lg" showSubtitle={true} showMotto={false} glow={true} />
+                </div>
 
                 {/* Styled WE ARE OPEN Title */}
                 <div className="relative my-2 w-full flex items-center justify-center">
