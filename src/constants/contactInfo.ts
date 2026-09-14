@@ -13,7 +13,7 @@ export const CONTACT_INFO = {
     walletNumber: '01000000095',
     workingHours: 'يومياً: 08:00 ص – 04:00 ص (20 ساعة متواصلة)',
     address: 'D95 Gaming Lounge & Café',
-    googleMapsLink: 'https://maps.google.com',
+    googleMapsLink: 'https://maps.app.goo.gl/7hUeemWJLdJtNosX6',
     mapsEmbedSrc: '',
     instagramHandle: '@daboor_1995',
     instagramUrl: 'https://www.instagram.com/daboor_1995/',

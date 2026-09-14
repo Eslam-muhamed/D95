@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowRight, Gamepad2, Coffee, Sun, Moon, ExternalLink } from 'lucide-react';
+import { ArrowRight, Gamepad2, Coffee, Sun, Moon, ExternalLink, MapPin } from 'lucide-react';
 import D95BrushLogo from '@/components/brand/D95BrushLogo';
 import { playPs5StartupSound, playCafeEntranceSound } from '@/lib/sound';
 import { useTheme } from '@/stores/themeStore';
@@ -68,24 +68,38 @@ export default function GatewayPage() {
                     <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-500 dark:text-neutral-400 font-bold">D95 GATEWAY</span>
                 </div>
 
-                <button
-                    onClick={toggleTheme}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer bg-white/80 dark:bg-black/60 border border-neutral-300 dark:border-white/15 text-neutral-800 dark:text-neutral-200 shadow-sm hover:scale-105 active:scale-95"
-                    aria-label="تبديل المظهر"
-                    title={theme === 'dark' ? 'تفعيل الوضع المضيء' : 'تفعيل الوضع الليلي'}
-                >
-                    {theme === 'dark' ? (
-                        <>
-                            <Sun size={14} className="text-amber-400" />
-                            <span className="font-body text-[11px]">نهاري</span>
-                        </>
-                    ) : (
-                        <>
-                            <Moon size={14} className="text-neutral-800" />
-                            <span className="font-body text-[11px]">ليلي</span>
-                        </>
-                    )}
-                </button>
+                <div className="flex items-center gap-2">
+                    <a
+                        href={CONTACT_INFO.googleMapsLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer bg-white/80 dark:bg-black/60 border border-neutral-300 dark:border-white/15 text-neutral-800 dark:text-neutral-200 shadow-sm hover:scale-105 active:scale-95 hover:border-red-500/50 hover:text-red-600 dark:hover:text-red-400"
+                        aria-label="موقع الصالة على خرائط جوجل"
+                        title="موقع الصالة على خرائط جوجل"
+                    >
+                        <MapPin size={13} className="text-red-600 shrink-0" />
+                        <span className="font-body text-[11px]">اللوكيشن</span>
+                    </a>
+
+                    <button
+                        onClick={toggleTheme}
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer bg-white/80 dark:bg-black/60 border border-neutral-300 dark:border-white/15 text-neutral-800 dark:text-neutral-200 shadow-sm hover:scale-105 active:scale-95"
+                        aria-label="تبديل المظهر"
+                        title={theme === 'dark' ? 'تفعيل الوضع المضيء' : 'تفعيل الوضع الليلي'}
+                    >
+                        {theme === 'dark' ? (
+                            <>
+                                <Sun size={14} className="text-amber-400" />
+                                <span className="font-body text-[11px]">نهاري</span>
+                            </>
+                        ) : (
+                            <>
+                                <Moon size={14} className="text-neutral-800" />
+                                <span className="font-body text-[11px]">ليلي</span>
+                            </>
+                        )}
+                    </button>
+                </div>
             </div>
 
             {/* Header: D95 Brand & Working Hours */}
@@ -386,9 +400,17 @@ export default function GatewayPage() {
                         THANK YOU &amp; ENJOY YOUR TIME!
                     </p>
                 </div>
-                <p className="font-body text-[10px] text-neutral-600 dark:text-neutral-400 tracking-widest uppercase">
-                    D95 GAMING &amp; CAFÉ • CAIRO, EGYPT
-                </p>
+                <a
+                    href={CONTACT_INFO.googleMapsLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 font-body text-[10px] text-neutral-600 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400 tracking-widest uppercase transition-colors group cursor-pointer"
+                    title="فتح الموقع على خرائط جوجل"
+                >
+                    <MapPin size={11} className="text-red-600 shrink-0 group-hover:scale-110 transition-transform" />
+                    <span>D95 GAMING &amp; CAFÉ • CAIRO, EGYPT</span>
+                    <ExternalLink size={9} className="opacity-60 group-hover:opacity-100" />
+                </a>
             </footer>
         </main>
     );
