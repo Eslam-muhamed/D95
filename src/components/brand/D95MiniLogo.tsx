@@ -18,11 +18,11 @@ export default function D95MiniLogo({
 
   return (
     <span dir="ltr" className={`inline-flex items-center select-none ${className}`}>
-      {/* Dark theme: White D + Original Burgundy 95 */}
+      {/* Dark theme: White D + Red 95 */}
       <img
         src="/new-logo.png"
         alt="D95"
-        className={`hidden dark:inline-block ${sizeMap} object-contain`}
+        className={`hidden dark:inline-block ${sizeMap} object-contain drop-shadow-[0_1px_8px_rgba(229,37,42,0.4)]`}
       />
       {/* Light theme: Dark D + Red 95 */}
       <img
