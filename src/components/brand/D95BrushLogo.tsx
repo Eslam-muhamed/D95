@@ -52,17 +52,17 @@ export default function D95BrushLogo({
         />
       )}
       
-      {/* Dark theme: White letters on dark background with bright red 95 */}
+      {/* Dark theme: White D on dark background with original burgundy 95 */}
       <img 
         src="/new-logo.png" 
         alt="D95" 
-        className={`hidden dark:block ${sizeMap.imgWidth} object-contain drop-shadow-[0_2px_16px_rgba(229,37,42,0.65)]`} 
+        className={`hidden dark:block ${sizeMap.imgWidth} object-contain`} 
       />
       {/* Light theme: Dark letters on light background */}
       <img 
         src="/new-logo-dark.png" 
         alt="D95" 
-        className={`block dark:hidden ${sizeMap.imgWidth} object-contain drop-shadow-[0_2px_14px_rgba(229,37,42,0.3)]`} 
+        className={`block dark:hidden ${sizeMap.imgWidth} object-contain`} 
       />
 
       {/* Red Brush Stroke Underline */}
