@@ -53,17 +53,34 @@ export default function D95BrushLogo({
       )}
       
       {/* Dark theme: White letters on dark background with bright red 95 */}
-      <img 
-        src="/new-logo.png" 
-        alt="D95" 
-        className={`hidden dark:block ${sizeMap.imgWidth} object-contain drop-shadow-[0_2px_16px_rgba(229,37,42,0.65)]`} 
-      />
+      <picture className={`hidden dark:block ${sizeMap.imgWidth}`}>
+        <source srcSet="/new-logo.webp" type="image/webp" />
+        <img 
+          src="/new-logo.png" 
+          alt="D95" 
+          width="840"
+          height="460"
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          className="w-full h-auto object-contain drop-shadow-[0_2px_16px_rgba(229,37,42,0.65)]" 
+        />
+      </picture>
+
       {/* Light theme: Dark letters on light background */}
-      <img 
-        src="/new-logo-dark.png" 
-        alt="D95" 
-        className={`block dark:hidden ${sizeMap.imgWidth} object-contain drop-shadow-[0_2px_14px_rgba(229,37,42,0.3)]`} 
-      />
+      <picture className={`block dark:hidden ${sizeMap.imgWidth}`}>
+        <source srcSet="/new-logo-dark.webp" type="image/webp" />
+        <img 
+          src="/new-logo-dark.png" 
+          alt="D95" 
+          width="840"
+          height="460"
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          className="w-full h-auto object-contain drop-shadow-[0_1px_6px_rgba(114,1,11,0.2)]" 
+        />
+      </picture>
 
       {/* Red Brush Stroke Underline */}
       <div className="relative w-full flex items-center justify-center -mt-1 sm:-mt-2">

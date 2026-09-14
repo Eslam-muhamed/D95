@@ -28,11 +28,27 @@
 
     <link rel="apple-touch-icon" href="/og-image.png" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cairo:wght@300;400;500;600;700;800;900&family=Changa:wght@400;500;600;700;800;900&family=Permanent+Marker&family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet" />
+    <!-- Preload Hero Brand Logo for instant 0ms rendering without lag -->
+    <link rel="preload" as="image" href="/new-logo.webp" type="image/webp" fetchpriority="high" />
+    <link rel="preload" as="image" href="/new-logo-dark.webp" type="image/webp" />
+
+    <!-- Instant theme initialization to prevent logo flicker and layout shift -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('d95-theme');
+          var theme = (stored === 'light' || stored === 'dark') ? stored : 'dark';
+          document.documentElement.setAttribute('data-theme', theme);
+          if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.documentElement.classList.remove('light');
+          } else {
+            document.documentElement.classList.add('light');
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
 
     <script type="application/ld+json">
     {
