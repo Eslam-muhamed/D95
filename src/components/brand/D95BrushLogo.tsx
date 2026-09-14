@@ -16,10 +16,10 @@ export default function D95BrushLogo({
   glow = true,
 }: D95BrushLogoProps) {
   const sizeMap = {
-    sm: 'w-24 sm:w-32',
-    md: 'w-40 sm:w-48 md:w-56',
-    lg: 'w-64 sm:w-72 md:w-80',
-    xl: 'w-80 sm:w-96 md:w-[32rem]',
+    sm: 'w-20 sm:w-28',
+    md: 'w-36 sm:w-44 md:w-52',
+    lg: 'w-52 sm:w-60 md:w-68',
+    xl: 'w-72 sm:w-80 md:w-[26rem]',
   }[size];
 
   return (
