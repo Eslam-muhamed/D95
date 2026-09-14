@@ -69,8 +69,6 @@ export default function AdminDashboardPage() {
         } catch (e) {
             console.error(e);
         }
-        localStorage.removeItem('d95_admin_auth');
-        localStorage.removeItem('d95_admin_auth_time');
         toast.info('تم تسجيل الخروج من لوحة التحكم');
         navigate('/admin/login');
     };

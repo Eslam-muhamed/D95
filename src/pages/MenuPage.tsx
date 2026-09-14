@@ -84,6 +84,11 @@ export default function MenuPage() {
     return getCachedOffers() || [];
   });
 
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(() => {
+    const cached = getCachedProducts();
+    return !cached || cached.length === 0;
+  });
+
   // Load live menu items, categories, and offers strictly from Supabase
   useEffect(() => {
     Promise.all([
@@ -119,6 +124,8 @@ export default function MenuPage() {
       }
     }).catch(err => {
       console.warn('Error loading live menu data from Supabase:', err);
+    }).finally(() => {
+      setIsInitialLoading(false);
     });
   }, []);
 
@@ -327,14 +334,31 @@ export default function MenuPage() {
                     </button>
                   </div>
                   {filteredItems.length === 0 ? (
-                    <div className="py-14 px-4 text-center max-w-md mx-auto my-4 bg-white dark:bg-[#120e10] border border-neutral-200 dark:border-white/[0.08] rounded-2xl shadow-sm">
-                      <p className="text-sm font-bold text-neutral-800 dark:text-neutral-200 font-body mb-1">
-                        لا توجد أصناف مضافة حالياً في هذا القسم
-                      </p>
-                      <p className="text-xs text-neutral-500 font-body">
-                        سيتم إضافتها قريباً من قِبل إدارة الكافيه عبر لوحة التحكم.
-                      </p>
-                    </div>
+                    isInitialLoading ? (
+                      <div className="px-4 py-8 max-w-4xl mx-auto space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                          {[1, 2, 3].map((n) => (
+                            <div key={n} className="h-28 rounded-2xl bg-white dark:bg-[#130f11] border border-neutral-200 dark:border-white/[0.08] p-3 flex gap-3 animate-pulse">
+                              <div className="w-20 h-20 rounded-xl bg-neutral-200 dark:bg-white/10 flex-shrink-0" />
+                              <div className="flex-1 space-y-2 py-1">
+                                <div className="h-4 w-3/4 bg-neutral-200 dark:bg-white/10 rounded" />
+                                <div className="h-3 w-1/2 bg-neutral-200 dark:bg-white/10 rounded" />
+                                <div className="h-4 w-1/4 bg-neutral-200 dark:bg-white/10 rounded mt-3" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-14 px-4 text-center max-w-md mx-auto my-4 bg-white dark:bg-[#120e10] border border-neutral-200 dark:border-white/[0.08] rounded-2xl shadow-sm">
+                        <p className="text-sm font-bold text-neutral-800 dark:text-neutral-200 font-body mb-1">
+                          لا توجد أصناف مضافة حالياً في هذا القسم
+                        </p>
+                        <p className="text-xs text-neutral-500 font-body">
+                          سيتم إضافتها قريباً من قِبل إدارة الكافيه عبر لوحة التحكم.
+                        </p>
+                      </div>
+                    )
                   ) : (
                     <MenuSection
                       category={filteredCategory}
@@ -364,7 +388,23 @@ export default function MenuPage() {
                 />
               ))}
 
-              {allItems.length === 0 && (
+              {isInitialLoading ? (
+                <div className="px-4 py-8 max-w-4xl mx-auto space-y-6">
+                  <div className="h-6 w-36 bg-neutral-200 dark:bg-white/10 rounded animate-pulse" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {[1, 2, 3, 4, 5, 6].map((n) => (
+                      <div key={n} className="h-28 rounded-2xl bg-white dark:bg-[#130f11] border border-neutral-200 dark:border-white/[0.08] p-3 flex gap-3 animate-pulse">
+                        <div className="w-20 h-20 rounded-xl bg-neutral-200 dark:bg-white/10 flex-shrink-0" />
+                        <div className="flex-1 space-y-2 py-1">
+                          <div className="h-4 w-3/4 bg-neutral-200 dark:bg-white/10 rounded" />
+                          <div className="h-3 w-1/2 bg-neutral-200 dark:bg-white/10 rounded" />
+                          <div className="h-4 w-1/4 bg-neutral-200 dark:bg-white/10 rounded mt-3" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : allItems.length === 0 ? (
                 <div className="py-16 px-4 text-center max-w-md mx-auto my-6 bg-white dark:bg-[#120e10] border border-neutral-200 dark:border-white/[0.08] rounded-2xl shadow-sm">
                   <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/30 flex items-center justify-center mx-auto mb-3.5">
                     <Coffee className="w-7 h-7" />
@@ -376,7 +416,7 @@ export default function MenuPage() {
                     سيتم عرض المنتجات هنا فور إضافتها واعتمادها من قِبل الإدارة عبر لوحة التحكم.
                   </p>
                 </div>
-              )}
+              ) : null}
             </motion.div>
           )}
         </AnimatePresence>

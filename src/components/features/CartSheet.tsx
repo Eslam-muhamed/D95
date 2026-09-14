@@ -192,6 +192,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
 
     setSubmittingCafeOrder(true);
     const orderNumber = `D95-ORD-${Date.now().toString(36).slice(-4).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${buildCafeWhatsAppMsg(orderNumber)}`;
 
     try {
       await createOrder({
@@ -211,12 +212,23 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
         })),
       });
 
-      toast.success(`تم تسجيل الطلب #${orderNumber} بنجاح!`);
+      toast.success(`تم تسجيل الطلب #${orderNumber} بنجاح!`, {
+        action: {
+          label: 'فتح واتساب',
+          onClick: () => {
+            window.location.href = whatsappUrl;
+          },
+        },
+      });
       clearCafe();
       setShowWaiter(false);
       handleClose();
 
-      window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${buildCafeWhatsAppMsg(orderNumber)}`, '_blank');
+      // Open WhatsApp tab; fallback to location.href if blocked by mobile browser popup blocker
+      const newTab = window.open(whatsappUrl, '_blank');
+      if (!newTab || newTab.closed || typeof newTab.closed === 'undefined') {
+        window.location.href = whatsappUrl;
+      }
     } catch (err) {
       console.error('Could not persist cafe order:', err);
       const msg = err instanceof Error ? err.message : 'حدث خطأ أثناء حفظ الطلب، يرجى المحاولة مرة أخرى';
@@ -227,7 +239,11 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
   };
 
   const sendPsOrder = () => {
-    window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${buildPsWhatsAppMsg()}`, '_blank');
+    const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${buildPsWhatsAppMsg()}`;
+    const newTab = window.open(whatsappUrl, '_blank');
+    if (!newTab || newTab.closed || typeof newTab.closed === 'undefined') {
+      window.location.href = whatsappUrl;
+    }
   };
 
   const inputStyle = {

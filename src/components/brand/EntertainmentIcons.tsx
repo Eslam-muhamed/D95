@@ -1,14 +1,27 @@
-import beinSportsImg from '@/assets/brand/bein-sports.png';
-
 export function BeinSportsIcon({ className = 'w-4 h-4' }: { className?: string }) {
     return (
-        <img
-            src={beinSportsImg}
-            alt="beIN SPORTS"
-            className={`${className} object-contain inline-block shrink-0`}
-            loading="eager"
-            decoding="async"
-        />
+        <svg
+            viewBox="0 0 48 48"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className={`${className} inline-block shrink-0`}
+            aria-label="beIN SPORTS"
+        >
+            <rect width="48" height="48" rx="10" fill="#5C1675" />
+            <path
+                d="M10 24c0-3.3 2-5 5-5s5 1.7 5 5-2 5-5 5-5-1.7-5-5zm3.2 0c0 1.8 0.9 2.8 2.2 2.8s2.2-1 2.2-2.8-0.9-2.8-2.2-2.8-2.2 1-2.2 2.8z"
+                fill="#FFFFFF"
+            />
+            <path
+                d="M23 15h3.2v14H23V15z"
+                fill="#FFFFFF"
+            />
+            <path
+                d="M28.5 29V19.2h3.1v1.6c0.8-1.2 2-1.8 3.5-1.8 2.8 0 4.4 1.8 4.4 4.8V29h-3.2v-4.8c0-1.6-0.8-2.4-2.1-2.4-1.3 0-2.3 0.9-2.3 2.5V29h-3.4z"
+                fill="#FFFFFF"
+            />
+            <rect x="10" y="32.5" width="28" height="3" rx="1.5" fill="#E5A823" />
+        </svg>
     );
 }
 

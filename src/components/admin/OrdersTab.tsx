@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
     ShoppingBag,
     Search,
@@ -131,7 +131,18 @@ export default function OrdersTab() {
         loadMetrics();
     }, [loadOrders, loadMetrics]);
 
-    // Realtime listener for incoming orders
+    const loadOrdersRef = useRef(loadOrders);
+    const loadMetricsRef = useRef(loadMetrics);
+
+    useEffect(() => {
+        loadOrdersRef.current = loadOrders;
+    }, [loadOrders]);
+
+    useEffect(() => {
+        loadMetricsRef.current = loadMetrics;
+    }, [loadMetrics]);
+
+    // Realtime listener for incoming orders (stable subscription, runs once on mount)
     useEffect(() => {
         const channel = supabase
             .channel('realtime_cafe_orders')
@@ -146,8 +157,8 @@ export default function OrdersTab() {
                             duration: 5000,
                         });
                     }
-                    loadOrders(true);
-                    loadMetrics();
+                    loadOrdersRef.current(true);
+                    loadMetricsRef.current();
                 }
             )
             .subscribe();
@@ -155,7 +166,7 @@ export default function OrdersTab() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [loadOrders, loadMetrics]);
+    }, []);
 
     const handleStatusChange = async (orderId: string, newStatus: string) => {
         try {

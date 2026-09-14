@@ -36,8 +36,6 @@ export default function AdminLoginPage() {
                 return;
             }
 
-            localStorage.setItem('d95_admin_auth', 'authenticated');
-            localStorage.setItem('d95_admin_auth_time', Date.now().toString());
             toast.success('تم تسجيل الدخول بنجاح! أهلاً بك في لوحة تحكم D95');
             navigate(from, { replace: true });
         } catch (err: unknown) {

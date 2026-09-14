@@ -22,39 +22,19 @@ export async function fetchRoomOccupiedIntervals(
             p_window_end: windowEnd ? windowEnd.toISOString() : null
         });
 
-        if (!error && Array.isArray(data)) {
+        if (error) {
+            console.error('Error fetching room occupied intervals via RPC:', error);
+            return [];
+        }
+
+        if (Array.isArray(data)) {
             return data.map((item: { start_datetime: string; end_datetime: string }) => ({
                 start: new Date(item.start_datetime),
                 end: new Date(item.end_datetime),
             }));
         }
 
-        // Fallback: direct table select for anon/authenticated if RPC fails
-        let query = supabase
-            .from('ps_bookings')
-            .select('start_datetime, end_datetime, status')
-            .eq('room_id', roomId)
-            .in('status', ['confirmed', 'completed']);
-
-        if (windowStart && windowEnd) {
-            query = query
-                .lt('start_datetime', windowEnd.toISOString())
-                .gt('end_datetime', windowStart.toISOString());
-        } else {
-            query = query.eq('booking_date', businessDate);
-        }
-
-        const { data: fallbackData, error: fallbackError } = await query;
-        if (fallbackError) {
-            console.error('Error fetching room intervals fallback:', fallbackError);
-            return [];
-        }
-
-        return (fallbackData || []).map((item: { start_datetime: string; end_datetime: string; status?: string }) => ({
-            start: new Date(item.start_datetime),
-            end: new Date(item.end_datetime),
-            status: item.status
-        }));
+        return [];
     } catch (err) {
         console.error('Exception fetching room intervals:', err);
         return [];
