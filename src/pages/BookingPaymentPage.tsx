@@ -30,6 +30,7 @@ import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 import { createBooking } from '@/services/bookingService';
 import { createDateTimeFromBusinessDate, calculateEndDateTime } from '@/lib/bookingDatetime';
 import { fetchPaymentSettings, PaymentSettings } from '@/services/paymentSettingsService';
+import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
 type PaymentMethod = 'instapay' | 'wallet' | 'cash';
 
@@ -280,10 +281,7 @@ export default function BookingPaymentPage() {
                                 طريقة الدفع وتأكيد الحجز
                             </h1>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                <div dir="ltr" className="flex items-baseline leading-none select-none tracking-wider">
-                                    <span className="font-bebas font-black text-sm text-neutral-900 dark:text-neutral-100">D</span>
-                                    <span className="font-bebas font-black text-sm text-[#E5252A] -ml-0.5">95</span>
-                                </div>
+                                <D95MiniLogo size="xs" />
                                 <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-semibold tracking-wider font-bebas">SECURE CHECKOUT</span>
                             </div>
                         </div>

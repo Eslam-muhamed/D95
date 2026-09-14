@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home, Copy, Check, ChevronDown, ChevronUp, Terminal } from 'lucide-react';
+import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
 interface Props {
     children: ReactNode;
@@ -79,9 +80,9 @@ ComponentStack: ${this.state.errorInfo?.componentStack || 'No component stack'}`
                             <AlertTriangle className="w-8 h-8" />
                         </div>
 
-                        <div className="flex items-center justify-center gap-2 mb-2">
-                            <span className="font-bebas text-3xl text-red-500 font-black tracking-wider">D95</span>
-                            <span className="text-xs bg-red-950/80 text-red-400 font-bold px-2.5 py-0.5 rounded-full border border-red-500/30">
+                        <div className="flex items-center justify-center gap-2.5 mb-2">
+                            <D95MiniLogo size="md" />
+                            <span className="text-xs bg-red-950/80 text-red-400 font-bold px-2.5 py-0.5 rounded-full border border-red-500/30 font-bebas tracking-wider">
                                 {isAdminOrDev ? 'ADMIN NOTICE' : 'SYSTEM NOTICE'}
                             </span>
                         </div>

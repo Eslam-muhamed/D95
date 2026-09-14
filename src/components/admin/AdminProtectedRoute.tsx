@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Gamepad2 } from 'lucide-react';
+import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
 interface Props {
     children: React.ReactNode;
@@ -59,9 +60,9 @@ export default function AdminProtectedRoute({ children }: Props) {
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-red-600 to-red-500 flex items-center justify-center text-white shadow-[0_0_30px_rgba(220,38,38,0.5)] mb-4 border border-red-400/30 animate-pulse">
                     <Gamepad2 className="w-9 h-9" />
                 </div>
-                <div className="flex items-center gap-2 mb-2">
-                    <span className="font-bebas text-3xl text-red-500 font-black tracking-wider">D95</span>
-                    <span className="text-xs bg-red-950 text-red-400 font-bold px-2 py-0.5 rounded-full border border-red-500/30">
+                <div className="flex items-center gap-2.5 mb-2">
+                    <D95MiniLogo size="md" />
+                    <span className="text-xs bg-red-950 text-red-400 font-bold px-2.5 py-0.5 rounded-full border border-red-500/30 font-bebas tracking-wider">
                         ADMIN
                     </span>
                 </div>

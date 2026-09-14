@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/stores/cartStore';
 import { useTheme } from '@/stores/themeStore';
 import { isAudioMuted, toggleAudioMute } from '@/lib/sound';
+import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
 interface Props {
   onCartOpen?: () => void;
@@ -38,10 +39,7 @@ export default function TopHeader({ onCartOpen }: Props = {}) {
 
           <div className="flex flex-col text-right">
             <div className="flex items-center gap-2">
-              <div dir="ltr" className="flex items-baseline leading-none select-none tracking-wider">
-                <span className="font-bebas font-black text-2xl text-neutral-900 dark:text-neutral-100">D</span>
-                <span className="font-bebas font-black text-2xl text-[#E5252A] -ml-0.5">95</span>
-              </div>
+              <D95MiniLogo size="sm" />
               <span className="h-1.5 w-1.5 bg-amber-500 rounded-full inline-block shadow-[0_0_8px_#f59e0b]" />
               <span className="text-xs font-bold bg-amber-100 dark:bg-amber-600/20 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full font-bebas tracking-wider border border-amber-300 dark:border-amber-600/30">
                 CAFÉ &amp; MENU

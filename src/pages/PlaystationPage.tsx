@@ -29,6 +29,7 @@ import { useCart } from '@/stores/cartStore';
 import { BeinSportsIcon, NetflixIcon } from '@/components/brand/EntertainmentIcons';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { playPs5SelectSound } from '@/lib/sound';
+import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
 interface RoomData {
     id: string;
@@ -267,10 +268,7 @@ export default function PlaystationPage() {
                         </Link>
                         <div className="flex flex-col text-right">
                             <div className="flex items-center gap-2">
-                                <div dir="ltr" className="flex items-baseline leading-none select-none tracking-wider">
-                                    <span className="font-bebas font-black text-2xl text-neutral-900 dark:text-neutral-100">D</span>
-                                    <span className="font-bebas font-black text-2xl text-[#E5252A] -ml-0.5">95</span>
-                                </div>
+                                <D95MiniLogo size="sm" />
                                 <span className="h-1.5 w-1.5 bg-red-600 rounded-full inline-block shadow-[0_0_8px_#c41e3a]" />
                                 <span className="text-xs font-bold bg-red-100 dark:bg-red-600/20 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full font-bebas tracking-wider border border-red-200 dark:border-red-600/30">
                                     GAMING LOUNGE

@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
 import { supabase } from '@/lib/supabase';
+import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
 export default function AdminLoginPage() {
     const [email, setEmail] = useState('admin@d95.com');
@@ -65,9 +66,9 @@ export default function AdminLoginPage() {
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-red-600 to-red-500 flex items-center justify-center text-white shadow-[0_0_30px_rgba(220,38,38,0.5)] mb-4 border border-red-400/30">
                         <Gamepad2 className="w-9 h-9" />
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className="font-bebas text-4xl text-red-500 font-black tracking-wider">D95</span>
-                        <span className="text-xs bg-red-950 text-red-400 font-bold px-2.5 py-0.5 rounded-full border border-red-500/30">
+                    <div className="flex items-center gap-2.5">
+                        <D95MiniLogo size="md" />
+                        <span className="text-xs bg-red-950 text-red-400 font-bold px-2.5 py-0.5 rounded-full border border-red-500/30 font-bebas tracking-wider">
                             ADMIN PORTAL
                         </span>
                     </div>

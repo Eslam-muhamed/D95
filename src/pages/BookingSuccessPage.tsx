@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { useTheme } from '@/stores/themeStore';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { fetchBookingByReservationId } from '@/services/bookingService';
+import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
 interface SnackAddon {
     id: string;
@@ -225,10 +226,7 @@ export default function BookingSuccessPage() {
                                 تأكيد وتذكرة الحجز
                             </h1>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                <div dir="ltr" className="flex items-baseline leading-none select-none tracking-wider">
-                                    <span className="font-bebas font-black text-sm text-neutral-900 dark:text-neutral-100">D</span>
-                                    <span className="font-bebas font-black text-sm text-[#E5252A] -ml-0.5">95</span>
-                                </div>
+                                <D95MiniLogo size="xs" />
                                 <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-semibold tracking-wider font-bebas">BOARDING PASS</span>
                             </div>
                         </div>
@@ -284,9 +282,7 @@ export default function BookingSuccessPage() {
                         {/* Top Athletic Header */}
                         <div className="p-3.5 sm:p-4 bg-neutral-100 dark:bg-black/60 border-b border-neutral-200 dark:border-white/10 text-neutral-900 dark:text-white flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <span className="bg-red-600 text-white font-brush text-sm font-black px-2 py-0.5 rounded tracking-wider">
-                                    D95
-                                </span>
+                                <D95MiniLogo size="sm" />
                                 <div className="flex flex-col">
                                     <span className="font-bebas text-base tracking-wider text-neutral-900 dark:text-white font-bold">VIP BOARDING PASS</span>
                                     <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-semibold">ESPORTS &amp; GAMING SUITES</span>
