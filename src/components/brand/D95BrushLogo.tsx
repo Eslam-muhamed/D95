@@ -32,10 +32,17 @@ export default function D95BrushLogo({
         />
       )}
       
+      {/* Dark theme: White letters on dark background */}
       <img 
         src="/new-logo.png" 
         alt="D95 Cafe & Gaming" 
-        className={`${sizeMap} object-contain drop-shadow-[0_2px_14px_rgba(229,37,42,0.55)]`} 
+        className={`hidden dark:block ${sizeMap} object-contain drop-shadow-[0_2px_14px_rgba(229,37,42,0.55)]`} 
+      />
+      {/* Light theme: Dark letters on light background */}
+      <img 
+        src="/new-logo-dark.png" 
+        alt="D95 Cafe & Gaming" 
+        className={`block dark:hidden ${sizeMap} object-contain drop-shadow-[0_2px_14px_rgba(229,37,42,0.3)]`} 
       />
 
       {/* Motto: PLAY • COMPETE • RELAX • REPEAT */}
