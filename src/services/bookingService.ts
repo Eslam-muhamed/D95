@@ -877,7 +877,20 @@ export interface RoomRates {
     [roomId: string]: number;
 }
 
+let cachedRoomRates: RoomRates | null = null;
+const ROOM_RATES_CACHE_KEY = 'd95_room_rates_cache';
+
 export async function fetchRoomRates(): Promise<RoomRates> {
+    if (cachedRoomRates) return cachedRoomRates;
+    try {
+        const stored = localStorage.getItem(ROOM_RATES_CACHE_KEY);
+        if (stored) {
+            cachedRoomRates = JSON.parse(stored);
+        }
+    } catch {
+        // Ignore storage errors
+    }
+
     try {
         const { data, error } = await supabase
             .from('app_settings')
@@ -886,15 +899,28 @@ export async function fetchRoomRates(): Promise<RoomRates> {
             .maybeSingle();
 
         if (!error && data?.value) {
-            return data.value as RoomRates;
+            cachedRoomRates = data.value as RoomRates;
+            try {
+                localStorage.setItem(ROOM_RATES_CACHE_KEY, JSON.stringify(cachedRoomRates));
+            } catch {
+                // Ignore
+            }
+            return cachedRoomRates;
         }
     } catch (err) {
         console.error('Error fetching room rates:', err);
     }
-    return { 'room-1': 100, 'room-2': 100 };
+    return cachedRoomRates || { 'room-1': 100, 'room-2': 100 };
 }
 
 export async function updateRoomRates(rates: RoomRates): Promise<RoomRates> {
+    cachedRoomRates = rates;
+    try {
+        localStorage.setItem(ROOM_RATES_CACHE_KEY, JSON.stringify(rates));
+    } catch {
+        // Ignore
+    }
+
     const { error } = await supabase
         .from('app_settings')
         .upsert({

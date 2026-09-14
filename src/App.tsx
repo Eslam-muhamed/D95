@@ -9,15 +9,15 @@ import ErrorBoundary from '@/components/features/ErrorBoundary';
 import AdminProtectedRoute from '@/components/admin/AdminProtectedRoute';
 import { preloadMenuData } from '@/services/menuService';
 
-// Statically import primary public tabs for 0ms instantaneous bottom bar navigation
+// Statically import primary public tabs & customer booking flow for 0ms instantaneous navigation
 import GatewayPage from '@/pages/GatewayPage';
 import PlaystationPage from '@/pages/PlaystationPage';
 import MenuPage from '@/pages/MenuPage';
+import BookingDetailsPage from '@/pages/BookingDetailsPage';
+import BookingPaymentPage from '@/pages/BookingPaymentPage';
+import BookingSuccessPage from '@/pages/BookingSuccessPage';
 
-// Route-level Code Splitting for secondary checkout & admin routes
-const BookingDetailsPage = lazy(() => import('@/pages/BookingDetailsPage'));
-const BookingPaymentPage = lazy(() => import('@/pages/BookingPaymentPage'));
-const BookingSuccessPage = lazy(() => import('@/pages/BookingSuccessPage'));
+// Route-level Code Splitting for back-office admin routes only
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'));
 const AdminLoginPage = lazy(() => import('@/pages/admin/AdminLoginPage'));
 

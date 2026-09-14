@@ -28,6 +28,7 @@ import { useTheme } from '@/stores/themeStore';
 import { useCart } from '@/stores/cartStore';
 import { BeinSportsIcon, NetflixIcon } from '@/components/brand/EntertainmentIcons';
 import { CONTACT_INFO } from '@/constants/contactInfo';
+import { playPs5SelectSound } from '@/lib/sound';
 
 interface RoomData {
     id: string;
@@ -223,6 +224,7 @@ export default function PlaystationPage() {
     // FAST & INSTANT ROOM ENTER (ZERO LAG • 60FPS SMOOTH)
     // ─────────────────────────────────────────────────────────────
     const handleDoorEnter = (room: RoomData) => {
+        playPs5SelectSound();
         navigate('/playstation/booking', {
             state: {
                 room: {
