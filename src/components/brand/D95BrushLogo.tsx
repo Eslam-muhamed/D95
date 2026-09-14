@@ -16,10 +16,30 @@ export default function D95BrushLogo({
   glow = true,
 }: D95BrushLogoProps) {
   const sizeMap = {
-    sm: 'w-20 sm:w-28',
-    md: 'w-36 sm:w-44 md:w-52',
-    lg: 'w-52 sm:w-60 md:w-68',
-    xl: 'w-72 sm:w-80 md:w-[26rem]',
+    sm: {
+      imgWidth: 'w-20 sm:w-28',
+      strokeWidth: 'w-24 sm:w-32',
+      subSize: 'text-[9px] sm:text-[10px]',
+      dashWidth: 'w-3 sm:w-4',
+    },
+    md: {
+      imgWidth: 'w-36 sm:w-44 md:w-52',
+      strokeWidth: 'w-40 sm:w-48 md:w-56',
+      subSize: 'text-[11px] md:text-xs',
+      dashWidth: 'w-4 md:w-5',
+    },
+    lg: {
+      imgWidth: 'w-52 sm:w-60 md:w-68',
+      strokeWidth: 'w-56 sm:w-64 md:w-72',
+      subSize: 'text-xs md:text-sm',
+      dashWidth: 'w-5 md:w-6',
+    },
+    xl: {
+      imgWidth: 'w-72 sm:w-80 md:w-[26rem]',
+      strokeWidth: 'w-80 sm:w-96 md:w-[28rem]',
+      subSize: 'text-sm md:text-base',
+      dashWidth: 'w-6 md:w-8',
+    },
   }[size];
 
   return (
@@ -36,14 +56,42 @@ export default function D95BrushLogo({
       <img 
         src="/new-logo.png" 
         alt="D95" 
-        className={`hidden dark:block ${sizeMap} object-contain drop-shadow-[0_2px_16px_rgba(229,37,42,0.65)]`} 
+        className={`hidden dark:block ${sizeMap.imgWidth} object-contain drop-shadow-[0_2px_16px_rgba(229,37,42,0.65)]`} 
       />
       {/* Light theme: Dark letters on light background */}
       <img 
         src="/new-logo-dark.png" 
         alt="D95" 
-        className={`block dark:hidden ${sizeMap} object-contain drop-shadow-[0_2px_14px_rgba(229,37,42,0.3)]`} 
+        className={`block dark:hidden ${sizeMap.imgWidth} object-contain drop-shadow-[0_2px_14px_rgba(229,37,42,0.3)]`} 
       />
+
+      {/* Red Brush Stroke Underline */}
+      <div className="relative w-full flex items-center justify-center -mt-1 sm:-mt-2">
+        <svg
+          viewBox="0 0 160 12"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className={`${sizeMap.strokeWidth} h-auto text-[#E5252A] drop-shadow-[0_0_12px_rgba(229,37,42,0.7)]`}
+        >
+          <path
+            d="M2 7.5C28 5.8 62 4.5 98 5.2C122 5.6 145 6.6 158 8C152 9.6 130 9.8 104 9.5C65 9 32 9.8 4 10.5C2 10.5 1.5 8.5 2 7.5Z"
+            fill="currentColor"
+          />
+        </svg>
+      </div>
+
+      {/* Subtitle: GAMING & CAFÉ */}
+      {showSubtitle && (
+        <div className="mt-2 sm:mt-2.5 flex items-center justify-center gap-2 sm:gap-2.5">
+          <span className={`${sizeMap.dashWidth} h-[1.5px] bg-[#E5252A]/80 rounded-full`} />
+          <p
+            className={`font-bebas font-black text-neutral-800 dark:text-neutral-200 uppercase ${sizeMap.subSize} tracking-[0.35em] drop-shadow-sm`}
+          >
+            GAMING &amp; CAFÉ
+          </p>
+          <span className={`${sizeMap.dashWidth} h-[1.5px] bg-[#E5252A]/80 rounded-full`} />
+        </div>
+      )}
 
       {/* Motto: PLAY • COMPETE • RELAX • REPEAT */}
       {showMotto && (
