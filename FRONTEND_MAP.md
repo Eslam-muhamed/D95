@@ -23,7 +23,7 @@
 | ما تريد تعديله | المسار المباشر للملف |
 | :--- | :--- |
 | **أرقام التليفون، الواتساب، المحافظ، إنستاباي الافتراضية** | [`src/constants/contactInfo.ts`](file:///Users/jrslam/D95/src/constants/contactInfo.ts) |
-| **أصناف المنيو الثابتة (الأسعار، الصور، الأسماء، الأوصاف)** | [`src/constants/menuData.ts`](file:///Users/jrslam/D95/src/constants/menuData.ts) أو [`hotItems.ts`](file:///Users/jrslam/D95/src/constants/hotItems.ts) أو [`coldItems.ts`](file:///Users/jrslam/D95/src/constants/coldItems.ts) |
+| **أصناف المنيو (الأسعار، الصور، الأسماء، التوفر)** | من لوحة التحكم `/admin` مباشرة (أو من جدول `products` في Supabase) |
 | **الصفحة الافتتاحية (البوابة - الدخول للبلايستيشن أو الكافيه)** | [`src/pages/GatewayPage.tsx`](file:///Users/jrslam/D95/src/pages/GatewayPage.tsx) |
 | **صفحة البلايستيشن والغرف وعرض المواصفات والأسعار** | [`src/pages/PlaystationPage.tsx`](file:///Users/jrslam/D95/src/pages/PlaystationPage.tsx) |
 | **خطوة حجز الغرفة (تحديد اليوم، عجلة الوقت، الساعات)** | [`src/pages/BookingDetailsPage.tsx`](file:///Users/jrslam/D95/src/pages/BookingDetailsPage.tsx) |
@@ -121,13 +121,9 @@ src/
 │   ├── supabase.ts             # إعداد عميل Supabase
 │   └── utils.ts                # دمج فئات Tailwind (clsx / twMerge)
 │
-└── constants/                  # الثوابت والبيانات الافتراضية
-    ├── contactInfo.ts          # معلومات التواصل والروابط
-    ├── menuMetadata.ts         # أقسام المنيو وأيقوناتها
-    ├── menuData.ts             # بيانات جميع الأصناف الافتراضية
-    ├── hotItems.ts             # أصناف المشروبات الساخنة
-    ├── coldItems.ts            # أصناف المشروبات الباردة
-    └── itemCustomizations.ts   # خيارات التخصيص لكل فئة
+└── constants/                  # الثوابت والبيانات المرجعية
+    ├── contactInfo.ts          # معلومات التواصل والروابط وحسابات الدفع
+    └── menuMetadata.ts         # أقسام المنيو الأساسية كاش واحتياطي
 ```
 
 ---
