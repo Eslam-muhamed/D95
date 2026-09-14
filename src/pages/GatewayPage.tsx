@@ -408,7 +408,7 @@ export default function GatewayPage() {
                     title="فتح الموقع على خرائط جوجل"
                 >
                     <MapPin size={11} className="text-red-600 shrink-0 group-hover:scale-110 transition-transform" />
-                    <span>D95 GAMING &amp; CAFÉ • CAIRO, EGYPT</span>
+                    <span>D95 GAMING &amp; CAFÉ • EL-QUDAH, KAFR SAQR</span>
                     <ExternalLink size={9} className="opacity-60 group-hover:opacity-100" />
                 </a>
             </footer>
