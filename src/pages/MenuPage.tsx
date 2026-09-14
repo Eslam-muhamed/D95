@@ -8,7 +8,6 @@ import OffersSection from '@/components/features/OffersSection';
 import MenuSection from '@/components/features/MenuSection';
 import ItemCustomizerModal from '@/components/features/ItemCustomizerModal';
 import Footer from '@/components/layout/Footer';
-import ContactSection from '@/components/features/ContactSection';
 import { categories as defaultCategories } from '@/constants/menuMetadata';
 import type { MenuItem, MenuCategory } from '@/types/menu';
 import { fetchCategories, fetchProducts, fetchOffers, getCachedCategories, getCachedProducts, getCachedOffers } from '@/services/menuService';
@@ -422,7 +421,6 @@ export default function MenuPage() {
         </AnimatePresence>
       </div>
 
-      <ContactSection />
       <Footer />
 
       {/* Scroll to Top */}
