@@ -71,7 +71,7 @@ export default function D95BrushLogo({
           viewBox="0 0 160 12"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className={`${sizeMap.strokeWidth} h-auto text-[#72010B] dark:text-[#E5252A] drop-shadow-[0_0_12px_rgba(229,37,42,0.7)]`}
+          className={`${sizeMap.strokeWidth} h-auto text-[#E5252A] drop-shadow-[0_0_12px_rgba(229,37,42,0.7)]`}
         >
           <path
             d="M2 7.5C28 5.8 62 4.5 98 5.2C122 5.6 145 6.6 158 8C152 9.6 130 9.8 104 9.5C65 9 32 9.8 4 10.5C2 10.5 1.5 8.5 2 7.5Z"
@@ -83,13 +83,13 @@ export default function D95BrushLogo({
       {/* Subtitle: GAMING & CAFÉ */}
       {showSubtitle && (
         <div className="mt-2 sm:mt-2.5 flex items-center justify-center gap-2 sm:gap-2.5">
-          <span className={`${sizeMap.dashWidth} h-[1.5px] bg-[#72010B]/80 dark:bg-[#E5252A]/80 rounded-full`} />
+          <span className={`${sizeMap.dashWidth} h-[1.5px] bg-[#E5252A]/80 rounded-full`} />
           <p
             className={`font-bebas font-black text-neutral-800 dark:text-neutral-200 uppercase ${sizeMap.subSize} tracking-[0.35em] drop-shadow-sm`}
           >
             GAMING &amp; CAFÉ
           </p>
-          <span className={`${sizeMap.dashWidth} h-[1.5px] bg-[#72010B]/80 dark:bg-[#E5252A]/80 rounded-full`} />
+          <span className={`${sizeMap.dashWidth} h-[1.5px] bg-[#E5252A]/80 rounded-full`} />
         </div>
       )}
 
