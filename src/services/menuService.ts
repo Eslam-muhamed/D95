@@ -1,7 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { DBCategory, DBProduct, DBOffer } from '@/types/database';
 import { categories as fallbackCategories } from '@/constants/menuMetadata';
-import { allItems as fallbackItems } from '@/constants/menuData';
 
 // ================= IN-MEMORY CACHE (INSTANT 0MS TAB SWITCHING) =================
 let cachedCategories: DBCategory[] | null = null;
@@ -164,34 +163,8 @@ export async function fetchProducts(categoryId?: string, forceRefresh = false): 
         const { data, error } = await query;
 
         if (error) {
-            console.warn('Fallback to local items due to error:', error.message);
-            const items = !isAll
-                ? fallbackItems.filter(i => i.category === categoryId)
-                : fallbackItems;
-
-            const mapped = items.map((it, i) => ({
-                id: it.id || `local-${i}`,
-                slug: it.id,
-                category_id: it.category,
-                name: it.name,
-                description: it.description || '',
-                price: it.price || 0,
-                original_price: null,
-                currency: it.currency || 'ج.م',
-                image_url: it.image || '',
-                badge: it.badge || null,
-                is_available: true,
-                is_hot: !!it.isHot,
-                is_cold: !!it.isCold,
-                tags: it.tags || [],
-                display_order: i + 1,
-            }));
-
-            if (isAll) {
-                cachedProducts = mapped;
-                cachedProductsTime = Date.now();
-            }
-            return mapped;
+            console.error('Error fetching products from database:', error.message);
+            return [];
         }
 
         const products = (data || []) as DBProduct[];

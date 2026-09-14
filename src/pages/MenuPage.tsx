@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronUp, Search } from 'lucide-react';
+import { ChevronUp, Search, Coffee } from 'lucide-react';
 import TopHeader from '@/components/features/TopHeader';
 import CategoryNav from '@/components/features/CategoryNav';
 import SearchBar from '@/components/features/SearchBar';
@@ -11,7 +11,6 @@ import Footer from '@/components/layout/Footer';
 import ReviewsSection from '@/components/features/ReviewsSection';
 import ContactSection from '@/components/features/ContactSection';
 import { categories as defaultCategories } from '@/constants/menuMetadata';
-import { allItems as defaultItems } from '@/constants/menuData';
 import type { MenuItem, MenuCategory } from '@/types/menu';
 import { fetchCategories, fetchProducts, fetchOffers, getCachedCategories, getCachedProducts, getCachedOffers } from '@/services/menuService';
 import type { DBOffer } from '@/types/database';
@@ -28,15 +27,14 @@ function ScrollToTop() {
     <AnimatePresence>
       {visible && (
         <motion.button
-          initial={{ opacity: 0, scale: 0.7 }}
+          initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.7 }}
-          whileTap={{ scale: 0.9 }}
+          exit={{ opacity: 0, scale: 0.8 }}
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          aria-label="عودة للأعلى"
-          className="cursor-pointer fixed bottom-22 left-4 sm:bottom-8 sm:left-8 z-30 w-10 h-10 rounded-full bg-white/95 dark:bg-[#160d10]/95 border border-red-500/40 shadow-lg flex items-center justify-center text-red-600 dark:text-red-400 hover:text-white hover:bg-red-600 transition-all backdrop-blur-sm"
+          className="fixed bottom-20 left-4 z-40 p-2.5 rounded-full bg-red-600 text-white shadow-lg shadow-red-600/30 hover:bg-red-500 transition-colors cursor-pointer"
+          aria-label="العودة لأعلى الصفحة"
         >
-          <ChevronUp size={18} />
+          <ChevronUp className="w-5 h-5" />
         </motion.button>
       )}
     </AnimatePresence>
@@ -44,8 +42,8 @@ function ScrollToTop() {
 }
 
 export default function MenuPage() {
+  const [activeCategory, setActiveCategory] = useState<string>('all');
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState('all');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
 
   // Synchronous cache initialization for instant 0ms rendering
@@ -79,14 +77,14 @@ export default function MenuPage() {
         isCold: p.is_cold
       }));
     }
-    return defaultItems;
+    return [];
   });
 
   const [liveOffers, setLiveOffers] = useState<DBOffer[]>(() => {
     return getCachedOffers() || [];
   });
 
-  // Load live menu items, categories, and offers from Supabase (SWR: Stale-While-Revalidate)
+  // Load live menu items, categories, and offers strictly from Supabase
   useEffect(() => {
     Promise.all([
       fetchCategories(),
@@ -101,7 +99,7 @@ export default function MenuPage() {
           description: c.description || undefined
         })));
       }
-      if (prods && prods.length > 0) {
+      if (prods) {
         setAllItems(prods.filter(p => p.is_available).map(p => ({
           id: p.slug || p.id,
           name: p.name,
@@ -120,7 +118,7 @@ export default function MenuPage() {
         setLiveOffers(offs);
       }
     }).catch(err => {
-      console.warn('Using local fallback menu data:', err);
+      console.warn('Error loading live menu data from Supabase:', err);
     });
   }, []);
 
@@ -331,11 +329,22 @@ export default function MenuPage() {
                       عرض جميع الأقسام
                     </button>
                   </div>
-                  <MenuSection
-                    category={filteredCategory}
-                    items={filteredItems}
-                    onAdd={setSelectedItem}
-                  />
+                  {filteredItems.length === 0 ? (
+                    <div className="py-14 px-4 text-center max-w-md mx-auto my-4 bg-white dark:bg-[#120e10] border border-neutral-200 dark:border-white/[0.08] rounded-2xl shadow-sm">
+                      <p className="text-sm font-bold text-neutral-800 dark:text-neutral-200 font-body mb-1">
+                        لا توجد أصناف مضافة حالياً في هذا القسم
+                      </p>
+                      <p className="text-xs text-neutral-500 font-body">
+                        سيتم إضافتها قريباً من قِبل إدارة الكافيه عبر لوحة التحكم.
+                      </p>
+                    </div>
+                  ) : (
+                    <MenuSection
+                      category={filteredCategory}
+                      items={filteredItems}
+                      onAdd={setSelectedItem}
+                    />
+                  )}
                 </div>
               ) : null}
             </motion.div>
@@ -357,6 +366,20 @@ export default function MenuPage() {
                   onAdd={setSelectedItem}
                 />
               ))}
+
+              {allItems.length === 0 && (
+                <div className="py-16 px-4 text-center max-w-md mx-auto my-6 bg-white dark:bg-[#120e10] border border-neutral-200 dark:border-white/[0.08] rounded-2xl shadow-sm">
+                  <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/30 flex items-center justify-center mx-auto mb-3.5">
+                    <Coffee className="w-7 h-7" />
+                  </div>
+                  <h3 className="font-bold text-base text-neutral-900 dark:text-white mb-1 font-body">
+                    قائمة الكافيه فارغة حالياً
+                  </h3>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed font-body">
+                    سيتم عرض المنتجات هنا فور إضافتها واعتمادها من قِبل الإدارة عبر لوحة التحكم.
+                  </p>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
