@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight, Gamepad2, Coffee, Sun, Moon, ExternalLink } from 'lucide-react';
 import D95BrushLogo from '@/components/brand/D95BrushLogo';
@@ -6,12 +6,27 @@ import { playPs5StartupSound, playCafeEntranceSound } from '@/lib/sound';
 import { useTheme } from '@/stores/themeStore';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { BeinSportsIcon, NetflixIcon, InstagramGradientIcon } from '@/components/brand/EntertainmentIcons';
+import {
+    fetchVenueStatus,
+    subscribeVenueStatus,
+    DEFAULT_VENUE_STATUS,
+    type VenueStatus,
+} from '@/services/venueStatusService';
 
 export default function GatewayPage() {
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
     const [isBootingPs5, setIsBootingPs5] = useState(false);
     const [isEnteringMenu, setIsEnteringMenu] = useState(false);
+    const [venueStatus, setVenueStatus] = useState<VenueStatus>(DEFAULT_VENUE_STATUS);
+
+    useEffect(() => {
+        fetchVenueStatus().then(setVenueStatus);
+        const unsubscribe = subscribeVenueStatus((newStatus) => {
+            setVenueStatus(newStatus);
+        });
+        return () => unsubscribe();
+    }, []);
 
     const handlePlaystationClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -76,17 +91,31 @@ export default function GatewayPage() {
             {/* Header: D95 Brand & Working Hours */}
             <header className="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center text-center pt-2 shrink-0">
                 {/* Status Badge */}
-                <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-white/80 dark:bg-black/60 rounded-full border border-neutral-300 dark:border-neutral-700/60 mb-2 shadow-md backdrop-blur-sm">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <div className={`inline-flex items-center gap-2 px-3.5 py-1 bg-white/80 dark:bg-black/60 rounded-full border transition-all duration-300 mb-2 shadow-md backdrop-blur-sm ${
+                    venueStatus.isOpen
+                        ? 'border-emerald-500/30'
+                        : 'border-rose-500/30'
+                }`}>
+                    <span className={`w-2 h-2 rounded-full ${
+                        venueStatus.isOpen
+                            ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]'
+                            : 'bg-rose-500 shadow-[0_0_8px_#f43f5e]'
+                    }`} />
                     <span className="font-bebas text-xs sm:text-sm text-neutral-800 dark:text-neutral-200 tracking-wider">OFFICIAL PORTAL</span>
                     <span className="text-neutral-400 text-xs">•</span>
-                    <span className="font-body text-[11px] text-red-600 dark:text-red-400 font-bold">مفتوح الآن</span>
+                    <span className={`font-body text-[11px] font-bold ${
+                        venueStatus.isOpen
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-rose-600 dark:text-rose-400'
+                    }`}>
+                        {venueStatus.isOpen ? 'مفتوح الآن' : 'مغلق الآن'}
+                    </span>
                 </div>
 
                 {/* Branded Brush Logo */}
                 <D95BrushLogo size="lg" showSubtitle={true} showMotto={false} glow={true} />
 
-                {/* Styled WE ARE OPEN Title */}
+                {/* Styled WE ARE OPEN / CURRENTLY CLOSED Title */}
                 <div className="relative my-2 w-full flex items-center justify-center">
                     <span
                         className="hidden sm:inline-block font-brush text-3xl md:text-5xl text-neutral-400 select-none mr-4 opacity-70 -rotate-12"
@@ -99,9 +128,13 @@ export default function GatewayPage() {
                         <h1
                             className="font-bebas text-4xl sm:text-5xl md:text-6xl uppercase tracking-[0.08em] text-neutral-900 dark:text-neutral-100 drop-shadow-sm dark:drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)] font-black leading-none"
                         >
-                            WE ARE OPEN
+                            {venueStatus.isOpen ? 'WE ARE OPEN' : 'CURRENTLY CLOSED'}
                         </h1>
-                        <div className="w-32 sm:w-44 h-[3px] bg-red-600 mx-auto mt-1.5 rounded-full shadow-[0_0_12px_rgba(220,38,38,0.7)]" />
+                        <div className={`w-32 sm:w-44 h-[3px] mx-auto mt-1.5 rounded-full transition-all duration-300 ${
+                            venueStatus.isOpen
+                                ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.7)]'
+                                : 'bg-rose-600 shadow-[0_0_12px_rgba(225,29,72,0.7)]'
+                        }`} />
                     </div>
 
                     <span
@@ -161,6 +194,14 @@ export default function GatewayPage() {
                     </p>
                     <span className="text-red-600 font-black text-xs leading-none mt-0.5">✕</span>
                 </div>
+
+                {/* Closed Notice Banner */}
+                {!venueStatus.isOpen && (
+                    <div className="mt-2.5 px-4 py-1.5 rounded-full bg-rose-500/10 dark:bg-rose-950/40 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs font-bold font-body flex items-center gap-2 shadow-sm">
+                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                        <span>الصالة مغلقة حالياً — نتشرف باستقبالكم خلال ساعات العمل الرسمية</span>
+                    </div>
+                )}
             </header>
 
             {/* Core Interactive Center: Dual Portals */}

@@ -13,6 +13,7 @@ import SimpleOperationsTab from '@/components/admin/SimpleOperationsTab';
 import OrdersTab from '@/components/admin/OrdersTab';
 import SimpleMenuSettingsTab from '@/components/admin/SimpleMenuSettingsTab';
 import PaymentSettingsTab from '@/components/admin/PaymentSettingsTab';
+import VenueStatusControl from '@/components/admin/VenueStatusControl';
 import { supabase } from '@/lib/supabase';
 import { playPs5NavigateSound } from '@/lib/sound';
 
@@ -161,6 +162,8 @@ export default function AdminDashboardPage() {
 
                 {/* Right Actions: Public Site Link + Logout */}
                 <div className="flex items-center gap-2">
+                    <VenueStatusControl userEmail={userEmail} variant="badge" />
+
                     <a
                         href="/menu"
                         target="_blank"
@@ -217,7 +220,7 @@ export default function AdminDashboardPage() {
 
             {/* Main Content Area */}
             <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 lg:p-6 pb-24 sm:pb-8">
-                {activeTab === 'operations' && <SimpleOperationsTab />}
+                {activeTab === 'operations' && <SimpleOperationsTab userEmail={userEmail} isCashier={isCashier} />}
                 {activeTab === 'orders' && <OrdersTab />}
                 {activeTab === 'menu_settings' && <SimpleMenuSettingsTab />}
                 {activeTab === 'payment_settings' && <PaymentSettingsTab />}

@@ -58,6 +58,12 @@ import BookingDetailsModal from './BookingDetailsModal';
 import AdminCalendarPopover from './AdminCalendarPopover';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 import { supabase } from '@/lib/supabase';
+import VenueStatusControl from './VenueStatusControl';
+
+interface SimpleOperationsTabProps {
+    isCashier?: boolean;
+    userEmail?: string;
+}
 
 type SubTabType = 'dashboard' | 'details' | 'settings';
 
@@ -98,7 +104,7 @@ function isBookingMatchingRoom(b: DBBooking, roomFilterId: string): boolean {
     return false;
 }
 
-export default function SimpleOperationsTab() {
+export default function SimpleOperationsTab({ isCashier = false, userEmail = 'admin@d95.com' }: SimpleOperationsTabProps) {
     const [activeSubTab, setActiveSubTab] = useState<SubTabType>('dashboard');
 
     // Cairo-pinned Date for Today
@@ -782,6 +788,9 @@ export default function SimpleOperationsTab() {
 
     return (
         <div className="space-y-4 max-w-7xl mx-auto" dir="rtl">
+            {/* Live Venue Status Control Card */}
+            <VenueStatusControl variant="card" userEmail={userEmail} className="mb-1" />
+
             {/* SUB-TABS NAVIGATION (Clean Light Executive Style) */}
             <div className="bg-white border border-slate-200/90 rounded-2xl p-2 sm:p-2.5 flex flex-wrap items-center justify-between gap-2 shadow-xs">
                 <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none w-full sm:w-auto">
