@@ -67,6 +67,10 @@ ComponentStack: ${this.state.errorInfo?.componentStack || 'No component stack'}`
     public render() {
         if (this.state.hasError) {
             const errorMessage = this.state.error?.message || 'خطأ غير محدد';
+            const isAdminOrDev = Boolean(
+                import.meta.env.DEV || 
+                (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin'))
+            );
 
             return (
                 <div className="min-h-screen w-full bg-[#0a0809] text-white flex items-center justify-center p-4 font-body" dir="rtl">
@@ -78,73 +82,79 @@ ComponentStack: ${this.state.errorInfo?.componentStack || 'No component stack'}`
                         <div className="flex items-center justify-center gap-2 mb-2">
                             <span className="font-bebas text-3xl text-red-500 font-black tracking-wider">D95</span>
                             <span className="text-xs bg-red-950/80 text-red-400 font-bold px-2.5 py-0.5 rounded-full border border-red-500/30">
-                                SYSTEM NOTICE
+                                {isAdminOrDev ? 'ADMIN NOTICE' : 'SYSTEM NOTICE'}
                             </span>
                         </div>
 
                         <h2 className="text-lg font-bold text-white mb-2">
                             عذراً، حدث خطأ غير متوقع في النظام
                         </h2>
-                        <p className="text-xs text-neutral-400 mb-4 leading-relaxed">
-                            تم تسجيل المشكلة تلقائياً لمنع تعطل باقي الخدمات. يمكنك نسخ تفاصيل الخطأ وإرسالها أو إعادة تحميل الصفحة.
+                        <p className="text-xs text-neutral-400 mb-6 leading-relaxed">
+                            {isAdminOrDev 
+                                ? 'حدث خطأ في واجهة الإدارة. يمكنك نسخ تفاصيل الخطأ الفنية وإرسالها للمطور أو إعادة تحميل الصفحة.' 
+                                : 'نعتذر عن هذا العطل المؤقت، تم تسجيل المشكلة تلقائياً لمنع تعطل باقي الخدمات. يمكنك تحديث الصفحة أو العودة للصفحة الرئيسية.'}
                         </p>
 
-                        {/* Error Summary Box */}
-                        <div className="bg-red-950/40 border border-red-800/40 rounded-xl p-3 text-right mb-4">
-                            <div className="flex items-center justify-between gap-2 mb-1">
-                                <span className="text-[11px] font-mono text-red-300 font-bold flex items-center gap-1.5">
-                                    <Terminal className="w-3.5 h-3.5 text-red-400" />
-                                    <span>نص الخطأ (Error Message):</span>
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={this.handleCopyError}
-                                    className="text-[11px] flex items-center gap-1 text-neutral-300 hover:text-white bg-white/10 hover:bg-white/15 px-2 py-1 rounded-lg transition-colors cursor-pointer"
-                                >
-                                    {this.state.copied ? (
-                                        <>
-                                            <Check className="w-3 h-3 text-emerald-400" />
-                                            <span className="text-emerald-400 font-bold">تم النسخ!</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Copy className="w-3 h-3" />
-                                            <span>نسخ الخطأ</span>
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                            <p className="font-mono text-xs text-red-200 break-all select-all dir-ltr text-left bg-black/40 p-2 rounded-lg">
-                                {errorMessage}
-                            </p>
-                        </div>
-
-                        {/* Expandable Technical Details */}
-                        <div className="mb-6 text-right">
-                            <button
-                                type="button"
-                                onClick={() => this.setState(prev => ({ showDetails: !prev.showDetails }))}
-                                className="text-[11px] text-neutral-400 hover:text-neutral-200 flex items-center gap-1 transition-colors cursor-pointer"
-                            >
-                                {this.state.showDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                                <span>{this.state.showDetails ? 'إخفاء التفاصيل الفنية الكاملة' : 'عرض التفاصيل الفنية والـ Stack Trace'}</span>
-                            </button>
-
-                            {this.state.showDetails && (
-                                <div className="mt-2 p-3 bg-black/70 border border-neutral-800 rounded-xl text-left dir-ltr max-h-48 overflow-y-auto font-mono text-[10px] text-neutral-400 select-all space-y-2">
-                                    <div>
-                                        <p className="text-red-400 font-bold">Stack:</p>
-                                        <pre className="whitespace-pre-wrap">{this.state.error?.stack || 'No stack'}</pre>
+                        {/* Technical Error Box: ONLY visible to Admin / Developer on /admin or DEV mode */}
+                        {isAdminOrDev && (
+                            <>
+                                <div className="bg-red-950/40 border border-red-800/40 rounded-xl p-3 text-right mb-4">
+                                    <div className="flex items-center justify-between gap-2 mb-1">
+                                        <span className="text-[11px] font-mono text-red-300 font-bold flex items-center gap-1.5">
+                                            <Terminal className="w-3.5 h-3.5 text-red-400" />
+                                            <span>تفاصيل الخطأ للإدارة:</span>
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={this.handleCopyError}
+                                            className="text-[11px] flex items-center gap-1 text-neutral-300 hover:text-white bg-white/10 hover:bg-white/15 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                                        >
+                                            {this.state.copied ? (
+                                                <>
+                                                    <Check className="w-3 h-3 text-emerald-400" />
+                                                    <span className="text-emerald-400 font-bold">تم النسخ!</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Copy className="w-3 h-3" />
+                                                    <span>نسخ الخطأ</span>
+                                                </>
+                                            )}
+                                        </button>
                                     </div>
-                                    {this.state.errorInfo?.componentStack && (
-                                        <div>
-                                            <p className="text-amber-400 font-bold">Component Stack:</p>
-                                            <pre className="whitespace-pre-wrap">{this.state.errorInfo.componentStack}</pre>
+                                    <p className="font-mono text-xs text-red-200 break-all select-all dir-ltr text-left bg-black/40 p-2 rounded-lg">
+                                        {errorMessage}
+                                    </p>
+                                </div>
+
+                                {/* Expandable Technical Details (Stack) */}
+                                <div className="mb-6 text-right">
+                                    <button
+                                        type="button"
+                                        onClick={() => this.setState(prev => ({ showDetails: !prev.showDetails }))}
+                                        className="text-[11px] text-neutral-400 hover:text-neutral-200 flex items-center gap-1 transition-colors cursor-pointer"
+                                    >
+                                        {this.state.showDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                                        <span>{this.state.showDetails ? 'إخفاء الـ Stack Trace' : 'عرض التفاصيل الفنية الكاملة'}</span>
+                                    </button>
+
+                                    {this.state.showDetails && (
+                                        <div className="mt-2 p-3 bg-black/70 border border-neutral-800 rounded-xl text-left dir-ltr max-h-48 overflow-y-auto font-mono text-[10px] text-neutral-400 select-all space-y-2">
+                                            <div>
+                                                <p className="text-red-400 font-bold">Stack:</p>
+                                                <pre className="whitespace-pre-wrap">{this.state.error?.stack || 'No stack'}</pre>
+                                            </div>
+                                            {this.state.errorInfo?.componentStack && (
+                                                <div>
+                                                    <p className="text-amber-400 font-bold">Component Stack:</p>
+                                                    <pre className="whitespace-pre-wrap">{this.state.errorInfo.componentStack}</pre>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
-                            )}
-                        </div>
+                            </>
+                        )}
 
                         {/* Action Buttons */}
                         <div className="flex flex-col sm:flex-row items-center gap-3">
