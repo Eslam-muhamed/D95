@@ -8,7 +8,6 @@ import OffersSection from '@/components/features/OffersSection';
 import MenuSection from '@/components/features/MenuSection';
 import ItemCustomizerModal from '@/components/features/ItemCustomizerModal';
 import Footer from '@/components/layout/Footer';
-import ReviewsSection from '@/components/features/ReviewsSection';
 import ContactSection from '@/components/features/ContactSection';
 import { categories as defaultCategories } from '@/constants/menuMetadata';
 import type { MenuItem, MenuCategory } from '@/types/menu';
@@ -385,9 +384,6 @@ export default function MenuPage() {
         </AnimatePresence>
       </div>
 
-      <div id="reviews-section">
-        <ReviewsSection />
-      </div>
       <ContactSection />
       <Footer />
 
