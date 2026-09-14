@@ -1,5 +1,6 @@
 import { Plus } from 'lucide-react';
 import type { MenuItem } from '@/types/menu';
+import CategoryIcon from './CategoryIcon';
 
 interface Props {
   item: MenuItem;
@@ -21,14 +22,24 @@ export default function MenuCard({ item, onAdd }: Props) {
       dir="rtl"
       onClick={() => onAdd(item)}
     >
-      {/* Image */}
-      <div className="relative shrink-0 rounded-lg overflow-hidden w-20 h-20 bg-neutral-100 dark:bg-black/40 border border-neutral-200 dark:border-white/10">
-        <img
-          src={item.image}
-          alt={item.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          loading="lazy"
-        />
+      {/* Image or Category Fallback Icon */}
+      <div className="relative shrink-0 rounded-lg overflow-hidden w-20 h-20 bg-neutral-100 dark:bg-black/40 border border-neutral-200 dark:border-white/10 flex items-center justify-center">
+        {item.image ? (
+          <img
+            src={item.image}
+            alt={item.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-100 dark:bg-white/[0.03]">
+            <CategoryIcon
+              categoryId={item.category}
+              size={28}
+              className={item.isHot ? 'text-amber-500/80' : 'text-cyan-500/80'}
+            />
+          </div>
+        )}
         {badgeStyle && (
           <span
             className={`absolute bottom-1 right-1 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border ${badgeStyle.bg} ${badgeStyle.color} ${badgeStyle.border} backdrop-blur-sm`}
