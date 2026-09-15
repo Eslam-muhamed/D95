@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, X, Send, User, Sparkles, AlertCircle } from 'lucide-react';
+import { Bot, X, Send, User, Sparkles, AlertCircle, ShoppingCart } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/stores/cartStore';
 
 // We import items to pass as context
 import { getCachedCategories, getCachedProducts } from '@/services/menuService';
+import type { DBProduct } from '@/types/database';
 
 interface Message {
   id: string;
@@ -24,6 +25,7 @@ export default function SmartWaiterBot() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { addItem } = useCart();
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -47,7 +49,7 @@ export default function SmartWaiterBot() {
     return categories.map(cat => {
       const catProducts = products.filter(p => p.category_id === cat.id);
       if (catProducts.length === 0) return '';
-      return `\nقسم ${cat.name}:\n` + catProducts.map(p => `- ${p.name} بـ ${p.price} جنيه`).join('\n');
+      return `\nقسم ${cat.name}:\n` + catProducts.map(p => `- [ID: ${p.id}] ${p.name} بـ ${p.price} جنيه`).join('\n');
     }).join('\n');
   };
 
@@ -92,6 +94,72 @@ export default function SmartWaiterBot() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleAddToCart = (product: DBProduct) => {
+    addItem({
+      id: String(product.id),
+      name: product.name,
+      price: product.price,
+      image: product.image_url || '',
+      category: String(product.category_id),
+      customization: {
+        quantity: 1
+      }
+    });
+    // Add a small temporary confirmation message
+    setMessages(prev => [...prev, {
+      id: Date.now().toString(),
+      role: 'model',
+      text: `تم إضافة ${product.name} للسلة بنجاح! 🛒`
+    }]);
+  };
+
+  const renderMessageContent = (text: string) => {
+    const parts = text.split(/(\[ADD_TO_CART:\d+\])/g);
+    const products = getCachedProducts();
+
+    return (
+      <div className="flex flex-col gap-2">
+        {parts.map((part, index) => {
+          const match = part.match(/\[ADD_TO_CART:(\d+)\]/);
+          if (match) {
+            const productIdStr = match[1];
+            const product = products.find(p => String(p.id) === productIdStr);
+            
+            if (product) {
+              return (
+                <div key={index} className="mt-2 flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    {product.image_url ? (
+                      <img src={product.image_url} alt={product.name} className="w-10 h-10 rounded-lg object-cover" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                        <ShoppingCart className="w-5 h-5 text-red-600" />
+                      </div>
+                    )}
+                    <div className="flex flex-col">
+                      <span className="font-bold text-xs text-slate-900 dark:text-white">{product.name}</span>
+                      <span className="font-bold text-[10px] text-red-600">{product.price} ج.م</span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => handleAddToCart(product)}
+                    className="p-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+                    title="أضف للسلة"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            }
+            return null; // Don't render the raw tag if product not found
+          }
+          
+          return part ? <span key={index} className="whitespace-pre-wrap">{part}</span> : null;
+        })}
+      </div>
+    );
   };
 
   return (
@@ -163,12 +231,12 @@ export default function SmartWaiterBot() {
                     </div>
                   )}
                   
-                  <div className={`max-w-[75%] rounded-2xl p-3 text-sm leading-relaxed shadow-sm ${
+                  <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-3 text-sm leading-relaxed shadow-sm ${
                     msg.role === 'user' 
                       ? 'bg-red-600 text-white rounded-tl-none' 
                       : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-tr-none'
                   }`}>
-                    {msg.text}
+                    {renderMessageContent(msg.text)}
                   </div>
 
                   {msg.role === 'user' && (
