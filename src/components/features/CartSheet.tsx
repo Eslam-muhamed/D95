@@ -562,11 +562,11 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold" style={{ color: 'var(--c-on-card)', fontFamily: 'Cairo, sans-serif' }}>عدد الأشخاص</span>
                             <div className="flex items-center gap-3">
-                              <button onClick={() => setPeople(p => Math.max(2, p - 1))} className="flex items-center justify-center rounded-full cursor-pointer" style={{ width: 28, height: 28, background: 'rgba(139,26,42,0.2)' }}>
+                              <button aria-label="تقليل عدد الأشخاص" onClick={() => setPeople(p => Math.max(2, p - 1))} className="flex items-center justify-center rounded-full cursor-pointer" style={{ width: 28, height: 28, background: 'rgba(139,26,42,0.2)' }}>
                                 <Minus size={12} style={{ color: 'var(--c-on-card)' }} />
                               </button>
                               <span className="font-bold text-sm" style={{ color: 'var(--c-text-1)', fontFamily: '"Playfair Display", serif' }}>{people}</span>
-                              <button onClick={() => setPeople(p => Math.min(10, p + 1))} className="flex items-center justify-center rounded-full cursor-pointer" style={{ width: 28, height: 28, background: 'rgba(139,26,42,0.2)' }}>
+                              <button aria-label="زيادة عدد الأشخاص" onClick={() => setPeople(p => Math.min(10, p + 1))} className="flex items-center justify-center rounded-full cursor-pointer" style={{ width: 28, height: 28, background: 'rgba(139,26,42,0.2)' }}>
                                 <Plus size={12} style={{ color: 'var(--c-on-card)' }} />
                               </button>
                             </div>

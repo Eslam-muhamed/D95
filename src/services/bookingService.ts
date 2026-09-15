@@ -37,7 +37,7 @@ export async function fetchRoomOccupiedIntervals(
         return [];
     } catch (err) {
         console.error('Exception fetching room intervals:', err);
-        return [];
+        throw err;
     }
 }
 
@@ -160,7 +160,7 @@ export async function fetchPaginatedBookings(filter?: {
 
         if (error) {
             console.error('Error fetching paginated bookings:', error);
-            return { bookings: [], totalCount: 0, page, pageSize, totalPages: 1 };
+            throw error;
         }
 
         const totalCount = count || 0;
@@ -175,7 +175,7 @@ export async function fetchPaginatedBookings(filter?: {
         };
     } catch (err) {
         console.error('Exception in fetchPaginatedBookings:', err);
-        return { bookings: [], totalCount: 0, page, pageSize, totalPages: 1 };
+        throw err;
     }
 }
 
@@ -283,16 +283,7 @@ export async function fetchBookingMetrics(): Promise<{
         };
     } catch (err) {
         console.error('Error fetching booking metrics:', err);
-        return {
-            totalCount: 0,
-            pendingCount: 0,
-            confirmedCount: 0,
-            todayCount: 0,
-            totalRevenue: 0,
-            todayRevenue: 0,
-            recentPending: [],
-            pendingCountsByDate: {},
-        };
+        throw err;
     }
 }
 
@@ -344,7 +335,7 @@ export async function fetchBookingsForDate(dateStr: string): Promise<DBBooking[]
 
         if (error) {
             console.error('Error fetching bookings for date:', error);
-            return [];
+            throw error;
         }
 
         const list = (data || []) as DBBooking[];
@@ -355,7 +346,7 @@ export async function fetchBookingsForDate(dateStr: string): Promise<DBBooking[]
         });
     } catch (err) {
         console.error('Exception in fetchBookingsForDate:', err);
-        return [];
+        throw err;
     }
 }
 
@@ -393,12 +384,12 @@ export async function fetchRecentBookings(options?: {
         const { data, error } = await query;
         if (error) {
             console.error('Error fetching recent bookings:', error);
-            return [];
+            throw error;
         }
         return (data || []) as DBBooking[];
     } catch (err) {
         console.error('Exception in fetchRecentBookings:', err);
-        return [];
+        throw err;
     }
 }
 
