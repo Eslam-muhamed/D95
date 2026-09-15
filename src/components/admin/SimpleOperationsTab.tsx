@@ -897,19 +897,18 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
                             </div>
                         </div>
 
-                        {/* 2. Ongoing Gaming Now */}
+                        {/* 2. Total Revenues */}
                         <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs hover:border-emerald-200 transition-colors">
                             <div>
-                                <span className="text-xs text-emerald-700 font-bold flex items-center gap-1.5">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                    <span>شغال الآن بالصالة</span>
+                                <span className="text-xs text-emerald-700 font-bold block">
+                                    إجمالي الإيرادات
                                 </span>
                                 <span className="font-sans text-2xl sm:text-3xl font-black text-emerald-600 mt-1 block">
-                                    {ongoingBookings.length}
+                                    {generalStats.totalRevenue} <span className="text-xs font-normal opacity-75">ج.م</span>
                                 </span>
                             </div>
                             <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center">
-                                <Gamepad2 className="w-5 h-5" />
+                                <DollarSign className="w-5 h-5" />
                             </div>
                         </div>
 
@@ -1030,18 +1029,24 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
 
                                 {/* Room Filter Pills - Exactly 2 Rooms */}
                                 <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-0.5 text-xs">
-                                    {LOUNGE_ROOM_FILTERS.map((r) => (
-                                        <button
-                                            key={r.id}
-                                            type="button"
-                                            onClick={() => setTodayRoomFilter(r.id)}
-                                            className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                                                todayRoomFilter === r.id ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-                                            }`}
-                                        >
-                                            {r.label}
-                                        </button>
-                                    ))}
+                                    {LOUNGE_ROOM_FILTERS.map((r) => {
+                                        const isRoomOngoing = r.id !== 'all' && ongoingBookings.some(b => b.room_id === r.id);
+                                        return (
+                                            <button
+                                                key={r.id}
+                                                type="button"
+                                                onClick={() => setTodayRoomFilter(r.id)}
+                                                className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                                                    todayRoomFilter === r.id ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                                                }`}
+                                            >
+                                                {isRoomOngoing && (
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                                                )}
+                                                <span>{r.label}</span>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
 
                                 {/* Search */}
