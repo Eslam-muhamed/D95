@@ -19,7 +19,8 @@ type CartAction =
     | { type: 'CLEAR_CAFE' }
     | { type: 'SET_TAB'; tab: CartTab }
     | { type: 'OPEN'; tab?: CartTab }
-    | { type: 'CLOSE' };
+    | { type: 'CLOSE' }
+    | { type: 'VALIDATE_ITEMS'; liveProducts: import('@/types/menu').MenuItem[] };
 
 const STORAGE_KEY = 'd95_unified_cart';
 
@@ -111,6 +112,29 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         }
         case 'CLOSE':
             return { ...state, isOpen: false };
+        case 'VALIDATE_ITEMS': {
+            let hasChanges = false;
+            const validItems = state.items.map(cartItem => {
+                const liveProduct = action.liveProducts.find(p => p.id === cartItem.id);
+                if (!liveProduct) {
+                    hasChanges = true;
+                    return null; // Product deleted
+                }
+                if (cartItem.price !== liveProduct.price) {
+                    hasChanges = true;
+                    return { ...cartItem, price: liveProduct.price, name: liveProduct.name };
+                }
+                return cartItem;
+            }).filter(Boolean) as import('@/types/cart').CartItem[];
+
+            if (!hasChanges) return state;
+
+            return {
+                ...state,
+                items: validItems,
+                activeTab: validItems.length === 0 && state.booking ? 'playstation' : state.activeTab,
+            };
+        }
         default:
             return state;
     }
@@ -141,6 +165,7 @@ interface CartContextValue {
     setActiveTab: (tab: CartTab) => void;
     openCart: (tab?: CartTab) => void;
     closeCart: () => void;
+    validateItems: (liveProducts: import('@/types/menu').MenuItem[]) => void;
 }
 
 const CartContext = createContext<CartContextValue>({} as CartContextValue);
@@ -193,6 +218,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const setActiveTab = useCallback((tab: CartTab) => dispatch({ type: 'SET_TAB', tab }), []);
     const openCart = useCallback((tab?: CartTab) => dispatch({ type: 'OPEN', tab }), []);
     const closeCart = useCallback(() => dispatch({ type: 'CLOSE' }), []);
+    const validateItems = useCallback((liveProducts: import('@/types/menu').MenuItem[]) => {
+        dispatch({ type: 'VALIDATE_ITEMS', liveProducts });
+    }, []);
 
     const contextValue = useMemo<CartContextValue>(() => ({
         items: state.items,
@@ -219,6 +247,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setActiveTab,
         openCart,
         closeCart,
+        validateItems,
     }), [
         state.items,
         state.booking,
@@ -242,6 +271,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setActiveTab,
         openCart,
         closeCart,
+        validateItems,
     ]);
 
     return (

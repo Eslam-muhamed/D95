@@ -209,7 +209,6 @@ export default function BookingPaymentPage() {
             console.error('Failed to save booking to Supabase:', err);
             const msg = err instanceof Error ? err.message : 'عذراً، تعذر إتمام الحجز لوجود تعارض في الموعد أو مشكلة في الاتصال';
             toast.error(msg);
-            setSubmitting(false);
             return; // Abort on failure - do NOT navigate to success!
         } finally {
             setSubmitting(false);
@@ -454,6 +453,7 @@ export default function BookingPaymentPage() {
                                                     if (activeInstapayLink) {
                                                         window.open(activeInstapayLink, '_blank');
                                                     } else {
+                                                        toast.info('الرابط غير متوفر، جاري فتح التطبيق مباشرة...');
                                                         // Attempt deep link to InstaPay application
                                                         window.location.href = 'instapay://';
                                                     }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
     LayoutDashboard,
     Clock,
@@ -219,6 +219,11 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
         loadOperationsData();
     }, [loadOperationsData]);
 
+    const loadOperationsDataRef = useRef(loadOperationsData);
+    useEffect(() => {
+        loadOperationsDataRef.current = loadOperationsData;
+    }, [loadOperationsData]);
+
     // Realtime channel listener + periodic sync for incoming bookings
     useEffect(() => {
         const channel = supabase
@@ -235,21 +240,21 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
                         });
                         playPs5SelectSound();
                     }
-                    loadOperationsData(true);
+                    loadOperationsDataRef.current(true);
                 }
             )
             .subscribe();
 
         // 20-second background polling fallback
         const pollInterval = setInterval(() => {
-            loadOperationsData(true);
+            loadOperationsDataRef.current(true);
         }, 20000);
 
         return () => {
             supabase.removeChannel(channel);
             clearInterval(pollInterval);
         };
-    }, [loadOperationsData]);
+    }, []);
 
     // 2. Load Archive Data
     const loadArchiveData = useCallback(async (targetPage = archivePage) => {

@@ -170,6 +170,15 @@ function DrumWheelColumn<T extends string | number>({
         }
     }, [selectedIndex, itemHeight]);
 
+    // Clear timeout on unmount to prevent memory leaks
+    useEffect(() => {
+        return () => {
+            if (scrollTimeoutRef.current) {
+                clearTimeout(scrollTimeoutRef.current);
+            }
+        };
+    }, []);
+
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         isUserScrollingRef.current = true;
         if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);

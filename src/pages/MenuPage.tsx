@@ -14,6 +14,7 @@ import { fetchCategories, fetchProducts, fetchOffers, getCachedCategories, getCa
 import type { DBOffer } from '@/types/database';
 import { playPaperFlipSound } from '@/lib/sound';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';
+import { useCart } from '@/stores/cartStore';
 
 function ScrollToTop() {
   const [visible, setVisible] = useState(false);
@@ -44,6 +45,7 @@ export default function MenuPage() {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const { validateItems } = useCart();
 
   // Synchronous cache initialization for instant 0ms rendering
   const [categories, setCategories] = useState<MenuCategory[]>(() => {
@@ -104,7 +106,7 @@ export default function MenuPage() {
         })));
       }
       if (prods) {
-        setAllItems(prods.filter(p => p.is_available).map(p => ({
+        const formattedProds = prods.filter(p => p.is_available).map(p => ({
           id: p.slug || p.id,
           name: p.name,
           description: p.description || '',
@@ -112,11 +114,13 @@ export default function MenuPage() {
           currency: p.currency || 'ج.م',
           category: p.category_id || '',
           image: p.image_url || '',
-          badge: (p.badge as MenuItem['badge']) || undefined,
+          badge: (p.badge as import('@/types/menu').MenuItem['badge']) || undefined,
           tags: p.tags || [],
           isHot: p.is_hot,
           isCold: p.is_cold
-        })));
+        }));
+        setAllItems(formattedProds);
+        validateItems(formattedProds);
       }
       if (offs && offs.length > 0) {
         setLiveOffers(offs);
