@@ -10,7 +10,7 @@ interface SplashScreenProps {
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
     const [visible, setVisible] = useState(() => {
         try {
-            return !sessionStorage.getItem('d95_splash_shown');
+            return !sessionStorage.getItem('d95_grand_opening_splash');
         } catch {
             return true;
         }
@@ -28,7 +28,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         setIsOpening(true);
         playGrandOpeningSound();
         try {
-            sessionStorage.setItem('d95_splash_shown', '1');
+            sessionStorage.setItem('d95_grand_opening_splash', '1');
         } catch {
             // ignore
         }
