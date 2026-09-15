@@ -18,25 +18,37 @@ export default function AdminProtectedRoute({ children }: Props) {
     useEffect(() => {
         let mounted = true;
 
-        const checkAuth = async () => {
-            try {
-                const { data: { session }, error } = await supabase.auth.getSession();
-                if (error) {
-                    console.warn('Auth session error:', error.message);
-                }
+        const loadAuthAndRole = async (session: any) => {
+            if (!session?.user?.email) {
                 if (mounted) {
-                    const email = session?.user?.email;
-                    if (email) {
-                        const role = await getCurrentUserRole(email);
-                        setRoleCache(role);
-                    } else {
-                        setRoleCache(null);
-                    }
-                    setIsAuthenticated(isStaff());
+                    setRoleCache(null);
+                    setIsAuthenticated(false);
+                    setLoading(false);
+                }
+                return;
+            }
+
+            try {
+                const role = await getCurrentUserRole(session.user.email);
+                if (mounted) {
+                    setRoleCache(role);
+                    setIsAuthenticated(role !== null);
                     setLoading(false);
                 }
             } catch (err) {
-                console.error('Session check failed:', err);
+                if (mounted) {
+                    setRoleCache(null);
+                    setIsAuthenticated(false);
+                    setLoading(false);
+                }
+            }
+        };
+
+        const initializeAuth = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                await loadAuthAndRole(session);
+            } catch (err) {
                 if (mounted) {
                     setIsAuthenticated(false);
                     setLoading(false);
@@ -44,19 +56,23 @@ export default function AdminProtectedRoute({ children }: Props) {
             }
         };
 
-        checkAuth();
+        initializeAuth();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            if (mounted) {
-                const email = session?.user?.email;
-                if (email) {
-                    const role = await getCurrentUserRole(email);
-                    setRoleCache(role);
-                } else {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'INITIAL_SESSION') return; // Handled by initializeAuth
+            
+            if (event === 'SIGNED_OUT') {
+                if (mounted) {
                     setRoleCache(null);
+                    setIsAuthenticated(false);
+                    setLoading(false);
                 }
-                setIsAuthenticated(isStaff());
-                setLoading(false);
+                return;
+            }
+
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+                // When auth state changes to a valid session, reload role
+                await loadAuthAndRole(session);
             }
         });
 
