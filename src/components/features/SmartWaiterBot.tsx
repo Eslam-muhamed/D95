@@ -20,7 +20,7 @@ export default function SmartWaiterBot() {
     {
       id: 'welcome',
       role: 'model',
-      text: 'أهلاً بك في D95 🎮☕! أنا النادل الذكي، إزاي أقدر أساعدك وأرشحلك من المنيو النهارده؟'
+      text: 'أهلاً بك في D95 ☕🎮! أنا دبور، إزاي أقدر أساعدك وأرشحلك من المنيو النهارده؟'
     }
   ]);
   const [input, setInput] = useState('');
@@ -167,19 +167,24 @@ export default function SmartWaiterBot() {
       {/* Floating Action Button */}
       <AnimatePresence>
         {!isOpen && (
-          <motion.button
+          <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            onClick={() => setIsOpen(true)}
-            className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40 bg-red-600 hover:bg-red-700 text-white p-3 sm:p-4 rounded-full shadow-2xl shadow-red-600/40 cursor-pointer flex items-center gap-2 group transition-all duration-300"
-            aria-label="النادل الذكي"
+            className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40"
           >
-            <Bot className="w-6 h-6 animate-pulse" />
-            <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-in-out whitespace-nowrap font-bold text-sm">
-              النادل الذكي
-            </span>
-          </motion.button>
+            <motion.button
+              onClick={() => setIsOpen(true)}
+              className="relative w-14 h-14 bg-red-600 rounded-full flex items-center justify-center shadow-2xl hover:bg-red-700 transition-colors overflow-hidden border-2 border-red-500"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              aria-label="اسأل دبور"
+            >
+              <img src="/dabour.png" alt="دبور" className="w-full h-full object-cover" />
+              {/* Online Indicator */}
+              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>
+            </motion.button>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -195,18 +200,16 @@ export default function SmartWaiterBot() {
             {/* Header */}
             <div className="bg-red-600 text-white p-4 flex items-center justify-between shrink-0 shadow-md z-10">
               <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                    <Bot className="w-6 h-6 text-white" />
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center overflow-hidden border-2 border-white/20">
+                    <img src="/dabour.png" alt="دبور" className="w-full h-full object-cover" />
                   </div>
-                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-red-600 rounded-full"></span>
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm flex items-center gap-1.5">
-                    النادل الذكي
-                    <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-                  </h3>
-                  <p className="text-[10px] text-white/80">يجيب على استفساراتك من المنيو</p>
+                  <div>
+                    <h3 className="font-bold text-lg flex items-center gap-2">
+                      اسأل دبور <Sparkles className="w-4 h-4 text-yellow-300" />
+                    </h3>
+                    <p className="text-red-100 text-xs">يجيب على استفساراتك من المنيو</p>
+                  </div>
                 </div>
               </div>
               <button 
@@ -223,11 +226,11 @@ export default function SmartWaiterBot() {
               {messages.map((msg) => (
                 <div 
                   key={msg.id} 
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} gap-2`}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-4 items-end gap-2`}
                 >
                   {msg.role === 'model' && (
-                    <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
-                      <Bot className="w-4 h-4 text-red-600" />
+                    <div className="w-8 h-8 bg-red-900/50 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      <img src="/dabour.png" alt="دبور" className="w-full h-full object-cover" />
                     </div>
                   )}
                   
