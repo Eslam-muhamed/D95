@@ -55,6 +55,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                         transition={{ duration: 1.2, ease: [0.25, 1, 0.5, 1] }}
                         className="absolute top-0 left-0 bottom-0 w-[55%] z-20 origin-left"
                         style={{
+                            willChange: 'transform',
                             background: 'linear-gradient(90deg, #2a0000 0%, #600000 15%, #3a0000 30%, #700000 45%, #400000 60%, #800000 75%, #4a0000 90%, #900000 100%)',
                             boxShadow: 'inset -30px 0 60px rgba(0,0,0,0.9), 20px 0 40px rgba(0,0,0,0.9)',
                             borderRight: '3px solid rgba(255,100,100,0.2)',
@@ -73,6 +74,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                         transition={{ duration: 1.2, ease: [0.25, 1, 0.5, 1] }}
                         className="absolute top-0 right-0 bottom-0 w-[55%] z-20 origin-right"
                         style={{
+                            willChange: 'transform',
                             background: 'linear-gradient(-90deg, #2a0000 0%, #600000 15%, #3a0000 30%, #700000 45%, #400000 60%, #800000 75%, #4a0000 90%, #900000 100%)',
                             boxShadow: 'inset 30px 0 60px rgba(0,0,0,0.9), -20px 0 40px rgba(0,0,0,0.9)',
                             borderLeft: '3px solid rgba(255,100,100,0.2)',
@@ -92,7 +94,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                     >
                         {/* Top Indicators */}
                         <div className="flex items-center justify-between w-full max-w-md px-4 pt-safe" dir="rtl">
-                            <div className="flex items-center gap-1.5 px-3 py-1 bg-black/40 border border-white/10 rounded-full backdrop-blur-md">
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-black/60 border border-white/10 rounded-full">
                                 <span className="text-amber-400">☀️</span>
                                 <span className="text-[10px] text-neutral-300 font-bold">نهاري</span>
                             </div>
@@ -104,17 +106,17 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                         </div>
 
                         {/* Portal Badge */}
-                        <div className="mt-4 flex items-center gap-2 bg-black/40 border border-emerald-500/30 px-5 py-1.5 rounded-full backdrop-blur-md shadow-[0_0_15px_rgba(16,185,129,0.15)]" dir="rtl">
+                        <div className="mt-4 flex items-center gap-2 bg-black/60 border border-emerald-500/30 px-5 py-1.5 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.15)]" dir="rtl">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                             <span className="text-[10px] sm:text-xs font-bold text-emerald-400">مفتوح الآن • OFFICIAL PORTAL</span>
                         </div>
 
                         {/* Logo & Main Title */}
                         <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm relative mt-8">
-                            {/* Glowing backdrop for logo */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-red-600/20 blur-3xl rounded-full" />
+                            {/* Glowing backdrop for logo (Optimized for mobile without blur filter) */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-[radial-gradient(circle_at_center,rgba(220,38,38,0.25)_0%,transparent_70%)] rounded-full pointer-events-none" />
                             
-                            <img src="/new-logo.png" alt="D95" className="w-64 sm:w-80 object-contain drop-shadow-[0_0_40px_rgba(220,38,38,0.6)] z-10" />
+                            <img src="/new-logo.png" alt="D95" className="w-64 sm:w-80 object-contain z-10" />
                             
                             <div className="mt-4 flex items-center gap-4 text-[10px] sm:text-xs font-bold text-neutral-400 tracking-[0.3em] font-bebas z-10">
                                 <span className="w-8 h-px bg-red-600/50" />
@@ -126,7 +128,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                                 <h1 className="font-bebas text-2xl sm:text-3xl font-bold tracking-[0.4em] text-neutral-300 mb-2">
                                     GRAND OPENING
                                 </h1>
-                                <h2 className="font-brush text-5xl sm:text-6xl text-red-600 drop-shadow-[0_0_20px_rgba(220,38,38,0.8)] transform -rotate-2">
+                                <h2 
+                                    className="font-brush text-5xl sm:text-6xl text-red-600 transform -rotate-2"
+                                    style={{ textShadow: '0 0 15px rgba(220,38,38,0.8)' }}
+                                >
                                     WELCOME
                                 </h2>
                             </div>
