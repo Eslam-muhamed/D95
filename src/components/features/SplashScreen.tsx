@@ -8,8 +8,6 @@ interface SplashScreenProps {
 }
 
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
-    const [visible, setVisible] = useState(true);
-    /*
     const [visible, setVisible] = useState(() => {
         try {
             return !sessionStorage.getItem('d95_splash_shown');
@@ -17,7 +15,6 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             return true;
         }
     });
-    */
     
     const [isOpening, setIsOpening] = useState(false);
 
@@ -30,13 +27,11 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     const handleEnter = () => {
         setIsOpening(true);
         playGrandOpeningSound();
-        /*
         try {
             sessionStorage.setItem('d95_splash_shown', '1');
         } catch {
             // ignore
         }
-        */
 
         // Wait for curtain animation to finish, then unmount
         setTimeout(() => {
