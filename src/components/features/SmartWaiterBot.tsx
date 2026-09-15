@@ -145,10 +145,11 @@ export default function SmartWaiterBot() {
                   </div>
                   <button 
                     onClick={() => handleAddToCart(product)}
-                    className="p-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+                    className="p-2 sm:p-2.5 rounded-xl bg-red-600 text-white hover:bg-red-700 hover:scale-105 active:scale-95 transition-all shadow-md flex items-center gap-2"
                     title="أضف للسلة"
                   >
-                    <ShoppingCart className="w-4 h-4" />
+                    <span className="text-xs font-bold hidden sm:inline-block">أضف</span>
+                    <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 </div>
               );
@@ -171,18 +172,30 @@ export default function SmartWaiterBot() {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40"
+            className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-3"
           >
+            {/* Thought Bubble */}
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1, duration: 0.5 }}
+              className="relative hidden sm:flex bg-white text-slate-800 px-4 py-2 rounded-2xl shadow-lg border border-slate-100 font-bold text-sm"
+            >
+              اسأل دبور 🐝
+              {/* Bubble Arrow */}
+              <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-4 h-4 bg-white border-r border-b border-slate-100 transform -rotate-45"></div>
+            </motion.div>
+
             <motion.button
               onClick={() => setIsOpen(true)}
-              className="relative w-14 h-14 bg-red-600 rounded-full flex items-center justify-center shadow-2xl hover:bg-red-700 transition-colors overflow-hidden border-2 border-red-500"
+              className="relative w-16 h-16 sm:w-20 sm:h-20 bg-red-600 rounded-full flex items-center justify-center shadow-2xl hover:bg-red-700 transition-colors overflow-hidden border-4 border-red-500 hover:scale-105 active:scale-95"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               aria-label="اسأل دبور"
             >
               <img src="/dabour.png" alt="دبور" className="w-full h-full object-cover" />
               {/* Online Indicator */}
-              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>
+              <span className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
             </motion.button>
           </motion.div>
         )}
