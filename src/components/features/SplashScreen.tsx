@@ -91,12 +91,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                         className="relative z-30 flex flex-col items-center justify-between h-full w-full py-12 px-4"
                     >
                         {/* Top Indicators */}
-                        <div className="flex items-center justify-between w-full max-w-md px-4 pt-safe" dir="rtl">
-                            <div className="flex items-center gap-1.5 px-3 py-1 bg-black/40 border border-white/10 rounded-full backdrop-blur-md">
-                                <span className="text-amber-400">☀️</span>
-                                <span className="text-[10px] text-neutral-300 font-bold">نهاري</span>
-                            </div>
-                            
+                        <div className="flex items-center justify-end w-full max-w-md px-4 pt-safe" dir="rtl">
                             <div className="flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
                                 <span className="text-[10px] font-bold text-neutral-400 tracking-wider">D95 GATEWAY</span>
