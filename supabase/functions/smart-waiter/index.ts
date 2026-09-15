@@ -74,8 +74,8 @@ ${menuContext || 'لا توجد بيانات متاحة للمنيو حاليا�
         },
         contents: formattedHistory,
         generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 256,
+          temperature: 0.8,
+          maxOutputTokens: 1024,
         },
       }),
     });
