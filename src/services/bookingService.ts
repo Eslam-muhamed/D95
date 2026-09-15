@@ -65,6 +65,9 @@ export async function createBooking(booking: Omit<DBBooking, 'id' | 'created_at'
             if (error.message.includes('الحد الأدنى') || error.message.includes('ساعة واحدة')) {
                 throw new Error('الحد الأدنى للحجز هو ساعة واحدة.');
             }
+            if (error.message.includes('منتج غير صالح')) {
+                throw new Error('أحد المنتجات المختارة غير صالح أو تم تغييره.');
+            }
             if (error.message.includes('مضى')) {
                 throw new Error('لا يمكن حجز موعد في الماضي.');
             }
@@ -82,7 +85,9 @@ export async function createBooking(booking: Omit<DBBooking, 'id' | 'created_at'
             errMsg.includes('تم حجزه') || 
             errMsg.includes('تعارض') || 
             errMsg.includes('الحد الأدنى') ||
-            errMsg.includes('الماضي')
+            errMsg.includes('الماضي') ||
+            errMsg.includes('منتج غير صالح') ||
+            errMsg.includes('أحد المنتجات')
         ) {
             throw rpcErr;
         }
