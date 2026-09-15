@@ -15,6 +15,7 @@ import type { DBOffer } from '@/types/database';
 import { playPaperFlipSound } from '@/lib/sound';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';
 import { useCart } from '@/stores/cartStore';
+import SmartWaiterBot from '@/components/features/SmartWaiterBot';
 
 function ScrollToTop() {
   const [visible, setVisible] = useState(false);
@@ -427,8 +428,10 @@ export default function MenuPage() {
 
       <Footer />
 
-      {/* Scroll to Top */}
+      {/* Floating Action Buttons */}
       <ScrollToTop />
+      <SmartWaiterBot />
+
       {/* ── Modals ── */}
       <ItemCustomizerModal
         item={selectedItem}
