@@ -174,18 +174,6 @@ export default function SmartWaiterBot() {
             exit={{ scale: 0, opacity: 0 }}
             className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-3"
           >
-            {/* Thought Bubble */}
-            <motion.div 
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 1, duration: 0.5 }}
-              className="relative flex bg-white text-slate-800 px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl shadow-lg border border-slate-100 font-bold text-xs sm:text-sm whitespace-nowrap"
-            >
-              اسأل دبور 🐝
-              {/* Bubble Arrow */}
-              <div className="absolute top-1/2 -right-1.5 sm:-right-2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 bg-white border-r border-b border-slate-100 transform -rotate-45"></div>
-            </motion.div>
-
             <motion.button
               onClick={() => setIsOpen(true)}
               className="relative w-16 h-16 sm:w-20 sm:h-20 bg-red-600 rounded-full flex items-center justify-center shadow-2xl hover:bg-red-700 transition-colors overflow-hidden border-4 border-red-500 hover:scale-105 active:scale-95"
@@ -197,6 +185,18 @@ export default function SmartWaiterBot() {
               {/* Online Indicator */}
               <span className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
             </motion.button>
+            
+            {/* Thought Bubble */}
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1, duration: 0.5 }}
+              className="relative flex bg-white text-slate-800 px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl shadow-lg border border-slate-100 font-bold text-xs sm:text-sm whitespace-nowrap"
+            >
+              اسأل دبور 🐝
+              {/* Bubble Arrow */}
+              <div className="absolute top-1/2 -right-1.5 sm:-right-2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 bg-white border-r border-t border-slate-100 transform rotate-45"></div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
