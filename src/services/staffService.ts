@@ -1,8 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export interface StaffUser {
     email: string;
@@ -28,40 +24,7 @@ export async function fetchStaffUsers(): Promise<StaffUser[]> {
     }
 }
 
-export async function addStaffUser(email: string, role: 'admin' | 'cashier', password?: string): Promise<boolean> {
-    const cleanEmail = email.trim().toLowerCase();
-    
-    // Create Auth user first using a non-persisted client so it doesn't log the current admin out
-    if (password) {
-        const tempSupabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-                persistSession: false,
-                autoRefreshToken: false,
-                detectSessionInUrl: false
-            }
-        });
-        
-        const { error: signUpError } = await tempSupabase.auth.signUp({
-            email: cleanEmail,
-            password: password
-        });
-        
-        if (signUpError && signUpError.message !== 'User already registered') {
-            console.error('Error creating Auth user:', signUpError);
-            throw new Error(`فشل إنشاء الحساب: ${signUpError.message}`);
-        }
-    }
 
-    const { error } = await supabase
-        .from('staff_users')
-        .upsert({ email: cleanEmail, role });
-
-    if (error) {
-        console.error('Error adding staff user:', error);
-        throw error;
-    }
-    return true;
-}
 
 export async function removeStaffUser(email: string): Promise<boolean> {
     const { error } = await supabase
