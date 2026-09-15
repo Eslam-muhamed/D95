@@ -141,8 +141,10 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
 
     // Filters for Section 1: Today's Confirmed Schedule
     const [todayRoomFilter, setTodayRoomFilter] = useState<string>('all');
-    const [todayStatusFilter, setTodayStatusFilter] = useState<'all' | 'confirmed' | 'ongoing'>('confirmed');
+    const [todayStatusFilter, setTodayStatusFilter] = useState<'all' | 'confirmed' | 'ongoing' | 'cancelled'>('confirmed');
     const [todaySearch, setTodaySearch] = useState<string>('');
+    const [todayDateFilter, setTodayDateFilter] = useState<string>(todayStr);
+    const [isTodayCalendarOpen, setIsTodayCalendarOpen] = useState<boolean>(false);
 
     // Filters for Section 2: Incoming Pending Bookings with Calendar
     const [recentDateFilter, setRecentDateFilter] = useState<string>(''); // empty = all upcoming dates
@@ -186,7 +188,7 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
         try {
             const [metrics, dayData, recentData, rates, pol] = await Promise.all([
                 fetchBookingMetrics(),
-                fetchBookingsForDate(todayStr), // ALWAYS strictly for today!
+                fetchBookingsForDate(todayDateFilter), 
                 fetchRecentBookings({ date: recentDateFilter || undefined, limit: 50 }),
                 fetchRoomRates(),
                 fetchBookingPolicy(),
@@ -213,7 +215,7 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
         } finally {
             if (!isSilent) setLoading(false);
         }
-    }, [todayStr, recentDateFilter]);
+    }, [todayStr, recentDateFilter, todayDateFilter]);
 
     useEffect(() => {
         loadOperationsData();
@@ -658,6 +660,7 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
     // Status counts for today
     const todayStatusCounts = useMemo(() => {
         const confirmed = todayBookings.filter(b => b.status === 'confirmed').length;
+        const cancelled = todayBookings.filter(b => b.status === 'cancelled').length;
         const nowMs = Date.now();
         const ongoing = todayBookings.filter(b => {
             if (b.status !== 'confirmed') return false;
@@ -667,6 +670,7 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
         return {
             confirmed,
             ongoing,
+            cancelled,
             all: todayBookings.length,
         };
     }, [todayBookings]);
@@ -684,6 +688,8 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
                 if (b.status !== 'confirmed') return false;
             } else if (todayStatusFilter === 'ongoing') {
                 if (!isOngoing) return false;
+            } else if (todayStatusFilter === 'cancelled') {
+                if (b.status !== 'cancelled') return false;
             }
 
             if (todaySearch.trim()) {
@@ -958,9 +964,6 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
                                         <h3 className="text-sm sm:text-base font-bold text-slate-900">
                                             جدول مواعيد وتشغيل اليوم (المؤكدة)
                                         </h3>
-                                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                                            {formattedTodayTitle}
-                                        </span>
                                         <span className="text-xs font-mono font-bold text-slate-500">
                                             ({filteredTodayBookings.length} موعد)
                                         </span>
@@ -1025,7 +1028,75 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
                                             </span>
                                         </button>
                                     )}
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setTodayStatusFilter('cancelled')}
+                                        className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                            todayStatusFilter === 'cancelled'
+                                                ? 'bg-rose-600 text-white shadow-xs'
+                                                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                                        }`}
+                                    >
+                                        <span>الملغي</span>
+                                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                                            todayStatusFilter === 'cancelled' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
+                                        }`}>
+                                            {todayStatusCounts.cancelled}
+                                        </span>
+                                    </button>
                                 </div>
+
+                                {/* Calendar Popover */}
+                                <div className="relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsTodayCalendarOpen(prev => !prev);
+                                            playPs5NavigateSound();
+                                        }}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs group ${
+                                            todayDateFilter !== todayStr
+                                                ? 'bg-red-50 text-red-700 border-red-200'
+                                                : 'bg-slate-100 hover:bg-white text-slate-700 border-slate-200'
+                                        }`}
+                                        title="اختيار تاريخ عرض جدول التشغيل"
+                                    >
+                                        <Calendar className="w-4 h-4 text-red-600 group-hover:scale-110 transition-transform" />
+                                        
+                                        <span>{formattedTodayTitle}</span>
+
+                                        {todayDateFilter !== todayStr && (
+                                            <span className="text-[10px] font-medium bg-red-600 text-white px-1.5 py-0.2 rounded-md">
+                                                مفلتر
+                                            </span>
+                                        )}
+
+                                        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isTodayCalendarOpen ? 'rotate-180 text-red-600' : ''}`} />
+                                    </button>
+
+                                    <AdminCalendarPopover
+                                        isOpen={isTodayCalendarOpen}
+                                        onClose={() => setIsTodayCalendarOpen(false)}
+                                        selectedDate={todayDateFilter}
+                                        onSelectDate={(newDate) => {
+                                            setTodayDateFilter(newDate);
+                                            setIsTodayCalendarOpen(false);
+                                        }}
+                                        pendingCountsByDate={{}}
+                                    />
+                                </div>
+
+                                {todayDateFilter !== todayStr && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setTodayDateFilter(todayStr)}
+                                        className="px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-colors cursor-pointer"
+                                        title="العودة لليوم"
+                                    >
+                                        اليوم ✕
+                                    </button>
+                                )}
 
                                 {/* Room Filter Pills - Exactly 2 Rooms */}
                                 <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-xl p-0.5 text-xs">
