@@ -16,6 +16,7 @@ import PaymentSettingsTab from '@/components/admin/PaymentSettingsTab';
 import VenueStatusControl from '@/components/admin/VenueStatusControl';
 import { supabase } from '@/lib/supabase';
 import { playPs5NavigateSound } from '@/lib/sound';
+import { isCashier as checkIsCashier, isStaff } from '@/lib/authRoles';
 
 type TabType = 'operations' | 'orders' | 'menu_settings' | 'payment_settings';
 
@@ -23,14 +24,14 @@ export default function AdminDashboardPage() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<TabType>('operations');
     const [pendingOrdersCount, setPendingOrdersCount] = useState<number>(0);
-    const [userEmail, setUserEmail] = useState<string>('admin@d95.com');
-    const isCashier = userEmail === 'cashier@d95.com';
+    const [userEmail, setUserEmail] = useState<string>('');
+    const isCashier = checkIsCashier(userEmail);
 
     // Auth verification: ensure active Supabase session with admin or cashier credentials
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
             const email = session?.user?.email;
-            if (!session?.user || (email !== 'admin@d95.com' && email !== 'cashier@d95.com')) {
+            if (!session?.user || !isStaff(email)) {
                 navigate('/admin/login');
             } else if (email) {
                 setUserEmail(email);

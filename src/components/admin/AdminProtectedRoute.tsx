@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { isStaff } from '@/lib/authRoles';
 import { Gamepad2 } from 'lucide-react';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
@@ -24,8 +25,7 @@ export default function AdminProtectedRoute({ children }: Props) {
                 }
                 if (mounted) {
                     const email = session?.user?.email;
-                    const isStaff = !!session?.user && (email === 'admin@d95.com' || email === 'cashier@d95.com');
-                    setIsAuthenticated(isStaff);
+                    setIsAuthenticated(isStaff(email));
                     setLoading(false);
                 }
             } catch (err) {
@@ -42,8 +42,7 @@ export default function AdminProtectedRoute({ children }: Props) {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             if (mounted) {
                 const email = session?.user?.email;
-                const isStaff = !!session?.user && (email === 'admin@d95.com' || email === 'cashier@d95.com');
-                setIsAuthenticated(isStaff);
+                setIsAuthenticated(isStaff(email));
                 setLoading(false);
             }
         });
