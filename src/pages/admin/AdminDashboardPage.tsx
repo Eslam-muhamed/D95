@@ -5,6 +5,7 @@ import {
     UtensilsCrossed,
     ShoppingBag,
     Wallet,
+    Users,
     ExternalLink,
     LogOut,
 } from 'lucide-react';
@@ -13,35 +14,33 @@ import SimpleOperationsTab from '@/components/admin/SimpleOperationsTab';
 import OrdersTab from '@/components/admin/OrdersTab';
 import SimpleMenuSettingsTab from '@/components/admin/SimpleMenuSettingsTab';
 import PaymentSettingsTab from '@/components/admin/PaymentSettingsTab';
+import StaffSettingsTab from '@/components/admin/StaffSettingsTab';
 import VenueStatusControl from '@/components/admin/VenueStatusControl';
 import { supabase } from '@/lib/supabase';
 import { playPs5NavigateSound } from '@/lib/sound';
 import { isCashier as checkIsCashier, isStaff } from '@/lib/authRoles';
 
-type TabType = 'operations' | 'orders' | 'menu_settings' | 'payment_settings';
+type TabType = 'operations' | 'orders' | 'menu_settings' | 'payment_settings' | 'staff_settings';
 
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<TabType>('operations');
     const [pendingOrdersCount, setPendingOrdersCount] = useState<number>(0);
     const [userEmail, setUserEmail] = useState<string>('');
-    const isCashier = checkIsCashier(userEmail);
+    const isCashier = checkIsCashier();
 
-    // Auth verification: ensure active Supabase session with admin or cashier credentials
+    // The user's role is already guaranteed and cached by AdminProtectedRoute
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
-            const email = session?.user?.email;
-            if (!session?.user || !isStaff(email)) {
-                navigate('/admin/login');
-            } else if (email) {
-                setUserEmail(email);
+            if (session?.user?.email) {
+                setUserEmail(session.user.email);
             }
         });
-    }, [navigate]);
+    }, []);
 
     // Ensure cashier cannot remain on admin-only tabs
     useEffect(() => {
-        if (isCashier && (activeTab === 'menu_settings' || activeTab === 'payment_settings')) {
+        if (isCashier && (activeTab === 'menu_settings' || activeTab === 'payment_settings' || activeTab === 'staff_settings')) {
             setActiveTab('operations');
         }
     }, [isCashier, activeTab]);
@@ -96,6 +95,12 @@ export default function AdminDashboardPage() {
             id: 'payment_settings',
             label: 'إعدادات الدفع والمحافظ',
             icon: <Wallet className="w-4 h-4" />,
+            adminOnly: true,
+        },
+        {
+            id: 'staff_settings',
+            label: 'إدارة الصلاحيات والموظفين',
+            icon: <Users className="w-4 h-4" />,
             adminOnly: true,
         },
     ];
@@ -221,8 +226,9 @@ export default function AdminDashboardPage() {
             <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 lg:p-6 pb-24 sm:pb-8">
                 {activeTab === 'operations' && <SimpleOperationsTab userEmail={userEmail} isCashier={isCashier} />}
                 {activeTab === 'orders' && <OrdersTab />}
-                {activeTab === 'menu_settings' && <SimpleMenuSettingsTab />}
-                {activeTab === 'payment_settings' && <PaymentSettingsTab />}
+                {activeTab === 'menu_settings' && !isCashier && <SimpleMenuSettingsTab />}
+                {activeTab === 'payment_settings' && !isCashier && <PaymentSettingsTab />}
+                {activeTab === 'staff_settings' && !isCashier && <StaffSettingsTab />}
             </main>
 
             {/* Mobile Bottom Navigation Bar */}

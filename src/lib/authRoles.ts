@@ -1,23 +1,21 @@
-export const ADMIN_EMAILS = (
-    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ADMIN_EMAILS) || 
-    'admin@d95.com'
-).split(',').map((e: string) => e.trim().toLowerCase());
+// Roles are now dynamically fetched from the database
+let cachedRole: 'admin' | 'cashier' | null = null;
 
-export const CASHIER_EMAILS = (
-    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_CASHIER_EMAILS) || 
-    'cashier@d95.com'
-).split(',').map((e: string) => e.trim().toLowerCase());
-
-export const isAdmin = (email?: string | null) => {
-    if (!email) return false;
-    return ADMIN_EMAILS.includes(email.toLowerCase());
+export const setRoleCache = (role: 'admin' | 'cashier' | null) => {
+    cachedRole = role;
 };
 
-export const isCashier = (email?: string | null) => {
-    if (!email) return false;
-    return CASHIER_EMAILS.includes(email.toLowerCase());
+export const getRoleCache = () => cachedRole;
+
+export const isAdmin = () => {
+    return cachedRole === 'admin';
 };
 
-export const isStaff = (email?: string | null) => {
-    return isAdmin(email) || isCashier(email);
+export const isCashier = () => {
+    return cachedRole === 'cashier';
 };
+
+export const isStaff = () => {
+    return cachedRole !== null;
+};
+

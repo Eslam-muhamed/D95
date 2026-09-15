@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { isStaff } from '@/lib/authRoles';
+import { isStaff, setRoleCache } from '@/lib/authRoles';
+import { getCurrentUserRole } from '@/services/staffService';
 import { Gamepad2 } from 'lucide-react';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
@@ -25,7 +26,13 @@ export default function AdminProtectedRoute({ children }: Props) {
                 }
                 if (mounted) {
                     const email = session?.user?.email;
-                    setIsAuthenticated(isStaff(email));
+                    if (email) {
+                        const role = await getCurrentUserRole(email);
+                        setRoleCache(role);
+                    } else {
+                        setRoleCache(null);
+                    }
+                    setIsAuthenticated(isStaff());
                     setLoading(false);
                 }
             } catch (err) {
@@ -39,10 +46,16 @@ export default function AdminProtectedRoute({ children }: Props) {
 
         checkAuth();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             if (mounted) {
                 const email = session?.user?.email;
-                setIsAuthenticated(isStaff(email));
+                if (email) {
+                    const role = await getCurrentUserRole(email);
+                    setRoleCache(role);
+                } else {
+                    setRoleCache(null);
+                }
+                setIsAuthenticated(isStaff());
                 setLoading(false);
             }
         });
