@@ -333,8 +333,12 @@ BEGIN
         WHERE id::text = v_snack_item.id OR slug = v_snack_item.id
         LIMIT 1;
       END IF;
+
+      IF v_db_price IS NULL THEN
+        RAISE EXCEPTION 'منتج غير صالح' USING ERRCODE = '22023';
+      END IF;
       
-      v_snacks_total := v_snacks_total + (COALESCE(v_db_price, GREATEST(0.00, v_snack_item.declared_price)) * v_snack_item.quantity);
+      v_snacks_total := v_snacks_total + (v_db_price * v_snack_item.quantity);
     END LOOP;
   END IF;
 
@@ -465,9 +469,9 @@ BEGIN
       END IF;
     END IF;
 
-    -- Fallback to declared price only if product was not found in DB (e.g. legacy item)
+    -- Reject invalid products strictly
     IF v_unit_price IS NULL THEN
-      v_unit_price := GREATEST(0.00, COALESCE((v_item.value->>'price')::NUMERIC, 0.00));
+      RAISE EXCEPTION 'منتج غير صالح' USING ERRCODE = '22023';
     END IF;
 
     v_unit_price := v_unit_price + v_extra_price;
@@ -1352,7 +1356,9 @@ CREATE POLICY "Allow admin write products" ON "public"."products" TO "authentica
 
 
 
-CREATE POLICY "Allow authenticated read staff_users" ON "public"."staff_users" FOR SELECT TO "authenticated" USING (true);
+CREATE POLICY "Allow authenticated read staff_users" ON "public"."staff_users" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."staff_users" su
+  WHERE (su."email" = ("auth"."jwt"() ->> 'email'::"text")))));
 
 
 
@@ -1396,11 +1402,11 @@ CREATE POLICY "Allow staff access orders" ON "public"."orders" TO "authenticated
 
 
 
-CREATE POLICY "Allow staff update app_settings" ON "public"."app_settings" TO "authenticated" USING ((EXISTS ( SELECT 1
+CREATE POLICY "Allow admin update app_settings" ON "public"."app_settings" TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."staff_users"
-  WHERE ("staff_users"."email" = ("auth"."jwt"() ->> 'email'::"text"))))) WITH CHECK ((EXISTS ( SELECT 1
+  WHERE (("staff_users"."email" = ("auth"."jwt"() ->> 'email'::"text")) AND ("staff_users"."role" = 'admin'::"text"))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."staff_users"
-  WHERE ("staff_users"."email" = ("auth"."jwt"() ->> 'email'::"text")))));
+  WHERE (("staff_users"."email" = ("auth"."jwt"() ->> 'email'::"text")) AND ("staff_users"."role" = 'admin'::"text")))));
 
 
 

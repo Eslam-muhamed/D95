@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { isAdmin } from '@/lib/authRoles';
 
 export interface StaffUser {
     email: string;
@@ -7,6 +8,11 @@ export interface StaffUser {
 }
 
 export async function fetchStaffUsers(): Promise<StaffUser[]> {
+    if (!isAdmin()) {
+        console.warn('Unauthorized attempt to fetch staff users');
+        return [];
+    }
+
     try {
         const { data, error } = await supabase
             .from('staff_users')

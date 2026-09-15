@@ -39,12 +39,7 @@ export default function AdminDashboardPage() {
         });
     }, []);
 
-    // Ensure cashier cannot remain on admin-only tabs
-    useEffect(() => {
-        if (isCashier && (activeTab === 'menu_settings' || activeTab === 'payment_settings' || activeTab === 'staff_settings')) {
-            setActiveTab('operations');
-        }
-    }, [isCashier, activeTab]);
+
 
     // Check pending orders count for badge
     useEffect(() => {
