@@ -497,6 +497,8 @@ export function calculateBookingExtensionInfo(
     const suggestedExtraPrice = Math.round(hourlyRate * (extensionMinutes / 60));
     const newDurationHours = Number((duration + extensionMinutes / 60).toFixed(2));
 
+    const ONE_MINUTE_MS = 60 * 1000;
+    
     // Operating window closing check (04:00 AM next day)
     const { closing } = getBusinessOperatingWindow(targetBooking.booking_date);
     const exceedsClosing = newEnd.getTime() > closing.getTime();
@@ -515,9 +517,9 @@ export function calculateBookingExtensionInfo(
 
     for (const item of otherBookings) {
         // If this booking starts before the current threshold and ends after currentEnd
-        if (item.start.getTime() >= currentEnd.getTime() - 60000 && item.start.getTime() < currentThreshold.getTime()) {
-            const shiftedStart = new Date(item.start.getTime() + extensionMinutes * 60 * 1000);
-            const shiftedEnd = new Date(item.end.getTime() + extensionMinutes * 60 * 1000);
+        if (item.start.getTime() >= currentEnd.getTime() - ONE_MINUTE_MS && item.start.getTime() < currentThreshold.getTime()) {
+            const shiftedStart = new Date(item.start.getTime() + extensionMinutes * ONE_MINUTE_MS);
+            const shiftedEnd = new Date(item.end.getTime() + extensionMinutes * ONE_MINUTE_MS);
             conflictingBookings.push({
                 booking: item.booking,
                 currentStart: item.start,

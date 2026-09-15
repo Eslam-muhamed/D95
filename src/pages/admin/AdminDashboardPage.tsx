@@ -16,6 +16,7 @@ import SimpleMenuSettingsTab from '@/components/admin/SimpleMenuSettingsTab';
 import PaymentSettingsTab from '@/components/admin/PaymentSettingsTab';
 import StaffSettingsTab from '@/components/admin/StaffSettingsTab';
 import VenueStatusControl from '@/components/admin/VenueStatusControl';
+import SectionErrorBoundary from '@/components/features/SectionErrorBoundary';
 import { supabase } from '@/lib/supabase';
 import { playPs5NavigateSound } from '@/lib/sound';
 import { isCashier as checkIsCashier, isStaff } from '@/lib/authRoles';
@@ -224,11 +225,13 @@ export default function AdminDashboardPage() {
 
             {/* Main Content Area */}
             <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 lg:p-6 pb-24 sm:pb-8">
-                {activeTab === 'operations' && <SimpleOperationsTab userEmail={userEmail} isCashier={isCashier} />}
-                {activeTab === 'orders' && <OrdersTab />}
-                {activeTab === 'menu_settings' && !isCashier && <SimpleMenuSettingsTab />}
-                {activeTab === 'payment_settings' && !isCashier && <PaymentSettingsTab />}
-                {activeTab === 'staff_settings' && !isCashier && <StaffSettingsTab />}
+                <SectionErrorBoundary>
+                    {activeTab === 'operations' && <SimpleOperationsTab userEmail={userEmail} isCashier={isCashier} />}
+                    {activeTab === 'orders' && <OrdersTab />}
+                    {activeTab === 'menu_settings' && !isCashier && <SimpleMenuSettingsTab />}
+                    {activeTab === 'payment_settings' && !isCashier && <PaymentSettingsTab />}
+                    {activeTab === 'staff_settings' && !isCashier && <StaffSettingsTab />}
+                </SectionErrorBoundary>
             </main>
 
             {/* Mobile Bottom Navigation Bar */}

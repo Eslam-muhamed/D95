@@ -49,27 +49,11 @@ export default function BookingPaymentPage() {
     const { theme, toggleTheme } = useTheme();
     const { items: cartItems, cafeTotal, clearCart } = useCart();
 
-    // Booking context from state or session storage fallback
+    // Booking context from state directly (no sessionStorage to avoid tab-state leak)
     const [bookingState] = useState(() => {
         if (location.state && location.state.room) {
-            try {
-                sessionStorage.setItem('d95_pending_booking', JSON.stringify(location.state));
-            } catch (e) {
-                console.warn('Could not cache pending booking:', e);
-            }
             return location.state;
         }
-
-        try {
-            const cached = sessionStorage.getItem('d95_pending_booking');
-            if (cached) {
-                const parsed = JSON.parse(cached);
-                if (parsed?.room) return parsed;
-            }
-        } catch (e) {
-            console.warn('Could not read cached booking:', e);
-        }
-
         return null;
     });
 
@@ -219,12 +203,7 @@ export default function BookingPaymentPage() {
                 notes: notes.trim() || null,
             });
 
-            // Booking successfully recorded - clear cart & pending session
-            try {
-                sessionStorage.removeItem('d95_pending_booking');
-            } catch (e) {
-                console.warn('Could not clear pending session:', e);
-            }
+            // Booking successfully recorded - clear cart
             clearCart();
         } catch (err: unknown) {
             console.error('Failed to save booking to Supabase:', err);

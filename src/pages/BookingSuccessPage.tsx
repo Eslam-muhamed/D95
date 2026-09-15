@@ -37,26 +37,8 @@ export default function BookingSuccessPage() {
 
     const [bookingData, setBookingData] = useState(() => {
         if (location.state && location.state.reservationId) {
-            try {
-                sessionStorage.setItem('d95_last_confirmed_booking', JSON.stringify(location.state));
-            } catch (e) {
-                console.warn('Could not cache booking:', e);
-            }
             return location.state;
         }
-
-        try {
-            const cached = sessionStorage.getItem('d95_last_confirmed_booking');
-            if (cached) {
-                const parsed = JSON.parse(cached);
-                if (!idFromParam || parsed.reservationId === idFromParam) {
-                    return parsed;
-                }
-            }
-        } catch (e) {
-            console.warn('Could not read cached booking:', e);
-        }
-
         return null;
     });
 
@@ -88,11 +70,6 @@ export default function BookingSuccessPage() {
                             status: b.status,
                         };
                         setBookingData(normalized);
-                        try {
-                            sessionStorage.setItem('d95_last_confirmed_booking', JSON.stringify(normalized));
-                        } catch (e) {
-                            console.warn('Could not cache booking:', e);
-                        }
                     } else {
                         toast.error('لم يتم العثور على تذكرة بهذا الرقم أو انتهت صلاحيتها');
                         navigate('/playstation', { replace: true });
