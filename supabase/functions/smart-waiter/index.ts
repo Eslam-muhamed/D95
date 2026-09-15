@@ -59,8 +59,8 @@ ${menuContext || 'لا توجد بيانات متاحة للمنيو حاليا�
       parts: [{ text: message }],
     });
 
-    // Call Gemini API (using gemini-1.5-flash for speed and cost efficiency)
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    // Call Gemini API
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -78,9 +78,9 @@ ${menuContext || 'لا توجد بيانات متاحة للمنيو حاليا�
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.text();
       console.error('Gemini API Error:', errorData);
-      throw new Error('Failed to generate response from Gemini');
+      throw new Error(`Failed to generate response from Gemini: ${errorData}`);
     }
 
     const data = await response.json();
