@@ -32,7 +32,7 @@ import { createDateTimeFromBusinessDate, calculateEndDateTime } from '@/lib/book
 import { fetchPaymentSettings, PaymentSettings } from '@/services/paymentSettingsService';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
-type PaymentMethod = 'instapay' | 'wallet' | 'cash';
+type PaymentMethod = 'instapay' | 'wallet';
 
 interface SnackItem {
     id: string;
@@ -57,7 +57,7 @@ export default function BookingPaymentPage() {
         return null;
     });
 
-    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('instapay');
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [notes, setNotes] = useState('');
@@ -140,8 +140,13 @@ export default function BookingPaymentPage() {
     const ussdTelUri = `tel:*9*7*${cleanWalletNumber}*${netTotal}%23`;
 
     const handleConfirm = async () => {
-        if (!name.trim() || name.trim().length < 3) {
-            toast.error('برجاء كتابة اسمك الكريم بالكامل');
+        if (!name.trim()) {
+            toast.error('برجاء إدخال الاسم لتأكيد الحجز');
+            return;
+        }
+
+        if (!paymentMethod) {
+            toast.error('برجاء اختيار طريقة الدفع أولاً (إنستاباي أو محفظة إلكترونية)');
             return;
         }
 
@@ -484,52 +489,7 @@ export default function BookingPaymentPage() {
                                 )}
                             </div>
 
-                            {/* METHOD 2: CASH ON ARRIVAL */}
-                            <div
-                                onClick={() => {
-                                    setPaymentMethod('cash');
-                                    playPs5NavigateSound();
-                                }}
-                                className={`w-full text-right p-4 rounded-2xl border-2 transition-all flex flex-col gap-2 cursor-pointer ${paymentMethod === 'cash'
-                                        ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-500 shadow-[0_0_20px_rgba(212,160,23,0.15)] dark:shadow-[0_0_20px_rgba(212,160,23,0.25)] scale-[1.01]'
-                                        : 'bg-white dark:bg-[#140e10]/95 border-neutral-200 dark:border-white/10 hover:border-neutral-300 dark:hover:border-white/20 text-neutral-700 dark:text-neutral-300'
-                                    }`}
-                            >
-                                <div className="flex items-center justify-between w-full">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-11 h-11 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-                                            <Banknote className="w-5 h-5" />
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-bold text-sm text-neutral-900 dark:text-white font-body">كاش في الصالة</span>
-                                                <span className="text-[10px] bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full font-bold border border-amber-300 dark:border-amber-500/40">
-                                                    بدون دفع مسبق
-                                                </span>
-                                            </div>
-                                            <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">ادفع نقداً في فرع D95 عند الوصول وبدء وقت اللعب</span>
-                                        </div>
-                                    </div>
-                                    <div
-                                        className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${paymentMethod === 'cash' ? 'bg-amber-500 border-amber-500 text-black' : 'border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-black/40'
-                                            }`}
-                                    >
-                                        {paymentMethod === 'cash' && <Check className="w-4 h-4 stroke-[3]" />}
-                                    </div>
-                                </div>
 
-                                {paymentMethod === 'cash' && (
-                                    <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        className="overflow-hidden pt-2 border-t border-neutral-200 dark:border-white/10"
-                                    >
-                                        <p className="text-xs text-amber-900 dark:text-amber-200 font-medium leading-relaxed bg-amber-50 dark:bg-amber-950/30 p-2.5 rounded-xl border border-amber-200 dark:border-amber-500/30">
-                                            سيتم حجز الغرفة باسمك فوراً. يرجى الحضور قبل الموعد بـ ١٠ دقائق لضمان حفظ الحجز.
-                                        </p>
-                                    </motion.div>
-                                )}
-                            </div>
 
                             {/* METHOD 3: MOBILE WALLET */}
                             <div
@@ -549,12 +509,12 @@ export default function BookingPaymentPage() {
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-bold text-sm text-neutral-900 dark:text-white font-body">فودافون كاش ومحافظ المحمول</span>
+                                                <span className="font-bold text-sm text-neutral-900 dark:text-white font-body">محافظ المحمول الإلكترونية</span>
                                                 <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full font-bold border border-emerald-300 dark:border-emerald-500/40">
                                                     كل المحافظ
                                                 </span>
                                             </div>
-                                            <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">تحويل كاش من فودافون كاش، أورنج، اتصالات، تيلدا أو وي</span>
+                                            <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">تحويل كاش من فودافون كاش، أورنج، اتصالات e&، تيلدا أو وي</span>
                                         </div>
                                     </div>
                                     <div
@@ -661,7 +621,7 @@ export default function BookingPaymentPage() {
                                         <div className="bg-neutral-50 dark:bg-[#1c1417]/80 p-3 rounded-xl border border-neutral-200 dark:border-white/10 text-xs text-neutral-700 dark:text-neutral-300 font-medium space-y-1">
                                             <p className="text-emerald-600 dark:text-emerald-400 font-bold">💡 طريقة التحويل من أي محفظة:</p>
                                             <p>• فودافون كاش: اضغط على زر "اتصال وتحويل فوري" أعلاه مباشرةً وأدخل الرقم السري.</p>
-                                            <p>• المحافظ الأخرى (أورنج/اتصالات/تيلدا/وي/البنوك): افتح تطبيق محفظتك واختر تحويل إلى الرقم ({activeWalletNumber}).</p>
+                                            <p>• المحافظ الأخرى (أورنج/اتصالات e&/تيلدا/وي/البنوك): افتح تطبيق محفظتك واختر تحويل إلى الرقم ({activeWalletNumber}).</p>
                                         </div>
                                     </motion.div>
                                 )}
@@ -753,7 +713,7 @@ export default function BookingPaymentPage() {
                     <div className="flex flex-col">
                         <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-semibold font-body">طريقة الدفع:</span>
                         <span className="text-xs font-bold text-neutral-900 dark:text-white font-body">
-                            {paymentMethod === 'instapay' ? 'إنستاباي لحظي' : paymentMethod === 'cash' ? 'كاش بالصالة' : 'محفظة إلكترونية'}
+                            {paymentMethod === 'instapay' ? 'إنستاباي لحظي' : paymentMethod === 'wallet' ? 'محفظة إلكترونية' : 'لم يتم الاختيار'}
                         </span>
                     </div>
 
