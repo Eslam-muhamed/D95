@@ -1356,9 +1356,16 @@ CREATE POLICY "Allow admin write products" ON "public"."products" TO "authentica
 
 
 
-CREATE POLICY "Allow authenticated read staff_users" ON "public"."staff_users" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
-   FROM "public"."staff_users" su
-  WHERE (su."email" = ("auth"."jwt"() ->> 'email'::"text")))));
+CREATE OR REPLACE FUNCTION public.is_staff() RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path = public
+    AS $$
+BEGIN
+  RETURN EXISTS (SELECT 1 FROM staff_users WHERE email = auth.jwt()->>'email');
+END;
+$$;
+
+CREATE POLICY "Allow authenticated read staff_users" ON "public"."staff_users" FOR SELECT TO "authenticated" USING (is_staff());
 
 
 
@@ -1402,11 +1409,16 @@ CREATE POLICY "Allow staff access orders" ON "public"."orders" TO "authenticated
 
 
 
-CREATE POLICY "Allow admin update app_settings" ON "public"."app_settings" TO "authenticated" USING ((EXISTS ( SELECT 1
-   FROM "public"."staff_users"
-  WHERE (("staff_users"."email" = ("auth"."jwt"() ->> 'email'::"text")) AND ("staff_users"."role" = 'admin'::"text"))))) WITH CHECK ((EXISTS ( SELECT 1
-   FROM "public"."staff_users"
-  WHERE (("staff_users"."email" = ("auth"."jwt"() ->> 'email'::"text")) AND ("staff_users"."role" = 'admin'::"text")))));
+CREATE OR REPLACE FUNCTION public.is_admin() RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path = public
+    AS $$
+BEGIN
+  RETURN EXISTS (SELECT 1 FROM staff_users WHERE email = auth.jwt()->>'email' AND role = 'admin');
+END;
+$$;
+
+CREATE POLICY "Allow admin update app_settings" ON "public"."app_settings" TO "authenticated" USING (is_admin()) WITH CHECK (is_admin());
 
 
 
