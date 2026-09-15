@@ -11,6 +11,7 @@ export default function StaffSettingsTab() {
     
     // Form state
     const [newEmail, setNewEmail] = useState('');
+    const [newPassword, setNewPassword] = useState('');
     const [newRole, setNewRole] = useState<'admin' | 'cashier'>('cashier');
 
     const loadStaff = async () => {
@@ -45,13 +46,15 @@ export default function StaffSettingsTab() {
 
         setSubmitting(true);
         try {
-            await addStaffUser(email, newRole);
+            await addStaffUser(email, newRole, newPassword.trim() || undefined);
             playPs5SelectSound();
             toast.success(`تم إضافة ${roleName(newRole)} بنجاح`);
             setNewEmail('');
+            setNewPassword('');
             await loadStaff();
-        } catch (err) {
-            toast.error('حدث خطأ أثناء إضافة الصلاحية');
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'حدث خطأ أثناء إضافة الصلاحية';
+            toast.error(errorMessage);
         } finally {
             setSubmitting(false);
         }
@@ -107,6 +110,19 @@ export default function StaffSettingsTab() {
                                     value={newEmail}
                                     onChange={(e) => setNewEmail(e.target.value)}
                                     placeholder="example@d95.com"
+                                    required
+                                    className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-3 text-sm text-left focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono"
+                                    dir="ltr"
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-600 mb-1.5">كلمة المرور الابتدائية (اختياري)</label>
+                                <input
+                                    type="text"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder="اتركه فارغاً إذا كان لديه حساب"
                                     className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-3 text-sm text-left focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono"
                                     dir="ltr"
                                 />
