@@ -116,13 +116,13 @@ export default function SmartWaiterBot() {
   };
 
   const renderMessageContent = (text: string) => {
-    const parts = text.split(/(\[ADD_TO_CART:\d+\])/g);
+    const parts = text.split(/(\[ADD_TO_CART:[a-zA-Z0-9-]+\])/g);
     const products = getCachedProducts();
 
     return (
       <div className="flex flex-col gap-2">
         {parts.map((part, index) => {
-          const match = part.match(/\[ADD_TO_CART:(\d+)\]/);
+          const match = part.match(/\[ADD_TO_CART:([a-zA-Z0-9-]+)\]/);
           if (match) {
             const productIdStr = match[1];
             const product = products.find(p => String(p.id) === productIdStr);
