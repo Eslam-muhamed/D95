@@ -58,7 +58,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                         initial={{ x: 0 }}
                         animate={isOpening ? { x: '-100%' } : { x: 0 }}
                         transition={{ duration: 1.2, ease: [0.25, 1, 0.5, 1] }}
-                        className="absolute top-0 left-0 bottom-0 w-[55%] z-40 origin-left"
+                        className="absolute top-0 left-0 bottom-0 w-[55%] z-20 origin-left"
                         style={{
                             background: 'linear-gradient(90deg, #2a0000 0%, #600000 15%, #3a0000 30%, #700000 45%, #400000 60%, #800000 75%, #4a0000 90%, #900000 100%)',
                             boxShadow: 'inset -30px 0 60px rgba(0,0,0,0.9), 20px 0 40px rgba(0,0,0,0.9)',
@@ -76,7 +76,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                         initial={{ x: 0 }}
                         animate={isOpening ? { x: '100%' } : { x: 0 }}
                         transition={{ duration: 1.2, ease: [0.25, 1, 0.5, 1] }}
-                        className="absolute top-0 right-0 bottom-0 w-[55%] z-40 origin-right"
+                        className="absolute top-0 right-0 bottom-0 w-[55%] z-20 origin-right"
                         style={{
                             background: 'linear-gradient(-90deg, #2a0000 0%, #600000 15%, #3a0000 30%, #700000 45%, #400000 60%, #800000 75%, #4a0000 90%, #900000 100%)',
                             boxShadow: 'inset 30px 0 60px rgba(0,0,0,0.9), -20px 0 40px rgba(0,0,0,0.9)',
