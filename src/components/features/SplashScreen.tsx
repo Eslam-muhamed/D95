@@ -109,7 +109,17 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                             {/* Glowing backdrop for logo */}
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-red-600/20 blur-3xl rounded-full" />
                             
-                            <img src="/new-logo.png" alt="D95" className="w-64 sm:w-80 object-contain drop-shadow-[0_0_40px_rgba(220,38,38,0.6)] z-10" />
+                            <picture className="w-64 sm:w-80 z-10">
+                                <source srcSet="/new-logo.webp" type="image/webp" />
+                                <img 
+                                    src="/new-logo.png" 
+                                    alt="D95" 
+                                    loading="eager"
+                                    fetchPriority="high"
+                                    decoding="async"
+                                    className="w-full h-auto object-contain drop-shadow-[0_0_40px_rgba(220,38,38,0.6)]" 
+                                />
+                            </picture>
                             
                             <div className="mt-4 flex items-center gap-4 text-[10px] sm:text-xs font-bold text-neutral-400 tracking-[0.3em] font-bebas z-10">
                                 <span className="w-8 h-px bg-red-600/50" />
