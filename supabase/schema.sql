@@ -82,7 +82,7 @@ DECLARE
     deleted_count integer;
 BEGIN
     -- Verify staff authorization
-    IF (SELECT coalesce(auth.jwt() ->> 'email', '')) NOT IN ('admin@d95.com', 'cashier@d95.com') THEN
+    IF NOT EXISTS (SELECT 1 FROM public.staff_users WHERE email = coalesce(auth.jwt() ->> 'email', '')) THEN
       RAISE EXCEPTION 'غير مصرح لك بمسح حجوزات الاختبار' USING ERRCODE = '42501';
     END IF;
 
@@ -119,7 +119,7 @@ DECLARE
   v_row RECORD;
 BEGIN
   -- 0. Security Verification: Allow authenticated admin or cashier
-  IF (SELECT coalesce(auth.jwt() ->> 'email', '')) NOT IN ('admin@d95.com', 'cashier@d95.com') THEN
+  IF NOT EXISTS (SELECT 1 FROM public.staff_users WHERE email = coalesce(auth.jwt() ->> 'email', '')) THEN
     RAISE EXCEPTION 'غير مصرح لك بتأكيد الحجوزات' USING ERRCODE = '42501';
   END IF;
 
@@ -711,7 +711,7 @@ DECLARE
   v_updated_target public.ps_bookings;
 BEGIN
   -- Verify admin or cashier role
-  IF (SELECT coalesce(auth.jwt() ->> 'email', '')) NOT IN ('admin@d95.com', 'cashier@d95.com') THEN
+  IF NOT EXISTS (SELECT 1 FROM public.staff_users WHERE email = coalesce(auth.jwt() ->> 'email', '')) THEN
     RAISE EXCEPTION 'غير مصرح لك بتمديد الحجوزات' USING ERRCODE = '42501';
   END IF;
 
@@ -817,7 +817,7 @@ DECLARE
   v_pending_counts_by_date JSONB := '{}'::jsonb;
 BEGIN
   -- Verify staff authorization
-  IF (SELECT coalesce(auth.jwt() ->> 'email', '')) NOT IN ('admin@d95.com', 'cashier@d95.com') THEN
+  IF NOT EXISTS (SELECT 1 FROM public.staff_users WHERE email = coalesce(auth.jwt() ->> 'email', '')) THEN
     RAISE EXCEPTION 'غير مصرح لك بالاطلاع على الإحصائيات' USING ERRCODE = '42501';
   END IF;
 
@@ -901,7 +901,7 @@ DECLARE
   v_cairo_today_start TIMESTAMPTZ;
 BEGIN
   -- Verify staff authorization
-  IF (SELECT coalesce(auth.jwt() ->> 'email', '')) NOT IN ('admin@d95.com', 'cashier@d95.com') THEN
+  IF NOT EXISTS (SELECT 1 FROM public.staff_users WHERE email = coalesce(auth.jwt() ->> 'email', '')) THEN
     RAISE EXCEPTION 'غير مصرح لك بالاطلاع على الإحصائيات' USING ERRCODE = '42501';
   END IF;
 
@@ -1295,6 +1295,11 @@ CREATE INDEX "idx_station_sessions_status_station" ON "public"."station_sessions
 
 ALTER TABLE ONLY "public"."products"
     ADD CONSTRAINT "products_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "public"."categories"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."ps_bookings"
+    ADD CONSTRAINT "ps_bookings_room_id_fkey" FOREIGN KEY ("room_id") REFERENCES "public"."gaming_stations"("id") ON DELETE RESTRICT;
 
 
 
