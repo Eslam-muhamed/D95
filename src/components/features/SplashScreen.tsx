@@ -1,19 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gamepad2, Coffee, Sparkles } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { playPs5SelectSound } from '@/lib/sound';
 
 interface SplashScreenProps {
     onComplete: () => void;
 }
-
-const AMBIENT_MOTES = [
-    { left: '15%', top: '25%', size: 4, dur: 4.2, delay: 0 },
-    { left: '80%', top: '30%', size: 6, dur: 5.1, delay: 0.5 },
-    { left: '70%', top: '75%', size: 5, dur: 4.6, delay: 0.8 },
-    { left: '25%', top: '80%', size: 3, dur: 5.5, delay: 1.2 },
-    { left: '50%', top: '15%', size: 4, dur: 3.8, delay: 0.2 },
-    { left: '88%', top: '65%', size: 5, dur: 4.9, delay: 1.5 },
-];
 
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
     const [visible, setVisible] = useState(() => {
@@ -23,221 +15,155 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             return true;
         }
     });
-
-    const [progress, setProgress] = useState(0);
-
-    const handleDismiss = () => {
-        try {
-            sessionStorage.setItem('d95_splash_shown', '1');
-        } catch {
-            // Silently ignore storage quota or privacy mode errors
-        }
-        setVisible(false);
-    };
+    
+    const [isOpening, setIsOpening] = useState(false);
 
     useEffect(() => {
         if (!visible) {
             onComplete();
-            return;
         }
+    }, [visible, onComplete]);
 
+    const handleEnter = () => {
+        setIsOpening(true);
+        playPs5SelectSound();
         try {
             sessionStorage.setItem('d95_splash_shown', '1');
         } catch {
-            // Silently ignore storage errors
+            // ignore
         }
 
-        const startTime = performance.now();
-        const duration = 1200; // 1.2s total smooth cinematic duration
-        let animationFrameId: number;
-
-        const step = (now: number) => {
-            const elapsed = now - startTime;
-            const nextProgress = Math.min(100, Math.round((elapsed / duration) * 100));
-            setProgress(nextProgress);
-
-            if (elapsed < duration) {
-                animationFrameId = requestAnimationFrame(step);
-            } else {
-                setTimeout(() => {
-                    setVisible(false);
-                }, 120);
-            }
-        };
-
-        animationFrameId = requestAnimationFrame(step);
-
-        return () => {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-        };
-    }, [visible, onComplete]);
-
-    const getStatusText = (val: number) => {
-        if (val < 45) return 'تهيئة أنظمة الألعاب والصالة...';
-        if (val < 85) return 'تجهيز غرف VIP والمنيو...';
-        return 'جاهز للانطلاق • مرحباً بك في D95';
+        // Wait for curtain animation to finish, then unmount
+        setTimeout(() => {
+            setVisible(false);
+        }, 1200); // 1.2s matches curtain duration
     };
 
     if (!visible) return null;
 
     return (
-        <AnimatePresence onExitComplete={onComplete}>
+        <AnimatePresence>
             {visible && (
-                <motion.div
-                    key="d95-splash"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0, scale: 1.03, filter: 'blur(8px)' }}
-                    transition={{ duration: 0.35, ease: 'easeInOut' }}
-                    onClick={handleDismiss}
-                    className="fixed inset-0 z-[9999] flex flex-col items-center justify-between p-6 sm:p-10 select-none overflow-hidden cursor-pointer bg-[#080406]"
-                    style={{
-                        backgroundImage: 'radial-gradient(ellipse at center, rgba(155,28,28,0.18) 0%, rgba(9,7,7,0.95) 75%)',
-                    }}
-                >
-                    {/* 1. CINEMATIC AMBIENT BACKGROUND */}
-                    <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                        {/* High-tech Subtle Grid */}
-                        <div
-                            className="absolute inset-0 opacity-[0.04]"
-                            style={{
-                                backgroundImage:
-                                    'linear-gradient(rgba(244,63,94,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(244,63,94,0.3) 1px, transparent 1px)',
-                                backgroundSize: '48px 48px',
-                            }}
-                        />
+                <div className="fixed inset-0 z-[9999] bg-[#0a0505] flex items-center justify-center overflow-hidden selection:bg-red-600/30" dir="ltr">
+                    {/* The Background Spotlight / Stage */}
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(225,29,72,0.15)_0%,rgba(10,5,5,1)_70%)]" />
 
-                        {/* Top Ambient Glow */}
-                        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-[radial-gradient(ellipse_at_center,rgba(225,29,72,0.18)_0%,transparent_70%)] blur-2xl" />
-
-                        {/* Floating Ambient Embers */}
-                        {AMBIENT_MOTES.map((mote, idx) => (
-                            <motion.div
-                                key={idx}
-                                className="absolute rounded-full"
-                                style={{
-                                    left: mote.left,
-                                    top: mote.top,
-                                    width: mote.size,
-                                    height: mote.size,
-                                    background:
-                                        idx % 2 === 0
-                                            ? 'rgba(239, 68, 68, 0.65)'
-                                            : 'rgba(245, 158, 11, 0.65)',
-                                    boxShadow:
-                                        idx % 2 === 0
-                                            ? '0 0 10px rgba(239, 68, 68, 0.8)'
-                                            : '0 0 10px rgba(245, 158, 11, 0.8)',
-                                }}
-                                animate={{
-                                    y: [0, -28, 0],
-                                    opacity: [0.25, 0.85, 0.25],
-                                    scale: [1, 1.3, 1],
-                                }}
-                                transition={{
-                                    duration: mote.dur,
-                                    delay: mote.delay,
-                                    repeat: Infinity,
-                                    ease: 'easeInOut',
-                                }}
-                            />
-                        ))}
-                    </div>
-
-                    {/* 2. TOP BADGE: SYSTEM VERSION & VENUE */}
+                    {/* Left Curtain */}
                     <motion.div
-                        initial={{ opacity: 0, y: -15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.1 }}
-                        className="relative z-10 flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md text-xs font-bebas tracking-wider text-neutral-400 shadow-sm"
+                        initial={{ x: 0 }}
+                        animate={isOpening ? { x: '-100%' } : { x: 0 }}
+                        transition={{ duration: 1.2, ease: [0.25, 1, 0.5, 1] }}
+                        className="absolute top-0 left-0 bottom-0 w-[55%] z-40 origin-left"
+                        style={{
+                            background: 'linear-gradient(90deg, #2a0000 0%, #600000 15%, #3a0000 30%, #700000 45%, #400000 60%, #800000 75%, #4a0000 90%, #900000 100%)',
+                            boxShadow: 'inset -30px 0 60px rgba(0,0,0,0.9), 20px 0 40px rgba(0,0,0,0.9)',
+                            borderRight: '3px solid rgba(255,100,100,0.2)',
+                            borderBottomRightRadius: '10% 20%',
+                        }}
                     >
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>D95 LOUNGE &amp; CAFÉ</span>
-                        <span className="text-neutral-600">•</span>
-                        <span className="text-red-400 font-bold">VIP EXPERIENCE</span>
+                        {/* Folds */}
+                        <div className="absolute inset-0 opacity-50 bg-[repeating-linear-gradient(90deg,transparent,transparent_20px,rgba(0,0,0,0.5)_40px,transparent_60px)]" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
                     </motion.div>
 
-                    {/* 3. CENTER HERO: EMBLEM & MASTER LOGO */}
+                    {/* Right Curtain */}
                     <motion.div
-                        initial={{ scale: 0.85, opacity: 0, y: 10 }}
-                        animate={{ scale: 1, opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                        className="relative z-10 flex flex-col items-center text-center my-auto"
+                        initial={{ x: 0 }}
+                        animate={isOpening ? { x: '100%' } : { x: 0 }}
+                        transition={{ duration: 1.2, ease: [0.25, 1, 0.5, 1] }}
+                        className="absolute top-0 right-0 bottom-0 w-[55%] z-40 origin-right"
+                        style={{
+                            background: 'linear-gradient(-90deg, #2a0000 0%, #600000 15%, #3a0000 30%, #700000 45%, #400000 60%, #800000 75%, #4a0000 90%, #900000 100%)',
+                            boxShadow: 'inset 30px 0 60px rgba(0,0,0,0.9), -20px 0 40px rgba(0,0,0,0.9)',
+                            borderLeft: '3px solid rgba(255,100,100,0.2)',
+                            borderBottomLeftRadius: '10% 20%',
+                        }}
                     >
-                        {/* Dual Gaming & Café Icon Crest */}
-                        <div className="relative mb-4 sm:mb-6">
-                            {/* Radial Glow */}
-                            <div className="absolute inset-0 -m-6 rounded-full bg-gradient-to-tr from-red-600/35 via-rose-500/20 to-amber-500/20 blur-2xl pointer-events-none animate-pulse" />
+                        {/* Folds */}
+                        <div className="absolute inset-0 opacity-50 bg-[repeating-linear-gradient(-90deg,transparent,transparent_20px,rgba(0,0,0,0.5)_40px,transparent_60px)]" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
+                    </motion.div>
 
-                            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-b from-[#240e14] to-[#120609] border-2 border-red-500/40 shadow-[0_0_35px_rgba(225,29,72,0.35)] flex items-center justify-center backdrop-blur-xl">
-                                <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-400 shadow-[0_0_6px_#f43f5e]" />
-                                <div className="absolute bottom-1.5 left-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_#f59e0b]" />
-
-                                <div className="flex items-center gap-1.5 text-neutral-100">
-                                    <Gamepad2 className="w-8 h-8 sm:w-9 sm:h-9 text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.7)]" />
-                                    <span className="w-0.5 h-6 bg-white/20 rounded-full" />
-                                    <Coffee className="w-7 h-7 sm:w-8 sm:h-8 text-amber-400 drop-shadow-[0_0_12px_rgba(245,158,11,0.7)]" />
-                                </div>
+                    {/* Center Content (Fades out when opening) */}
+                    <motion.div
+                        animate={isOpening ? { opacity: 0, scale: 1.1 } : { opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        className="relative z-30 flex flex-col items-center justify-between h-full w-full py-12 px-4"
+                    >
+                        {/* Top Indicators */}
+                        <div className="flex items-center justify-between w-full max-w-md px-4 pt-safe" dir="rtl">
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-black/40 border border-white/10 rounded-full backdrop-blur-md">
+                                <span className="text-amber-400">☀️</span>
+                                <span className="text-[10px] text-neutral-300 font-bold">نهاري</span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                                <span className="text-[10px] font-bold text-neutral-400 tracking-wider">D95 GATEWAY</span>
                             </div>
                         </div>
 
-                        {/* Master Brand Typography */}
-                        <div className="flex items-center justify-center select-none my-1" dir="ltr">
-                            <img
-                                src="/new-logo.png"
-                                alt="D95"
-                                className="w-56 sm:w-72 md:w-80 object-contain drop-shadow-[0_0_40px_rgba(229,37,42,0.75)]"
-                            />
+                        {/* Portal Badge */}
+                        <div className="mt-4 flex items-center gap-2 bg-black/40 border border-emerald-500/30 px-5 py-1.5 rounded-full backdrop-blur-md shadow-[0_0_15px_rgba(16,185,129,0.15)]" dir="rtl">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-[10px] sm:text-xs font-bold text-emerald-400">مفتوح الآن • OFFICIAL PORTAL</span>
                         </div>
 
-                        {/* Category Capsule */}
-                        <div className="mt-3 flex items-center gap-2 px-4 sm:px-5 py-1.5 rounded-full bg-white/[0.04] border border-red-500/30 backdrop-blur-md shadow-lg">
-                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                            <span className="font-bebas text-sm sm:text-base font-bold tracking-[0.25em] text-neutral-200">
-                                GAMING LOUNGE &amp; CAFÉ
+                        {/* Logo & Main Title */}
+                        <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm relative mt-8">
+                            {/* Glowing backdrop for logo */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-red-600/20 blur-3xl rounded-full" />
+                            
+                            <img src="/new-logo.png" alt="D95" className="w-64 sm:w-80 object-contain drop-shadow-[0_0_40px_rgba(220,38,38,0.6)] z-10" />
+                            
+                            <div className="mt-4 flex items-center gap-4 text-[10px] sm:text-xs font-bold text-neutral-400 tracking-[0.3em] font-bebas z-10">
+                                <span className="w-8 h-px bg-red-600/50" />
+                                <span>GAMING & CAFÉ</span>
+                                <span className="w-8 h-px bg-red-600/50" />
+                            </div>
+
+                            <div className="mt-8 flex flex-col items-center z-10">
+                                <h1 className="font-bebas text-2xl sm:text-3xl font-bold tracking-[0.4em] text-neutral-300 mb-2">
+                                    GRAND OPENING
+                                </h1>
+                                <h2 className="font-brush text-5xl sm:text-6xl text-red-600 drop-shadow-[0_0_20px_rgba(220,38,38,0.8)] transform -rotate-2">
+                                    WELCOME
+                                </h2>
+                            </div>
+                        </div>
+
+                        {/* Working Hours */}
+                        <div className="w-full max-w-sm flex items-center justify-between border-t border-white/10 pt-6 mt-8">
+                            <div className="flex flex-col items-center text-center w-1/2 border-r border-white/10">
+                                <span className="text-[10px] font-bold text-neutral-500 tracking-widest mb-1">FROM</span>
+                                <div className="font-bebas text-3xl sm:text-4xl text-neutral-300 tracking-wider">08:00 <span className="text-red-600 text-xl">AM</span></div>
+                            </div>
+                            <div className="flex flex-col items-center text-center w-1/2">
+                                <span className="text-[10px] font-bold text-neutral-500 tracking-widest mb-1">TO</span>
+                                <div className="font-bebas text-3xl sm:text-4xl text-neutral-300 tracking-wider">04:00 <span className="text-red-600 text-xl">AM</span></div>
+                            </div>
+                        </div>
+
+                        {/* Tagline & Button */}
+                        <div className="mt-10 flex flex-col items-center w-full pb-safe z-50">
+                            <span className="text-[10px] sm:text-xs font-bold text-neutral-500 tracking-[0.2em] mb-6 font-bebas">
+                                PLAY - COMPETE - RELAX - REPEAT
                             </span>
+                            
+                            <button
+                                onClick={handleEnter}
+                                className="group relative flex items-center gap-3 px-8 py-3.5 bg-red-700 hover:bg-red-600 text-white rounded-full font-bold text-sm sm:text-base transition-all active:scale-95 shadow-[0_0_30px_rgba(220,38,38,0.5)] hover:shadow-[0_0_50px_rgba(220,38,38,0.8)] z-50 cursor-pointer"
+                                dir="rtl"
+                            >
+                                <span className="tracking-wide">دخول الموقع</span>
+                                <ArrowLeft className="w-4 h-4 text-white/80 group-hover:-translate-x-1 transition-transform" />
+                                
+                                {/* Button Ripple/Glow */}
+                                <div className="absolute inset-0 rounded-full border-2 border-red-400/50 animate-ping opacity-30" />
+                            </button>
                         </div>
-
-                        {/* Hospitality Tagline */}
-                        <p className="mt-3 text-xs sm:text-sm text-neutral-400 font-body font-medium tracking-wide">
-                            أقوى تجربة ألعاب PS5 • ضيافة كافيه راقية
-                        </p>
                     </motion.div>
-
-                    {/* 4. BOTTOM: HIGH-TECH LASER PROGRESS & SKIP HINT */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.15 }}
-                        className="relative z-10 w-full max-w-xs sm:max-w-sm flex flex-col items-center gap-3"
-                    >
-                        {/* Laser Progress Bar */}
-                        <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden relative border border-white/5 shadow-inner">
-                            <motion.div
-                                className="h-full rounded-full bg-gradient-to-r from-red-600 via-rose-400 to-amber-400 shadow-[0_0_14px_rgba(244,63,94,0.9)]"
-                                style={{ width: `${progress}%` }}
-                            />
-                        </div>
-
-                        {/* Status Info Row */}
-                        <div className="w-full flex items-center justify-between text-[11px] text-neutral-400 font-body px-1">
-                            <span className="font-mono font-bold text-neutral-300 tabular-nums">
-                                {progress}%
-                            </span>
-                            <span className="text-neutral-300 font-medium">
-                                {getStatusText(progress)}
-                            </span>
-                        </div>
-
-                        {/* Tap Anywhere to Skip */}
-                        <div className="pt-2 flex items-center gap-1.5 text-[10px] sm:text-[11px] text-neutral-500 hover:text-neutral-300 transition-colors">
-                            <span>انقر في أي مكان للدخول السريع</span>
-                            <span className="text-red-500 animate-bounce">⚡</span>
-                        </div>
-                    </motion.div>
-                </motion.div>
+                </div>
             )}
         </AnimatePresence>
     );
