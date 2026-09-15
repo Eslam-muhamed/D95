@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
-import { playPs5SelectSound } from '@/lib/sound';
+import { playGrandOpeningSound } from '@/lib/sound';
 
 interface SplashScreenProps {
     onComplete: () => void;
@@ -26,7 +26,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
     const handleEnter = () => {
         setIsOpening(true);
-        playPs5SelectSound();
+        playGrandOpeningSound();
         try {
             sessionStorage.setItem('d95_splash_shown', '1');
         } catch {

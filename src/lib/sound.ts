@@ -604,3 +604,95 @@ export function playPaperFlipSound(): void {
 
 
 
+
+/**
+ * Plays a cinematic "Grand Opening" sound effect:
+ * Deep sub-bass impact, orchestral cymbal swell, and a sweeping swoosh for curtain opening.
+ */
+export function playGrandOpeningSound(): void {
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0.8, now);
+        masterGain.connect(ctx.destination);
+
+        // 1. DEEP CINEMATIC BOOM (Sub-bass impact)
+        const boomOsc = ctx.createOscillator();
+        const boomGain = ctx.createGain();
+        boomOsc.type = 'sine';
+        boomOsc.frequency.setValueAtTime(120, now);
+        boomOsc.frequency.exponentialRampToValueAtTime(30, now + 1.2);
+        
+        boomGain.gain.setValueAtTime(0, now);
+        boomGain.gain.linearRampToValueAtTime(0.5, now + 0.05);
+        boomGain.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+        
+        boomOsc.connect(boomGain);
+        boomGain.connect(masterGain);
+        boomOsc.start(now);
+        boomOsc.stop(now + 2.6);
+
+        // 2. CURTAIN SWOOSH (Filtered noise sweep)
+        const bufferSize = Math.floor(ctx.sampleRate * 2.0);
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+        
+        const swooshNoise = ctx.createBufferSource();
+        swooshNoise.buffer = noiseBuffer;
+        
+        const swooshFilter = ctx.createBiquadFilter();
+        swooshFilter.type = 'lowpass';
+        swooshFilter.frequency.setValueAtTime(100, now);
+        swooshFilter.frequency.exponentialRampToValueAtTime(3000, now + 0.8);
+        swooshFilter.frequency.exponentialRampToValueAtTime(200, now + 2.0);
+        swooshFilter.Q.setValueAtTime(2.0, now);
+
+        const swooshGain = ctx.createGain();
+        swooshGain.gain.setValueAtTime(0, now);
+        swooshGain.gain.linearRampToValueAtTime(0.3, now + 0.8);
+        swooshGain.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+        
+        swooshNoise.connect(swooshFilter);
+        swooshFilter.connect(swooshGain);
+        swooshGain.connect(masterGain);
+        swooshNoise.start(now);
+        swooshNoise.stop(now + 2.0);
+
+        // 3. ORCHESTRAL CHORD SWELL (A-Major)
+        const chordFreqs = [220.0, 277.18, 329.63, 440.0, 554.37, 659.25];
+        chordFreqs.forEach((freq) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, now);
+            
+            // Subtle detune for width
+            osc.detune.setValueAtTime((Math.random() - 0.5) * 10, now);
+            
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.08, now + 0.5);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 3.0);
+            
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(500, now);
+            filter.frequency.exponentialRampToValueAtTime(2500, now + 0.5);
+            filter.frequency.exponentialRampToValueAtTime(800, now + 3.0);
+            
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(masterGain);
+            
+            osc.start(now);
+            osc.stop(now + 3.1);
+        });
+    } catch {
+        // Silently fail if audio not supported
+    }
+}
