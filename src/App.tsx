@@ -7,6 +7,7 @@ import CartSheet from '@/components/features/CartSheet';
 import BottomNav from '@/components/layout/BottomNav';
 import ErrorBoundary from '@/components/features/ErrorBoundary';
 import AdminProtectedRoute from '@/components/admin/AdminProtectedRoute';
+import SplashScreen from '@/components/features/SplashScreen';
 import { preloadMenuData } from '@/services/menuService';
 
 // Statically import primary public tabs & customer booking flow for 0ms instantaneous navigation
@@ -52,6 +53,7 @@ function AppRoutes() {
 
     return (
         <div className="w-full min-h-screen bg-[var(--bg-main)] flex flex-col selection:bg-red-500/30">
+            <SplashScreen onComplete={() => console.log('Splash finished')} />
             {!isAdminRoute && <CartSheet />}
             <Suspense fallback={<PageLoadingFallback />}>
                 <Routes>
