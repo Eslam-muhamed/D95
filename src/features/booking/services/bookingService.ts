@@ -51,36 +51,30 @@ export async function createBooking(booking: Omit<DBBooking, 'id' | 'created_at'
         room_id: booking.room_id || 'room-1',
     };
 
-    // Try atomic RPC first for complete server-side validation & exclusion protection
-    try {
-        const { data, error } = await supabase.rpc('create_booking_atomic', {
-            p_booking: cleanBooking
-        });
+    // Atomic RPC for complete server-side validation & exclusion protection
+    const { data, error } = await supabase.rpc('create_booking_atomic', {
+        p_booking: cleanBooking
+    });
 
-        if (error) {
-            console.warn('RPC create_booking_atomic failed, inspecting error:', error);
-            if (error.code === '23P01' || error.message.includes('23P01') || error.message.includes('تعارض') || error.message.includes('محجوز')) {
-                throw new Error('عذراً، هذا الموعد تم حجزه للتو أو يتعارض مع حجز قائم. يرجى اختيار موعد آخر.');
-            }
-            if (error.message.includes('الحد الأدنى') || error.message.includes('ساعة واحدة')) {
-                throw new Error('الحد الأدنى للحجز هو ساعة واحدة.');
-            }
-            if (error.message.includes('منتج غير صالح')) {
-                throw new Error('أحد المنتجات المختارة غير صالح أو تم تغييره.');
-            }
-            if (error.message.includes('مضى')) {
-                throw new Error('لا يمكن حجز موعد في الماضي.');
-            }
-            throw error;
+    if (error) {
+        console.warn('RPC create_booking_atomic failed, inspecting error:', error);
+        if (error.code === '23P01' || error.message.includes('23P01') || error.message.includes('تعارض') || error.message.includes('محجوز')) {
+            throw new Error('عذراً، هذا الموعد تم حجزه للتو أو يتعارض مع حجز قائم. يرجى اختيار موعد آخر.');
         }
+        if (error.message.includes('الحد الأدنى') || error.message.includes('ساعة واحدة')) {
+            throw new Error('الحد الأدنى للحجز هو ساعة واحدة.');
+        }
+        if (error.message.includes('منتج غير صالح')) {
+            throw new Error('أحد المنتجات المختارة غير صالح أو تم تغييره.');
+        }
+        if (error.message.includes('مضى')) {
+            throw new Error('لا يمكن حجز موعد في الماضي.');
+        }
+        throw error;
+    }
 
-        if (data) {
-            return data as DBBooking;
-        }
-    } catch (rpcErr: unknown) {
-        // Since we removed public INSERT privileges on ps_bookings, 
-        // we can no longer fallback to direct inserts. We must rely entirely on the RPC.
-        throw rpcErr;
+    if (data) {
+        return data as DBBooking;
     }
 
     throw new Error('تعذر إتمام الحجز');

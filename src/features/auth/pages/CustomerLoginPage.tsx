@@ -14,7 +14,7 @@ export default function CustomerLoginPage() {
 
     useEffect(() => {
         if (session && !isLoading) {
-            const from = (location.state as any)?.from?.pathname || '/customer';
+            const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/customer';
             navigate(from, { replace: true });
         }
     }, [session, isLoading, navigate, location]);
@@ -30,7 +30,7 @@ export default function CustomerLoginPage() {
             });
             
             if (error) throw error;
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('OAuth error:', err);
             toast.error(err.message || 'حدث خطأ أثناء تسجيل الدخول');
             setIsRedirecting(false);

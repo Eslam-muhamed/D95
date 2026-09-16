@@ -30,7 +30,7 @@ function getStored<T>(key: string): T | null {
 function setStored<T>(key: string, data: T) {
     try {
         localStorage.setItem('d95_menu_' + key, JSON.stringify({ data, time: Date.now() }));
-    } catch {}
+    } catch { /* ignore */ }
 }
 
 function clearStored() {
@@ -38,7 +38,7 @@ function clearStored() {
         localStorage.removeItem('d95_menu_categories');
         localStorage.removeItem('d95_menu_products');
         localStorage.removeItem('d95_menu_offers');
-    } catch {}
+    } catch { /* ignore */ }
 }
 
 export function getCachedCategories(): DBCategory[] | null {

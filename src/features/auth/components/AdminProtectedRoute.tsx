@@ -18,7 +18,7 @@ export default function AdminProtectedRoute({ children }: Props) {
     useEffect(() => {
         let mounted = true;
 
-        const loadAuthAndRole = async (session: any) => {
+        const loadAuthAndRole = async (session: unknown) => {
             if (!session?.user?.email) {
                 if (mounted) {
                     setRoleCache(null);

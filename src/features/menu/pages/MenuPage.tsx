@@ -131,7 +131,7 @@ export default function MenuPage() {
     }).finally(() => {
       setIsInitialLoading(false);
     });
-  }, []);
+  }, [validateItems]);
 
   const handleCategoryChange = (id: string) => {
     playPaperFlipSound();

@@ -108,7 +108,7 @@ export default function CustomerDashboardPage() {
             } else {
                 toast.error(data?.message || 'فشل ربط رقم الهاتف.');
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Link phone error:', err);
             toast.error(err.message || 'حدث خطأ أثناء محاولة ربط الحساب.');
         } finally {
