@@ -22,12 +22,26 @@ serve(async (req: Request) => {
 
     const { message, history, menuContext } = await req.json();
 
-    if (!message) {
-      return new Response(JSON.stringify({ error: 'Message is required' }), {
+    // Input Validation
+    if (!message || typeof message !== 'string') {
+      return new Response(JSON.stringify({ error: 'Message is required and must be a string' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    if (message.length > 1000) {
+      return new Response(JSON.stringify({ error: 'Message exceeds maximum length of 1000 characters' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    let safeMenuContext = menuContext;
+    if (menuContext && typeof menuContext === 'string' && menuContext.length > 5000) {
+      safeMenuContext = menuContext.substring(0, 5000);
+    }
+
 
     // Prepare system instructions
     const systemInstruction = `
@@ -41,7 +55,7 @@ serve(async (req: Request) => {
 - شعار المكان: PLAY. COMPETE. RELAX. REPEAT.
 
 قائمة الطعام (المنيو) المتوفرة لدينا حالياً بالأسعار:
-${menuContext || 'لا توجد بيانات متاحة للمنيو حالياً.'}
+${safeMenuContext || 'لا توجد بيانات متاحة للمنيو حالياً.'}
 
 تعليمات الرد:
 1. كن ودوداً ورحب بالعميل بشكل جميل. اشرح تفاصيل المنتجات بطريقة تفتح الشهية (مثال: "أنصحك بتجربة القهوة الفرنساوي، طعمها غني وممتاز").
@@ -52,11 +66,16 @@ ${menuContext || 'لا توجد بيانات متاحة للمنيو حاليا�
 4. اعتذر بلطف إذا سأل العميل عن منتج غير موجود في المنيو.
     `.trim();
 
-    // Format history for Gemini (roles: 'user' or 'model')
-    const formattedHistory = Array.isArray(history) ? history.map((msg: any) => ({
+    // Format history for Gemini (roles: 'user' or 'model') and enforce limits
+    let safeHistory = Array.isArray(history) ? history : [];
+    if (safeHistory.length > 20) {
+      safeHistory = safeHistory.slice(-20); // Keep only last 20 messages
+    }
+    
+    const formattedHistory = safeHistory.map((msg: any) => ({
       role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.text }],
-    })) : [];
+      parts: [{ text: String(msg.text).substring(0, 1000) }],
+    }));
 
     // Append the current message
     formattedHistory.push({
