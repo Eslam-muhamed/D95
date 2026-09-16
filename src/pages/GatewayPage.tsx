@@ -69,6 +69,27 @@ export default function GatewayPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <Link
+                        to="/customer"
+                        className="group relative flex items-center justify-center w-8 h-8 rounded-full transition-all cursor-pointer bg-gradient-to-tr from-red-600 to-red-800 border border-red-500/50 text-white shadow-[0_0_15px_rgba(220,38,38,0.3)] hover:shadow-[0_0_25px_rgba(220,38,38,0.5)] hover:scale-110 active:scale-95 overflow-hidden"
+                        title="حساب العميل"
+                    >
+                        <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.3)_50%,transparent_75%)] bg-[length:250%_250%] bg-[position:-100%_0] group-hover:animate-[shimmer_1.5s_infinite]" />
+                        <UserCircle2 size={18} className="shrink-0 relative z-10" />
+                    </Link>
+
+                    <a
+                        href={CONTACT_INFO.googleMapsLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer bg-white/80 dark:bg-black/60 border border-neutral-300 dark:border-white/15 text-neutral-800 dark:text-neutral-200 shadow-sm hover:scale-105 active:scale-95 hover:border-red-500/50 hover:text-red-600 dark:hover:text-red-400"
+                        aria-label="موقع الصالة على خرائط جوجل"
+                        title="موقع الصالة على خرائط جوجل"
+                    >
+                        <MapPin size={13} className="text-red-600 shrink-0" />
+                        <span className="font-body text-[11px]">اللوكيشن</span>
+                    </a>
+
                     <button
                         onClick={toggleTheme}
                         className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer bg-white/80 dark:bg-black/60 border border-neutral-300 dark:border-white/15 text-neutral-800 dark:text-neutral-200 shadow-sm hover:scale-105 active:scale-95"
@@ -87,27 +108,6 @@ export default function GatewayPage() {
                             </>
                         )}
                     </button>
-
-                    <a
-                        href={CONTACT_INFO.googleMapsLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer bg-white/80 dark:bg-black/60 border border-neutral-300 dark:border-white/15 text-neutral-800 dark:text-neutral-200 shadow-sm hover:scale-105 active:scale-95 hover:border-red-500/50 hover:text-red-600 dark:hover:text-red-400"
-                        aria-label="موقع الصالة على خرائط جوجل"
-                        title="موقع الصالة على خرائط جوجل"
-                    >
-                        <MapPin size={13} className="text-red-600 shrink-0" />
-                        <span className="font-body text-[11px]">اللوكيشن</span>
-                    </a>
-
-                    <Link
-                        to="/customer"
-                        className="group relative flex items-center justify-center w-8 h-8 rounded-full transition-all cursor-pointer bg-gradient-to-tr from-red-600 to-red-800 border border-red-500/50 text-white shadow-[0_0_15px_rgba(220,38,38,0.3)] hover:shadow-[0_0_25px_rgba(220,38,38,0.5)] hover:scale-110 active:scale-95 overflow-hidden"
-                        title="حساب العميل"
-                    >
-                        <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.3)_50%,transparent_75%)] bg-[length:250%_250%] bg-[position:-100%_0] group-hover:animate-[shimmer_1.5s_infinite]" />
-                        <UserCircle2 size={18} className="shrink-0 relative z-10" />
-                    </Link>
                 </div>
             </div>
 
