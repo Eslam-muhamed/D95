@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -6,13 +7,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
+    // @ts-ignore
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
     if (!GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY is not set in environment variables');
