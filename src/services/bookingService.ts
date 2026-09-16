@@ -71,7 +71,6 @@ export async function createBooking(booking: Omit<DBBooking, 'id' | 'created_at'
             if (error.message.includes('مضى')) {
                 throw new Error('لا يمكن حجز موعد في الماضي.');
             }
-            // If it's a general server error or permission, fallback to direct insert protected by Exclusion Constraint
             throw error;
         }
 
@@ -79,35 +78,9 @@ export async function createBooking(booking: Omit<DBBooking, 'id' | 'created_at'
             return data as DBBooking;
         }
     } catch (rpcErr: unknown) {
-        const errMsg = rpcErr instanceof Error ? rpcErr.message : String(rpcErr);
-        // If error was an explicit conflict or validation, rethrow immediately
-        if (
-            errMsg.includes('تم حجزه') || 
-            errMsg.includes('تعارض') || 
-            errMsg.includes('الحد الأدنى') ||
-            errMsg.includes('الماضي') ||
-            errMsg.includes('منتج غير صالح') ||
-            errMsg.includes('أحد المنتجات')
-        ) {
-            throw rpcErr;
-        }
-
-        // Otherwise fallback to direct insert which is STILL strictly protected by the Postgres Exclusion Constraint
-        const { data, error } = await supabase
-            .from('ps_bookings')
-            .insert([cleanBooking])
-            .select()
-            .single();
-
-        if (error) {
-            console.error('Direct insert failed:', error);
-            if (error.code === '23P01' || error.message.includes('no_overlapping_bookings') || error.message.includes('exclusion')) {
-                throw new Error('عذراً، هذا الموعد تم حجزه للتو أو يتعارض مع حجز قائم. يرجى اختيار موعد آخر.');
-            }
-            throw new Error(error.message || 'فشل تسجيل الحجز في قاعدة البيانات');
-        }
-
-        return data as DBBooking;
+        // Since we removed public INSERT privileges on ps_bookings, 
+        // we can no longer fallback to direct inserts. We must rely entirely on the RPC.
+        throw rpcErr;
     }
 
     throw new Error('تعذر إتمام الحجز');
