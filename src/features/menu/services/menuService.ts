@@ -14,9 +14,42 @@ let cachedOffersTime = 0;
 
 const CACHE_TTL_MS = 1000 * 60 * 3; // 3 minutes cache for blazing fast switching
 
+
+// ================= LOCAL STORAGE CACHE HELPERS =================
+function getStored<T>(key: string): T | null {
+    try {
+        const itemStr = localStorage.getItem('d95_menu_' + key);
+        if (!itemStr) return null;
+        const item = JSON.parse(itemStr);
+        return item.data as T;
+    } catch {
+        return null;
+    }
+}
+
+function setStored<T>(key: string, data: T) {
+    try {
+        localStorage.setItem('d95_menu_' + key, JSON.stringify({ data, time: Date.now() }));
+    } catch {}
+}
+
+function clearStored() {
+    try {
+        localStorage.removeItem('d95_menu_categories');
+        localStorage.removeItem('d95_menu_products');
+        localStorage.removeItem('d95_menu_offers');
+    } catch {}
+}
+
 export function getCachedCategories(): DBCategory[] | null {
     if (cachedCategories && (Date.now() - cachedCategoriesTime < CACHE_TTL_MS)) {
         return cachedCategories;
+    }
+    const stored = getStored<DBCategory[]>('categories');
+    if (stored) {
+        cachedCategories = stored;
+        cachedCategoriesTime = Date.now();
+        return stored;
     }
     return null;
 }
@@ -25,12 +58,24 @@ export function getCachedProducts(): DBProduct[] | null {
     if (cachedProducts && (Date.now() - cachedProductsTime < CACHE_TTL_MS)) {
         return cachedProducts;
     }
+    const stored = getStored<DBProduct[]>('products');
+    if (stored) {
+        cachedProducts = stored;
+        cachedProductsTime = Date.now();
+        return stored;
+    }
     return null;
 }
 
 export function getCachedOffers(): DBOffer[] | null {
     if (cachedOffers && (Date.now() - cachedOffersTime < CACHE_TTL_MS)) {
         return cachedOffers;
+    }
+    const stored = getStored<DBOffer[]>('offers');
+    if (stored) {
+        cachedOffers = stored;
+        cachedOffersTime = Date.now();
+        return stored;
     }
     return null;
 }
@@ -42,6 +87,7 @@ export function clearMenuCache(): void {
     cachedProductsTime = 0;
     cachedOffers = null;
     cachedOffersTime = 0;
+    clearStored();
 }
 
 export async function preloadMenuData(): Promise<void> {
@@ -86,6 +132,7 @@ export async function fetchCategories(forceRefresh = false): Promise<DBCategory[
         const categories = (data || []) as DBCategory[];
         cachedCategories = categories;
         cachedCategoriesTime = Date.now();
+        setStored('categories', categories);
         return categories;
     } catch (err) {
         console.error('Error fetching categories:', err);
@@ -171,6 +218,7 @@ export async function fetchProducts(categoryId?: string, forceRefresh = false): 
         if (isAll) {
             cachedProducts = products;
             cachedProductsTime = Date.now();
+            setStored('products', products);
         }
         return products;
     } catch (err) {
@@ -265,6 +313,7 @@ export async function fetchOffers(forceRefresh = false): Promise<DBOffer[]> {
 
         cachedOffers = data as DBOffer[];
         cachedOffersTime = Date.now();
+        setStored('offers', data);
         return data as DBOffer[];
     } catch (err) {
         console.error('Error fetching offers:', err);
