@@ -71,11 +71,12 @@ export default function GatewayPage() {
                 <div className="flex items-center gap-2">
                     <Link
                         to="/customer"
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer bg-red-600 border border-red-500 text-white shadow-sm hover:scale-105 active:scale-95 hover:bg-red-700"
+                        className="group relative flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer bg-gradient-to-r from-red-600 to-red-800 border border-red-500/50 text-white shadow-[0_0_15px_rgba(220,38,38,0.3)] hover:shadow-[0_0_25px_rgba(220,38,38,0.5)] hover:scale-105 active:scale-95 overflow-hidden"
                         title="حساب العميل"
                     >
-                        <UserCircle2 size={14} className="shrink-0" />
-                        <span className="font-body text-[11px]">حسابي</span>
+                        <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.3)_50%,transparent_75%)] bg-[length:250%_250%] bg-[position:-100%_0] group-hover:animate-[shimmer_1.5s_infinite]" />
+                        <UserCircle2 size={13} className="shrink-0 relative z-10" />
+                        <span className="font-body text-[11px] tracking-wide relative z-10">حسابي</span>
                     </Link>
 
                     <a
