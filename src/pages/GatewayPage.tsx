@@ -78,18 +78,6 @@ export default function GatewayPage() {
                         <UserCircle2 size={18} className="shrink-0 relative z-10" />
                     </Link>
 
-                    <a
-                        href={CONTACT_INFO.googleMapsLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer bg-white/80 dark:bg-black/60 border border-neutral-300 dark:border-white/15 text-neutral-800 dark:text-neutral-200 shadow-sm hover:scale-105 active:scale-95 hover:border-red-500/50 hover:text-red-600 dark:hover:text-red-400"
-                        aria-label="موقع الصالة على خرائط جوجل"
-                        title="موقع الصالة على خرائط جوجل"
-                    >
-                        <MapPin size={13} className="text-red-600 shrink-0" />
-                        <span className="font-body text-[11px]">اللوكيشن</span>
-                    </a>
-
                     <button
                         onClick={toggleTheme}
                         className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer bg-white/80 dark:bg-black/60 border border-neutral-300 dark:border-white/15 text-neutral-800 dark:text-neutral-200 shadow-sm hover:scale-105 active:scale-95"
