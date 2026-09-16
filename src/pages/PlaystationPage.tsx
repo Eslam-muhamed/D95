@@ -22,8 +22,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import room01InteriorImg from '@/assets/doors/room-01-interior.jpg';
-import room02InteriorImg from '@/assets/doors/room-02-interior.jpg';
+import room01InteriorImg from '@/assets/doors/room-01-interior.webp';
+import room02InteriorImg from '@/assets/doors/room-02-interior.webp';
 import { useTheme } from '@/stores/themeStore';
 import { useCart } from '@/stores/cartStore';
 import { BeinSportsIcon, NetflixIcon } from '@/components/brand/EntertainmentIcons';
@@ -56,9 +56,9 @@ const ROOMS: RoomData[] = [
     {
         id: 'room-1',
         code: 'ROOM 01',
-        titleEn: 'THE ARENA',
-        titleAr: 'غرفة الأبطال (Play Room 01)',
-        subtitle: 'أجواء تنافسية حماسية لتحديات ومباريات اللعب الجماعي',
+        titleEn: 'BREAKING BAD',
+        titleAr: 'غرفة بريكينج باد (Breaking Bad)',
+        subtitle: 'أجواء الكيمياء والغموض المستوحاة من مسلسل بريكينج باد',
         rate: 100,
         badge: 'Available',
         accentColor: '#10b981',
@@ -103,9 +103,9 @@ const ROOMS: RoomData[] = [
     {
         id: 'room-2',
         code: 'ROOM 02',
-        titleEn: 'VIP SUITE',
-        titleAr: 'غرفة النجوم (VIP Room 02)',
-        subtitle: 'إضاءة نيون وسقف نجوم سينمائي لجلسات الروقان والـ VIP',
+        titleEn: 'LA CASA DE PAPEL',
+        titleAr: 'غرفة لا كاسا دي بابيل (La Casa De Papel)',
+        subtitle: 'أجواء حماسية وتخطيط احترافي مستوحاة من مسلسل لا كاسا دي بابيل',
         rate: 100,
         badge: 'Available',
         accentColor: '#ff007f',
@@ -428,7 +428,7 @@ export default function PlaystationPage() {
                                                     </span>
                                                 </div>
                                                 <h3 className="font-bebas text-base sm:text-2xl font-black text-white drop-shadow-md truncate tracking-wide">
-                                                    {isRoom1 ? 'غرفة الأبطال' : 'غرفة النجوم VIP'}
+                                                    {isRoom1 ? 'غرفة بريكينج باد' : 'غرفة لا كاسا دي بابيل'}
                                                 </h3>
                                             </div>
 
