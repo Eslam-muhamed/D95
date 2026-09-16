@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowRight, Gamepad2, Coffee, Sun, Moon, ExternalLink, MapPin } from 'lucide-react';
+import { ArrowRight, Gamepad2, Coffee, Sun, Moon, ExternalLink, MapPin, UserCircle2 } from 'lucide-react';
 import D95BrushLogo from '@/components/brand/D95BrushLogo';
 import { playPs5StartupSound, playCafeEntranceSound } from '@/lib/sound';
 import { useTheme } from '@/stores/themeStore';
@@ -69,6 +69,15 @@ export default function GatewayPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <Link
+                        to="/customer"
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer bg-red-600 border border-red-500 text-white shadow-sm hover:scale-105 active:scale-95 hover:bg-red-700"
+                        title="حساب العميل"
+                    >
+                        <UserCircle2 size={14} className="shrink-0" />
+                        <span className="font-body text-[11px]">حسابي</span>
+                    </Link>
+
                     <a
                         href={CONTACT_INFO.googleMapsLink}
                         target="_blank"
