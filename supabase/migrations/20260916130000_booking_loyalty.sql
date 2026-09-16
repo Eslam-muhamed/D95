@@ -1,5 +1,5 @@
 -- 1. Add booking_id column to loyalty_transactions
-ALTER TABLE loyalty_transactions ADD COLUMN IF NOT EXISTS booking_id TEXT;
+ALTER TABLE loyalty_transactions ADD COLUMN IF NOT EXISTS booking_id UUID REFERENCES bookings(id) ON DELETE SET NULL;
 
 -- 2. Update the trigger function to use booking_id
 CREATE OR REPLACE FUNCTION process_booking_loyalty() RETURNS trigger AS $$
@@ -21,7 +21,7 @@ BEGIN
     -- If booking is Confirmed or Completed, give points (if not already given)
     IF NEW.status IN ('confirmed', 'completed') AND v_customer_phone IS NOT NULL THEN
         -- Check if points already awarded for this booking
-        SELECT id INTO v_existing_earn_id FROM loyalty_transactions WHERE booking_id = NEW.id::TEXT AND type = 'EARN';
+        SELECT id INTO v_existing_earn_id FROM loyalty_transactions WHERE booking_id = NEW.id AND type = 'EARN';
         
         IF v_existing_earn_id IS NULL THEN
             -- Get or create customer
@@ -48,7 +48,7 @@ BEGIN
             IF v_earned_points > 0 THEN
                 -- Insert transaction
                 INSERT INTO loyalty_transactions (customer_id, booking_id, points, type, description)
-                VALUES (v_customer_id, NEW.id::TEXT, v_earned_points, 'EARN', 'نقاط مكتسبة من حجز ' || COALESCE(NEW.room_name, 'غرفة'));
+                VALUES (v_customer_id, NEW.id, v_earned_points, 'EARN', 'نقاط مكتسبة من حجز ' || COALESCE(NEW.room_name, 'غرفة'));
                 
                 -- Update balance
                 UPDATE customers SET loyalty_points_balance = loyalty_points_balance + v_earned_points WHERE id = v_customer_id;
@@ -56,16 +56,16 @@ BEGIN
         END IF;
 
     -- If cancelled after being confirmed/completed, refund points
-    ELSIF NEW.status = 'cancelled' AND OLD.status IN ('confirmed', 'completed') AND v_customer_phone IS NOT NULL THEN
+    ELSIF NEW.status = 'cancelled' AND v_customer_phone IS NOT NULL THEN
         -- Check if points were awarded
         SELECT id, customer_id, points INTO v_existing_earn_id, v_customer_id, v_earned_points 
-        FROM loyalty_transactions WHERE booking_id = NEW.id::TEXT AND type = 'EARN' LIMIT 1;
+        FROM loyalty_transactions WHERE booking_id = NEW.id AND type = 'EARN' LIMIT 1;
         
         IF v_existing_earn_id IS NOT NULL THEN
             -- Check if REFUND already exists
-            IF NOT EXISTS (SELECT 1 FROM loyalty_transactions WHERE booking_id = NEW.id::TEXT AND type = 'REFUND') THEN
+            IF NOT EXISTS (SELECT 1 FROM loyalty_transactions WHERE booking_id = NEW.id AND type = 'REFUND') THEN
                 INSERT INTO loyalty_transactions (customer_id, booking_id, points, type, description)
-                VALUES (v_customer_id, NEW.id::TEXT, -v_earned_points, 'REFUND', 'استرجاع نقاط بسبب إلغاء حجز ' || COALESCE(NEW.room_name, 'غرفة'));
+                VALUES (v_customer_id, NEW.id, -v_earned_points, 'REFUND', 'استرجاع نقاط بسبب إلغاء حجز ' || COALESCE(NEW.room_name, 'غرفة'));
                 UPDATE customers SET loyalty_points_balance = loyalty_points_balance - v_earned_points WHERE id = v_customer_id;
             END IF;
         END IF;

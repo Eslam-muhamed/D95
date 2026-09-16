@@ -48,6 +48,7 @@ export default function CustomerDashboardPage() {
                 if (ordersRes.data) setAuthOrders(ordersRes.data);
             } catch (err) {
                 console.error('Error fetching auth data:', err);
+                toast.error('حدث خطأ أثناء تحميل البيانات');
             } finally {
                 setFetchingAuthData(false);
             }
