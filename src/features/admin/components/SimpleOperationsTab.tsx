@@ -47,7 +47,7 @@ import {
     getBookingDates,
     type RoomRates,
     type ConflictGroup,
-} from '@/services/bookingService';
+} from '@/features/booking/services/bookingService';
 import {
     getCairoTodayDateString,
     addDaysToDateString,

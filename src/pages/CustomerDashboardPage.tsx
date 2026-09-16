@@ -4,7 +4,7 @@ import { Phone, ArrowRight, Star, History, AlertCircle, Calendar, UserCircle2, L
 import { toast } from 'sonner';
 import { getCustomerLoyaltyInfo } from '@/services/loyaltyService';
 import type { DBCustomer, DBLoyaltyTransaction, DBOrder } from '@/types/database';
-import { useAuth } from '@/stores/authStore';
+import { useAuth } from '@/features/auth/stores/authStore';
 import { supabase } from '@/lib/supabase';
 
 export default function CustomerDashboardPage() {

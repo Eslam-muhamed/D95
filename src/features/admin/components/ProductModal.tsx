@@ -1,8 +1,10 @@
 import { useState, useRef } from 'react';
 import { X, Upload, Image as ImageIcon, Flame, Snowflake, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { createProduct, updateProduct, uploadProductImage } from '@/services/menuService';
+import { createProduct, updateProduct, uploadProductImage } from '@/features/menu/services/menuService';
 import type { DBCategory, DBProduct } from '@/types/database';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 interface ProductModalProps {
     product: DBProduct | null;
@@ -129,13 +131,13 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
                             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                 اسم المنتج (عربي) *
                             </label>
-                            <input
+                            <Input
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="مثال: سبانش لاتيه بارد"
                                 required
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-red-500"
+                                className="bg-slate-50 rounded-xl"
                             />
                         </div>
 
@@ -163,14 +165,14 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
                             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                 سعر البيع (ج.م) *
                             </label>
-                            <input
+                            <Input
                                 type="number"
                                 step="0.5"
                                 value={price}
                                 onChange={(e) => setPrice(e.target.value)}
                                 placeholder="مثال: 65"
                                 required
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-red-500"
+                                className="bg-slate-50 rounded-xl"
                             />
                         </div>
 
@@ -178,13 +180,13 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
                             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                 السعر قبل الخصم (اختياري)
                             </label>
-                            <input
+                            <Input
                                 type="number"
                                 step="0.5"
                                 value={originalPrice}
                                 onChange={(e) => setOriginalPrice(e.target.value)}
                                 placeholder="مثال: 80 (سيظهر مشطوباً كعرض)"
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-red-500"
+                                className="bg-slate-50 rounded-xl"
                             />
                         </div>
                     </div>
@@ -325,25 +327,26 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
 
                     {/* Submit and Cancel Buttons */}
                     <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
-                        <button
+                        <Button
                             type="button"
+                            variant="secondary"
                             onClick={onClose}
-                            className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer border border-slate-200"
+                            className="rounded-xl font-bold"
                         >
                             إلغاء
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
                             disabled={saving || uploading}
-                            className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                            className="rounded-xl font-bold px-6"
                         >
                             {saving ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
                                 <Check className="w-4 h-4 stroke-[3]" />
                             )}
-                            <span>{isEdit ? 'حفظ التعديلات' : 'إضافة المنتج للمنيو'}</span>
-                        </button>
+                            <span className="mr-1.5">{isEdit ? 'حفظ التعديلات' : 'إضافة المنتج للمنيو'}</span>
+                        </Button>
                     </div>
                 </form>
             </div>

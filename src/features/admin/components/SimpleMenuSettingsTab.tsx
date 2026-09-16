@@ -22,11 +22,11 @@ import {
     fetchOffers,
     deleteOffer,
     updateOffer,
-} from '@/services/menuService';
+} from '@/features/menu/services/menuService';
 import ProductModal from './ProductModal';
 import CategoryModal from './CategoryModal';
 import OfferModal from './OfferModal';
-import CategoryIcon from '@/components/features/CategoryIcon';
+import CategoryIcon from '@/features/menu/components/CategoryIcon';
 import type { DBCategory, DBProduct, DBOffer } from '@/types/database';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 

@@ -2,10 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, X, Send, User, Sparkles, AlertCircle, ShoppingCart } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { useCart } from '@/stores/cartStore';
+import { useCart } from '@/features/cart/stores/cartStore';
 
 // We import items to pass as context
-import { getCachedCategories, getCachedProducts } from '@/services/menuService';
+import { getCachedCategories, getCachedProducts } from '@/features/menu/services/menuService';
 import type { DBProduct } from '@/types/database';
 
 interface Message {

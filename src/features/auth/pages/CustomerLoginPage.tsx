@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { UserCircle2, ArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/stores/authStore';
+import { useAuth } from '@/features/auth/stores/authStore';
 import { toast } from 'sonner';
 
 export default function CustomerLoginPage() {

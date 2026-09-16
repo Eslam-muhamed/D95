@@ -20,8 +20,8 @@ import {
   ShoppingBag
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useCart } from '@/stores/cartStore';
-import { useAuth } from '@/stores/authStore';
+import { useCart } from '@/features/cart/stores/cartStore';
+import { useAuth } from '@/features/auth/stores/authStore';
 import { getItemUnitPrice } from '@/lib/cartUtils';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { createOrder } from '@/services/orderService';

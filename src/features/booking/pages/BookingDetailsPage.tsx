@@ -26,7 +26,7 @@ import { toast } from 'sonner';
 import room01InteriorImg from '@/assets/doors/room-01-interior.webp';
 import room02InteriorImg from '@/assets/doors/room-02-interior.webp';
 import { useTheme } from '@/stores/themeStore';
-import { useCart } from '@/stores/cartStore';
+import { useCart } from '@/features/cart/stores/cartStore';
 import { getItemUnitPrice } from '@/lib/cartUtils';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 import {
@@ -38,7 +38,7 @@ import {
     formatArabicTimeFromDate,
     OPERATING_HOURS,
 } from '@/lib/bookingDatetime';
-import { fetchRoomOccupiedIntervals, fetchRoomRates, type RoomRates } from '@/services/bookingService';
+import { fetchRoomOccupiedIntervals, fetchRoomRates, type RoomRates } from '@/features/booking/services/bookingService';
 import { BookingTimelineSchedule } from '@/components/booking/BookingTimelineSchedule';
 
 interface Room {

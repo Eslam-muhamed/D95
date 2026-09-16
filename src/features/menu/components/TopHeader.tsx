@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ShoppingBag, Sun, Moon, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCart } from '@/stores/cartStore';
+import { useCart } from '@/features/cart/stores/cartStore';
 import { useTheme } from '@/stores/themeStore';
 import { isAudioMuted, toggleAudioMute } from '@/lib/sound';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';

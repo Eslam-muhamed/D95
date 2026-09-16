@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { createCategory, updateCategory } from '@/services/menuService';
+import { createCategory, updateCategory } from '@/features/menu/services/menuService';
 import type { DBCategory } from '@/types/database';
 
 interface CategoryModalProps {

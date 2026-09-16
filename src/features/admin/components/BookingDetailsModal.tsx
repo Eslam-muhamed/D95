@@ -18,7 +18,7 @@ import {
     ShieldCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getBookingDates } from '@/services/bookingService';
+import { getBookingDates } from '@/features/booking/services/bookingService';
 import type { DBBooking } from '@/types/database';
 
 interface BookingDetailsModalProps {

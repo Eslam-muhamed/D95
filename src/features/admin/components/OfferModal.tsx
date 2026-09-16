@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { createOffer, updateOffer } from '@/services/menuService';
+import { createOffer, updateOffer } from '@/features/menu/services/menuService';
 import type { DBOffer } from '@/types/database';
 
 interface OfferModalProps {

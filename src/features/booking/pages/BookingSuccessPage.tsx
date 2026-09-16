@@ -16,7 +16,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useTheme } from '@/stores/themeStore';
 import { CONTACT_INFO } from '@/constants/contactInfo';
-import { fetchBookingByReservationId } from '@/services/bookingService';
+import { fetchBookingByReservationId } from '@/features/booking/services/bookingService';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
 interface SnackAddon {

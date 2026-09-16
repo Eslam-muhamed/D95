@@ -11,13 +11,13 @@ import {
     LogOut,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import SimpleOperationsTab from '@/components/admin/SimpleOperationsTab';
-import OrdersTab from '@/components/admin/OrdersTab';
-import SimpleMenuSettingsTab from '@/components/admin/SimpleMenuSettingsTab';
-import PaymentSettingsTab from '@/components/admin/PaymentSettingsTab';
-import StaffSettingsTab from '@/components/admin/StaffSettingsTab';
-import LoyaltyTab from '@/components/admin/LoyaltyTab';
-import VenueStatusControl from '@/components/admin/VenueStatusControl';
+import SimpleOperationsTab from '@/features/admin/components/SimpleOperationsTab';
+import OrdersTab from '@/features/admin/components/OrdersTab';
+import SimpleMenuSettingsTab from '@/features/admin/components/SimpleMenuSettingsTab';
+import PaymentSettingsTab from '@/features/admin/components/PaymentSettingsTab';
+import StaffSettingsTab from '@/features/admin/components/StaffSettingsTab';
+import LoyaltyTab from '@/features/admin/components/LoyaltyTab';
+import VenueStatusControl from '@/features/admin/components/VenueStatusControl';
 import SectionErrorBoundary from '@/components/features/SectionErrorBoundary';
 import { supabase } from '@/lib/supabase';
 import { playPs5NavigateSound } from '@/lib/sound';

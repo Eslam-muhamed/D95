@@ -22,12 +22,12 @@ import {
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/stores/themeStore';
-import { useCart } from '@/stores/cartStore';
+import { useCart } from '@/features/cart/stores/cartStore';
 import { getItemUnitPrice } from '@/lib/cartUtils';
-import CategoryIcon from '@/components/features/CategoryIcon';
+import CategoryIcon from '@/features/menu/components/CategoryIcon';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
-import { createBooking } from '@/services/bookingService';
+import { createBooking } from '@/features/booking/services/bookingService';
 import { createDateTimeFromBusinessDate, calculateEndDateTime } from '@/lib/bookingDatetime';
 import { fetchPaymentSettings, PaymentSettings } from '@/services/paymentSettingsService';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';

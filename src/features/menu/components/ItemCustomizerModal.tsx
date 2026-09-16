@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Plus } from 'lucide-react';
 import type { MenuItem } from '@/types/menu';
 import type { ItemCustomization } from '@/types/cart';
-import { useCart } from '@/stores/cartStore';
+import { useCart } from '@/features/cart/stores/cartStore';
 import { playCartChime } from '@/lib/sound';
 
 interface Props {

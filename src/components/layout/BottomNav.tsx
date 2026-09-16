@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Gamepad2, Coffee, ShoppingBag, Home, Star } from 'lucide-react';
-import { useCart } from '@/stores/cartStore';
-import { preloadMenuData } from '@/services/menuService';
+import { useCart } from '@/features/cart/stores/cartStore';
+import { preloadMenuData } from '@/features/menu/services/menuService';
 
 export default function BottomNav() {
     const location = useLocation();

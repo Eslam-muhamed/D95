@@ -1,21 +1,21 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, Search, Coffee } from 'lucide-react';
-import TopHeader from '@/components/features/TopHeader';
-import CategoryNav from '@/components/features/CategoryNav';
-import SearchBar from '@/components/features/SearchBar';
-import OffersSection from '@/components/features/OffersSection';
-import MenuSection from '@/components/features/MenuSection';
-import ItemCustomizerModal from '@/components/features/ItemCustomizerModal';
+import TopHeader from '@/features/menu/components/TopHeader';
+import CategoryNav from '@/features/menu/components/CategoryNav';
+import SearchBar from '@/features/menu/components/SearchBar';
+import OffersSection from '@/features/menu/components/OffersSection';
+import MenuSection from '@/features/menu/components/MenuSection';
+import ItemCustomizerModal from '@/features/menu/components/ItemCustomizerModal';
 import Footer from '@/components/layout/Footer';
 import { categories as defaultCategories } from '@/constants/menuMetadata';
 import type { MenuItem, MenuCategory } from '@/types/menu';
-import { fetchCategories, fetchProducts, fetchOffers, getCachedCategories, getCachedProducts, getCachedOffers } from '@/services/menuService';
+import { fetchCategories, fetchProducts, fetchOffers, getCachedCategories, getCachedProducts, getCachedOffers } from '@/features/menu/services/menuService';
 import type { DBOffer } from '@/types/database';
 import { playPaperFlipSound } from '@/lib/sound';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';
-import { useCart } from '@/stores/cartStore';
-import SmartWaiterBot from '@/components/features/SmartWaiterBot';
+import { useCart } from '@/features/cart/stores/cartStore';
+import SmartWaiterBot from '@/features/menu/components/SmartWaiterBot';
 
 function ScrollToTop() {
   const [visible, setVisible] = useState(false);
