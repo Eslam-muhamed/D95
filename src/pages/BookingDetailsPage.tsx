@@ -23,8 +23,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import room01InteriorImg from '@/assets/doors/room-01-interior.jpg';
-import room02InteriorImg from '@/assets/doors/room-02-interior.jpg';
+import room01InteriorImg from '@/assets/doors/room-01-interior.webp';
+import room02InteriorImg from '@/assets/doors/room-02-interior.webp';
 import { useTheme } from '@/stores/themeStore';
 import { useCart } from '@/stores/cartStore';
 import { getItemUnitPrice } from '@/lib/cartUtils';
