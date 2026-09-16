@@ -22,7 +22,7 @@ export default function BottomNav() {
         { path: '/', label: 'البوابة', icon: Home, isExact: true },
         { path: '/playstation', label: 'الأجهزة', icon: Gamepad2 },
         { path: '/menu', label: 'الكافيه', icon: Coffee },
-        { path: '/customer', label: 'الولاء', icon: Star },
+        { path: '/customer', label: 'حسابي', icon: Star },
     ];
 
     const handleTabSelect = (path: string, isExact?: boolean) => {
