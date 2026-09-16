@@ -365,7 +365,7 @@ export default function CustomerDashboardPage() {
             <div className="bg-[var(--bg-main)] text-[var(--text-1)] sticky top-0 z-40 border-b border-[var(--c-border)] backdrop-blur-md bg-opacity-80">
                 <div className="container mx-auto px-4 h-14 sm:h-16 flex items-center justify-between max-w-md">
                     <button 
-                        onClick={() => navigate(-1)} 
+                        onClick={() => navigate('/')} 
                         className="w-10 h-10 flex items-center justify-center hover:bg-[var(--c-card)] rounded-xl transition-colors border border-transparent hover:border-[var(--c-border)]"
                     >
                         <ArrowRight className="w-5 h-5 text-[var(--text-2)]" />
