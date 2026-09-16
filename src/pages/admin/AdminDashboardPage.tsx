@@ -6,6 +6,7 @@ import {
     ShoppingBag,
     Wallet,
     Users,
+    Star,
     ExternalLink,
     LogOut,
 } from 'lucide-react';
@@ -15,13 +16,14 @@ import OrdersTab from '@/components/admin/OrdersTab';
 import SimpleMenuSettingsTab from '@/components/admin/SimpleMenuSettingsTab';
 import PaymentSettingsTab from '@/components/admin/PaymentSettingsTab';
 import StaffSettingsTab from '@/components/admin/StaffSettingsTab';
+import LoyaltyTab from '@/components/admin/LoyaltyTab';
 import VenueStatusControl from '@/components/admin/VenueStatusControl';
 import SectionErrorBoundary from '@/components/features/SectionErrorBoundary';
 import { supabase } from '@/lib/supabase';
 import { playPs5NavigateSound } from '@/lib/sound';
 import { isCashier as checkIsCashier, isStaff } from '@/lib/authRoles';
 
-type TabType = 'operations' | 'orders' | 'menu_settings' | 'payment_settings' | 'staff_settings';
+type TabType = 'operations' | 'orders' | 'menu_settings' | 'payment_settings' | 'staff_settings' | 'loyalty';
 
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
@@ -85,6 +87,12 @@ export default function AdminDashboardPage() {
             id: 'menu_settings',
             label: 'منيو وأسعار الكافيه',
             icon: <UtensilsCrossed className="w-4 h-4" />,
+            adminOnly: true,
+        },
+        {
+            id: 'loyalty',
+            label: 'الولاء والنقاط',
+            icon: <Star className="w-4 h-4" />,
             adminOnly: true,
         },
         {
@@ -226,6 +234,7 @@ export default function AdminDashboardPage() {
                     {activeTab === 'menu_settings' && !isCashier && <SimpleMenuSettingsTab />}
                     {activeTab === 'payment_settings' && !isCashier && <PaymentSettingsTab />}
                     {activeTab === 'staff_settings' && !isCashier && <StaffSettingsTab />}
+                    {activeTab === 'loyalty' && !isCashier && <LoyaltyTab />}
                 </SectionErrorBoundary>
             </main>
 
@@ -292,6 +301,20 @@ export default function AdminDashboardPage() {
                         >
                             <Wallet className="w-5 h-5" />
                             <span className="text-[10px]">المحافظ والدفع</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                playPs5NavigateSound();
+                                setActiveTab('loyalty');
+                            }}
+                            className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-xl transition-all cursor-pointer ${
+                                activeTab === 'loyalty' ? 'text-amber-500 font-bold' : 'text-slate-500'
+                            }`}
+                        >
+                            <Star className="w-5 h-5" />
+                            <span className="text-[10px]">الولاء</span>
                         </button>
                     </>
                 )}

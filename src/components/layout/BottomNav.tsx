@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Gamepad2, Coffee, ShoppingBag, Home } from 'lucide-react';
+import { Gamepad2, Coffee, ShoppingBag, Home, Star } from 'lucide-react';
 import { useCart } from '@/stores/cartStore';
 import { preloadMenuData } from '@/services/menuService';
 
@@ -22,6 +22,7 @@ export default function BottomNav() {
         { path: '/', label: 'البوابة', icon: Home, isExact: true },
         { path: '/playstation', label: 'الأجهزة', icon: Gamepad2 },
         { path: '/menu', label: 'الكافيه', icon: Coffee },
+        { path: '/customer', label: 'الولاء', icon: Star },
     ];
 
     const handleTabSelect = (path: string, isExact?: boolean) => {

@@ -105,6 +105,7 @@ export async function createOrder(orderData: {
         customization?: Record<string, unknown>;
     }>;
     notes?: string | null;
+    user_id?: string | null;
 }): Promise<DBOrder> {
     const { data, error } = await supabase.rpc('create_order_atomic', {
         p_order: orderData,

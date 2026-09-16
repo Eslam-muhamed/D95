@@ -252,6 +252,10 @@ export default function BookingSuccessPage() {
                         {paymentMethod === 'cash'
                             ? 'تم إرسال طلبك بنجاح. يرجى إرسال التذكرة عبر واتساب للإدارة لتأكيد الموعد وقفله باسمك.'
                             : 'تم تجهيز تذكرتك المبدئية. اضغط على الزر الأخضر لإرسال التذكرة وإيصال التحويل عبر واتساب ليتم تأكيد الموعد فوراً.'}
+                        <br/>
+                        <span className="text-amber-600 dark:text-amber-400 font-bold mt-1 inline-block">
+                            ⭐ سيتم احتساب نقاط الولاء الخاصة بك عند تأكيد الحجز!
+                        </span>
                     </p>
 
                     {/* VIP DIGITAL BOARDING PASS TICKET (ATHLETIC CARD) */}

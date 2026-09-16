@@ -1,6 +1,7 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { useAuth } from '@/stores/authStore';
 import { ThemeProvider } from '@/stores/themeStore';
 import { CartProvider } from '@/stores/cartStore';
 import CartSheet from '@/components/features/CartSheet';
@@ -17,6 +18,9 @@ import MenuPage from '@/pages/MenuPage';
 import BookingDetailsPage from '@/pages/BookingDetailsPage';
 import BookingPaymentPage from '@/pages/BookingPaymentPage';
 import BookingSuccessPage from '@/pages/BookingSuccessPage';
+
+import CustomerDashboardPage from '@/pages/CustomerDashboardPage';
+import CustomerLoginPage from '@/pages/CustomerLoginPage';
 
 // Route-level Code Splitting for back-office admin routes only
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'));
@@ -63,6 +67,8 @@ function AppRoutes() {
                     <Route path="/playstation/payment" element={<BookingPaymentPage />} />
                     <Route path="/playstation/success" element={<BookingSuccessPage />} />
                     <Route path="/menu" element={<MenuPage />} />
+                    <Route path="/customer" element={<CustomerDashboardPage />} />
+                    <Route path="/login" element={<CustomerLoginPage />} />
                     <Route
                         path="/admin"
                         element={
@@ -82,13 +88,16 @@ function AppRoutes() {
 }
 
 export default function App() {
+    const { initialize } = useAuth();
+
     useEffect(() => {
+        initialize();
         // Warm up menu cache during idle time so first menu visit is instant 0ms
         const timer = setTimeout(() => {
             preloadMenuData();
         }, 500);
         return () => clearTimeout(timer);
-    }, []);
+    }, [initialize]);
 
     return (
         <ErrorBoundary>

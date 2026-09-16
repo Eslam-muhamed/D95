@@ -97,6 +97,26 @@ export interface DBOrder {
     subtotal: number;
     total_amount: number;
     status: 'pending' | 'preparing' | 'completed' | 'cancelled' | string;
-    notes: string | null;
+    user_id?: string | null;
+    created_at: string;
+}
+
+export interface DBCustomer {
+    id: string;
+    auth_user_id?: string | null;
+    email?: string | null;
+    phone_number: string | null;
+    full_name: string | null;
+    loyalty_points_balance: number;
+    created_at: string;
+}
+
+export interface DBLoyaltyTransaction {
+    id: string;
+    customer_id: string;
+    order_id: string | null;
+    points: number;
+    type: 'EARN' | 'REDEEM' | 'ADJUSTMENT' | 'REFUND';
+    description: string;
     created_at: string;
 }

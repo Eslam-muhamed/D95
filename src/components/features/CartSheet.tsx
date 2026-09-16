@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCart } from '@/stores/cartStore';
+import { useAuth } from '@/stores/authStore';
 import { getItemUnitPrice } from '@/lib/cartUtils';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { createOrder } from '@/services/orderService';
@@ -81,6 +82,7 @@ function formatCustomization(c: import('@/types/cart').ItemCustomization): strin
 
 export default function CartSheet({ open: propOpen, onClose: propOnClose }: Props) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const {
     items,
     booking,
@@ -210,9 +212,10 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
           quantity: i.customization.quantity,
           customization: i.customization as unknown as Record<string, unknown>,
         })),
+        user_id: user?.id || null,
       });
 
-      toast.success(`تم تسجيل الطلب #${orderNumber} بنجاح!`, {
+      toast.success(`تم تسجيل الطلب #${orderNumber} بنجاح! سيتم إضافة نقاط الولاء بعد تأكيد الطلب.`, {
         action: {
           label: 'فتح واتساب',
           onClick: () => {
