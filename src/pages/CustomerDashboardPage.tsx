@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Phone, ArrowRight, Star, History, AlertCircle, Calendar, UserCircle2, LogOut, Link as LinkIcon, ShoppingBag, Sparkles, ChevronLeft, Gamepad2 } from 'lucide-react';
+import { ArrowRight, Star, History, AlertCircle, Calendar, UserCircle2, LogOut, Link as LinkIcon, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import { getCustomerLoyaltyInfo } from '@/services/loyaltyService';
-import type { DBCustomer, DBLoyaltyTransaction, DBOrder, DBBooking } from '@/types/database';
+import type { DBCustomer, DBLoyaltyTransaction } from '@/types/database';
 import { useAuth } from '@/features/auth/stores/authStore';
 import { supabase } from '@/lib/supabase';
 
@@ -13,18 +12,11 @@ export default function CustomerDashboardPage() {
     
     // Authenticated User State
     const [authHistory, setAuthHistory] = useState<DBLoyaltyTransaction[]>([]);
-    const [authOrders, setAuthOrders] = useState<DBOrder[]>([]);
-    const [authBookings, setAuthBookings] = useState<DBBooking[]>([]);
     const [fetchingAuthData, setFetchingAuthData] = useState(false);
-    const [activeTab, setActiveTab] = useState<'history' | 'orders' | 'bookings'>('history');
 
     // Pagination States
     const [txLimit, setTxLimit] = useState(10);
-    const [ordersLimit, setOrdersLimit] = useState(10);
-    const [bookingsLimit, setBookingsLimit] = useState(10);
     const [hasMoreTx, setHasMoreTx] = useState(true);
-    const [hasMoreOrders, setHasMoreOrders] = useState(true);
-    const [hasMoreBookings, setHasMoreBookings] = useState(true);
 
     // Link Phone State
     const [linkPhone, setLinkPhone] = useState('');
@@ -36,38 +28,16 @@ export default function CustomerDashboardPage() {
             if (!session || !customerProfile) return;
             setFetchingAuthData(true);
             try {
-                const [txRes, ordersRes, bookingsRes] = await Promise.all([
-                    supabase
-                        .from('loyalty_transactions')
-                        .select('*', { count: 'exact' })
-                        .eq('customer_id', customerProfile.id)
-                        .order('created_at', { ascending: false })
-                        .range(0, txLimit - 1),
-                    supabase
-                        .from('orders')
-                        .select('*', { count: 'exact' })
-                        .eq('user_id', user?.id)
-                        .order('created_at', { ascending: false })
-                        .range(0, ordersLimit - 1),
-                    supabase
-                        .from('ps_bookings')
-                        .select('*', { count: 'exact' })
-                        .eq('user_id', user?.id)
-                        .order('created_at', { ascending: false })
-                        .range(0, bookingsLimit - 1)
-                ]);
+                const txRes = await supabase
+                    .from('loyalty_transactions')
+                    .select('*', { count: 'exact' })
+                    .eq('customer_id', customerProfile.id)
+                    .order('created_at', { ascending: false })
+                    .range(0, txLimit - 1);
                 
                 if (txRes.data) {
                     setAuthHistory(txRes.data);
                     setHasMoreTx((txRes.count || 0) > txLimit);
-                }
-                if (ordersRes.data) {
-                    setAuthOrders(ordersRes.data);
-                    setHasMoreOrders((ordersRes.count || 0) > ordersLimit);
-                }
-                if (bookingsRes.data) {
-                    setAuthBookings(bookingsRes.data);
-                    setHasMoreBookings((bookingsRes.count || 0) > bookingsLimit);
                 }
             } catch (err) {
                 console.error('Error fetching auth data:', err);
@@ -78,7 +48,7 @@ export default function CustomerDashboardPage() {
         }
         
         fetchAuthData();
-    }, [session, customerProfile, user?.id, txLimit, ordersLimit, bookingsLimit]);
+    }, [session, customerProfile, user?.id, txLimit]);
 
     useEffect(() => {
         // Handle OAuth error in URL hash
@@ -203,91 +173,7 @@ export default function CustomerDashboardPage() {
         );
     };
 
-    const renderOrders = (orders: DBOrder[], isFetching: boolean) => {
-        if (isFetching) return <SkeletonList />;
-        
-        if (orders.length === 0) return (
-            <div className="bg-[var(--c-card)] border border-[var(--c-border)] rounded-2xl p-8 text-center mt-4 shadow-sm">
-                <ShoppingBag className="w-10 h-10 text-[var(--text-3)] mx-auto mb-3 opacity-50" />
-                <p className="text-[var(--text-2)] font-medium text-sm">لم تقم بأي طلبات مسبقاً.</p>
-            </div>
-        );
 
-        return (
-            <div className="mt-4 space-y-3">
-                {orders.map(order => (
-                    <div key={order.id} className="bg-[var(--c-card)] border border-[var(--c-border)] rounded-2xl p-4 flex flex-col hover:border-[var(--c-brand-l)] transition-colors shadow-sm">
-                        <div className="flex items-center justify-between mb-3 border-b border-[var(--c-border)] pb-3">
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-white/5 flex items-center justify-center text-[var(--text-2)]">
-                                    <ShoppingBag size={14} />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-[var(--text-1)] text-sm">طلب #{order.order_number}</p>
-                                    <p className="text-[10px] text-[var(--text-3)]">{formatDate(order.created_at)}</p>
-                                </div>
-                            </div>
-                            <span className={`text-[10px] font-bold px-2 py-1 rounded-md ${
-                                order.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
-                                order.status === 'cancelled' ? 'bg-red-500/10 text-red-500 border border-red-500/20' :
-                                'bg-amber-500/10 text-amber-500 border border-amber-500/20'
-                            }`}>
-                                {order.status === 'completed' ? 'مكتمل' : order.status === 'cancelled' ? 'ملغي' : order.status === 'preparing' ? 'قيد التجهيز' : 'قيد الانتظار'}
-                            </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs text-[var(--text-2)] font-medium">الإجمالي:</span>
-                            <span className="font-bold font-mono text-base text-[var(--text-1)]">{order.total_amount} <span className="text-[10px] text-[var(--text-3)] font-sans">ج.م</span></span>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        );
-    };
-
-
-    const renderBookings = (bookings: DBBooking[], isFetching: boolean) => {
-        if (isFetching) return <SkeletonList />;
-        
-        if (bookings.length === 0) return (
-            <div className="bg-[var(--c-card)] border border-[var(--c-border)] rounded-2xl p-8 text-center mt-4 shadow-sm">
-                <Gamepad2 className="w-10 h-10 text-[var(--text-3)] mx-auto mb-3 opacity-50" />
-                <p className="text-[var(--text-2)] font-medium text-sm">لم تقم بأي حجوزات غرف مسبقاً.</p>
-            </div>
-        );
-
-        return (
-            <div className="mt-4 space-y-3">
-                {bookings.map(booking => (
-                    <div key={booking.id} className="bg-[var(--c-card)] border border-[var(--c-border)] rounded-2xl p-4 flex flex-col hover:border-[var(--c-brand-l)] transition-colors shadow-sm">
-                        <div className="flex items-center justify-between mb-3 border-b border-[var(--c-border)] pb-3">
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-white/5 flex items-center justify-center text-[var(--text-2)]">
-                                    <Gamepad2 size={14} />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-[var(--text-1)] text-sm">{booking.room_name || 'غرفة اللعب'}</p>
-                                    <p className="text-[10px] text-[var(--text-3)]">{formatDate(booking.created_at || '')}</p>
-                                </div>
-                            </div>
-                            <span className={`text-[10px] font-bold px-2 py-1 rounded-md ${
-                                booking.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
-                                booking.status === 'cancelled' ? 'bg-red-500/10 text-red-500 border border-red-500/20' :
-                                booking.status === 'confirmed' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' :
-                                'bg-amber-500/10 text-amber-500 border border-amber-500/20'
-                            }`}>
-                                {booking.status === 'completed' ? 'مكتمل' : booking.status === 'cancelled' ? 'ملغي' : booking.status === 'confirmed' ? 'مؤكد' : 'معلق'}
-                            </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs text-[var(--text-2)] font-medium">الإجمالي:</span>
-                            <span className="font-bold font-mono text-base text-[var(--text-1)]">{booking.total_amount} <span className="text-[10px] text-[var(--text-3)] font-sans">ج.م</span></span>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        );
-    };
 
     const renderVIPCard = (targetCustomer: DBCustomer, isAuth: boolean) => (
         <div className="relative w-full rounded-3xl overflow-hidden shadow-2xl border border-white/10" style={{
@@ -421,38 +307,22 @@ export default function CustomerDashboardPage() {
                             </div>
                         )}
 
-                        {/* Tabs Navigation */}
+                        {/* Points History */}
                         {customerProfile && (
                             <div className="pt-2">
-                                <div className="flex overflow-x-auto hide-scrollbar gap-2 mb-4 pb-2 border-b border-[var(--c-border)]">
-                                    <button 
-                                        onClick={() => setActiveTab('history')}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'history' ? 'bg-amber-500/10 text-amber-500' : 'text-[var(--text-2)] hover:bg-[var(--c-card)]'}`}
+                                <h3 className="font-bold text-sm text-[var(--text-1)] mb-3 flex items-center gap-2">
+                                    <History className="w-4 h-4 text-amber-500" />
+                                    سجل النقاط والمكافآت
+                                </h3>
+                                {renderHistory(authHistory, fetchingAuthData)}
+                                {hasMoreTx && (
+                                    <button
+                                        onClick={() => setTxLimit(prev => prev + 10)}
+                                        className="w-full mt-4 py-3 bg-[var(--c-card)] hover:bg-[var(--c-card-hover)] border border-[var(--c-border)] text-[var(--text-2)] rounded-2xl text-xs font-bold transition-colors shadow-xs"
                                     >
-                                        <History size={16} />
-                                        سجل النقاط
+                                        عرض المزيد من الحركات
                                     </button>
-                                    <button 
-                                        onClick={() => setActiveTab('orders')}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'orders' ? 'bg-amber-500/10 text-amber-500' : 'text-[var(--text-2)] hover:bg-[var(--c-card)]'}`}
-                                    >
-                                        <ShoppingBag size={16} />
-                                        طلبات الكافيه
-                                    </button>
-                                    <button 
-                                        onClick={() => setActiveTab('bookings')}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'bookings' ? 'bg-amber-500/10 text-amber-500' : 'text-[var(--text-2)] hover:bg-[var(--c-card)]'}`}
-                                    >
-                                        <Gamepad2 size={16} />
-                                        حجوزات الغرف
-                                    </button>
-                                </div>
-                                
-                                <div className="pt-2">
-                                    {activeTab === 'history' && renderHistory(authHistory, fetchingAuthData)}
-                                    {activeTab === 'orders' && renderOrders(authOrders, fetchingAuthData)}
-                                    {activeTab === 'bookings' && renderBookings(authBookings, fetchingAuthData)}
-                                </div>
+                                )}
                             </div>
                         )}
                     </div>

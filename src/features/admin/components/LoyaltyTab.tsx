@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Star, Search, CheckCircle2, History, Plus, Minus, User, ShieldAlert } from 'lucide-react';
+import { Star, Search, CheckCircle2, History, Plus, Minus, User, ShieldAlert, Mail } from 'lucide-react';
 import { toast } from 'sonner';
-import { fetchAllCustomers, adminAdjustPoints, getCustomerLoyaltyInfo, getPointsPerEgp, updatePointsPerEgp } from '@/services/loyaltyService';
+import { fetchAllCustomers, adminAdjustPoints, getPointsPerEgp, updatePointsPerEgp } from '@/services/loyaltyService';
 import type { DBCustomer, DBLoyaltyTransaction } from '@/types/database';
+import { supabase } from '@/lib/supabase';
 
 export default function LoyaltyTab() {
     const [customers, setCustomers] = useState<DBCustomer[]>([]);
@@ -65,9 +66,16 @@ export default function LoyaltyTab() {
         setSelectedCustomer(customer);
         setLoadingHistory(true);
         try {
-            const data = await getCustomerLoyaltyInfo(customer.phone_number);
-            setHistory(data.history || []);
+            const { data, error } = await supabase
+                .from('loyalty_transactions')
+                .select('*')
+                .eq('customer_id', customer.id)
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            setHistory(data || []);
         } catch (error) {
+            console.error('Error fetching loyalty history:', error);
             toast.error('فشل تحميل السجل');
         } finally {
             setLoadingHistory(false);
@@ -113,10 +121,14 @@ export default function LoyaltyTab() {
         }
     };
 
-    const filteredCustomers = customers.filter(c => 
-        (c.full_name && c.full_name.includes(searchQuery)) || 
-        c.phone_number.includes(searchQuery)
-    );
+    const filteredCustomers = customers.filter(c => {
+        const q = searchQuery.trim().toLowerCase();
+        if (!q) return true;
+        const nameMatch = c.full_name && c.full_name.toLowerCase().includes(q);
+        const emailMatch = c.email && c.email.toLowerCase().includes(q);
+        const phoneMatch = c.phone_number && c.phone_number.includes(q);
+        return Boolean(nameMatch || emailMatch || phoneMatch);
+    });
 
     return (
         <div className="space-y-6" dir="rtl">
@@ -178,7 +190,7 @@ export default function LoyaltyTab() {
                         <thead className="bg-slate-50 text-slate-600 text-xs uppercase font-bold">
                             <tr>
                                 <th className="px-6 py-4">العميل</th>
-                                <th className="px-6 py-4">رقم الهاتف</th>
+                                <th className="px-6 py-4">الحساب / جهة الاتصال</th>
                                 <th className="px-6 py-4">الرصيد الحالي</th>
                                 <th className="px-6 py-4 text-center">الإجراءات</th>
                             </tr>
@@ -196,13 +208,32 @@ export default function LoyaltyTab() {
                                 filteredCustomers.map(c => (
                                     <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-6 py-4 font-medium text-slate-900">
-                                            {c.full_name || 'عميل بدون اسم'}
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs shrink-0">
+                                                    {c.full_name ? c.full_name.slice(0, 2) : 'ع'}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-slate-900 text-sm">{c.full_name || 'عميل مسجل'}</p>
+                                                    {c.email && (
+                                                        <span className="text-[11px] text-slate-400 font-mono block mt-0.5" dir="ltr">{c.email}</span>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </td>
-                                        <td className="px-6 py-4 font-mono text-slate-600" dir="ltr">
-                                            {c.phone_number}
+                                        <td className="px-6 py-4 text-slate-600">
+                                            {c.phone_number ? (
+                                                <span className="font-mono text-sm block" dir="ltr">{c.phone_number}</span>
+                                            ) : c.email ? (
+                                                <span className="inline-flex items-center gap-1 text-[11px] bg-emerald-50 text-emerald-700 font-medium px-2 py-0.5 rounded-md border border-emerald-200/60">
+                                                    حساب مسجل (Google)
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs text-slate-400">غير محدد</span>
+                                            )}
                                         </td>
-                                        <td className="px-6 py-4 font-mono font-bold text-amber-500">
+                                        <td className="px-6 py-4 font-mono font-bold text-amber-500 text-base">
                                             {c.loyalty_points_balance.toLocaleString()}
+                                            <span className="text-xs text-amber-600/70 font-sans mr-1">نقطة</span>
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <button
@@ -230,10 +261,19 @@ export default function LoyaltyTab() {
                         <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/50">
                             <div>
                                 <h3 className="text-xl font-bold text-slate-900">سجل نقاط العميل</h3>
-                                <p className="text-sm text-slate-500 mt-1 flex items-center gap-2">
-                                    {selectedCustomer.full_name || 'بدون اسم'}
-                                    <span className="font-mono text-xs" dir="ltr">({selectedCustomer.phone_number})</span>
-                                </p>
+                                <div className="text-sm text-slate-500 mt-1 flex flex-wrap items-center gap-2">
+                                    <span className="font-bold text-slate-800">{selectedCustomer.full_name || 'بدون اسم'}</span>
+                                    {selectedCustomer.email && (
+                                        <span className="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded" dir="ltr">
+                                            {selectedCustomer.email}
+                                        </span>
+                                    )}
+                                    {selectedCustomer.phone_number && (
+                                        <span className="font-mono text-xs text-slate-600 bg-slate-100 px-2 py-0.5 rounded" dir="ltr">
+                                            {selectedCustomer.phone_number}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                             <div className="text-center">
                                 <span className="block text-xs font-bold text-slate-500 mb-1">الرصيد الحالي</span>
