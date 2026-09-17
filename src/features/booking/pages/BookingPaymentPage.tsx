@@ -22,6 +22,7 @@ import {
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/stores/themeStore';
+import { useAuth } from '@/features/auth/stores/authStore';
 import { useCart } from '@/features/cart/stores/cartStore';
 import { getItemUnitPrice } from '@/lib/cartUtils';
 import CategoryIcon from '@/features/menu/components/CategoryIcon';
@@ -47,6 +48,7 @@ export default function BookingPaymentPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
+    const { user } = useAuth();
     const { items: cartItems, cafeTotal, clearCart } = useCart();
 
     // Booking context from state directly (no sessionStorage to avoid tab-state leak)
@@ -206,6 +208,7 @@ export default function BookingPaymentPage() {
                 status: 'pending',
                 snacks: effectiveSnacks || [],
                 notes: notes.trim() || null,
+                user_id: user?.id || undefined,
             });
 
             // Booking successfully recorded - clear cart

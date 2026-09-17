@@ -47,6 +47,7 @@ export interface DBBooking {
     customer_name: string;
     customer_phone: string;
     room_id?: string;
+    user_id?: string;
     room_name: string;
     booking_date: string;
     start_time: string;
