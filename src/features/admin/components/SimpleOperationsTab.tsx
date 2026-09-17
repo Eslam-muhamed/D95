@@ -62,7 +62,6 @@ import { supabase } from '@/lib/supabase';
 import VenueStatusControl from './VenueStatusControl';
 
 interface SimpleOperationsTabProps {
-    isCashier?: boolean;
     userEmail?: string;
 }
 
@@ -105,7 +104,7 @@ function isBookingMatchingRoom(b: DBBooking, roomFilterId: string): boolean {
     return false;
 }
 
-export default function SimpleOperationsTab({ isCashier = false, userEmail = 'admin@d95.com' }: SimpleOperationsTabProps) {
+export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: SimpleOperationsTabProps) {
     const [activeSubTab, setActiveSubTab] = useState<SubTabType>('dashboard');
 
     // Cairo-pinned Date for Today
@@ -222,7 +221,7 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
         } finally {
             if (!isSilent) setLoading(false);
         }
-    }, [todayStr, recentDateFilter, todayDateFilter]);
+    }, [recentDateFilter, todayDateFilter]);
 
     useEffect(() => {
         loadOperationsData();

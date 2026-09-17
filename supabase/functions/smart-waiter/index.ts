@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-// @ts-ignore
+// @ts-expect-error Deno http server import
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -14,7 +14,7 @@ serve(async (req: Request) => {
   }
 
   try {
-    // @ts-ignore
+    // @ts-expect-error Deno environment variable access
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
     if (!GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY is not set in environment variables');
@@ -51,7 +51,7 @@ serve(async (req: Request) => {
 معلومات أساسية عن المكان:
 - الاسم: D95 Gaming & Cafe
 - أوقات العمل: مفتوح يومياً من الساعة 8:00 صباحاً وحتى الساعة 4:00 فجراً.
-- الموقع: [أضف عنوان الكافيه إذا كان متوفراً أو قل أنه في موقعنا].
+- الموقع: الصالة الرئيسية لعلامة D95 Gaming Lounge & Cafe.
 - شعار المكان: PLAY. COMPETE. RELAX. REPEAT.
 
 قائمة الطعام (المنيو) المتوفرة لدينا حالياً بالأسعار:
@@ -67,14 +67,12 @@ ${safeMenuContext || 'لا توجد بيانات متاحة للمنيو حال�
     `.trim();
 
     // Format history for Gemini (roles: 'user' or 'model') and enforce limits
-    let safeHistory = Array.isArray(history) ? history : [];
-    if (safeHistory.length > 20) {
-      safeHistory = safeHistory.slice(-20); // Keep only last 20 messages
-    }
+    const safeHistory: Array<{ role?: string; text?: unknown }> = Array.isArray(history) ? history : [];
+    const recentHistory = safeHistory.length > 20 ? safeHistory.slice(-20) : safeHistory;
     
-    const formattedHistory = safeHistory.map((msg: any) => ({
+    const formattedHistory = recentHistory.map((msg: { role?: string; text?: unknown }) => ({
       role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: String(msg.text).substring(0, 1000) }],
+      parts: [{ text: String(msg.text || '').substring(0, 1000) }],
     }));
 
     // Append the current message
@@ -84,7 +82,7 @@ ${safeMenuContext || 'لا توجد بيانات متاحة للمنيو حال�
     });
 
     // Call Gemini API
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

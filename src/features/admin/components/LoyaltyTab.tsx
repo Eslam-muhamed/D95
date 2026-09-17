@@ -31,7 +31,7 @@ export default function LoyaltyTab() {
     const [adjustReason, setAdjustReason] = useState('');
     const [isAdjusting, setIsAdjusting] = useState(false);
 
-    const loadData = useCallback(async (targetPage = page, query = searchQuery) => {
+    const loadData = useCallback(async (targetPage = 1, query = '') => {
         setLoading(true);
         try {
             const [paginated, rate] = await Promise.all([
@@ -49,7 +49,7 @@ export default function LoyaltyTab() {
         } finally {
             setLoading(false);
         }
-    }, [page, pageSize, searchQuery]);
+    }, [pageSize]);
 
     // Initial load & search debounce
     useEffect(() => {
@@ -57,7 +57,7 @@ export default function LoyaltyTab() {
             loadData(1, searchQuery);
         }, 300);
         return () => clearTimeout(timer);
-    }, [searchQuery]);
+    }, [searchQuery, loadData]);
 
     const handlePageChange = (newPage: number) => {
         if (newPage >= 1 && newPage <= totalPages && newPage !== page) {

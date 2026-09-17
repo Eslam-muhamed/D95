@@ -241,79 +241,100 @@ async function runAllTests() {
         assert(!res.isAvailable && res.reason === 'PAST_TIME', 'Edge Case 12: Attempt to book past time is rejected with PAST_TIME');
     }
 
+    function getFutureTestDate(seed: number) {
+        const randomDayOffset = Math.floor(Math.random() * 50000);
+        const d = new Date(Date.UTC(2030, 0, 1 + seed * 500 + randomDayOffset));
+        const y = d.getUTCFullYear();
+        const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(d.getUTCDate()).padStart(2, '0');
+        const dateStr = `${y}-${m}-${day}`;
+        return {
+            dateStr,
+            startIso: (h: number) => new Date(Date.UTC(y, d.getUTCMonth(), d.getUTCDate(), h, 0, 0)).toISOString(),
+            endIso: (h: number) => new Date(Date.UTC(y, d.getUTCMonth(), d.getUTCDate(), h, 0, 0)).toISOString(),
+        };
+    }
+
     // Edge Case 13: Duplicate booking submission (RPC / Exclusion Constraint)
     {
-        const testRoomDup = `dup-room-${Date.now()}`;
-        const testResId = `DUP-TEST-${Date.now()}`;
-        const startDt = new Date(Date.UTC(2027, 0, 10, 12, 0, 0)).toISOString();
-        const endDt = new Date(Date.UTC(2027, 0, 10, 14, 0, 0)).toISOString();
+        const testRoomId = 'room-1';
+        const ts = Date.now();
+        const testResId1 = `DUP-1-${ts}`;
+        const testResId2 = `DUP-2-${ts}`;
+        const d13 = getFutureTestDate(1);
 
-        const payload = {
-            reservation_id: testResId,
-            customer_name: 'Test Customer',
-            customer_phone: '01012345678',
-            room_id: testRoomDup,
-            room_name: 'غرفة تجريبية',
-            booking_date: '2027-01-10',
-            start_datetime: startDt,
-            end_datetime: endDt,
+        const payload1 = {
+            reservation_id: testResId1,
+            customer_name: 'Test Customer 1',
+            customer_phone: '0101' + String(ts).slice(-7),
+            room_id: testRoomId,
+            room_name: 'غرفة 01',
+            booking_date: d13.dateStr,
+            start_datetime: d13.startIso(12),
+            end_datetime: d13.endIso(14),
             start_time: '12:00 م',
             end_time: '02:00 م',
             duration_hours: 2,
             total_amount: 200,
             payment_method: 'cash',
-            status: 'confirmed',
+        };
+
+        const payload2 = {
+            ...payload1,
+            reservation_id: testResId2,
+            customer_name: 'Test Customer 2',
+            customer_phone: '0102' + String(ts + 1).slice(-7),
         };
 
         // First insert (should succeed)
-        const { data: firstData, error: firstErr } = await supabase.rpc('create_booking_atomic', { p_booking: payload });
+        const { error: firstErr } = await supabase.rpc('create_booking_atomic', { p_booking: payload1 });
         
-        // Second identical insert (must be rejected by exclusion constraint / overlap check)
-        const { data: secondData, error: secondErr } = await supabase.rpc('create_booking_atomic', { p_booking: payload });
+        // Second overlapping insert for same room & time (must be rejected by exclusion constraint / overlap check)
+        const { error: secondErr } = await supabase.rpc('create_booking_atomic', { p_booking: payload2 });
 
         const duplicateBlocked = !firstErr && secondErr !== null;
         assert(duplicateBlocked, 'Edge Case 13: Duplicate booking submission rejected by database atomic RPC');
 
         // Cleanup
-        await supabase.from('ps_bookings').delete().eq('room_id', testRoomDup);
+        await supabase.from('ps_bookings').delete().in('reservation_id', [testResId1, testResId2]);
     }
 
     // Edge Case 14: Two simultaneous booking attempts (Race condition protection)
     {
-        const roomSim = `room-sim-${Date.now()}`;
-        const startDt = new Date(Date.UTC(2027, 0, 11, 14, 0, 0)).toISOString();
-        const endDt = new Date(Date.UTC(2027, 0, 11, 16, 0, 0)).toISOString();
+        const testRoomId = 'room-1';
+        const ts = Date.now();
+        const resId1 = `SIM-1-${ts}`;
+        const resId2 = `SIM-2-${ts}`;
+        const d14 = getFutureTestDate(2);
 
         const p1 = {
-            reservation_id: `SIM-1-${Date.now()}`,
+            reservation_id: resId1,
             customer_name: 'User 1',
-            customer_phone: '01011111111',
-            room_id: roomSim,
-            room_name: 'Sim Room',
-            booking_date: '2027-01-11',
-            start_datetime: startDt,
-            end_datetime: endDt,
+            customer_phone: '0103' + String(ts + 2).slice(-7),
+            room_id: testRoomId,
+            room_name: 'غرفة 01',
+            booking_date: d14.dateStr,
+            start_datetime: d14.startIso(14),
+            end_datetime: d14.endIso(16),
             start_time: '02:00 م',
             end_time: '04:00 م',
             duration_hours: 2,
             total_amount: 200,
-            status: 'confirmed',
         };
 
         const p2 = {
-            reservation_id: `SIM-2-${Date.now()}`,
+            reservation_id: resId2,
             customer_name: 'User 2',
-            customer_phone: '01022222222',
-            room_id: roomSim,
-            room_name: 'Sim Room',
-            booking_date: '2027-01-11',
-            start_datetime: startDt,
-            end_datetime: endDt,
+            customer_phone: '0104' + String(ts + 3).slice(-7),
+            room_id: testRoomId,
+            room_name: 'غرفة 01',
+            booking_date: d14.dateStr,
+            start_datetime: d14.startIso(14),
+            end_datetime: d14.endIso(16),
             start_time: '02:00 م',
             end_time: '04:00 م',
             duration_hours: 2,
             total_amount: 200,
-            status: 'confirmed',
         };
 
         // Launch both concurrently via Promise.all
@@ -328,100 +349,95 @@ async function runAllTests() {
         assert(successes === 1 && errors === 1, 'Edge Case 14: Concurrent simultaneous race condition - EXACTLY ONE succeeds, ONE is blocked');
 
         // Cleanup
-        await supabase.from('ps_bookings').delete().eq('room_id', roomSim);
+        await supabase.from('ps_bookings').delete().in('reservation_id', [resId1, resId2]);
     }
 
     // Edge Case 15: Different stations (rooms) at the same time
     {
-        const roomA = `station-A-${Date.now()}`;
-        const roomB = `station-B-${Date.now()}`;
-        const startDt = new Date(Date.UTC(2027, 0, 12, 18, 0, 0)).toISOString();
-        const endDt = new Date(Date.UTC(2027, 0, 12, 20, 0, 0)).toISOString();
+        const ts = Date.now();
+        const resIdA = `ROOM-A-${ts}`;
+        const resIdB = `ROOM-B-${ts}`;
+        const d15 = getFutureTestDate(3);
 
         const [r1, r2] = await Promise.all([
             supabase.rpc('create_booking_atomic', { p_booking: {
-                reservation_id: `ROOM-A-${Date.now()}`,
+                reservation_id: resIdA,
                 customer_name: 'User A',
-                customer_phone: '01033333333',
-                room_id: roomA,
-                room_name: 'Station A',
-                booking_date: '2027-01-12',
-                start_datetime: startDt,
-                end_datetime: endDt,
+                customer_phone: '0105' + String(ts + 4).slice(-7),
+                room_id: 'room-1',
+                room_name: 'غرفة 01',
+                booking_date: d15.dateStr,
+                start_datetime: d15.startIso(18),
+                end_datetime: d15.endIso(20),
                 start_time: '06:00 م',
                 end_time: '08:00 م',
                 duration_hours: 2,
                 total_amount: 200,
-                status: 'confirmed',
             }}),
             supabase.rpc('create_booking_atomic', { p_booking: {
-                reservation_id: `ROOM-B-${Date.now()}`,
+                reservation_id: resIdB,
                 customer_name: 'User B',
-                customer_phone: '01044444444',
-                room_id: roomB,
-                room_name: 'Station B',
-                booking_date: '2027-01-12',
-                start_datetime: startDt,
-                end_datetime: endDt,
+                customer_phone: '0106' + String(ts + 5).slice(-7),
+                room_id: 'room-2',
+                room_name: 'غرفة 02',
+                booking_date: d15.dateStr,
+                start_datetime: d15.startIso(18),
+                end_datetime: d15.endIso(20),
                 start_time: '06:00 م',
                 end_time: '08:00 م',
                 duration_hours: 2,
                 total_amount: 200,
-                status: 'confirmed',
             }}),
         ]);
 
         assert(!r1.error && !r2.error, 'Edge Case 15: Different stations at the exact same time both succeed');
 
         // Cleanup
-        await supabase.from('ps_bookings').delete().in('room_id', [roomA, roomB]);
+        await supabase.from('ps_bookings').delete().in('reservation_id', [resIdA, resIdB]);
     }
 
     // Edge Case 16: Same station at different times
     {
-        const roomDiff = `room-diff-${Date.now()}`;
-        const s1 = new Date(Date.UTC(2027, 0, 13, 10, 0, 0)).toISOString();
-        const e1 = new Date(Date.UTC(2027, 0, 13, 12, 0, 0)).toISOString();
-        const s2 = new Date(Date.UTC(2027, 0, 13, 14, 0, 0)).toISOString();
-        const e2 = new Date(Date.UTC(2027, 0, 13, 16, 0, 0)).toISOString();
+        const ts = Date.now();
+        const resIdDiff1 = `DIFF-1-${ts}`;
+        const resIdDiff2 = `DIFF-2-${ts}`;
+        const d16 = getFutureTestDate(4);
 
         const [r1, r2] = await Promise.all([
             supabase.rpc('create_booking_atomic', { p_booking: {
-                reservation_id: `DIFF-1-${Date.now()}`,
+                reservation_id: resIdDiff1,
                 customer_name: 'User 1',
-                customer_phone: '01055555555',
-                room_id: roomDiff,
-                room_name: 'Diff Room',
-                booking_date: '2027-01-13',
-                start_datetime: s1,
-                end_datetime: e1,
+                customer_phone: '0107' + String(ts + 6).slice(-7),
+                room_id: 'room-1',
+                room_name: 'غرفة 01',
+                booking_date: d16.dateStr,
+                start_datetime: d16.startIso(10),
+                end_datetime: d16.endIso(12),
                 start_time: '10:00 ص',
                 end_time: '12:00 م',
                 duration_hours: 2,
                 total_amount: 200,
-                status: 'confirmed',
             }}),
             supabase.rpc('create_booking_atomic', { p_booking: {
-                reservation_id: `DIFF-2-${Date.now()}`,
+                reservation_id: resIdDiff2,
                 customer_name: 'User 2',
-                customer_phone: '01066666666',
-                room_id: roomDiff,
-                room_name: 'Diff Room',
-                booking_date: '2027-01-13',
-                start_datetime: s2,
-                end_datetime: e2,
+                customer_phone: '0108' + String(ts + 7).slice(-7),
+                room_id: 'room-1',
+                room_name: 'غرفة 01',
+                booking_date: d16.dateStr,
+                start_datetime: d16.startIso(14),
+                end_datetime: d16.endIso(16),
                 start_time: '02:00 م',
                 end_time: '04:00 م',
                 duration_hours: 2,
                 total_amount: 200,
-                status: 'confirmed',
             }}),
         ]);
 
         assert(!r1.error && !r2.error, 'Edge Case 16: Same station at different non-overlapping times both succeed');
 
         // Cleanup
-        await supabase.from('ps_bookings').delete().eq('room_id', roomDiff);
+        await supabase.from('ps_bookings').delete().in('reservation_id', [resIdDiff1, resIdDiff2]);
     }
 
     // Edge Case 17: Cancelled booking does NOT block availability

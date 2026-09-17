@@ -227,7 +227,9 @@ export async function fetchBookingMetrics(): Promise<BookingMetrics> {
             memBookingMetricsCache = metrics;
             try {
                 sessionStorage.setItem(BOOKING_METRICS_CACHE_KEY, JSON.stringify(metrics));
-            } catch {}
+            } catch (_e) {
+                // Ignore storage quota or disabled errors
+            }
             return metrics;
         }
 
