@@ -18,6 +18,7 @@ import PaymentSettingsTab from '@/features/admin/components/PaymentSettingsTab';
 import StaffSettingsTab from '@/features/admin/components/StaffSettingsTab';
 import LoyaltyTab from '@/features/admin/components/LoyaltyTab';
 import VenueStatusControl from '@/features/admin/components/VenueStatusControl';
+import UnifiedRevenueCard from '@/features/admin/components/UnifiedRevenueCard';
 import SectionErrorBoundary from '@/components/features/SectionErrorBoundary';
 import { supabase } from '@/lib/supabase';
 import { playPs5NavigateSound } from '@/lib/sound';
@@ -212,7 +213,10 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Main Content Area */}
-            <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 lg:p-6 pb-24 sm:pb-8">
+            <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 lg:p-6 pb-24 sm:pb-8 space-y-6">
+                {/* Unified Revenue Overview (PS + Cafe) */}
+                <UnifiedRevenueCard />
+
                 <SectionErrorBoundary>
                     {activeTab === 'operations' && <SimpleOperationsTab userEmail={userEmail} />}
                     {activeTab === 'orders' && <OrdersTab />}
