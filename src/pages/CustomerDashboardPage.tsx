@@ -18,6 +18,14 @@ export default function CustomerDashboardPage() {
     const [fetchingAuthData, setFetchingAuthData] = useState(false);
     const [activeTab, setActiveTab] = useState<'history' | 'orders' | 'bookings'>('history');
 
+    // Pagination States
+    const [txLimit, setTxLimit] = useState(10);
+    const [ordersLimit, setOrdersLimit] = useState(10);
+    const [bookingsLimit, setBookingsLimit] = useState(10);
+    const [hasMoreTx, setHasMoreTx] = useState(true);
+    const [hasMoreOrders, setHasMoreOrders] = useState(true);
+    const [hasMoreBookings, setHasMoreBookings] = useState(true);
+
     // Link Phone State
     const [linkPhone, setLinkPhone] = useState('');
     const [isLinking, setIsLinking] = useState(false);
@@ -31,22 +39,36 @@ export default function CustomerDashboardPage() {
                 const [txRes, ordersRes, bookingsRes] = await Promise.all([
                     supabase
                         .from('loyalty_transactions')
-                        .select('*')
-                        .order('created_at', { ascending: false }),
+                        .select('*', { count: 'exact' })
+                        .eq('customer_id', customerProfile.id)
+                        .order('created_at', { ascending: false })
+                        .range(0, txLimit - 1),
                     supabase
                         .from('orders')
-                        .select('*')
-                        .order('created_at', { ascending: false }),
+                        .select('*', { count: 'exact' })
+                        .eq('user_id', user?.id)
+                        .order('created_at', { ascending: false })
+                        .range(0, ordersLimit - 1),
                     supabase
                         .from('ps_bookings')
-                        .select('*')
-                        .eq('customer_phone', customerProfile.phone_number)
+                        .select('*', { count: 'exact' })
+                        .eq('user_id', user?.id)
                         .order('created_at', { ascending: false })
+                        .range(0, bookingsLimit - 1)
                 ]);
                 
-                if (txRes.data) setAuthHistory(txRes.data);
-                if (ordersRes.data) setAuthOrders(ordersRes.data);
-                if (bookingsRes.data) setAuthBookings(bookingsRes.data);
+                if (txRes.data) {
+                    setAuthHistory(txRes.data);
+                    setHasMoreTx((txRes.count || 0) > txLimit);
+                }
+                if (ordersRes.data) {
+                    setAuthOrders(ordersRes.data);
+                    setHasMoreOrders((ordersRes.count || 0) > ordersLimit);
+                }
+                if (bookingsRes.data) {
+                    setAuthBookings(bookingsRes.data);
+                    setHasMoreBookings((bookingsRes.count || 0) > bookingsLimit);
+                }
             } catch (err) {
                 console.error('Error fetching auth data:', err);
                 toast.error('حدث خطأ أثناء تحميل البيانات');
@@ -56,7 +78,7 @@ export default function CustomerDashboardPage() {
         }
         
         fetchAuthData();
-    }, [session, customerProfile]);
+    }, [session, customerProfile, user?.id, txLimit, ordersLimit, bookingsLimit]);
 
     useEffect(() => {
         // Handle OAuth error in URL hash
@@ -402,12 +424,34 @@ export default function CustomerDashboardPage() {
                         {/* Tabs Navigation */}
                         {customerProfile && (
                             <div className="pt-2">
-                                <div className="pt-2">
-                                    <h3 className="font-bold text-sm text-[var(--text-1)] mb-3 flex items-center gap-2">
-                                        <History className="w-4 h-4 text-[var(--text-3)]" />
+                                <div className="flex overflow-x-auto hide-scrollbar gap-2 mb-4 pb-2 border-b border-[var(--c-border)]">
+                                    <button 
+                                        onClick={() => setActiveTab('history')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'history' ? 'bg-amber-500/10 text-amber-500' : 'text-[var(--text-2)] hover:bg-[var(--c-card)]'}`}
+                                    >
+                                        <History size={16} />
                                         سجل النقاط
-                                    </h3>
-                                    {renderHistory(authHistory, fetchingAuthData)}
+                                    </button>
+                                    <button 
+                                        onClick={() => setActiveTab('orders')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'orders' ? 'bg-amber-500/10 text-amber-500' : 'text-[var(--text-2)] hover:bg-[var(--c-card)]'}`}
+                                    >
+                                        <ShoppingBag size={16} />
+                                        طلبات الكافيه
+                                    </button>
+                                    <button 
+                                        onClick={() => setActiveTab('bookings')}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'bookings' ? 'bg-amber-500/10 text-amber-500' : 'text-[var(--text-2)] hover:bg-[var(--c-card)]'}`}
+                                    >
+                                        <Gamepad2 size={16} />
+                                        حجوزات الغرف
+                                    </button>
+                                </div>
+                                
+                                <div className="pt-2">
+                                    {activeTab === 'history' && renderHistory(authHistory, fetchingAuthData)}
+                                    {activeTab === 'orders' && renderOrders(authOrders, fetchingAuthData)}
+                                    {activeTab === 'bookings' && renderBookings(authBookings, fetchingAuthData)}
                                 </div>
                             </div>
                         )}
