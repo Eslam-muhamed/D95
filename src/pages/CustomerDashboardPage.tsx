@@ -8,7 +8,6 @@ import {
     Calendar,
     UserCircle2,
     LogOut,
-    Link as LinkIcon,
     Sparkles,
     ShoppingBag,
     Gamepad2,
@@ -36,10 +35,6 @@ export default function CustomerDashboardPage() {
     const [hasMoreTx, setHasMoreTx] = useState(true);
     const [hasMoreOrders, setHasMoreOrders] = useState(true);
     const [hasMoreBookings, setHasMoreBookings] = useState(true);
-
-    // Link Phone State
-    const [linkPhone, setLinkPhone] = useState('');
-    const [isLinking, setIsLinking] = useState(false);
 
     // Fetch Auth Data
     useEffect(() => {
@@ -104,31 +99,6 @@ export default function CustomerDashboardPage() {
         }
     }, []);
 
-    const handleLinkPhone = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!linkPhone || linkPhone.length < 10) {
-            toast.error('برجاء إدخال رقم هاتف صحيح');
-            return;
-        }
-        
-        setIsLinking(true);
-        try {
-            const { data, error } = await supabase.rpc('link_phone_to_auth', { p_phone: linkPhone });
-            if (error) throw error;
-            
-            if (data?.success) {
-                toast.success(data.message || 'تم ربط رقم الهاتف بنجاح!');
-                await refreshProfile();
-            } else {
-                toast.error(data?.message || 'فشل ربط رقم الهاتف.');
-            }
-        } catch (err: unknown) {
-            console.error('Link phone error:', err);
-            toast.error((err as Error).message || 'حدث خطأ أثناء محاولة ربط الحساب.');
-        } finally {
-            setIsLinking(false);
-        }
-    };
 
     const handleSignOut = async () => {
         await signOut();
@@ -359,7 +329,7 @@ export default function CustomerDashboardPage() {
                         <div>
                             <p className="text-[10px] text-neutral-400 uppercase tracking-wide">Card Holder</p>
                             <p className="font-bold text-sm text-white line-clamp-1 max-w-[140px] sm:max-w-[180px]">
-                                {targetCustomer.full_name || targetCustomer.phone_number || targetCustomer.email || 'عميل مسجل'}
+                                {targetCustomer.full_name || targetCustomer.email || 'عميل مسجل'}
                             </p>
                         </div>
                     </div>
@@ -410,42 +380,11 @@ export default function CustomerDashboardPage() {
                                 </div>
                                 <h3 className="font-bold text-base mb-2">جاري تهيئة الحساب...</h3>
                                 <p className="text-xs text-[var(--text-3)] leading-relaxed">
-                                    برجاء تحديث الصفحة. إذا كنت تمتلك حساباً قديماً بالهاتف، يمكنك ربطه الآن.
+                                    برجاء تحديث الصفحة لإعادة تحميل بيانات حسابك ومتابعة مكافآتك.
                                 </p>
                                 <button onClick={refreshProfile} className="mt-5 w-full py-3 bg-red-600 text-white rounded-xl font-bold text-sm shadow-sm hover:bg-red-700 transition-colors">
                                     تحديث الصفحة
                                 </button>
-                            </div>
-                        )}
-
-                        {/* Link Legacy Account UI */}
-                        {customerProfile && !customerProfile.phone_number && (
-                            <div className="bg-[var(--c-card)] border border-amber-500/30 rounded-3xl p-5 shadow-sm relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-2 h-full bg-amber-500" />
-                                <div className="flex items-center gap-2 mb-2 text-amber-600 dark:text-amber-500">
-                                    <LinkIcon size={18} />
-                                    <h3 className="font-bold text-sm">لديك نقاط سابقة؟</h3>
-                                </div>
-                                <p className="text-xs text-[var(--text-2)] mb-4 leading-relaxed">
-                                    اربط رقم هاتفك القديم بحسابك الحالي لدمج نقاطك ومشترياتك السابقة.
-                                </p>
-                                <form onSubmit={handleLinkPhone} className="flex gap-2">
-                                    <input
-                                        type="tel"
-                                        dir="ltr"
-                                        value={linkPhone}
-                                        onChange={(e) => setLinkPhone(e.target.value.replace(/\D/g, ''))}
-                                        placeholder="010XXXXXXXX"
-                                        className="flex-1 bg-[var(--bg-main)] border border-[var(--c-border)] rounded-xl px-3 py-2.5 text-sm font-mono focus:border-amber-500 outline-none transition-colors"
-                                    />
-                                    <button
-                                        type="submit"
-                                        disabled={isLinking}
-                                        className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs disabled:opacity-50 transition-colors shrink-0"
-                                    >
-                                        {isLinking ? 'جاري الربط...' : 'ربط الهاتف'}
-                                    </button>
-                                </form>
                             </div>
                         )}
 
