@@ -247,10 +247,10 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
             )
             .subscribe();
 
-        // 20-second background polling fallback
+        // 2-minute gentle background polling fallback (realtime handles instant updates)
         const pollInterval = setInterval(() => {
             loadOperationsDataRef.current(true);
-        }, 20000);
+        }, 120000);
 
         return () => {
             supabase.removeChannel(channel);
