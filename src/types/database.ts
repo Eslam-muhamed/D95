@@ -98,6 +98,7 @@ export interface DBOrder {
     subtotal: number;
     total_amount: number;
     status: 'pending' | 'preparing' | 'completed' | 'cancelled' | string;
+    notes?: string | null;
     user_id?: string | null;
     created_at: string;
 }

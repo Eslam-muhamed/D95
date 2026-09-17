@@ -601,7 +601,7 @@ export default function OrdersTab() {
             )}
 
             {/* Pagination Controls */}
-            {totalPages > 1 && (
+            {totalCount > 0 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white border border-slate-200/90 rounded-2xl px-5 py-3.5 shadow-xs">
                     <div className="text-xs text-slate-500">
                         عرض <span className="font-mono text-slate-900 font-bold">{(page - 1) * pageSize + 1}</span> إلى{' '}
