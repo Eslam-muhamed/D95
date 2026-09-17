@@ -95,51 +95,78 @@ export default function UnifiedRevenueCard() {
     const cafePercent = totalAmount > 0 ? Math.round((cafeAmount / totalAmount) * 100) : 0;
 
     return (
-        <div className="bg-gradient-to-br from-white via-slate-50/80 to-slate-100/60 border border-slate-200/90 rounded-3xl p-4 sm:p-5 shadow-xs relative overflow-hidden transition-all" dir="rtl">
+        <div className="bg-gradient-to-br from-white via-slate-50/80 to-slate-100/60 border border-slate-200/90 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-xs relative overflow-hidden transition-all" dir="rtl">
             {/* Top Row: Title, Period Toggle, Refresh, Collapse */}
-            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${!isCollapsed ? 'pb-4 border-b border-slate-200/70' : ''}`}>
-                <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20 shrink-0">
-                        <DollarSign className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
-                                إجمالي الإيرادات الموحدة
-                            </h2>
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <Sparkles className="w-3 h-3 text-emerald-600" />
-                                كافيه + بلايستيشن
-                            </span>
+            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 ${!isCollapsed ? 'pb-3.5 sm:pb-4 border-b border-slate-200/70' : ''}`}>
+                {/* Brand Title & Amount Summary */}
+                <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20 shrink-0">
+                            <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
                         </div>
-                        {isCollapsed ? (
-                            <div className="flex items-center gap-3 text-xs mt-1">
-                                <span className="font-bold text-emerald-700 font-mono">
-                                    {totalAmount.toLocaleString()} ج.م
-                                </span>
-                                <span className="text-slate-400">•</span>
-                                <span className="text-slate-500 text-[11px]">
-                                    (PS: <strong className="font-mono text-blue-700">{psAmount.toLocaleString()}</strong> | كافيه: <strong className="font-mono text-amber-700">{cafeAmount.toLocaleString()}</strong>)
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                <h2 className="text-xs sm:text-base font-black text-slate-900 tracking-tight whitespace-nowrap">
+                                    إجمالي الإيرادات الموحدة
+                                </h2>
+                                <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                                    <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-600" />
+                                    <span>كافيه + PS</span>
                                 </span>
                             </div>
-                        ) : (
-                            <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                                {isToday ? 'صافي المبيعات والحجوزات المسجلة اليوم' : 'إجمالي الدخل التاريخي التراكمي في النظام'}
-                            </p>
-                        )}
+                            {isCollapsed ? (
+                                <div className="flex items-center gap-1.5 sm:gap-3 text-xs mt-0.5 flex-wrap">
+                                    <span className="font-bold text-emerald-700 font-mono text-sm sm:text-base">
+                                        {totalAmount.toLocaleString()} ج.م
+                                    </span>
+                                    <span className="text-slate-300 hidden sm:inline">•</span>
+                                    <span className="text-slate-500 text-[10px] sm:text-[11px] truncate">
+                                        (PS: <strong className="font-mono text-blue-700">{psAmount.toLocaleString()}</strong> | كافيه: <strong className="font-mono text-amber-700">{cafeAmount.toLocaleString()}</strong>)
+                                    </span>
+                                </div>
+                            ) : (
+                                <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 font-medium">
+                                    {isToday ? 'صافي المبيعات والحجوزات المسجلة اليوم' : 'إجمالي الدخل التاريخي التراكمي في النظام'}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Mobile-only Quick Action Buttons (Collapse & Refresh) */}
+                    <div className="flex sm:hidden items-center gap-1.5 shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                playPs5SelectSound();
+                                loadMetrics(true);
+                            }}
+                            disabled={refreshing || loading}
+                            title="تحديث الأرقام لحظياً"
+                            className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-600 flex items-center justify-center transition-all disabled:opacity-50 cursor-pointer"
+                        >
+                            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-emerald-600' : ''}`} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={toggleCollapse}
+                            title={isCollapsed ? 'توسيع الكارت والتفاصيل' : 'تصغير الكارت'}
+                            className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-600 flex items-center justify-center transition-all cursor-pointer"
+                        >
+                            {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                        </button>
                     </div>
                 </div>
 
-                {/* Period Controls & Quick Actions */}
-                <div className="flex items-center gap-2 self-end sm:self-auto">
-                    <div className="bg-slate-200/70 p-1 rounded-xl flex items-center gap-1">
+                {/* Period Controls & Desktop Actions */}
+                <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-0.5 sm:pt-0">
+                    <div className="bg-slate-200/70 p-0.5 sm:p-1 rounded-xl flex items-center gap-1 w-full sm:w-auto">
                         <button
                             type="button"
                             onClick={() => {
                                 playPs5SelectSound();
                                 setPeriod('today');
                             }}
-                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            className={`flex-1 sm:flex-none px-3 py-1.5 sm:py-1 rounded-lg text-xs font-bold transition-all text-center cursor-pointer active:scale-95 ${
                                 isToday
                                     ? 'bg-white text-slate-900 shadow-xs'
                                     : 'text-slate-600 hover:text-slate-900'
@@ -153,7 +180,7 @@ export default function UnifiedRevenueCard() {
                                 playPs5SelectSound();
                                 setPeriod('allTime');
                             }}
-                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            className={`flex-1 sm:flex-none px-3 py-1.5 sm:py-1 rounded-lg text-xs font-bold transition-all text-center cursor-pointer active:scale-95 ${
                                 !isToday
                                     ? 'bg-white text-slate-900 shadow-xs'
                                     : 'text-slate-600 hover:text-slate-900'
@@ -163,35 +190,38 @@ export default function UnifiedRevenueCard() {
                         </button>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={() => {
-                            playPs5SelectSound();
-                            loadMetrics(true);
-                        }}
-                        disabled={refreshing || loading}
-                        title="تحديث الأرقام لحظياً"
-                        className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer"
-                    >
-                        <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-emerald-600' : ''}`} />
-                    </button>
+                    {/* Desktop-only action buttons */}
+                    <div className="hidden sm:flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                playPs5SelectSound();
+                                loadMetrics(true);
+                            }}
+                            disabled={refreshing || loading}
+                            title="تحديث الأرقام لحظياً"
+                            className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer"
+                        >
+                            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-emerald-600' : ''}`} />
+                        </button>
 
-                    <button
-                        type="button"
-                        onClick={toggleCollapse}
-                        title={isCollapsed ? 'توسيع الكارت والتفاصيل' : 'تصغير الكارت'}
-                        className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
-                    >
-                        {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-                    </button>
+                        <button
+                            type="button"
+                            onClick={toggleCollapse}
+                            title={isCollapsed ? 'توسيع الكارت والتفاصيل' : 'تصغير الكارت'}
+                            className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
+                        >
+                            {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            {/* Collapsible Stats Grid */}
+            {/* Collapsible Stats Grid: 2 columns on mobile, 3 columns on desktop */}
             {!isCollapsed && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-5">
-                    {/* 1. Grand Total Card */}
-                    <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs relative overflow-hidden flex flex-col justify-between">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4 pt-3.5 sm:pt-5">
+                    {/* 1. Grand Total Card (spans full width on mobile) */}
+                    <div className="col-span-2 md:col-span-1 bg-white border border-slate-200/90 rounded-2xl p-3.5 sm:p-5 shadow-xs relative overflow-hidden flex flex-col justify-between">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-slate-600">
                                 {isToday ? 'إجمالي دخل اليوم الموحد' : 'إجمالي الدخل الكلي'}
@@ -200,14 +230,14 @@ export default function UnifiedRevenueCard() {
                                 <TrendingUp className="w-4 h-4" />
                             </div>
                         </div>
-                        <div className="my-3">
+                        <div className="my-2.5 sm:my-3">
                             <div className="flex items-baseline gap-1.5">
-                                <span className="font-mono text-3xl sm:text-4xl font-black text-emerald-600 tracking-tight">
+                                <span className="font-mono text-2xl sm:text-4xl font-black text-emerald-600 tracking-tight">
                                     {loading ? '...' : totalAmount.toLocaleString()}
                                 </span>
-                                <span className="text-sm font-bold text-slate-500">ج.م</span>
+                                <span className="text-xs sm:text-sm font-bold text-slate-500">ج.م</span>
                             </div>
-                            <span className="text-[11px] text-slate-400 mt-1 block">
+                            <span className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 block">
                                 {isToday ? 'مجموع إيرادات الغرف ومبيعات الكافيه اليوم' : 'الدخل التراكمي الشامل لكافة العمليات'}
                             </span>
                         </div>
@@ -226,61 +256,61 @@ export default function UnifiedRevenueCard() {
                         </div>
                     </div>
 
-                    {/* 2. PlayStation Revenue Card */}
-                    <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-blue-200 transition-colors">
+                    {/* 2. PlayStation Revenue Card (1 column on mobile) */}
+                    <div className="col-span-1 bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-5 shadow-xs flex flex-col justify-between hover:border-blue-200 transition-colors">
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
-                                    <Gamepad2 className="w-4 h-4" />
+                            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+                                    <Gamepad2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 </div>
-                                <span className="text-xs font-bold text-slate-700">دخل البلايستيشن</span>
+                                <span className="text-[11px] sm:text-xs font-bold text-slate-700 truncate">دخل البلايستيشن</span>
                             </div>
-                            <span className="text-[11px] font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60">
+                            <span className="text-[10px] sm:text-[11px] font-mono font-bold text-blue-700 bg-blue-50 px-1.5 sm:px-2 py-0.5 rounded-md border border-blue-200/60 shrink-0">
                                 {psPercent}%
                             </span>
                         </div>
-                        <div className="my-3">
-                            <div className="flex items-baseline gap-1.5">
-                                <span className="font-mono text-2xl sm:text-3xl font-black text-blue-600 tracking-tight">
+                        <div className="my-2 sm:my-3">
+                            <div className="flex items-baseline gap-1">
+                                <span className="font-mono text-lg sm:text-3xl font-black text-blue-600 tracking-tight">
                                     {loading ? '...' : psAmount.toLocaleString()}
                                 </span>
-                                <span className="text-xs font-bold text-slate-500">ج.م</span>
+                                <span className="text-[10px] sm:text-xs font-bold text-slate-500">ج.م</span>
                             </div>
-                            <span className="text-[11px] text-slate-500 mt-1 block">
-                                حجوزات وجلسات الغرف المؤكدة
+                            <span className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 block truncate">
+                                حجوزات الغرف المؤكدة
                             </span>
                         </div>
-                        <div className="text-[11px] text-slate-400 font-medium pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <div className="text-[10px] sm:text-[11px] text-slate-400 font-medium pt-2 border-t border-slate-100 flex items-center justify-between">
                             <span>العمليات:</span>
                             <span className="font-mono font-bold text-slate-700">{metrics?.psCount || 0} حجز</span>
                         </div>
                     </div>
 
-                    {/* 3. Cafe Revenue Card */}
-                    <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-amber-200 transition-colors">
+                    {/* 3. Cafe Revenue Card (1 column on mobile) */}
+                    <div className="col-span-1 bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-5 shadow-xs flex flex-col justify-between hover:border-amber-200 transition-colors">
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center">
-                                    <Coffee className="w-4 h-4" />
+                            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center shrink-0">
+                                    <Coffee className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 </div>
-                                <span className="text-xs font-bold text-slate-700">دخل الكافيه والسناكس</span>
+                                <span className="text-[11px] sm:text-xs font-bold text-slate-700 truncate">دخل الكافيه</span>
                             </div>
-                            <span className="text-[11px] font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
+                            <span className="text-[10px] sm:text-[11px] font-mono font-bold text-amber-700 bg-amber-50 px-1.5 sm:px-2 py-0.5 rounded-md border border-amber-200/60 shrink-0">
                                 {cafePercent}%
                             </span>
                         </div>
-                        <div className="my-3">
-                            <div className="flex items-baseline gap-1.5">
-                                <span className="font-mono text-2xl sm:text-3xl font-black text-amber-600 tracking-tight">
+                        <div className="my-2 sm:my-3">
+                            <div className="flex items-baseline gap-1">
+                                <span className="font-mono text-lg sm:text-3xl font-black text-amber-600 tracking-tight">
                                     {loading ? '...' : cafeAmount.toLocaleString()}
                                 </span>
-                                <span className="text-xs font-bold text-slate-500">ج.م</span>
+                                <span className="text-[10px] sm:text-xs font-bold text-slate-500">ج.م</span>
                             </div>
-                            <span className="text-[11px] text-slate-500 mt-1 block">
-                                طلبات المشروبات والمأكولات المكتملة
+                            <span className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 block truncate">
+                                المشروبات والسناكس
                             </span>
                         </div>
-                        <div className="text-[11px] text-slate-400 font-medium pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <div className="text-[10px] sm:text-[11px] text-slate-400 font-medium pt-2 border-t border-slate-100 flex items-center justify-between">
                             <span>الطلبات:</span>
                             <span className="font-mono font-bold text-slate-700">{metrics?.cafeCount || 0} طلب</span>
                         </div>

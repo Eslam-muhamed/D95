@@ -180,9 +180,9 @@ export default function AdminDashboardPage() {
                 </div>
             </header>
 
-            {/* Mobile Top Sub-Header: Segmented Bar */}
-            <div className="md:hidden bg-white border-b border-slate-200 px-3 py-2">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            {/* Mobile Top Sub-Header: Smooth Horizontal Scrollable Pills */}
+            <div className="md:hidden bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-2.5 py-2 sticky top-[53px] z-30 shadow-2xs">
+                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5 px-0.5">
                     {navItems.map((item) => {
                         const isActive = activeTab === item.id;
                         return (
@@ -193,16 +193,18 @@ export default function AdminDashboardPage() {
                                     playPs5NavigateSound();
                                     setActiveTab(item.id);
                                 }}
-                                className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer truncate ${
+                                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer active:scale-95 ${
                                     isActive
-                                        ? 'bg-red-600 text-white shadow-sm'
-                                        : 'bg-slate-100 text-slate-600 hover:text-slate-900'
+                                        ? 'bg-red-600 text-white shadow-xs'
+                                        : 'bg-slate-100/90 text-slate-600 hover:text-slate-900'
                                 }`}
                             >
                                 {item.icon}
-                                <span className="truncate">{item.label}</span>
+                                <span className="whitespace-nowrap">{item.label}</span>
                                 {item.badgeCount !== undefined && item.badgeCount > 0 && (
-                                    <span className="w-4 h-4 rounded-full bg-amber-400 text-slate-950 text-[9px] font-bold flex items-center justify-center shrink-0">
+                                    <span className={`w-4 h-4 rounded-full text-[9px] font-mono font-bold flex items-center justify-center shrink-0 ${
+                                        isActive ? 'bg-white text-red-600' : 'bg-amber-400 text-slate-950'
+                                    }`}>
                                         {item.badgeCount}
                                     </span>
                                 )}
@@ -213,7 +215,7 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Main Content Area */}
-            <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 lg:p-6 pb-24 sm:pb-8 space-y-6">
+            <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 lg:p-6 pb-28 sm:pb-8 space-y-4 sm:space-y-6">
                 {/* Unified Revenue Overview (PS + Cafe) */}
                 <UnifiedRevenueCard />
 
@@ -232,14 +234,14 @@ export default function AdminDashboardPage() {
             </main>
 
             {/* Mobile Bottom Navigation Bar */}
-            <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200 px-3 py-2 flex items-center justify-around shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+            <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200/90 px-2 py-1.5 flex items-center justify-around shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
                 <button
                     type="button"
                     onClick={() => {
                         playPs5NavigateSound();
                         setActiveTab('operations');
                     }}
-                    className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-xl transition-all cursor-pointer ${
+                    className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-xl transition-all cursor-pointer active:scale-95 ${
                         activeTab === 'operations' ? 'text-red-600 font-bold' : 'text-slate-500'
                     }`}
                 >

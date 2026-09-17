@@ -894,64 +894,64 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
             {activeSubTab === 'dashboard' && (
                 <div className="space-y-6">
                     {/* 4 Executive KPI Cards */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
                         {/* 1. All Confirmed Bookings */}
-                        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs hover:border-blue-200 transition-colors">
-                            <div>
-                                <span className="text-xs text-slate-500 font-bold block">
+                        <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 sm:p-5 flex items-center justify-between shadow-xs hover:border-blue-200 transition-colors">
+                            <div className="min-w-0">
+                                <span className="text-[11px] sm:text-xs text-slate-500 font-bold block truncate">
                                     الحجوزات المؤكدة
                                 </span>
-                                <span className="font-sans text-2xl sm:text-3xl font-black text-slate-900 mt-1 block">
+                                <span className="font-sans text-xl sm:text-3xl font-black text-slate-900 mt-0.5 sm:mt-1 block">
                                     {generalStats.confirmedCount}
                                 </span>
                             </div>
-                            <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
-                                <Calendar className="w-5 h-5" />
+                            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+                                <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
                             </div>
                         </div>
 
                         {/* 2. Total Revenues */}
-                        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs hover:border-emerald-200 transition-colors">
-                            <div>
-                                <span className="text-xs text-emerald-700 font-bold block">
+                        <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 sm:p-5 flex items-center justify-between shadow-xs hover:border-emerald-200 transition-colors">
+                            <div className="min-w-0">
+                                <span className="text-[11px] sm:text-xs text-emerald-700 font-bold block truncate">
                                     إجمالي الإيرادات
                                 </span>
-                                <span className="font-sans text-2xl sm:text-3xl font-black text-emerald-600 mt-1 block">
-                                    {generalStats.totalRevenue} <span className="text-xs font-normal opacity-75">ج.م</span>
+                                <span className="font-sans text-lg sm:text-3xl font-black text-emerald-600 mt-0.5 sm:mt-1 block truncate">
+                                    {generalStats.totalRevenue} <span className="text-[10px] sm:text-xs font-normal opacity-75">ج.م</span>
                                 </span>
                             </div>
-                            <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center">
-                                <DollarSign className="w-5 h-5" />
+                            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0">
+                                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
                             </div>
                         </div>
 
                         {/* 3. Pending Requests */}
-                        <div className={`border rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs transition-colors ${
+                        <div className={`border rounded-2xl p-3.5 sm:p-5 flex items-center justify-between shadow-xs transition-colors ${
                             totalPendingCount > 0 ? 'border-amber-300 bg-amber-50/40 hover:border-amber-400' : 'bg-white border-slate-200/90'
                         }`}>
-                            <div>
-                                <span className="text-xs text-amber-800 font-bold block">طلبات بانتظار التأكيد</span>
-                                <span className="font-sans text-2xl sm:text-3xl font-black text-amber-600 mt-1 block">
+                            <div className="min-w-0">
+                                <span className="text-[11px] sm:text-xs text-amber-800 font-bold block truncate">طلبات بالانتظار</span>
+                                <span className="font-sans text-xl sm:text-3xl font-black text-amber-600 mt-0.5 sm:mt-1 block">
                                     {totalPendingCount}
                                 </span>
                             </div>
-                            <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center">
-                                <AlertCircle className="w-5 h-5" />
+                            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center shrink-0">
+                                <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                             </div>
                         </div>
 
                         {/* 4. Confirmed Revenue Today */}
-                        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs hover:border-emerald-200 transition-colors">
-                            <div>
-                                <span className="text-xs text-slate-500 font-bold block">
+                        <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 sm:p-5 flex items-center justify-between shadow-xs hover:border-emerald-200 transition-colors">
+                            <div className="min-w-0">
+                                <span className="text-[11px] sm:text-xs text-slate-500 font-bold block truncate">
                                     إيراد اليوم المؤكد
                                 </span>
-                                <span className="font-sans text-2xl sm:text-3xl font-black text-slate-900 mt-1 block">
-                                    {todayRevenue} <span className="text-xs font-normal text-slate-500">ج.م</span>
+                                <span className="font-sans text-lg sm:text-3xl font-black text-slate-900 mt-0.5 sm:mt-1 block truncate">
+                                    {todayRevenue} <span className="text-[10px] sm:text-xs font-normal text-slate-500">ج.م</span>
                                 </span>
                             </div>
-                            <div className="w-11 h-11 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center">
-                                <DollarSign className="w-5 h-5" />
+                            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shrink-0">
+                                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
                             </div>
                         </div>
                     </div>

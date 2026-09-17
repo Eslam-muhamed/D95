@@ -215,64 +215,64 @@ export default function OrdersTab() {
     ];
 
     return (
-        <div className="space-y-6" dir="rtl">
+        <div className="space-y-4 sm:space-y-6" dir="rtl">
             {/* Header & Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Metric 1: Pending Orders */}
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-5 relative overflow-hidden group hover:border-amber-400 transition-all shadow-xs">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4">
+                {/* Metric 1: Pending Orders (Full width on mobile for maximum alert prominence) */}
+                <div className="col-span-2 md:col-span-1 bg-white border border-slate-200/90 rounded-2xl p-3.5 sm:p-5 relative overflow-hidden group hover:border-amber-400 transition-all shadow-xs">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-xs font-semibold text-slate-500">طلبات قيد الانتظار</p>
-                            <h3 className="text-2xl sm:text-3xl font-bold font-mono text-amber-600 mt-1">
+                            <p className="text-[11px] sm:text-xs font-semibold text-slate-500">طلبات قيد الانتظار</p>
+                            <h3 className="text-2xl sm:text-3xl font-bold font-mono text-amber-600 mt-0.5 sm:mt-1">
                                 {metrics.pendingOrdersCount}
                             </h3>
                         </div>
-                        <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
-                            <Clock className="w-6 h-6" />
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
+                            <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                     </div>
                     {metrics.pendingOrdersCount > 0 && (
-                        <div className="mt-3 flex items-center gap-1.5 text-[11px] text-amber-800 font-medium">
+                        <div className="mt-2 sm:mt-3 flex items-center gap-1.5 text-[10px] sm:text-[11px] text-amber-800 font-medium">
                             <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping inline-block" />
                             <span>تتطلب سرعة التجهيز والرد</span>
                         </div>
                     )}
                 </div>
 
-                {/* Metric 2: Today Orders Count */}
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-5 relative overflow-hidden group hover:border-red-400 transition-all shadow-xs">
+                {/* Metric 2: Today Orders Count (Side-by-side on mobile) */}
+                <div className="col-span-1 bg-white border border-slate-200/90 rounded-2xl p-3.5 sm:p-5 relative overflow-hidden group hover:border-red-400 transition-all shadow-xs flex flex-col justify-between">
                     <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-xs font-semibold text-slate-500">إجمالي طلبات اليوم</p>
-                            <h3 className="text-2xl sm:text-3xl font-bold font-mono text-slate-900 mt-1">
+                        <div className="min-w-0">
+                            <p className="text-[11px] sm:text-xs font-semibold text-slate-500 truncate">طلبات اليوم</p>
+                            <h3 className="text-xl sm:text-3xl font-bold font-mono text-slate-900 mt-0.5 sm:mt-1">
                                 {metrics.todayOrdersCount}
                             </h3>
                         </div>
-                        <div className="w-12 h-12 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
-                            <ShoppingBag className="w-6 h-6" />
+                        <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600 shrink-0">
+                            <ShoppingBag className="w-4 h-4 sm:w-6 sm:h-6" />
                         </div>
                     </div>
-                    <div className="mt-3 text-[11px] text-slate-500">
-                        سجل مبيعات الكافيه لليوم
+                    <div className="mt-2 sm:mt-3 text-[10px] sm:text-[11px] text-slate-400 truncate">
+                        سجل مبيعات اليوم
                     </div>
                 </div>
 
-                {/* Metric 3: Today Revenue */}
-                <div className="bg-white border border-slate-200/90 rounded-2xl p-5 relative overflow-hidden group hover:border-emerald-400 transition-all shadow-xs">
+                {/* Metric 3: Today Revenue (Side-by-side on mobile) */}
+                <div className="col-span-1 bg-white border border-slate-200/90 rounded-2xl p-3.5 sm:p-5 relative overflow-hidden group hover:border-emerald-400 transition-all shadow-xs flex flex-col justify-between">
                     <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-xs font-semibold text-slate-500">مبيعات الكافيه اليوم</p>
-                            <h3 className="text-2xl sm:text-3xl font-bold font-mono text-emerald-700 mt-1">
-                                {metrics.todayOrdersRevenue.toLocaleString()} <span className="text-xs font-normal text-slate-500">ج.م</span>
+                        <div className="min-w-0">
+                            <p className="text-[11px] sm:text-xs font-semibold text-slate-500 truncate">مبيعات اليوم</p>
+                            <h3 className="text-lg sm:text-3xl font-bold font-mono text-emerald-700 mt-0.5 sm:mt-1">
+                                {metrics.todayOrdersRevenue.toLocaleString()} <span className="text-[10px] sm:text-xs font-normal text-slate-500">ج.م</span>
                             </h3>
                         </div>
-                        <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
-                            <TrendingUp className="w-6 h-6" />
+                        <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
+                            <TrendingUp className="w-4 h-4 sm:w-6 sm:h-6" />
                         </div>
                     </div>
-                    <div className="mt-3 text-[11px] text-emerald-700 flex items-center gap-1 font-medium">
-                        <Check className="w-3.5 h-3.5" />
-                        <span>من كافة طلبات الصالة والدليفري</span>
+                    <div className="mt-2 sm:mt-3 text-[10px] sm:text-[11px] text-emerald-700 flex items-center gap-1 font-medium truncate">
+                        <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                        <span className="truncate">طلبات الصالة والدليفري</span>
                     </div>
                 </div>
             </div>
