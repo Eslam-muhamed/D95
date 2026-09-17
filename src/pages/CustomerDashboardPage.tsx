@@ -64,6 +64,19 @@ export default function CustomerDashboardPage() {
         fetchAuthData();
     }, [session, customerProfile]);
 
+    useEffect(() => {
+        // Handle OAuth error in URL hash
+        const hash = window.location.hash;
+        if (hash && hash.includes('error=')) {
+            const params = new URLSearchParams(hash.substring(1));
+            const errorDesc = params.get('error_description') || params.get('error');
+            if (errorDesc) {
+                toast.error(decodeURIComponent(errorDesc).replace(/\+/g, ' '));
+                window.history.replaceState(null, '', window.location.pathname);
+            }
+        }
+    }, []);
+
     const handleGuestLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         
@@ -110,7 +123,7 @@ export default function CustomerDashboardPage() {
             }
         } catch (err: unknown) {
             console.error('Link phone error:', err);
-            toast.error(err.message || 'حدث خطأ أثناء محاولة ربط الحساب.');
+            toast.error((err as Error).message || 'حدث خطأ أثناء محاولة ربط الحساب.');
         } finally {
             setIsLinking(false);
         }

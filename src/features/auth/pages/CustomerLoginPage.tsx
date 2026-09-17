@@ -13,6 +13,17 @@ export default function CustomerLoginPage() {
     const [isRedirecting, setIsRedirecting] = useState(false);
 
     useEffect(() => {
+        // Handle OAuth error in URL hash
+        const hash = window.location.hash;
+        if (hash && hash.includes('error=')) {
+            const params = new URLSearchParams(hash.substring(1));
+            const errorDesc = params.get('error_description') || params.get('error');
+            if (errorDesc) {
+                toast.error(decodeURIComponent(errorDesc).replace(/\+/g, ' '));
+                window.history.replaceState(null, '', window.location.pathname);
+            }
+        }
+
         if (session && !isLoading) {
             const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/customer';
             navigate(from, { replace: true });
@@ -32,7 +43,7 @@ export default function CustomerLoginPage() {
             if (error) throw error;
         } catch (err: unknown) {
             console.error('OAuth error:', err);
-            toast.error(err.message || 'حدث خطأ أثناء تسجيل الدخول');
+            toast.error((err as Error).message || 'حدث خطأ أثناء تسجيل الدخول');
             setIsRedirecting(false);
         }
     };
@@ -50,7 +61,7 @@ export default function CustomerLoginPage() {
             <header className="px-5 pt-8 pb-4 flex items-center justify-between sticky top-0 z-50 bg-[var(--bg-main)]/80 backdrop-blur-md">
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => navigate(-1)}
+                        onClick={() => navigate('/', { replace: true })}
                         className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors"
                     >
                         <ArrowRight size={20} className="text-white" />
