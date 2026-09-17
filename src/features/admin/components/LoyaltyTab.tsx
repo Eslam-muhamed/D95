@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Star, Search, CheckCircle2, History, Plus, Minus, User, ShieldAlert, Mail } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Star, Search, CheckCircle2, History, Plus, Minus, User, ShieldAlert, Mail, ChevronRight, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { fetchAllCustomers, adminAdjustPoints, getPointsPerEgp, updatePointsPerEgp } from '@/services/loyaltyService';
+import { fetchPaginatedCustomers, adminAdjustPoints, getPointsPerEgp, updatePointsPerEgp } from '@/services/loyaltyService';
 import type { DBCustomer, DBLoyaltyTransaction } from '@/types/database';
 import { supabase } from '@/lib/supabase';
 
@@ -9,6 +9,12 @@ export default function LoyaltyTab() {
     const [customers, setCustomers] = useState<DBCustomer[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    
+    // Pagination state
+    const [page, setPage] = useState(1);
+    const [pageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
     
     // Settings
     const [pointsRate, setPointsRate] = useState<number>(1);
@@ -25,14 +31,17 @@ export default function LoyaltyTab() {
     const [adjustReason, setAdjustReason] = useState('');
     const [isAdjusting, setIsAdjusting] = useState(false);
 
-    const loadData = async () => {
+    const loadData = useCallback(async (targetPage = page, query = searchQuery) => {
         setLoading(true);
         try {
-            const [custData, rate] = await Promise.all([
-                fetchAllCustomers(),
+            const [paginated, rate] = await Promise.all([
+                fetchPaginatedCustomers({ page: targetPage, pageSize, search: query }),
                 getPointsPerEgp()
             ]);
-            setCustomers(custData);
+            setCustomers(paginated.customers);
+            setTotalPages(paginated.totalPages);
+            setTotalCount(paginated.totalCount);
+            setPage(paginated.page);
             setPointsRate(rate);
         } catch (error) {
             console.error(error);
@@ -40,11 +49,21 @@ export default function LoyaltyTab() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [page, pageSize, searchQuery]);
 
+    // Initial load & search debounce
     useEffect(() => {
-        loadData();
-    }, []);
+        const timer = setTimeout(() => {
+            loadData(1, searchQuery);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    const handlePageChange = (newPage: number) => {
+        if (newPage >= 1 && newPage <= totalPages && newPage !== page) {
+            loadData(newPage, searchQuery);
+        }
+    };
 
     const handleUpdateRate = async () => {
         if (pointsRate <= 0) {
@@ -70,7 +89,8 @@ export default function LoyaltyTab() {
                 .from('loyalty_transactions')
                 .select('*')
                 .eq('customer_id', customer.id)
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(50);
             
             if (error) throw error;
             setHistory(data || []);
@@ -106,7 +126,7 @@ export default function LoyaltyTab() {
             
             // Refresh
             handleViewHistory(selectedCustomer);
-            loadData();
+            loadData(page, searchQuery);
             
             // Update local selected customer to reflect new balance immediately
             setSelectedCustomer(prev => prev ? {
@@ -120,15 +140,6 @@ export default function LoyaltyTab() {
             setIsAdjusting(false);
         }
     };
-
-    const filteredCustomers = customers.filter(c => {
-        const q = searchQuery.trim().toLowerCase();
-        if (!q) return true;
-        const nameMatch = c.full_name && c.full_name.toLowerCase().includes(q);
-        const emailMatch = c.email && c.email.toLowerCase().includes(q);
-        const phoneMatch = c.phone_number && c.phone_number.includes(q);
-        return Boolean(nameMatch || emailMatch || phoneMatch);
-    });
 
     return (
         <div className="space-y-6" dir="rtl">
@@ -171,7 +182,7 @@ export default function LoyaltyTab() {
                 <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                         <User className="w-5 h-5 text-slate-500" />
-                        العملاء والنقاط ({customers.length})
+                        العملاء والنقاط ({totalCount})
                     </h3>
                     <div className="relative w-full sm:w-auto">
                         <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -179,7 +190,7 @@ export default function LoyaltyTab() {
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="ابحث بالاسم أو رقم الهاتف..."
+                            placeholder="ابحث بالاسم أو البريد أو الهاتف..."
                             className="w-full sm:w-72 bg-slate-50 border border-slate-200 rounded-xl pr-10 pl-4 py-2 text-sm text-slate-900 focus:outline-none focus:border-red-500"
                         />
                     </div>
@@ -200,12 +211,12 @@ export default function LoyaltyTab() {
                                 <tr>
                                     <td colSpan={4} className="text-center py-8 text-slate-500">جاري التحميل...</td>
                                 </tr>
-                            ) : filteredCustomers.length === 0 ? (
+                            ) : customers.length === 0 ? (
                                 <tr>
                                     <td colSpan={4} className="text-center py-8 text-slate-500">لا يوجد عملاء يطابقون البحث.</td>
                                 </tr>
                             ) : (
-                                filteredCustomers.map(c => (
+                                customers.map(c => (
                                     <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-6 py-4 font-medium text-slate-900">
                                             <div className="flex items-center gap-3">
@@ -249,6 +260,46 @@ export default function LoyaltyTab() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+                    <div>
+                        {totalCount > 0 ? (
+                            <span>
+                                عرض <strong className="text-slate-900 font-mono">{((page - 1) * pageSize) + 1}</strong> إلى{' '}
+                                <strong className="text-slate-900 font-mono">{Math.min(page * pageSize, totalCount)}</strong> من إجمالي{' '}
+                                <strong className="text-slate-900 font-mono">{totalCount}</strong> عميل
+                            </span>
+                        ) : (
+                            <span>لا توجد نتائج</span>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => handlePageChange(page - 1)}
+                            disabled={page <= 1 || loading}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed font-medium transition-colors"
+                            title="الصفحة السابقة"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                            <span>السابق</span>
+                        </button>
+                        <span className="font-mono font-medium px-2 py-1 text-slate-700 bg-slate-100 rounded-md">
+                            {page} / {totalPages}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => handlePageChange(page + 1)}
+                            disabled={page >= totalPages || loading}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed font-medium transition-colors"
+                            title="الصفحة التالية"
+                        >
+                            <span>التالي</span>
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
             </div>
 
