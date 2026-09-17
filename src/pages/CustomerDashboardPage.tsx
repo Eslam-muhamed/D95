@@ -11,12 +11,6 @@ export default function CustomerDashboardPage() {
     const navigate = useNavigate();
     const { session, user, customerProfile, isLoading, signOut, refreshProfile } = useAuth();
     
-    // Guest Phone State
-    const [phone, setPhone] = useState('');
-    const [guestLoading, setGuestLoading] = useState(false);
-    const [guestCustomer, setGuestCustomer] = useState<DBCustomer | null>(null);
-    const [guestHistory, setGuestHistory] = useState<DBLoyaltyTransaction[]>([]);
-
     // Authenticated User State
     const [authHistory, setAuthHistory] = useState<DBLoyaltyTransaction[]>([]);
     const [authOrders, setAuthOrders] = useState<DBOrder[]>([]);
@@ -76,32 +70,6 @@ export default function CustomerDashboardPage() {
             }
         }
     }, []);
-
-    const handleGuestLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        if (!phone || phone.length < 10) {
-            toast.error('برجاء إدخال رقم هاتف صحيح');
-            return;
-        }
-
-        setGuestLoading(true);
-        try {
-            const data = await getCustomerLoyaltyInfo(phone);
-            if (data.exists && data.customer) {
-                setGuestCustomer(data.customer);
-                setGuestHistory(data.history || []);
-                toast.success('تم العثور على حسابك بنجاح');
-            } else {
-                toast.error('لا يوجد حساب أو نقاط مسجلة بهذا الرقم بعد.');
-            }
-        } catch (error) {
-            toast.error('حدث خطأ أثناء البحث عن الحساب');
-            console.error(error);
-        } finally {
-            setGuestLoading(false);
-        }
-    };
 
     const handleLinkPhone = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -354,19 +322,7 @@ export default function CustomerDashboardPage() {
                             <LogOut size={13} />
                             <span>خروج</span>
                         </button>
-                    ) : (
-                        <button 
-                            onClick={() => {
-                                setGuestCustomer(null);
-                                setPhone('');
-                                setGuestHistory([]);
-                            }}
-                            className="text-xs bg-white/10 hover:bg-white/20 border border-white/10 text-white px-3 py-1.5 rounded-lg transition-colors font-bold flex items-center gap-1.5 backdrop-blur-sm"
-                        >
-                            <ChevronLeft size={13} />
-                            <span>بحث جديد</span>
-                        </button>
-                    )}
+                    ) : null}
                 </div>
             </div>
         </div>
@@ -457,89 +413,23 @@ export default function CustomerDashboardPage() {
                         )}
                     </div>
                 ) : (
-                    /* STATE 2: GUEST / PHONE LOOKUP */
-                    !guestCustomer ? (
-                        <div className="space-y-6">
-                            {/* Login Card CTA */}
-                            <div className="bg-gradient-to-r from-red-600 to-red-800 rounded-3xl p-6 text-white text-center shadow-lg shadow-red-900/20">
-                                <UserCircle2 size={40} className="mx-auto mb-3 opacity-90" />
-                                <h2 className="text-lg sm:text-xl font-bold mb-2 font-display">سجل دخولك الآن!</h2>
-                                <p className="text-red-100 text-xs sm:text-sm mb-5 leading-relaxed">
-                                    تابع نقاطك، تصفح طلباتك السابقة، واحصل على عروض حصرية.
-                                </p>
-                                <button 
-                                    onClick={() => navigate('/login')}
-                                    className="w-full bg-white text-red-700 font-bold py-3.5 rounded-xl shadow-sm hover:bg-red-50 transition-colors text-sm"
-                                >
-                                    تسجيل الدخول / إنشاء حساب
-                                </button>
-                            </div>
-
-                            <div className="relative py-2">
-                                <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-[var(--c-border)]"></div>
-                                </div>
-                                <div className="relative flex justify-center text-xs">
-                                    <span className="px-4 bg-[var(--bg-main)] text-[var(--text-3)]">أو استعلم كزائر</span>
-                                </div>
-                            </div>
-
-                            <div className="bg-[var(--c-card)] rounded-3xl p-6 shadow-sm border border-[var(--c-border)]">
-                                <div className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center mx-auto mb-4">
-                                    <Star className="w-6 h-6 fill-amber-500" />
-                                </div>
-                                <h2 className="text-base sm:text-lg font-bold text-center text-[var(--text-1)] mb-2 font-display">
-                                    استعلام سريع عن النقاط
-                                </h2>
-                                <p className="text-center text-[var(--text-3)] mb-6 text-xs leading-relaxed">
-                                    أدخل رقم الهاتف الذي قمت بالطلب منه مسبقاً لمعرفة رصيد نقاطك.
-                                </p>
-
-                                <form onSubmit={handleGuestLogin} className="space-y-4">
-                                    <div>
-                                        <div className="relative">
-                                            <Phone className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-3)]" />
-                                            <input
-                                                type="tel"
-                                                dir="ltr"
-                                                value={phone}
-                                                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                                                placeholder="010XXXXXXXX"
-                                                className="w-full bg-[var(--bg-main)] border border-[var(--c-border)] rounded-xl pr-11 pl-4 py-3.5 text-sm font-mono focus:outline-none focus:border-red-500 transition-colors text-[var(--text-1)]"
-                                            />
-                                        </div>
-                                    </div>
-                                    <button
-                                        type="submit"
-                                        disabled={guestLoading}
-                                        className="w-full bg-[var(--text-1)] hover:bg-opacity-90 disabled:opacity-50 text-[var(--bg-main)] font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm shadow-sm"
-                                    >
-                                        {guestLoading ? 'جاري البحث...' : 'عرض النقاط'}
-                                    </button>
-                                </form>
-                            </div>
+                    /* STATE 2: UNAUTHENTICATED */
+                    <div className="space-y-6">
+                        {/* Login Card CTA */}
+                        <div className="bg-gradient-to-r from-red-600 to-red-800 rounded-3xl p-6 text-white text-center shadow-lg shadow-red-900/20">
+                            <UserCircle2 size={40} className="mx-auto mb-3 opacity-90" />
+                            <h2 className="text-lg sm:text-xl font-bold mb-2 font-display">سجل دخولك الآن!</h2>
+                            <p className="text-red-100 text-xs sm:text-sm mb-5 leading-relaxed">
+                                تابع نقاطك، تصفح طلباتك السابقة، واحصل على عروض حصرية.
+                            </p>
+                            <button 
+                                onClick={() => navigate('/login')}
+                                className="w-full bg-white text-red-700 font-bold py-3.5 rounded-xl shadow-sm hover:bg-red-50 transition-colors text-sm"
+                            >
+                                تسجيل الدخول / إنشاء حساب
+                            </button>
                         </div>
-                    ) : (
-                        <div className="space-y-6">
-                            <div className="bg-blue-500/10 border border-blue-500/20 text-blue-500 dark:text-blue-400 p-4 rounded-2xl text-sm flex items-start gap-3">
-                                <AlertCircle size={20} className="shrink-0 mt-0.5" />
-                                <div>
-                                    <p className="font-bold mb-1">أنت تتصفح كزائر</p>
-                                    <p className="text-xs opacity-90">قم بتسجيل الدخول لدمج هذا الرقم بحسابك وتتبع طلباتك السابقة.</p>
-                                </div>
-                            </div>
-                            
-                            {renderVIPCard(guestCustomer, false)}
-                            
-                            <div className="pt-2">
-                                <h3 className="font-bold text-sm text-[var(--text-1)] mb-3 flex items-center gap-2">
-                                    <History className="w-4 h-4 text-[var(--text-3)]" />
-                                    سجل النقاط
-                                </h3>
-                                {renderHistory(guestHistory, false)}
-                            </div>
-                        </div>
-                    )
+                    </div>
                 )}
             </div>
         </div>
