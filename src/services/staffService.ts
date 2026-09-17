@@ -3,7 +3,7 @@ import { isAdmin } from '@/lib/authRoles';
 
 export interface StaffUser {
     email: string;
-    role: 'admin' | 'cashier';
+    role: 'admin';
     created_at?: string;
 }
 
@@ -30,7 +30,24 @@ export async function fetchStaffUsers(): Promise<StaffUser[]> {
     }
 }
 
+export async function addStaffUser(email: string): Promise<StaffUser> {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+        throw new Error('يرجى إدخال بريد إلكتروني صحيح');
+    }
 
+    const { data, error } = await supabase
+        .from('staff_users')
+        .upsert({ email: cleanEmail, role: 'admin' })
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error adding admin user:', error);
+        throw error;
+    }
+    return data as StaffUser;
+}
 
 export async function removeStaffUser(email: string): Promise<boolean> {
     const { error } = await supabase
@@ -45,7 +62,7 @@ export async function removeStaffUser(email: string): Promise<boolean> {
     return true;
 }
 
-export async function getCurrentUserRole(email: string): Promise<'admin' | 'cashier' | null> {
+export async function getCurrentUserRole(email: string): Promise<'admin' | null> {
     try {
         const { data, error } = await supabase
             .from('staff_users')
@@ -54,7 +71,7 @@ export async function getCurrentUserRole(email: string): Promise<'admin' | 'cash
             .maybeSingle();
 
         if (!error && data) {
-            return data.role as 'admin' | 'cashier';
+            return data.role as 'admin';
         }
         return null;
     } catch (err) {

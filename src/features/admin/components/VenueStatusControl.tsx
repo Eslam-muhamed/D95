@@ -39,7 +39,7 @@ export default function VenueStatusControl({ userEmail = 'admin@d95.com', varian
         setIsUpdating(true);
         playPs5SelectSound();
 
-        const roleLabel = userEmail === 'cashier@d95.com' ? 'الكاشير' : 'الإدارة';
+        const roleLabel = 'الإدارة';
 
         try {
             const updated = await updateVenueStatus(targetState, roleLabel);

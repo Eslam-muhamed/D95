@@ -1,7 +1,7 @@
-// Roles are now dynamically fetched from the database
-let cachedRole: 'admin' | 'cashier' | null = null;
+// Roles are now dynamically fetched from the database (Admin only)
+let cachedRole: 'admin' | null = null;
 
-export const setRoleCache = (role: 'admin' | 'cashier' | null) => {
+export const setRoleCache = (role: 'admin' | null) => {
     cachedRole = role;
 };
 
@@ -12,10 +12,10 @@ export const isAdmin = () => {
 };
 
 export const isCashier = () => {
-    return cachedRole === 'cashier';
+    return false;
 };
 
 export const isStaff = () => {
-    return cachedRole !== null;
+    return cachedRole === 'admin';
 };
 
