@@ -25,7 +25,28 @@ export default function UnifiedRevenueCard() {
     const [metrics, setMetrics] = useState<UnifiedRevenueMetrics | null>(() => getCachedUnifiedRevenueMetrics());
     const [loading, setLoading] = useState<boolean>(() => !getCachedUnifiedRevenueMetrics());
     const [refreshing, setRefreshing] = useState<boolean>(false);
-    const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+    const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+        try {
+            const saved = localStorage.getItem('d95_revenue_card_collapsed');
+            if (saved !== null) return saved === 'true';
+        } catch {
+            // Ignore localStorage errors
+        }
+        return true; // Default collapsed (ملموم) as requested
+    });
+
+    const toggleCollapse = () => {
+        playPs5NavigateSound();
+        setIsCollapsed((prev) => {
+            const next = !prev;
+            try {
+                localStorage.setItem('d95_revenue_card_collapsed', String(next));
+            } catch {
+                // Ignore localStorage errors
+            }
+            return next;
+        });
+    };
 
     const loadMetrics = useCallback(async (silent = false) => {
         if (!silent && !getCachedUnifiedRevenueMetrics()) setLoading(true);
@@ -157,10 +178,7 @@ export default function UnifiedRevenueCard() {
 
                     <button
                         type="button"
-                        onClick={() => {
-                            playPs5NavigateSound();
-                            setIsCollapsed(!isCollapsed);
-                        }}
+                        onClick={toggleCollapse}
                         title={isCollapsed ? 'توسيع الكارت والتفاصيل' : 'تصغير الكارت'}
                         className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
                     >
