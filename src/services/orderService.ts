@@ -119,19 +119,43 @@ export async function createOrder(orderData: {
     return data as DBOrder;
 }
 
-export async function fetchOrderMetrics(): Promise<{
+export interface CafeOrderMetrics {
     pendingOrdersCount: number;
     todayOrdersCount: number;
     todayOrdersRevenue: number;
-}> {
+}
+
+const ORDER_METRICS_CACHE_KEY = 'd95_cafe_order_metrics_cache';
+let memOrderMetricsCache: CafeOrderMetrics | null = null;
+
+export function getCachedOrderMetrics(): CafeOrderMetrics | null {
+    if (memOrderMetricsCache) return memOrderMetricsCache;
+    try {
+        const stored = sessionStorage.getItem(ORDER_METRICS_CACHE_KEY);
+        if (stored) {
+            memOrderMetricsCache = JSON.parse(stored);
+            return memOrderMetricsCache;
+        }
+    } catch {
+        // Ignore session storage errors
+    }
+    return null;
+}
+
+export async function fetchOrderMetrics(): Promise<CafeOrderMetrics> {
     try {
         const { data, error } = await supabase.rpc('get_order_metrics_v2');
         if (!error && data) {
-            return {
+            const metrics: CafeOrderMetrics = {
                 pendingOrdersCount: Number(data.pendingOrdersCount) || 0,
                 todayOrdersCount: Number(data.todayOrdersCount) || 0,
                 todayOrdersRevenue: Number(data.todayOrdersRevenue) || 0,
             };
+            memOrderMetricsCache = metrics;
+            try {
+                sessionStorage.setItem(ORDER_METRICS_CACHE_KEY, JSON.stringify(metrics));
+            } catch {}
+            return metrics;
         }
 
         // Fallback in case RPC is unavailable
@@ -149,13 +173,20 @@ export async function fetchOrderMetrics(): Promise<{
 
         const todayRevenue = (todayRes.data || []).reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
 
-        return {
+        const metrics: CafeOrderMetrics = {
             pendingOrdersCount: pendingRes.count || 0,
             todayOrdersCount: todayRes.data?.length || 0,
             todayOrdersRevenue: Math.round(todayRevenue),
         };
+
+        memOrderMetricsCache = metrics;
+        try {
+            sessionStorage.setItem(ORDER_METRICS_CACHE_KEY, JSON.stringify(metrics));
+        } catch {}
+
+        return metrics;
     } catch (err) {
         console.error('Error fetching order metrics:', err);
-        return { pendingOrdersCount: 0, todayOrdersCount: 0, todayOrdersRevenue: 0 };
+        return memOrderMetricsCache || { pendingOrdersCount: 0, todayOrdersCount: 0, todayOrdersRevenue: 0 };
     }
 }

@@ -13,18 +13,22 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { fetchUnifiedRevenueMetrics, type UnifiedRevenueMetrics } from '@/services/revenueService';
+import {
+    fetchUnifiedRevenueMetrics,
+    getCachedUnifiedRevenueMetrics,
+    type UnifiedRevenueMetrics,
+} from '@/services/revenueService';
 import { playPs5SelectSound, playPs5NavigateSound } from '@/lib/sound';
 
 export default function UnifiedRevenueCard() {
     const [period, setPeriod] = useState<'today' | 'allTime'>('today');
-    const [metrics, setMetrics] = useState<UnifiedRevenueMetrics | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
+    const [metrics, setMetrics] = useState<UnifiedRevenueMetrics | null>(() => getCachedUnifiedRevenueMetrics());
+    const [loading, setLoading] = useState<boolean>(() => !getCachedUnifiedRevenueMetrics());
     const [refreshing, setRefreshing] = useState<boolean>(false);
     const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
 
     const loadMetrics = useCallback(async (silent = false) => {
-        if (!silent) setLoading(true);
+        if (!silent && !getCachedUnifiedRevenueMetrics()) setLoading(true);
         else setRefreshing(true);
 
         try {

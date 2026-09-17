@@ -25,6 +25,7 @@ import {
     updateOrderStatus,
     deleteOrder,
     fetchOrderMetrics,
+    getCachedOrderMetrics,
 } from '@/services/orderService';
 import type { DBOrder } from '@/types/database';
 import type { ItemCustomization } from '@/types/cart';
@@ -92,8 +93,8 @@ export default function OrdersTab() {
     const [totalCount, setTotalCount] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
 
-    // Metrics
-    const [metrics, setMetrics] = useState({
+    // Metrics (instant 0ms render via SWR cache)
+    const [metrics, setMetrics] = useState(() => getCachedOrderMetrics() || {
         pendingOrdersCount: 0,
         todayOrdersCount: 0,
         todayOrdersRevenue: 0,

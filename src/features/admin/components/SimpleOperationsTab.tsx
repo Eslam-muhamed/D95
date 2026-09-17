@@ -36,6 +36,7 @@ import {
     fetchRecentBookings,
     fetchPaginatedBookings,
     fetchBookingMetrics,
+    getCachedBookingMetrics,
     updateBookingStatus,
     deleteBooking,
     fetchBookingPolicy,
@@ -120,11 +121,14 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
         totalRevenue: number;
         pendingCount: number;
         confirmedCount: number;
-    }>({
-        totalBookings: 0,
-        totalRevenue: 0,
-        pendingCount: 0,
-        confirmedCount: 0,
+    }>(() => {
+        const cached = getCachedBookingMetrics();
+        return {
+            totalBookings: cached?.totalCount || 0,
+            totalRevenue: cached?.totalRevenue || 0,
+            pendingCount: cached?.pendingCount || 0,
+            confirmedCount: cached?.confirmedCount || 0,
+        };
     });
 
     // Modals & Focused Detail Preview
@@ -185,15 +189,8 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
     const loadOperationsData = useCallback(async (isSilentInput?: boolean | unknown) => {
         const isSilent = typeof isSilentInput === 'boolean' ? isSilentInput : false;
         if (!isSilent) setLoading(true);
-        try {
-            const [metrics, dayData, recentData, rates, pol] = await Promise.all([
-                fetchBookingMetrics(),
-                fetchBookingsForDate(todayDateFilter), 
-                fetchRecentBookings({ date: recentDateFilter || undefined, limit: 50 }),
-                fetchRoomRates(),
-                fetchBookingPolicy(),
-            ]);
-
+        // 1. Instantly fire & update metrics in parallel for instant KPI card display
+        fetchBookingMetrics().then((metrics) => {
             setAllPendingBookings(metrics.recentPending);
             if (metrics.pendingCountsByDate) {
                 setPendingCountsByDate(metrics.pendingCountsByDate);
@@ -204,6 +201,16 @@ export default function SimpleOperationsTab({ isCashier = false, userEmail = 'ad
                 pendingCount: metrics.pendingCount,
                 confirmedCount: metrics.confirmedCount,
             });
+        }).catch(() => {});
+
+        try {
+            const [dayData, recentData, rates, pol] = await Promise.all([
+                fetchBookingsForDate(todayDateFilter), 
+                fetchRecentBookings({ date: recentDateFilter || undefined, limit: 50 }),
+                fetchRoomRates(),
+                fetchBookingPolicy(),
+            ]);
+
             setTodayBookings(dayData);
             setRecentBookings(recentData);
             setRoomRates(rates);

@@ -182,7 +182,7 @@ export async function autoCancelExpiredPendingBookings(): Promise<number> {
     }
 }
 
-export async function fetchBookingMetrics(): Promise<{
+export interface BookingMetrics {
     totalCount: number;
     pendingCount: number;
     confirmedCount: number;
@@ -191,11 +191,30 @@ export async function fetchBookingMetrics(): Promise<{
     todayRevenue: number;
     recentPending: DBBooking[];
     pendingCountsByDate: Record<string, number>;
-}> {
+}
+
+const BOOKING_METRICS_CACHE_KEY = 'd95_ps_booking_metrics_cache';
+let memBookingMetricsCache: BookingMetrics | null = null;
+
+export function getCachedBookingMetrics(): BookingMetrics | null {
+    if (memBookingMetricsCache) return memBookingMetricsCache;
+    try {
+        const stored = sessionStorage.getItem(BOOKING_METRICS_CACHE_KEY);
+        if (stored) {
+            memBookingMetricsCache = JSON.parse(stored);
+            return memBookingMetricsCache;
+        }
+    } catch {
+        // Ignore session storage errors
+    }
+    return null;
+}
+
+export async function fetchBookingMetrics(): Promise<BookingMetrics> {
     try {
         const { data, error } = await supabase.rpc('get_booking_metrics_v2');
         if (!error && data) {
-            return {
+            const metrics: BookingMetrics = {
                 totalCount: Number(data.totalCount) || 0,
                 pendingCount: Number(data.pendingCount) || 0,
                 confirmedCount: Number(data.confirmedCount) || 0,
@@ -205,6 +224,11 @@ export async function fetchBookingMetrics(): Promise<{
                 recentPending: (data.recentPending || []) as DBBooking[],
                 pendingCountsByDate: (data.pendingCountsByDate || {}) as Record<string, number>,
             };
+            memBookingMetricsCache = metrics;
+            try {
+                sessionStorage.setItem(BOOKING_METRICS_CACHE_KEY, JSON.stringify(metrics));
+            } catch {}
+            return metrics;
         }
 
         // Fallback: in case RPC is unavailable, run direct query safely

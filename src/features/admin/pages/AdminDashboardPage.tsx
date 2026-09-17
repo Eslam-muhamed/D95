@@ -218,8 +218,12 @@ export default function AdminDashboardPage() {
                 <UnifiedRevenueCard />
 
                 <SectionErrorBoundary>
-                    {activeTab === 'operations' && <SimpleOperationsTab userEmail={userEmail} />}
-                    {activeTab === 'orders' && <OrdersTab />}
+                    <div className={activeTab === 'operations' ? 'block' : 'hidden'}>
+                        <SimpleOperationsTab userEmail={userEmail} />
+                    </div>
+                    <div className={activeTab === 'orders' ? 'block' : 'hidden'}>
+                        <OrdersTab />
+                    </div>
                     {activeTab === 'menu_settings' && <SimpleMenuSettingsTab />}
                     {activeTab === 'payment_settings' && <PaymentSettingsTab />}
                     {activeTab === 'staff_settings' && <StaffSettingsTab />}
