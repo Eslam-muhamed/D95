@@ -225,8 +225,31 @@ export default function SmartWaiterBot() {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-3"
+            className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40"
           >
+            {/* Thought Bubble */}
+            {!hasOpened && (
+              <motion.div 
+                initial={{ opacity: 0, y: 15, scale: 0.8 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: 1.2, duration: 0.6, type: 'spring', bounce: 0.5 }}
+                className="absolute -top-20 -left-16 sm:-top-24 sm:-left-20 flex flex-col items-end pointer-events-none"
+              >
+                <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2.5 sm:px-5 sm:py-3 rounded-[24px] rounded-br-lg shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)] border border-slate-100/50 dark:border-slate-700/50 z-10 transform -rotate-2">
+                  <span className="font-bold text-sm sm:text-base bg-gradient-to-r from-red-600 to-rose-500 bg-clip-text text-transparent whitespace-nowrap">
+                    اسأل دبور
+                  </span>
+                  <span className="ml-1.5">🐝</span>
+                </div>
+                
+                {/* Trailing thought circles */}
+                <div className="flex flex-col items-end pr-4 mt-1 gap-1">
+                  <div className="w-3.5 h-3.5 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-full shadow-md border border-slate-100/50 dark:border-slate-700/50"></div>
+                  <div className="w-2 h-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-full shadow-sm border border-slate-100/50 dark:border-slate-700/50 mr-2"></div>
+                </div>
+              </motion.div>
+            )}
+
             <motion.button
               onClick={() => {
                 setIsOpen(true);
@@ -241,20 +264,6 @@ export default function SmartWaiterBot() {
               {/* Online Indicator */}
               <span className="absolute bottom-0.5 right-1 sm:bottom-1 sm:right-2 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full z-10"></span>
             </motion.button>
-            
-            {/* Thought Bubble */}
-            {!hasOpened && (
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 1, duration: 0.5 }}
-                className="relative flex bg-white text-slate-800 px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl shadow-lg border border-slate-100 font-bold text-xs sm:text-sm whitespace-nowrap"
-              >
-                اسأل دبور 🐝
-                {/* Bubble Arrow */}
-                <div className="absolute top-1/2 -right-1.5 sm:-right-2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 bg-white border-r border-t border-slate-100 transform rotate-45"></div>
-              </motion.div>
-            )}
           </motion.div>
         )}
       </AnimatePresence>
