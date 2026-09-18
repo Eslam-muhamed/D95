@@ -57,6 +57,29 @@ export default function SmartWaiterBot() {
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
+    // Check daily message limit (max 1000 messages per day)
+    const today = new Date().toISOString().split('T')[0];
+    const usageStr = localStorage.getItem('d95_bot_usage');
+    let usage = usageStr ? JSON.parse(usageStr) : { date: today, count: 0 };
+    
+    if (usage.date !== today) {
+      usage = { date: today, count: 0 };
+    }
+
+    if (usage.count >= 1000) {
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'model',
+        text: 'يسعدنا جداً تواصلك معانا! 🤩 وصلنا للحد الأقصى المسموح به للمحادثة.'
+      }]);
+      setInput('');
+      return;
+    }
+
+    // Increment usage
+    usage.count += 1;
+    localStorage.setItem('d95_bot_usage', JSON.stringify(usage));
+
     const userText = input.trim();
     setInput('');
     
