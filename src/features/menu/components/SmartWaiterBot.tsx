@@ -225,7 +225,7 @@ export default function SmartWaiterBot() {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40"
+            className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40 flex flex-col items-end"
           >
             {/* Thought Bubble */}
             {!hasOpened && (
@@ -233,10 +233,10 @@ export default function SmartWaiterBot() {
                 initial={{ opacity: 0, y: 15, scale: 0.8 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ delay: 1.2, duration: 0.6, type: 'spring', bounce: 0.5 }}
-                className="absolute -top-20 -left-16 sm:-top-24 sm:-left-20 flex flex-col items-end pointer-events-none"
+                className="flex flex-col items-end mb-1 mr-6 sm:mr-8 pointer-events-none"
               >
-                <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2.5 sm:px-5 sm:py-3 rounded-[24px] rounded-br-lg shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)] border border-slate-100/50 dark:border-slate-700/50 z-10 transform -rotate-2">
-                  <span className="font-bold text-sm sm:text-base bg-gradient-to-r from-red-600 to-rose-500 bg-clip-text text-transparent whitespace-nowrap">
+                <div className="bg-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-[24px] shadow-lg border border-slate-200 z-10">
+                  <span className="font-bold text-slate-800 text-sm sm:text-base whitespace-nowrap">
                     اسأل دبور
                   </span>
                   <span className="ml-1.5">🐝</span>
@@ -244,8 +244,8 @@ export default function SmartWaiterBot() {
                 
                 {/* Trailing thought circles */}
                 <div className="flex flex-col items-end pr-4 mt-1 gap-1">
-                  <div className="w-3.5 h-3.5 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-full shadow-md border border-slate-100/50 dark:border-slate-700/50"></div>
-                  <div className="w-2 h-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-full shadow-sm border border-slate-100/50 dark:border-slate-700/50 mr-2"></div>
+                  <div className="w-3.5 h-3.5 bg-white rounded-full shadow-sm border border-slate-200 mr-2"></div>
+                  <div className="w-2 h-2 bg-white rounded-full shadow-sm border border-slate-200 mr-0"></div>
                 </div>
               </motion.div>
             )}
