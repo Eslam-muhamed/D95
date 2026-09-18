@@ -232,14 +232,14 @@ export default function SmartWaiterBot() {
                 setIsOpen(true);
                 setHasOpened(true);
               }}
-              className="relative w-16 h-16 sm:w-20 sm:h-20 bg-red-600 rounded-full flex items-center justify-center shadow-2xl hover:bg-red-700 transition-colors overflow-hidden border-4 border-red-500 hover:scale-105 active:scale-95"
+              className="relative w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               aria-label="اسأل دبور"
             >
-              <img src="/dabour.png" alt="دبور" className="w-full h-full object-cover" />
+              <img src="/dabour.png" alt="دبور" className="w-full h-full object-contain drop-shadow-2xl filter" />
               {/* Online Indicator */}
-              <span className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
+              <span className="absolute bottom-2 right-2 w-4 h-4 bg-green-500 border-2 border-white rounded-full z-10"></span>
             </motion.button>
             
             {/* Thought Bubble */}
