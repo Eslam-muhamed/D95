@@ -82,7 +82,7 @@ ${safeMenuContext || 'لا توجد بيانات متاحة للمنيو حال�
     });
 
     // Call Gemini API
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -112,6 +112,7 @@ ${safeMenuContext || 'لا توجد بيانات متاحة للمنيو حال�
       JSON.stringify({ reply: botReply }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
   } catch (error) {
     console.error('Smart Waiter Error:', error);
     return new Response(
