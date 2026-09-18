@@ -29,16 +29,32 @@ export default function SmartWaiterBot() {
   const { addItem } = useCart();
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
   };
 
   useEffect(() => {
-    if (isOpen) {
-      scrollToBottom();
+    if (!isOpen) return;
+
+    if (messages.length <= 1) {
+      scrollToBottom('auto');
       setTimeout(() => inputRef.current?.focus(), 100);
+      return;
+    }
+
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg?.role === 'model') {
+      const lastMsgEl = document.getElementById(`msg-${lastMsg.id}`);
+      if (lastMsgEl) {
+        lastMsgEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else {
+        scrollToBottom('smooth');
+      }
+    } else {
+      scrollToBottom('smooth');
     }
   }, [isOpen, messages]);
 
@@ -266,21 +282,19 @@ export default function SmartWaiterBot() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-0 left-0 right-0 sm:bottom-6 sm:left-auto sm:right-6 sm:w-96 sm:h-[500px] h-[80vh] z-50 bg-white dark:bg-slate-900 sm:rounded-2xl shadow-2xl shadow-black/20 border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden"
+            className="fixed bottom-0 left-0 right-0 sm:bottom-6 sm:left-auto sm:right-6 w-full sm:w-[460px] md:w-[480px] h-[88dvh] sm:h-[660px] sm:max-h-[85vh] z-50 bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl shadow-black/30 border border-slate-200/80 dark:border-slate-800/80 flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="bg-red-600 text-white p-4 flex items-center justify-between shrink-0 shadow-md z-10">
+            <div className="bg-red-600 text-white px-4 py-3.5 sm:px-5 flex items-center justify-between shrink-0 shadow-md z-10">
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center overflow-hidden border-2 border-white/20">
-                    <img src="/dabour.png" alt="دبور" className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg flex items-center gap-2">
-                      اسأل دبور <Sparkles className="w-4 h-4 text-yellow-300" />
-                    </h3>
-                    <p className="text-red-100 text-xs">يجيب على استفساراتك من المنيو</p>
-                  </div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden bg-white/10 p-0.5 border border-white/20">
+                  <img src="/dabour.png" alt="دبور" className="w-full h-full object-contain filter drop-shadow" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base sm:text-lg flex items-center gap-1.5">
+                    اسأل دبور <Sparkles className="w-4 h-4 text-yellow-300" />
+                  </h3>
+                  <p className="text-red-100 text-[11px] sm:text-xs">يجيب على استفساراتك من المنيو</p>
                 </div>
               </div>
               <button 
@@ -293,19 +307,20 @@ export default function SmartWaiterBot() {
             </div>
 
             {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-slate-900 scroll-smooth">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-slate-900 scroll-smooth">
               {messages.map((msg) => (
                 <div 
                   key={msg.id} 
+                  id={`msg-${msg.id}`}
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-4 items-end gap-2`}
                 >
                   {msg.role === 'model' && (
-                    <div className="w-8 h-8 bg-red-900/50 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      <img src="/dabour.png" alt="دبور" className="w-full h-full object-cover" />
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-red-100 dark:bg-red-950/40 p-0.5 border border-red-500/20">
+                      <img src="/dabour.png" alt="دبور" className="w-full h-full object-contain" />
                     </div>
                   )}
                   
-                  <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-3 text-sm leading-relaxed shadow-sm ${
+                  <div className={`max-w-[88%] sm:max-w-[84%] rounded-2xl p-3.5 sm:p-4 text-sm leading-relaxed shadow-sm ${
                     msg.role === 'user' 
                       ? 'bg-red-600 text-white rounded-tl-none' 
                       : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-tr-none'
