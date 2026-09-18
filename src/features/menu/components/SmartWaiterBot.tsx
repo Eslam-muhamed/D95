@@ -184,7 +184,7 @@ export default function SmartWaiterBot() {
                 </div>
               );
             }
-            return null; // Don't render the raw tag if product not found
+            return <span key={index} className="text-red-500 font-bold text-xs whitespace-pre-wrap mx-1">(عذراً، المنتج غير متوفر)</span>;
           }
           
           return part ? <span key={index} className="whitespace-pre-wrap">{part}</span> : null;
