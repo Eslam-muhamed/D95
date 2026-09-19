@@ -72,7 +72,8 @@ export default function TournamentsTab() {
             setFormData({ name: '', game: '', start_date: '', entry_fee: 0, prize: '', status: 'upcoming', is_active_in_ui: false });
             loadTournaments();
         } catch (error: any) {
-            toast.error('فشل في إنشاء البطولة');
+            console.error('Error creating tournament:', error);
+            toast.error(error?.message || error?.details || 'فشل في إنشاء البطولة (تحقق من الصلاحيات)');
         }
     };
 
