@@ -50,6 +50,16 @@ export default function TournamentsTab() {
         }
     };
 
+    const handleStatusChange = async (t: DBTournament, newStatus: string) => {
+        try {
+            await tournamentService.updateTournament(t.id, { status: newStatus });
+            toast.success('تم تحديث حالة البطولة بنجاح');
+            loadTournaments();
+        } catch (error: any) {
+            toast.error('حدث خطأ أثناء تحديث الحالة');
+        }
+    };
+
     const handleDelete = async (id: string) => {
         if (!confirm('هل أنت متأكد من حذف هذه البطولة نهائياً؟')) return;
         try {
@@ -151,13 +161,19 @@ export default function TournamentsTab() {
                                 <h3 className="font-black text-lg text-slate-900">{t.name}</h3>
                                 <span className="text-xs font-bold text-red-600">{t.game}</span>
                             </div>
-                            <span className={`px-2 py-1 rounded text-[10px] font-bold ${
-                                t.status === 'active' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 
-                                t.status === 'completed' ? 'bg-slate-100 text-slate-700 border border-slate-200' :
-                                'bg-amber-100 text-amber-700 border border-amber-200'
-                            }`}>
-                                {t.status === 'active' ? 'جارية' : t.status === 'completed' ? 'منتهية' : 'قادمة'}
-                            </span>
+                            <select
+                                value={t.status}
+                                onChange={(e) => handleStatusChange(t, e.target.value)}
+                                className={`px-2 py-1.5 rounded-lg text-xs font-bold border outline-none cursor-pointer text-center ${
+                                    t.status === 'active' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 
+                                    t.status === 'completed' ? 'bg-slate-100 text-slate-700 border-slate-200' :
+                                    'bg-amber-100 text-amber-700 border-amber-200'
+                                }`}
+                            >
+                                <option value="upcoming">قادمة (إتاحة التسجيل)</option>
+                                <option value="active">جارية (بدء البطولة)</option>
+                                <option value="completed">منتهية (إغلاق)</option>
+                            </select>
                         </div>
 
                         <div className="flex flex-col gap-1 text-sm text-slate-600">
