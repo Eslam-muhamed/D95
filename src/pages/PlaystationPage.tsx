@@ -18,6 +18,7 @@ import {
     Sparkles,
     ShoppingBag,
     Instagram,
+    Trophy,
     type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -30,6 +31,7 @@ import { BeinSportsIcon, NetflixIcon } from '@/components/brand/EntertainmentIco
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { playPs5SelectSound } from '@/lib/sound';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';
+import { useTournamentStore } from '@/stores/tournamentStore';
 
 interface RoomData {
     id: string;
@@ -199,6 +201,7 @@ export default function PlaystationPage() {
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
     const { itemCount, openCart } = useCart();
+    const hasTournaments = useTournamentStore(state => state.hasActiveTournament());
 
     const [roomRates, setRoomRates] = useState<RoomRates>({ 'room-1': 100, 'room-2': 100 });
 
@@ -297,6 +300,15 @@ export default function PlaystationPage() {
                         >
                             منيو الكافيه
                         </Link>
+                        {hasTournaments && (
+                            <Link
+                                to="/tournaments"
+                                className="px-3.5 py-1.5 rounded-full text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-white dark:hover:bg-white/10 transition-all flex items-center gap-1"
+                            >
+                                <Trophy size={14} className="text-amber-500" />
+                                <span>بطولات</span>
+                            </Link>
+                        )}
                     </div>
 
                     {/* Actions: Theme Toggle & Cart */}

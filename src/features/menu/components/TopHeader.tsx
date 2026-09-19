@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ShoppingBag, Sun, Moon, Volume2, VolumeX } from 'lucide-react';
+import { ArrowRight, ShoppingBag, Sun, Moon, Volume2, VolumeX, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/features/cart/stores/cartStore';
 import { useTheme } from '@/stores/themeStore';
 import { isAudioMuted, toggleAudioMute } from '@/lib/sound';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';
+import { useTournamentStore } from '@/stores/tournamentStore';
 
 interface Props {
   onCartOpen?: () => void;
@@ -14,6 +15,7 @@ interface Props {
 export default function TopHeader({ onCartOpen }: Props = {}) {
   const { itemCount, openCart } = useCart();
   const { theme, toggleTheme } = useTheme();
+  const hasTournaments = useTournamentStore(state => state.hasActiveTournament());
   const [muted, setMuted] = useState(() => isAudioMuted());
 
   const handleToggleSound = () => {
@@ -68,6 +70,15 @@ export default function TopHeader({ onCartOpen }: Props = {}) {
           <span className="px-3.5 py-1.5 rounded-full bg-amber-600 text-white shadow-xs font-bold">
             منيو الكافيه
           </span>
+          {hasTournaments && (
+            <Link
+              to="/tournaments"
+              className="px-3.5 py-1.5 rounded-full text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-white dark:hover:bg-white/10 transition-all flex items-center gap-1"
+            >
+              <Trophy size={14} className="text-amber-500" />
+              <span>بطولات</span>
+            </Link>
+          )}
         </div>
 
         {/* Left side (RTL end): Theme toggle & Cart button */}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowRight, Gamepad2, Coffee, Sun, Moon, ExternalLink, MapPin, UserCircle2 } from 'lucide-react';
+import { ArrowRight, Gamepad2, Coffee, Sun, Moon, ExternalLink, MapPin, UserCircle2, Trophy } from 'lucide-react';
 import D95BrushLogo from '@/components/brand/D95BrushLogo';
 import { playPs5StartupSound, playCafeEntranceSound } from '@/lib/sound';
 import { useTheme } from '@/stores/themeStore';
@@ -13,6 +13,7 @@ import {
     DEFAULT_VENUE_STATUS,
     type VenueStatus,
 } from '@/services/venueStatusService';
+import { useTournamentStore } from '@/stores/tournamentStore';
 
 export default function GatewayPage() {
     const navigate = useNavigate();
@@ -20,6 +21,7 @@ export default function GatewayPage() {
     const [isBootingPs5, setIsBootingPs5] = useState(false);
     const [isEnteringMenu, setIsEnteringMenu] = useState(false);
     const [venueStatus, setVenueStatus] = useState<VenueStatus>(DEFAULT_VENUE_STATUS);
+    const hasTournaments = useTournamentStore(state => state.hasActiveTournament());
 
     useEffect(() => {
         fetchVenueStatus().then(setVenueStatus);
@@ -315,6 +317,42 @@ export default function GatewayPage() {
                         </div>
                     </Link>
                 </div>
+
+                {/* PORTAL 3: ESPORTS TOURNAMENTS (Only visible if active) */}
+                {hasTournaments && (
+                    <Link
+                        to="/tournaments"
+                        className="mt-3 sm:mt-6 group relative w-full flex items-center justify-between p-3.5 sm:p-6 concrete-card rounded-2xl sm:rounded-3xl border border-neutral-300/80 dark:border-white/10 hover:border-amber-500/60 transition-all duration-300 active:scale-[0.98] cursor-pointer shadow-sm hover:shadow-[0_0_35px_rgba(245,158,11,0.25)] overflow-hidden"
+                    >
+                        {/* Background subtle glow */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-transparent to-amber-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        
+                        <div className="flex items-center gap-3 sm:gap-5 relative z-10 w-full">
+                            <div className="flex-1 text-right">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-600/30 text-amber-800 dark:text-amber-300 font-bold text-[9px] flex items-center gap-1 border border-amber-200 dark:border-transparent">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                                        LIVE TOURNAMENTS
+                                    </span>
+                                    <span className="font-bebas text-xs text-neutral-500 dark:text-neutral-400 tracking-wider font-bold">
+                                        ZONE 03
+                                    </span>
+                                </div>
+                                <h2 className="font-bebas text-lg sm:text-2xl uppercase font-black text-neutral-900 dark:text-white tracking-wide group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors leading-tight">
+                                    ESPORTS ARENA
+                                </h2>
+                                <p className="font-body text-[10px] sm:text-xs text-neutral-600 dark:text-neutral-400 font-bold mt-0.5 line-clamp-1">
+                                    بطولات تنافسية نشطة، انضم الآن ونافس على الجوائز!
+                                </p>
+                            </div>
+
+                            <div className="shrink-0 flex flex-col items-center justify-center relative w-12 h-12 sm:w-16 sm:h-16">
+                                <div className="absolute inset-0 rounded-full bg-amber-600/10 dark:bg-amber-600/20 blur-lg group-hover:scale-125 transition-all" />
+                                <Trophy className="w-7 h-7 sm:w-9 sm:h-9 text-amber-500 relative z-10 drop-shadow-sm group-hover:scale-110 transition-transform" />
+                            </div>
+                        </div>
+                    </Link>
+                )}
             </section>
 
             {/* VIP Entertainment Features (beIN SPORTS & Netflix 4K) */}
