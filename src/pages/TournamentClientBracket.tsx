@@ -63,7 +63,7 @@ export default function TournamentClientBracket({ tournamentId }: Props) {
 
     return (
         <div className="w-full overflow-x-auto pb-4 custom-scrollbar" dir="rtl">
-            <div className="flex gap-6 md:gap-12 min-w-max px-2">
+            <div className="flex gap-8 md:gap-16 min-w-max px-4 md:px-8 py-4">
                 {rounds.map((round, rIdx) => {
                     const roundMatches = matches.filter(m => m.round === round);
                     const isFinal = roundMatches.length === 1 && matches.length > 1;

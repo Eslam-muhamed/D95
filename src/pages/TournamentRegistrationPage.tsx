@@ -166,9 +166,9 @@ export default function TournamentRegistrationPage() {
                 </div>
             </div>
 
-            <div className="max-w-md mx-auto px-4 py-6">
-                {/* Tournament Info Card */}
-                <div className="bg-white dark:bg-[#150f11] rounded-2xl p-4 sm:p-5 border border-neutral-200 dark:border-white/5 shadow-sm mb-6 flex items-center gap-4">
+            <div className={`mx-auto px-4 py-8 transition-all duration-300 ${activeTab === 'register' ? 'max-w-xl' : 'max-w-7xl'}`}>
+                {/* Header Info */}
+                <div className="bg-white dark:bg-[#150f11] rounded-2xl p-6 shadow-sm border border-neutral-200 dark:border-white/10 mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="w-14 h-14 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
                         <Trophy className="w-7 h-7 text-red-600 dark:text-red-400" />
                     </div>

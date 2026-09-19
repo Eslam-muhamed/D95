@@ -283,7 +283,7 @@ export default function TournamentMatchesModal({ tournament, onClose }: Props) {
                                 </button>
                             </div>
                             
-                            <div className="flex-1 flex flex-col md:flex-row gap-6 md:gap-12 overflow-x-auto pb-4">
+                            <div className="flex-1 flex flex-col md:flex-row gap-8 md:gap-16 overflow-x-auto pb-4 px-4 md:px-8 custom-scrollbar">
                                 {rounds.map((round, rIdx) => {
                                     const roundMatches = matches.filter(m => m.round === round);
                                     
