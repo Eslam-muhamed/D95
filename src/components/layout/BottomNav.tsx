@@ -1,7 +1,8 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Gamepad2, Coffee, ShoppingBag, Home, Star } from 'lucide-react';
+import { Gamepad2, Coffee, ShoppingBag, Home, Star, Trophy } from 'lucide-react';
 import { useCart } from '@/features/cart/stores/cartStore';
 import { preloadMenuData } from '@/features/menu/services/menuService';
+import { useTournamentStore } from '@/stores/tournamentStore';
 
 export default function BottomNav() {
     const location = useLocation();
@@ -24,6 +25,12 @@ export default function BottomNav() {
         { path: '/menu', label: 'الكافيه', icon: Coffee },
         { path: '/customer', label: 'حسابي', icon: Star },
     ];
+
+    const hasTournaments = useTournamentStore(state => state.hasActiveTournament());
+    
+    if (hasTournaments) {
+        navItems.splice(3, 0, { path: '/tournaments', label: 'بطولات', icon: Trophy });
+    }
 
     const handleTabSelect = (path: string, isExact?: boolean) => {
         const isCurrentActive = isExact

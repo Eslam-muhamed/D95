@@ -6,6 +6,7 @@ import { CartProvider } from '@/features/cart/stores/cartStore';
 import ErrorBoundary from '@/components/features/ErrorBoundary';
 import { preloadMenuData } from '@/features/menu/services/menuService';
 import { AppRoutes } from './routes';
+import { useTournamentStore } from '@/stores/tournamentStore';
 
 function AppContent() {
     return (
@@ -20,6 +21,9 @@ export default function App() {
 
     useEffect(() => {
         initialize();
+        // Fetch active tournaments
+        useTournamentStore.getState().fetchActiveTournaments();
+        
         // Warm up menu cache during idle time so first menu visit is instant 0ms
         const timer = setTimeout(() => {
             preloadMenuData();

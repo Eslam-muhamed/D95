@@ -6,6 +6,7 @@ import { playPs5StartupSound, playCafeEntranceSound } from '@/lib/sound';
 import { useTheme } from '@/stores/themeStore';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { BeinSportsIcon, NetflixIcon, InstagramGradientIcon } from '@/components/brand/EntertainmentIcons';
+import TournamentAnnouncementPopup from '@/components/features/TournamentAnnouncementPopup';
 import {
     fetchVenueStatus,
     subscribeVenueStatus,
@@ -409,6 +410,8 @@ export default function GatewayPage() {
                     <ExternalLink size={9} className="opacity-60 group-hover:opacity-100" />
                 </a>
             </footer>
+
+            <TournamentAnnouncementPopup />
         </main>
     );
 }

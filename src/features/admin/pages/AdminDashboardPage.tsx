@@ -19,11 +19,13 @@ import StaffSettingsTab from '@/features/admin/components/StaffSettingsTab';
 import LoyaltyTab from '@/features/admin/components/LoyaltyTab';
 import VenueStatusControl from '@/features/admin/components/VenueStatusControl';
 import UnifiedRevenueCard from '@/features/admin/components/UnifiedRevenueCard';
+import TournamentsTab from '@/features/admin/components/TournamentsTab';
 import SectionErrorBoundary from '@/components/features/SectionErrorBoundary';
 import { supabase } from '@/lib/supabase';
 import { playPs5NavigateSound } from '@/lib/sound';
+import { Trophy } from 'lucide-react';
 
-type TabType = 'operations' | 'orders' | 'menu_settings' | 'payment_settings' | 'staff_settings' | 'loyalty';
+type TabType = 'operations' | 'orders' | 'menu_settings' | 'payment_settings' | 'staff_settings' | 'loyalty' | 'tournaments';
 
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
@@ -88,6 +90,11 @@ export default function AdminDashboardPage() {
             id: 'loyalty',
             label: 'الولاء والنقاط',
             icon: <Star className="w-4 h-4" />,
+        },
+        {
+            id: 'tournaments',
+            label: 'البطولات',
+            icon: <Trophy className="w-4 h-4" />,
         },
         {
             id: 'payment_settings',
@@ -230,6 +237,7 @@ export default function AdminDashboardPage() {
                     {activeTab === 'payment_settings' && <PaymentSettingsTab />}
                     {activeTab === 'staff_settings' && <StaffSettingsTab />}
                     {activeTab === 'loyalty' && <LoyaltyTab />}
+                    {activeTab === 'tournaments' && <TournamentsTab />}
                 </SectionErrorBoundary>
             </main>
 
@@ -308,6 +316,20 @@ export default function AdminDashboardPage() {
                 >
                     <Star className="w-5 h-5" />
                     <span className="text-[10px]">الولاء</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => {
+                        playPs5NavigateSound();
+                        setActiveTab('tournaments');
+                    }}
+                    className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-xl transition-all cursor-pointer ${
+                        activeTab === 'tournaments' ? 'text-red-600 font-bold' : 'text-slate-500'
+                    }`}
+                >
+                    <Trophy className="w-5 h-5" />
+                    <span className="text-[10px]">البطولات</span>
                 </button>
             </nav>
         </div>

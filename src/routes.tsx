@@ -18,6 +18,9 @@ import BookingSuccessPage from '@/features/booking/pages/BookingSuccessPage';
 import CustomerDashboardPage from '@/pages/CustomerDashboardPage';
 import CustomerLoginPage from '@/features/auth/pages/CustomerLoginPage';
 
+import TournamentsPage from '@/pages/TournamentsPage';
+import TournamentRegistrationPage from '@/pages/TournamentRegistrationPage';
+
 // Route-level Code Splitting for back-office admin routes only
 const AdminDashboardPage = lazy(() => import('@/features/admin/pages/AdminDashboardPage'));
 const AdminLoginPage = lazy(() => import('@/features/admin/pages/AdminLoginPage'));
@@ -57,6 +60,8 @@ export function AppRoutes() {
                     <Route path="/menu" element={<MenuPage />} />
                     <Route path="/customer" element={<CustomerDashboardPage />} />
                     <Route path="/login" element={<CustomerLoginPage />} />
+                    <Route path="/tournaments" element={<TournamentsPage />} />
+                    <Route path="/tournaments/register/:id" element={<TournamentRegistrationPage />} />
                     <Route
                         path="/admin"
                         element={
