@@ -10,10 +10,12 @@ export default function TournamentAnnouncementPopup() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Show if there is at least one active tournament
+        // Show if there is at least one upcoming tournament
         // and user hasn't closed it recently
         const hasClosed = sessionStorage.getItem('tournament_popup_closed');
-        if (activeTournaments.length > 0 && !hasClosed) {
+        const hasUpcoming = activeTournaments.some(t => t.status === 'upcoming');
+        
+        if (hasUpcoming && !hasClosed) {
             setIsVisible(true);
         }
     }, [activeTournaments]);
@@ -28,9 +30,11 @@ export default function TournamentAnnouncementPopup() {
         navigate('/tournaments');
     };
 
-    if (!isVisible || activeTournaments.length === 0) return null;
+    const upcomingTournaments = activeTournaments.filter(t => t.status === 'upcoming');
+    
+    if (!isVisible || upcomingTournaments.length === 0) return null;
 
-    const latestTournament = activeTournaments[0]; // Assuming ordered by date or just taking the first
+    const latestTournament = upcomingTournaments[0];
 
     return (
         <AnimatePresence>
