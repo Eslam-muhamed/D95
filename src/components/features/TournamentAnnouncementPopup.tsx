@@ -52,7 +52,7 @@ export default function TournamentAnnouncementPopup() {
                     {/* Close Button */}
                     <button
                         onClick={handleClose}
-                        className="absolute top-4 left-4 p-2 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors z-10"
+                        className="absolute top-4 left-4 p-2 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors z-20 cursor-pointer"
                     >
                         <X className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
                     </button>
