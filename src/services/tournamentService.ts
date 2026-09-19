@@ -98,14 +98,11 @@ export const tournamentService = {
 
   async registerParticipant(
     participant: Omit<DBTournamentParticipant, 'id' | 'created_at' | 'status'>
-  ): Promise<DBTournamentParticipant> {
-    const { data, error } = await supabase
+  ): Promise<void> {
+    const { error } = await supabase
       .from('tournament_participants')
-      .insert({ ...participant, status: 'pending' })
-      .select()
-      .single();
+      .insert({ ...participant, status: 'pending' });
 
     if (error) throw error;
-    return data;
   }
 };
