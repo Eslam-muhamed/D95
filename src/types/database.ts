@@ -122,3 +122,27 @@ export interface DBLoyaltyTransaction {
     description: string;
     created_at: string;
 }
+
+export interface DBTournament {
+    id: string;
+    name: string;
+    game: string;
+    start_date: string | null;
+    end_date: string | null;
+    entry_fee: number;
+    prize: string | null;
+    status: 'upcoming' | 'active' | 'completed' | string;
+    is_active_in_ui: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface DBTournamentParticipant {
+    id: string;
+    tournament_id: string;
+    player_name: string;
+    phone: string;
+    status: 'pending' | 'confirmed' | string;
+    payment_method: 'cash' | 'instapay' | string;
+    created_at: string;
+}
