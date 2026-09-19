@@ -146,3 +146,19 @@ export interface DBTournamentParticipant {
     payment_method: 'cash' | 'instapay' | string;
     created_at: string;
 }
+
+export interface DBTournamentMatch {
+    id: string;
+    tournament_id: string;
+    round: number;
+    match_number: number;
+    player1_id: string | null;
+    player2_id: string | null;
+    winner_id: string | null;
+    score1: number;
+    score2: number;
+    status: 'pending' | 'active' | 'completed' | string;
+    next_match_id: string | null;
+    created_at: string;
+    updated_at: string;
+}

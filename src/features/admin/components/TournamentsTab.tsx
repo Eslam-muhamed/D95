@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Trophy, Plus, Eye, EyeOff, Edit, Trash2, Users, Loader2 } from 'lucide-react';
+import { Trophy, Plus, Eye, EyeOff, Edit, Trash2, Users, GitBranch, Loader2 } from 'lucide-react';
 import { tournamentService } from '@/services/tournamentService';
 import { DBTournament } from '@/types/database';
 import { toast } from 'sonner';
 import TournamentParticipantsModal from './TournamentParticipantsModal';
+import TournamentMatchesModal from './TournamentMatchesModal';
 
 export default function TournamentsTab() {
     const [tournaments, setTournaments] = useState<DBTournament[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedTournament, setSelectedTournament] = useState<DBTournament | null>(null);
+    const [selectedTournamentForMatches, setSelectedTournamentForMatches] = useState<DBTournament | null>(null);
     const [isCreating, setIsCreating] = useState(false);
 
     // Form State
@@ -180,6 +182,13 @@ export default function TournamentsTab() {
                                 >
                                     <Users className="w-4 h-4" />
                                 </button>
+                                <button
+                                    onClick={() => setSelectedTournamentForMatches(t)}
+                                    className="p-2 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors cursor-pointer"
+                                    title="شجرة البطولة والمباريات"
+                                >
+                                    <GitBranch className="w-4 h-4" />
+                                </button>
                             </div>
                             <div className="flex items-center gap-2">
                                 {/* Future: edit button */}
@@ -208,6 +217,13 @@ export default function TournamentsTab() {
                 <TournamentParticipantsModal
                     tournament={selectedTournament}
                     onClose={() => setSelectedTournament(null)}
+                />
+            )}
+
+            {selectedTournamentForMatches && (
+                <TournamentMatchesModal
+                    tournament={selectedTournamentForMatches}
+                    onClose={() => setSelectedTournamentForMatches(null)}
                 />
             )}
         </div>

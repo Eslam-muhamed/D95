@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { DBTournament, DBTournamentParticipant } from '../types/database';
+import { DBTournament, DBTournamentParticipant, DBTournamentMatch } from '../types/database';
 
 export const tournamentService = {
   // === Admin Methods ===
@@ -104,5 +104,110 @@ export const tournamentService = {
       .insert({ ...participant, status: 'pending' });
 
     if (error) throw error;
+  },
+
+  // === Matches Methods ===
+
+  async fetchMatches(tournamentId: string): Promise<DBTournamentMatch[]> {
+    const { data, error } = await supabase
+      .from('tournament_matches')
+      .select('*')
+      .eq('tournament_id', tournamentId)
+      .order('round', { ascending: true })
+      .order('match_number', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async generateRandomMatches(tournamentId: string): Promise<void> {
+    const participants = await this.fetchParticipants(tournamentId);
+    const confirmed = participants.filter(p => p.status === 'confirmed');
+
+    if (confirmed.length < 2) {
+      throw new Error('يجب أن يكون هناك لاعبان على الأقل لإنشاء بطولة');
+    }
+    if (confirmed.length % 2 !== 0) {
+      throw new Error('يجب أن يكون عدد اللاعبين المؤكدين زوجياً (مثلاً 2, 4, 8, 16...) لإنشاء القرعة');
+    }
+
+    // Shuffle players
+    const shuffled = [...confirmed].sort(() => Math.random() - 0.5);
+
+    // Delete existing matches first
+    await supabase.from('tournament_matches').delete().eq('tournament_id', tournamentId);
+
+    // Create First Round matches (Round 1)
+    const matchesToInsert = [];
+    let matchNumber = 1;
+    for (let i = 0; i < shuffled.length; i += 2) {
+      matchesToInsert.push({
+        tournament_id: tournamentId,
+        round: 1,
+        match_number: matchNumber++,
+        player1_id: shuffled[i].id,
+        player2_id: shuffled[i + 1].id,
+        status: 'pending'
+      });
+    }
+
+    const { error } = await supabase.from('tournament_matches').insert(matchesToInsert);
+    if (error) throw error;
+  },
+
+  async clearMatches(tournamentId: string): Promise<void> {
+    const { error } = await supabase.from('tournament_matches').delete().eq('tournament_id', tournamentId);
+    if (error) throw error;
+  },
+
+  async updateMatch(id: string, updates: Partial<DBTournamentMatch>): Promise<void> {
+    const { error } = await supabase
+      .from('tournament_matches')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  async advanceWinner(matchId: string, winnerId: string, tournamentId: string, currentRound: number, currentMatchNumber: number): Promise<void> {
+    const nextRound = currentRound + 1;
+    const nextMatchNumber = Math.ceil(currentMatchNumber / 2);
+
+    let { data: nextMatch } = await supabase
+      .from('tournament_matches')
+      .select('*')
+      .eq('tournament_id', tournamentId)
+      .eq('round', nextRound)
+      .eq('match_number', nextMatchNumber)
+      .single();
+
+    if (!nextMatch) {
+      const { data: newMatch, error } = await supabase
+        .from('tournament_matches')
+        .insert({
+          tournament_id: tournamentId,
+          round: nextRound,
+          match_number: nextMatchNumber,
+          player1_id: winnerId,
+          status: 'pending'
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      nextMatch = newMatch;
+    } else {
+      const slot = nextMatch.player1_id ? 'player2_id' : 'player1_id';
+      await supabase
+        .from('tournament_matches')
+        .update({ [slot]: winnerId })
+        .eq('id', nextMatch.id);
+    }
+
+    await this.updateMatch(matchId, { 
+      winner_id: winnerId,
+      status: 'completed',
+      next_match_id: nextMatch.id
+    });
   }
 };
