@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { 
     ArrowRight, User, Phone, CheckCircle2, Trophy, Loader2, 
     Wallet, Zap, Check, Copy, ExternalLink, AlertCircle, PhoneCall, GitBranch, PenTool
@@ -16,6 +16,10 @@ import TournamentClientBracket from './TournamentClientBracket';
 export default function TournamentRegistrationPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
+    
+    const queryParams = new URLSearchParams(location.search);
+    const initialTab = queryParams.get('tab') as 'register' | 'bracket' || 'register';
     
     const [tournament, setTournament] = useState<DBTournament | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -23,7 +27,7 @@ export default function TournamentRegistrationPage() {
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'register' | 'bracket'>('register');
+    const [activeTab, setActiveTab] = useState<'register' | 'bracket'>(initialTab);
 
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
         walletNumber: CONTACT_INFO.walletNumber,
@@ -44,6 +48,10 @@ export default function TournamentRegistrationPage() {
             .then(data => {
                 if (!data) throw new Error('Tournament not found');
                 setTournament(data);
+                
+                if (data.status === 'active' || data.status === 'completed') {
+                    setActiveTab('bracket');
+                }
             })
             .catch(err => {
                 console.error(err);
@@ -155,56 +163,78 @@ export default function TournamentRegistrationPage() {
         <div className="min-h-[100dvh] bg-[#F6F5F2] dark:bg-[#0d0c0c] text-neutral-900 dark:text-white pb-24 md:pb-6 font-body">
             {/* Header */}
             <div className="sticky top-0 z-30 bg-white/80 dark:bg-[#120a0d]/80 backdrop-blur-md border-b border-neutral-200 dark:border-white/10 px-4 py-4 flex items-center shadow-sm">
-                <button
+                <button 
                     onClick={() => navigate(-1)}
                     className="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                 >
                     <ArrowRight className="w-6 h-6" />
                 </button>
                 <div className="flex-1 text-center pr-6">
-                    <h1 className="font-bebas text-xl uppercase tracking-wider font-bold">تسجيل في البطولة</h1>
+                    <h1 className="font-bebas text-xl uppercase tracking-wider font-bold">
+                        {tournament?.status === 'active' || tournament?.status === 'completed' ? 'متابعة البطولة' : 'تسجيل في البطولة'}
+                    </h1>
                 </div>
             </div>
 
-            <div className={`mx-auto px-4 py-8 transition-all duration-300 ${activeTab === 'register' ? 'max-w-xl' : 'max-w-7xl'}`}>
+            <div className={`mx-auto px-4 py-8 transition-all duration-300 ${(activeTab === 'register' && tournament?.status === 'upcoming') ? 'max-w-xl' : 'max-w-7xl'}`}>
                 {/* Header Info */}
                 <div className="bg-white dark:bg-[#150f11] rounded-2xl p-6 shadow-sm border border-neutral-200 dark:border-white/10 mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="w-14 h-14 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
-                        <Trophy className="w-7 h-7 text-red-600 dark:text-red-400" />
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+                            <Trophy className="w-7 h-7 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-black leading-tight mb-1">{tournament?.name}</h2>
+                            <div className="text-xs text-neutral-500 font-bold">لعبة: {tournament?.game}</div>
+                        </div>
                     </div>
-                    <div>
-                        <h2 className="text-lg font-black leading-tight mb-1">{tournament.name}</h2>
-                        <div className="text-xs text-neutral-500 font-bold">لعبة: {tournament.game}</div>
-                    </div>
+                    {tournament && (tournament.status === 'active' || tournament.status === 'completed') && (
+                        <div className={`px-4 py-2 rounded-lg font-bold text-sm border shadow-sm ${
+                            tournament.status === 'active' 
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-400'
+                            : 'bg-slate-50 border-slate-200 text-slate-700 dark:bg-slate-900/30 dark:border-slate-800 dark:text-slate-400'
+                        }`}>
+                            {tournament.status === 'active' ? (
+                                <span className="flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                    البطولة جارية الآن
+                                </span>
+                            ) : (
+                                <span>البطولة منتهية</span>
+                            )}
+                        </div>
+                    )}
                 </div>
 
-                {/* Tabs */}
-                <div className="flex p-1 bg-neutral-200/50 dark:bg-[#1a1416] rounded-xl mb-6">
-                    <button
-                        onClick={() => { playPs5NavigateSound(); setActiveTab('register'); }}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                            activeTab === 'register' 
-                            ? 'bg-white dark:bg-[#251b1f] text-red-600 dark:text-red-400 shadow-sm' 
-                            : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
-                        }`}
-                    >
-                        <PenTool className="w-4 h-4" />
-                        التسجيل
-                    </button>
-                    <button
-                        onClick={() => { playPs5NavigateSound(); setActiveTab('bracket'); }}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                            activeTab === 'bracket' 
-                            ? 'bg-white dark:bg-[#251b1f] text-red-600 dark:text-red-400 shadow-sm' 
-                            : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
-                        }`}
-                    >
-                        <GitBranch className="w-4 h-4" />
-                        شجرة البطولة
-                    </button>
-                </div>
+                {/* Tabs - Only show if tournament is upcoming */}
+                {tournament?.status === 'upcoming' && (
+                    <div className="flex p-1 bg-neutral-200/50 dark:bg-[#1a1416] rounded-xl mb-6">
+                        <button
+                            onClick={() => { playPs5NavigateSound(); setActiveTab('register'); }}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                                activeTab === 'register' 
+                                ? 'bg-white dark:bg-[#251b1f] text-red-600 dark:text-red-400 shadow-sm' 
+                                : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+                            }`}
+                        >
+                            <PenTool className="w-4 h-4" />
+                            التسجيل
+                        </button>
+                        <button
+                            onClick={() => { playPs5NavigateSound(); setActiveTab('bracket'); }}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                                activeTab === 'bracket' 
+                                ? 'bg-white dark:bg-[#251b1f] text-red-600 dark:text-red-400 shadow-sm' 
+                                : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+                            }`}
+                        >
+                            <GitBranch className="w-4 h-4" />
+                            شجرة البطولة
+                        </button>
+                    </div>
+                )}
 
-                {activeTab === 'register' ? (
+                {activeTab === 'register' && tournament?.status === 'upcoming' ? (
                     <form onSubmit={handleSubmit} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                     <div className="space-y-4">
                         <div>

@@ -107,13 +107,25 @@ export default function TournamentsPage() {
                                     </div>
                                 )}
 
-                                <button
-                                    onClick={() => handleRegisterClick(tournament)}
-                                    className="w-full flex items-center justify-center gap-2 py-3.5 bg-neutral-900 dark:bg-white text-white dark:text-black font-bold rounded-xl active:scale-95 transition-all shadow-md hover:shadow-lg"
-                                >
-                                    <span>اشترك الآن</span>
-                                    <Users className="w-4 h-4" />
-                                </button>
+                                {tournament.status === 'active' || tournament.status === 'completed' ? (
+                                    <button
+                                        onClick={() => navigate(`/tournament/${tournament.id}?tab=bracket`)}
+                                        className={`w-full flex items-center justify-center gap-2 py-3.5 text-white font-bold rounded-xl active:scale-95 transition-all shadow-md hover:shadow-lg ${
+                                            tournament.status === 'active' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-600 hover:bg-slate-700'
+                                        }`}
+                                    >
+                                        <span>تابع البطولة</span>
+                                        <Trophy className="w-4 h-4" />
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => handleRegisterClick(tournament)}
+                                        className="w-full flex items-center justify-center gap-2 py-3.5 bg-neutral-900 dark:bg-white text-white dark:text-black font-bold rounded-xl active:scale-95 transition-all shadow-md hover:shadow-lg"
+                                    >
+                                        <span>اشترك الآن</span>
+                                        <Users className="w-4 h-4" />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))
