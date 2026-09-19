@@ -88,11 +88,11 @@ export default function TournamentsTab() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-black text-neutral-900 dark:text-white flex items-center gap-2">
+                    <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
                         <Trophy className="w-6 h-6 text-amber-500" />
                         إدارة البطولات
                     </h2>
-                    <p className="text-sm text-neutral-500">إضافة ومتابعة البطولات والمشتركين</p>
+                    <p className="text-sm text-slate-500">إضافة ومتابعة البطولات والمشتركين</p>
                 </div>
                 <button
                     onClick={() => setIsCreating(!isCreating)}
@@ -104,37 +104,37 @@ export default function TournamentsTab() {
             </div>
 
             {isCreating && (
-                <div className="p-6 bg-white dark:bg-[#150f11] rounded-2xl border border-neutral-200 dark:border-white/10 shadow-sm animate-in slide-in-from-top-4 duration-300">
-                    <h3 className="text-lg font-bold mb-4">تفاصيل البطولة الجديدة</h3>
+                <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm animate-in slide-in-from-top-4 duration-300">
+                    <h3 className="text-lg font-bold mb-4 text-slate-900">تفاصيل البطولة الجديدة</h3>
                     <form onSubmit={handleCreate} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-bold mb-1">اسم البطولة</label>
-                                <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-2.5 rounded-lg border border-neutral-200 dark:border-white/10 bg-transparent" placeholder="مثال: بطولة فيفا الكبرى" />
+                                <label className="block text-sm font-bold mb-1 text-slate-700">اسم البطولة</label>
+                                <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="مثال: بطولة فيفا الكبرى" />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold mb-1">اللعبة</label>
-                                <input type="text" required value={formData.game} onChange={e => setFormData({...formData, game: e.target.value})} className="w-full p-2.5 rounded-lg border border-neutral-200 dark:border-white/10 bg-transparent" placeholder="مثال: FC 24" />
+                                <label className="block text-sm font-bold mb-1 text-slate-700">اللعبة</label>
+                                <input type="text" required value={formData.game} onChange={e => setFormData({...formData, game: e.target.value})} className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="مثال: FC 24" />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold mb-1">رسوم الاشتراك (جنيه)</label>
-                                <input type="number" required min="0" value={formData.entry_fee} onChange={e => setFormData({...formData, entry_fee: Number(e.target.value)})} className="w-full p-2.5 rounded-lg border border-neutral-200 dark:border-white/10 bg-transparent" />
+                                <label className="block text-sm font-bold mb-1 text-slate-700">رسوم الاشتراك (جنيه)</label>
+                                <input type="number" required min="0" value={formData.entry_fee} onChange={e => setFormData({...formData, entry_fee: Number(e.target.value)})} className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500" />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold mb-1">تاريخ البطولة</label>
-                                <input type="datetime-local" value={formData.start_date} onChange={e => setFormData({...formData, start_date: e.target.value})} className="w-full p-2.5 rounded-lg border border-neutral-200 dark:border-white/10 bg-transparent" />
+                                <label className="block text-sm font-bold mb-1 text-slate-700">تاريخ البطولة</label>
+                                <input type="datetime-local" value={formData.start_date} onChange={e => setFormData({...formData, start_date: e.target.value})} className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500" />
                             </div>
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-bold mb-1">الجائزة</label>
-                                <input type="text" value={formData.prize} onChange={e => setFormData({...formData, prize: e.target.value})} className="w-full p-2.5 rounded-lg border border-neutral-200 dark:border-white/10 bg-transparent" placeholder="مثال: 1000 جنيه للمركز الأول" />
+                                <label className="block text-sm font-bold mb-1 text-slate-700">الجائزة</label>
+                                <input type="text" value={formData.prize} onChange={e => setFormData({...formData, prize: e.target.value})} className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="مثال: 1000 جنيه للمركز الأول" />
                             </div>
                             <div className="md:col-span-2 flex items-center gap-2 mt-2">
                                 <input type="checkbox" id="is_active_in_ui" checked={formData.is_active_in_ui} onChange={e => setFormData({...formData, is_active_in_ui: e.target.checked})} className="w-4 h-4 rounded text-red-600 focus:ring-red-500" />
-                                <label htmlFor="is_active_in_ui" className="text-sm font-bold cursor-pointer">إظهار البطولة للعملاء فوراً</label>
+                                <label htmlFor="is_active_in_ui" className="text-sm font-bold cursor-pointer text-slate-700">إظهار البطولة للعملاء فوراً</label>
                             </div>
                         </div>
                         <div className="flex justify-end pt-4">
-                            <button type="submit" className="px-6 py-2.5 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors">حفظ وإضافة</button>
+                            <button type="submit" className="px-6 py-2.5 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors cursor-pointer">حفظ وإضافة</button>
                         </div>
                     </form>
                 </div>
@@ -142,39 +142,39 @@ export default function TournamentsTab() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {tournaments.map(t => (
-                    <div key={t.id} className="p-5 bg-white dark:bg-[#150f11] rounded-2xl border border-neutral-200 dark:border-white/10 shadow-sm flex flex-col gap-3">
+                    <div key={t.id} className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-3">
                         <div className="flex justify-between items-start">
                             <div>
-                                <h3 className="font-black text-lg text-neutral-900 dark:text-white">{t.name}</h3>
-                                <span className="text-xs font-bold text-red-600 dark:text-red-400">{t.game}</span>
+                                <h3 className="font-black text-lg text-slate-900">{t.name}</h3>
+                                <span className="text-xs font-bold text-red-600">{t.game}</span>
                             </div>
                             <span className={`px-2 py-1 rounded text-[10px] font-bold ${
                                 t.status === 'active' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 
-                                t.status === 'completed' ? 'bg-neutral-200 text-neutral-700 border border-neutral-300' :
+                                t.status === 'completed' ? 'bg-slate-100 text-slate-700 border border-slate-200' :
                                 'bg-amber-100 text-amber-700 border border-amber-200'
                             }`}>
                                 {t.status === 'active' ? 'جارية' : t.status === 'completed' ? 'منتهية' : 'قادمة'}
                             </span>
                         </div>
 
-                        <div className="flex flex-col gap-1 text-sm text-neutral-600 dark:text-neutral-400">
+                        <div className="flex flex-col gap-1 text-sm text-slate-600">
                             <span>التاريخ: {t.start_date ? new Date(t.start_date).toLocaleDateString('ar-EG') : 'غير محدد'}</span>
                             <span>الرسوم: {t.entry_fee} جنيه</span>
                             <span>الجائزة: {t.prize || '-'}</span>
                         </div>
 
-                        <div className="mt-auto pt-4 flex items-center justify-between border-t border-neutral-100 dark:border-white/5">
+                        <div className="mt-auto pt-4 flex items-center justify-between border-t border-slate-100">
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => handleToggleUI(t)}
-                                    className={`p-2 rounded-lg transition-colors ${t.is_active_in_ui ? 'bg-emerald-500 text-white' : 'bg-neutral-100 dark:bg-white/5 text-neutral-500 hover:text-neutral-800 dark:hover:text-white'}`}
+                                    className={`p-2 rounded-lg transition-colors cursor-pointer ${t.is_active_in_ui ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-800'}`}
                                     title={t.is_active_in_ui ? 'مخفية - اضغط للإخفاء' : 'مخفية - اضغط للإظهار'}
                                 >
                                     {t.is_active_in_ui ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                                 </button>
                                 <button
                                     onClick={() => setSelectedTournament(t)}
-                                    className="p-2 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                    className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
                                     title="المشتركين"
                                 >
                                     <Users className="w-4 h-4" />
@@ -184,7 +184,7 @@ export default function TournamentsTab() {
                                 {/* Future: edit button */}
                                 <button
                                     onClick={() => handleDelete(t.id)}
-                                    className="p-2 rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors"
+                                    className="p-2 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
                                     title="حذف"
                                 >
                                     <Trash2 className="w-4 h-4" />
@@ -195,10 +195,10 @@ export default function TournamentsTab() {
                 ))}
                 
                 {tournaments.length === 0 && !isCreating && (
-                    <div className="col-span-full py-20 flex flex-col items-center justify-center text-neutral-500 border-2 border-dashed border-neutral-200 dark:border-white/10 rounded-3xl">
+                    <div className="col-span-full py-20 flex flex-col items-center justify-center text-slate-500 border-2 border-dashed border-slate-200 rounded-3xl">
                         <Trophy className="w-12 h-12 mb-4 opacity-50" />
                         <p className="font-bold">لا يوجد بطولات حالية</p>
-                        <button onClick={() => setIsCreating(true)} className="mt-4 text-red-500 underline">إنشاء بطولة جديدة</button>
+                        <button onClick={() => setIsCreating(true)} className="mt-4 text-red-600 hover:text-red-700 font-medium underline cursor-pointer">إنشاء بطولة جديدة</button>
                     </div>
                 )}
             </div>
