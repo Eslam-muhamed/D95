@@ -1,8 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowRight, User, Phone, CheckCircle2, Trophy, Loader2, Wallet, Banknote } from 'lucide-react';
+import { 
+    ArrowRight, User, Phone, CheckCircle2, Trophy, Loader2, 
+    Wallet, Zap, Check, Copy, ExternalLink, AlertCircle, PhoneCall 
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { tournamentService } from '@/services/tournamentService';
 import { DBTournament } from '@/types/database';
+import { CONTACT_INFO } from '@/constants/contactInfo';
+import { fetchPaymentSettings, PaymentSettings } from '@/services/paymentSettingsService';
+import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 
 export default function TournamentRegistrationPage() {
     const { id } = useParams<{ id: string }>();
@@ -13,11 +21,18 @@ export default function TournamentRegistrationPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+    const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
+        walletNumber: CONTACT_INFO.walletNumber,
+        instapayHandle: CONTACT_INFO.instapayHandle,
+        instapayLink: '',
+    });
 
     const [formData, setFormData] = useState({
         playerName: '',
         phone: '',
-        paymentMethod: 'cash' as 'cash' | 'instapay'
+        paymentMethod: 'instapay' as 'instapay' | 'wallet'
     });
 
     useEffect(() => {
@@ -33,6 +48,12 @@ export default function TournamentRegistrationPage() {
                 setError('حدث خطأ أثناء تحميل بيانات البطولة');
             })
             .finally(() => setIsLoading(false));
+            
+        fetchPaymentSettings().then((res) => {
+            if (res) {
+                setPaymentSettings(res);
+            }
+        });
     }, [id]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,8 +61,16 @@ export default function TournamentRegistrationPage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSelectPayment = (method: 'cash' | 'instapay') => {
+    const handleSelectPayment = (method: 'instapay' | 'wallet') => {
+        playPs5NavigateSound();
         setFormData(prev => ({ ...prev, paymentMethod: method }));
+    };
+
+    const handleCopy = (text: string, key: string) => {
+        navigator.clipboard.writeText(text);
+        setCopiedKey(key);
+        toast.success(`تم نسخ ${text} بنجاح!`);
+        setTimeout(() => setCopiedKey(null), 2500);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -53,6 +82,7 @@ export default function TournamentRegistrationPage() {
             return;
         }
 
+        playPs5SelectSound();
         setIsSubmitting(true);
         setError(null);
 
@@ -96,11 +126,9 @@ export default function TournamentRegistrationPage() {
                 <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center mb-6">
                     <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <h1 className="text-3xl font-black text-neutral-900 dark:text-white mb-2">تم التسجيل بنجاح!</h1>
-                <p className="text-neutral-600 dark:text-neutral-300 mb-8 max-w-sm">
-                    {formData.paymentMethod === 'cash' 
-                        ? 'يرجى التوجه لمسؤول الصالة لتسديد رسوم الاشتراك وتأكيد مقعدك في البطولة.'
-                        : 'تم استلام طلبك. إذا كنت قد حولت على إنستاباي، سيقوم مسؤول الصالة بتأكيد الاشتراك قريباً.'}
+                <h1 className="text-3xl font-black text-neutral-900 dark:text-white mb-2">تم استلام طلبك بنجاح!</h1>
+                <p className="text-neutral-600 dark:text-neutral-300 mb-8 max-w-sm leading-relaxed">
+                    تم تسجيل طلب الاشتراك الخاص بك. سيقوم مسؤول الصالة بمراجعة عملية الدفع وتأكيد مقعدك في البطولة قريباً.
                 </p>
                 <button
                     onClick={() => navigate('/tournaments')}
@@ -111,6 +139,15 @@ export default function TournamentRegistrationPage() {
             </div>
         );
     }
+
+    const netTotal = tournament.entry_fee;
+    const activeWalletNumber = paymentSettings.walletNumber || CONTACT_INFO.walletNumber;
+    const cleanWalletNumber = activeWalletNumber.replace(/\D/g, '');
+    const activeInstapayHandle = paymentSettings.instapayHandle || CONTACT_INFO.instapayHandle;
+    const activeInstapayLink = paymentSettings.instapayLink;
+
+    const ussdTransferCode = `*9*7*${cleanWalletNumber}*${netTotal}#`;
+    const ussdTelUri = `tel:*9*7*${cleanWalletNumber}*${netTotal}%23`;
 
     return (
         <div className="min-h-[100dvh] bg-[#F6F5F2] dark:bg-[#0d0c0c] text-neutral-900 dark:text-white pb-24 md:pb-6 font-body">
@@ -180,35 +217,179 @@ export default function TournamentRegistrationPage() {
                     </div>
 
                     <div className="space-y-3">
-                        <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-1">رسوم الاشتراك: {tournament.entry_fee} جنيه</label>
-                        <p className="text-xs text-neutral-500 mb-2">اختر طريقة دفع الرسوم:</p>
+                        <div className="flex items-center gap-2 px-1 text-sm font-bold text-neutral-900 dark:text-white">
+                            <Wallet className="w-4 h-4 text-red-600 dark:text-red-500" />
+                            <span>رسوم الاشتراك: {tournament.entry_fee} جنيه</span>
+                        </div>
                         
-                        <div className="grid grid-cols-2 gap-3">
-                            <button
-                                type="button"
-                                onClick={() => handleSelectPayment('cash')}
-                                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                                    formData.paymentMethod === 'cash'
-                                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/10 text-emerald-700 dark:text-emerald-400 shadow-sm'
-                                        : 'border-neutral-200 dark:border-white/5 bg-white dark:bg-[#150f11] text-neutral-500 hover:border-neutral-300 dark:hover:border-white/10'
-                                }`}
-                            >
-                                <Banknote className={`w-6 h-6 ${formData.paymentMethod === 'cash' ? 'text-emerald-500' : ''}`} />
-                                <span className="font-bold text-sm">دفع كاش</span>
-                            </button>
-
+                        <div className="grid grid-cols-2 gap-3 mb-4">
                             <button
                                 type="button"
                                 onClick={() => handleSelectPayment('instapay')}
-                                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${
                                     formData.paymentMethod === 'instapay'
-                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10 text-purple-700 dark:text-purple-400 shadow-sm'
+                                        ? 'border-red-500 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 shadow-sm scale-[1.02]'
                                         : 'border-neutral-200 dark:border-white/5 bg-white dark:bg-[#150f11] text-neutral-500 hover:border-neutral-300 dark:hover:border-white/10'
                                 }`}
                             >
-                                <Wallet className={`w-6 h-6 ${formData.paymentMethod === 'instapay' ? 'text-purple-500' : ''}`} />
+                                <Zap className={`w-5 h-5 ${formData.paymentMethod === 'instapay' ? 'text-red-500' : ''}`} />
                                 <span className="font-bold text-sm">إنستاباي</span>
                             </button>
+                            
+                            <button
+                                type="button"
+                                onClick={() => handleSelectPayment('wallet')}
+                                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${
+                                    formData.paymentMethod === 'wallet'
+                                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 shadow-sm scale-[1.02]'
+                                        : 'border-neutral-200 dark:border-white/5 bg-white dark:bg-[#150f11] text-neutral-500 hover:border-neutral-300 dark:hover:border-white/10'
+                                }`}
+                            >
+                                <Wallet className={`w-5 h-5 ${formData.paymentMethod === 'wallet' ? 'text-emerald-500' : ''}`} />
+                                <span className="font-bold text-sm">محفظة كاش</span>
+                            </button>
+                        </div>
+
+                        {/* Payment Details Container */}
+                        <div className="bg-white dark:bg-[#150f11] border border-neutral-200 dark:border-white/5 rounded-2xl p-4 shadow-sm">
+                            <AnimatePresence mode="wait">
+                                {formData.paymentMethod === 'instapay' ? (
+                                    <motion.div
+                                        key="instapay"
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        className="flex flex-col gap-3"
+                                    >
+                                        <div className="bg-neutral-100 dark:bg-black/60 p-3 rounded-xl flex items-center justify-between border border-neutral-200 dark:border-white/10 shadow-sm">
+                                            <div className="flex flex-col min-w-0">
+                                                <span className="text-xs text-neutral-600 dark:text-neutral-400 font-semibold">معرف إنستاباي المعتمد (IPA):</span>
+                                                <span className="text-sm font-bold text-red-600 dark:text-red-400 font-mono tracking-wider select-all" dir="ltr">
+                                                    {activeInstapayHandle}
+                                                </span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleCopy(activeInstapayHandle, 'instapay');
+                                                }}
+                                                className="shrink-0 flex items-center gap-1.5 bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-sm"
+                                            >
+                                                {copiedKey === 'instapay' ? (
+                                                    <>
+                                                        <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                                                        <span>تم النسخ</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Copy className="w-4 h-4" />
+                                                        <span>نسخ</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+
+                                        <div className="p-3 bg-red-500/10 dark:bg-red-950/40 rounded-xl border border-red-500/30 flex flex-col gap-2.5">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleCopy(activeInstapayHandle, 'instapay');
+                                                    playPs5SelectSound();
+                                                    toast.success(`تم نسخ معرف إنستاباي والمبلغ!`);
+                                                    if (activeInstapayLink) {
+                                                        window.open(activeInstapayLink, '_blank');
+                                                    } else {
+                                                        window.location.href = 'instapay://';
+                                                    }
+                                                }}
+                                                className="flex items-center justify-center gap-1.5 bg-red-600 hover:bg-red-500 text-white px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md active:scale-95 cursor-pointer w-full"
+                                            >
+                                                <ExternalLink className="w-4 h-4" />
+                                                <span>فتح تطبيق InstaPay للتحويل</span>
+                                            </button>
+                                        </div>
+                                        
+                                        <div className="p-3 rounded-xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/30 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2 leading-relaxed">
+                                            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                                            <div>يرجى تحويل مبلغ <span className="font-bold text-red-600 font-mono">{netTotal} ج.م</span> بالضبط لتأكيد اشتراكك.</div>
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="wallet"
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        className="flex flex-col gap-3"
+                                    >
+                                        <div className="bg-neutral-100 dark:bg-black/60 p-3 rounded-xl flex items-center justify-between border border-neutral-200 dark:border-white/10 shadow-sm">
+                                            <div className="flex flex-col min-w-0">
+                                                <span className="text-xs text-neutral-600 dark:text-neutral-400 font-semibold">رقم المحفظة المعتمد للتحويل:</span>
+                                                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono tracking-wider select-all" dir="ltr">
+                                                    {activeWalletNumber}
+                                                </span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleCopy(activeWalletNumber, 'wallet');
+                                                }}
+                                                className="shrink-0 flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-sm"
+                                            >
+                                                {copiedKey === 'wallet' ? (
+                                                    <>
+                                                        <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                                                        <span>تم النسخ</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Copy className="w-4 h-4" />
+                                                        <span>نسخ</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+
+                                        <div className="p-3 bg-emerald-500/10 dark:bg-emerald-950/40 rounded-xl border border-emerald-500/30 flex flex-col gap-2.5">
+                                            <div className="flex flex-col text-center mb-1">
+                                                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 mb-1">
+                                                    كود فودافون كاش المباشر:
+                                                </span>
+                                                <span className="font-mono font-bold text-lg text-neutral-800 dark:text-neutral-200" dir="ltr">
+                                                    {ussdTransferCode}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <a
+                                                    href={ussdTelUri}
+                                                    onClick={(e) => { e.stopPropagation(); playPs5SelectSound(); }}
+                                                    className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+                                                >
+                                                    <PhoneCall className="w-4 h-4" />
+                                                    <span>اتصال وتحويل فوري</span>
+                                                </a>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); handleCopy(ussdTransferCode, 'ussd'); }}
+                                                    className="flex items-center justify-center gap-1.5 bg-white dark:bg-black/60 hover:bg-neutral-50 border border-neutral-300 dark:border-white/15 text-neutral-700 dark:text-neutral-200 px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer active:scale-95"
+                                                >
+                                                    {copiedKey === 'ussd' ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="p-3 rounded-xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/30 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2 leading-relaxed">
+                                            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                                            <div>يرجى تحويل مبلغ <span className="font-bold text-emerald-600 font-mono">{netTotal} ج.م</span> بالضبط لتأكيد اشتراكك.</div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
                     </div>
 
@@ -227,7 +408,7 @@ export default function TournamentRegistrationPage() {
                             <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
                             <>
-                                <span>تأكيد التسجيل</span>
+                                <span>تأكيد التسجيل والدفع</span>
                                 <ArrowRight className="w-4 h-4 rotate-180" />
                             </>
                         )}
