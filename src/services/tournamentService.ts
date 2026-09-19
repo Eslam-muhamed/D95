@@ -120,6 +120,15 @@ export const tournamentService = {
     return data || [];
   },
 
+  async fetchPublicParticipants(tournamentId: string): Promise<{id: string, player_name: string, status: string}[]> {
+    const { data, error } = await supabase.rpc('get_tournament_public_participants', { p_tournament_id: tournamentId });
+    if (error) {
+        console.error("Error fetching public participants:", error);
+        return [];
+    }
+    return data || [];
+  },
+
   async generateRandomMatches(tournamentId: string): Promise<void> {
     const participants = await this.fetchParticipants(tournamentId);
     const confirmed = participants.filter(p => p.status === 'confirmed');

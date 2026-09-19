@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
     ArrowRight, User, Phone, CheckCircle2, Trophy, Loader2, 
-    Wallet, Zap, Check, Copy, ExternalLink, AlertCircle, PhoneCall 
+    Wallet, Zap, Check, Copy, ExternalLink, AlertCircle, PhoneCall, GitBranch, PenTool
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -11,6 +11,7 @@ import { DBTournament } from '@/types/database';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { fetchPaymentSettings, PaymentSettings } from '@/services/paymentSettingsService';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
+import TournamentClientBracket from './TournamentClientBracket';
 
 export default function TournamentRegistrationPage() {
     const { id } = useParams<{ id: string }>();
@@ -22,6 +23,7 @@ export default function TournamentRegistrationPage() {
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'register' | 'bracket'>('register');
 
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
         walletNumber: CONTACT_INFO.walletNumber,
@@ -176,7 +178,34 @@ export default function TournamentRegistrationPage() {
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Tabs */}
+                <div className="flex p-1 bg-neutral-200/50 dark:bg-[#1a1416] rounded-xl mb-6">
+                    <button
+                        onClick={() => { playPs5NavigateSound(); setActiveTab('register'); }}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                            activeTab === 'register' 
+                            ? 'bg-white dark:bg-[#251b1f] text-red-600 dark:text-red-400 shadow-sm' 
+                            : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+                        }`}
+                    >
+                        <PenTool className="w-4 h-4" />
+                        التسجيل
+                    </button>
+                    <button
+                        onClick={() => { playPs5NavigateSound(); setActiveTab('bracket'); }}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                            activeTab === 'bracket' 
+                            ? 'bg-white dark:bg-[#251b1f] text-red-600 dark:text-red-400 shadow-sm' 
+                            : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+                        }`}
+                    >
+                        <GitBranch className="w-4 h-4" />
+                        شجرة البطولة
+                    </button>
+                </div>
+
+                {activeTab === 'register' ? (
+                    <form onSubmit={handleSubmit} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">اسم اللاعب (أو الفريق)</label>
@@ -414,6 +443,11 @@ export default function TournamentRegistrationPage() {
                         )}
                     </button>
                 </form>
+                ) : (
+                    <div className="animate-in fade-in slide-in-from-left-4 duration-300">
+                        <TournamentClientBracket tournamentId={tournament.id} />
+                    </div>
+                )}
             </div>
         </div>
     );
