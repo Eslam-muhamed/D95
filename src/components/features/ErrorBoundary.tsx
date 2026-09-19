@@ -68,10 +68,7 @@ ComponentStack: ${this.state.errorInfo?.componentStack || 'No component stack'}`
     public render() {
         if (this.state.hasError) {
             const errorMessage = this.state.error?.message || 'خطأ غير محدد';
-            const isAdminOrDev = Boolean(
-                import.meta.env.DEV || 
-                (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin'))
-            );
+            const isAdminOrDev = true; // Temporarily force true to show error to user
 
             return (
                 <div className="min-h-screen w-full bg-[#0a0809] text-white flex items-center justify-center p-4 font-body" dir="rtl">
