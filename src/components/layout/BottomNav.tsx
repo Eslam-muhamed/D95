@@ -15,6 +15,7 @@ export default function BottomNav() {
         location.pathname.startsWith('/playstation/success');
 
     const isGateway = location.pathname === '/';
+    const hasTournaments = useTournamentStore(state => state.hasActiveTournament());
 
     // Hide bottom nav on Gateway (hub/launcher) and during checkout flows
     if (isGateway || isCheckoutFlow) return null;
@@ -26,8 +27,6 @@ export default function BottomNav() {
         { path: '/customer', label: 'حسابي', icon: Star },
     ];
 
-    const hasTournaments = useTournamentStore(state => state.hasActiveTournament());
-    
     if (hasTournaments) {
         navItems.splice(3, 0, { path: '/tournaments', label: 'بطولات', icon: Trophy });
     }
