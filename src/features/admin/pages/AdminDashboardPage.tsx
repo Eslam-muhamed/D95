@@ -15,7 +15,6 @@ import SimpleOperationsTab from '@/features/admin/components/SimpleOperationsTab
 import OrdersTab from '@/features/admin/components/OrdersTab';
 import SimpleMenuSettingsTab from '@/features/admin/components/SimpleMenuSettingsTab';
 import PaymentSettingsTab from '@/features/admin/components/PaymentSettingsTab';
-import StaffSettingsTab from '@/features/admin/components/StaffSettingsTab';
 import LoyaltyTab from '@/features/admin/components/LoyaltyTab';
 import VenueStatusControl from '@/features/admin/components/VenueStatusControl';
 import UnifiedRevenueCard from '@/features/admin/components/UnifiedRevenueCard';
@@ -25,7 +24,7 @@ import { supabase } from '@/lib/supabase';
 import { playPs5NavigateSound } from '@/lib/sound';
 import { Trophy } from 'lucide-react';
 
-type TabType = 'operations' | 'orders' | 'menu_settings' | 'payment_settings' | 'staff_settings' | 'loyalty' | 'tournaments';
+type TabType = 'operations' | 'orders' | 'menu_settings' | 'payment_settings' | 'loyalty' | 'tournaments';
 
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
@@ -100,11 +99,6 @@ export default function AdminDashboardPage() {
             id: 'payment_settings',
             label: 'إعدادات الدفع والمحافظ',
             icon: <Wallet className="w-4 h-4" />,
-        },
-        {
-            id: 'staff_settings',
-            label: 'إدارة المديرين',
-            icon: <Users className="w-4 h-4" />,
         },
     ];
 
@@ -235,7 +229,6 @@ export default function AdminDashboardPage() {
                     </div>
                     {activeTab === 'menu_settings' && <SimpleMenuSettingsTab />}
                     {activeTab === 'payment_settings' && <PaymentSettingsTab />}
-                    {activeTab === 'staff_settings' && <StaffSettingsTab />}
                     {activeTab === 'loyalty' && <LoyaltyTab />}
                     {activeTab === 'tournaments' && <TournamentsTab />}
                 </SectionErrorBoundary>
