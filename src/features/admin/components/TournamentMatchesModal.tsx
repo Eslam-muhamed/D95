@@ -14,6 +14,7 @@ export default function TournamentMatchesModal({ tournament, onClose }: Props) {
     const [participants, setParticipants] = useState<DBTournamentParticipant[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [matchScores, setMatchScores] = useState<Record<string, { s1: number; s2: number }>>({});
     
     // Manual Setup State
     const [isManualSetup, setIsManualSetup] = useState(false);
@@ -132,14 +133,28 @@ export default function TournamentMatchesModal({ tournament, onClose }: Props) {
     };
 
     const handleAdvanceWinner = async (matchId: string, winnerId: string, currentRound: number, currentMatchNumber: number) => {
-        if (!confirm('تأكيد صعود اللاعب للدور القادم؟ (لا يمكن التراجع عن هذا الإجراء)')) return;
+        if (!confirm('تأكيد صعود اللاعب للبطولة أو فوزه؟ (لا يمكن التراجع عن هذا الإجراء)')) return;
+        
+        const scores = matchScores[matchId] || { s1: 0, s2: 0 };
+        
         try {
-            await tournamentService.advanceWinner(matchId, winnerId, tournament.id, currentRound, currentMatchNumber);
-            toast.success('تم صعود اللاعب بنجاح');
+            await tournamentService.advanceWinner(matchId, winnerId, tournament.id, currentRound, currentMatchNumber, scores.s1, scores.s2);
+            toast.success('تم تسجيل النتيجة وتصعيد اللاعب بنجاح');
             loadData();
         } catch (error: any) {
-            toast.error('فشل في تصعيد اللاعب');
+            toast.error('فشل في تسجيل النتيجة');
         }
+    };
+
+    const handleScoreChange = (matchId: string, player: 's1' | 's2', value: string) => {
+        const numValue = value ? parseInt(value, 10) : 0;
+        setMatchScores(prev => ({
+            ...prev,
+            [matchId]: {
+                ...prev[matchId],
+                [player]: numValue
+            }
+        }));
     };
 
     const getPlayerName = (id: string | null) => {
@@ -279,7 +294,10 @@ export default function TournamentMatchesModal({ tournament, onClose }: Props) {
                                             </h3>
                                             
                                             <div className="flex flex-col gap-8 justify-center flex-1">
-                                                {roundMatches.map(match => (
+                                                {roundMatches.map(match => {
+                                                    const scores = matchScores[match.id] || { s1: match.score1 || 0, s2: match.score2 || 0 };
+                                                    
+                                                    return (
                                                     <div key={match.id} className="relative bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col min-h-[90px]">
                                                         {match.status === 'completed' && (
                                                             <div className="absolute top-0 right-0 w-1 h-full bg-emerald-500" />
@@ -287,7 +305,7 @@ export default function TournamentMatchesModal({ tournament, onClose }: Props) {
                                                         
                                                         {/* Player 1 */}
                                                         <div className={`p-3 border-b border-slate-100 flex items-center justify-between transition-colors flex-1 ${match.winner_id === match.player1_id ? 'bg-emerald-50' : ''}`}>
-                                                            <div className="flex items-center gap-2">
+                                                            <div className="flex items-center gap-2 flex-1">
                                                                 <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${match.player1_id ? 'bg-slate-100' : 'bg-slate-50 border border-dashed border-slate-200'}`}>
                                                                     <User className="w-3 h-3 text-slate-500" />
                                                                 </div>
@@ -296,22 +314,38 @@ export default function TournamentMatchesModal({ tournament, onClose }: Props) {
                                                                 </span>
                                                             </div>
                                                             
-                                                            {match.player1_id && match.status !== 'completed' && match.player2_id && (
-                                                                <button 
-                                                                    onClick={() => handleAdvanceWinner(match.id, match.player1_id!, match.round, match.match_number)}
-                                                                    className="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded hover:bg-emerald-200 transition-colors cursor-pointer shrink-0 ml-2"
-                                                                >
-                                                                    فوز
-                                                                </button>
-                                                            )}
-                                                            {match.winner_id === match.player1_id && (
-                                                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 ml-2" />
-                                                            )}
+                                                            <div className="flex items-center gap-3">
+                                                                {match.player1_id && match.player2_id && match.status !== 'completed' && (
+                                                                    <input 
+                                                                        type="number"
+                                                                        min="0"
+                                                                        className="w-12 h-7 text-center font-bold text-sm border border-slate-200 rounded bg-slate-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                                                                        value={scores.s1}
+                                                                        onChange={(e) => handleScoreChange(match.id, 's1', e.target.value)}
+                                                                        dir="ltr"
+                                                                    />
+                                                                )}
+                                                                {match.status === 'completed' && match.player2_id && (
+                                                                    <div className="w-8 text-center font-bold text-slate-700">{match.score1}</div>
+                                                                )}
+                                                                
+                                                                {match.player1_id && match.status !== 'completed' && (match.player2_id || match.winner_id) && (
+                                                                    <button 
+                                                                        onClick={() => handleAdvanceWinner(match.id, match.player1_id!, match.round, match.match_number)}
+                                                                        className="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded hover:bg-emerald-200 transition-colors cursor-pointer shrink-0"
+                                                                    >
+                                                                        فوز
+                                                                    </button>
+                                                                )}
+                                                                {match.winner_id === match.player1_id && (
+                                                                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                                                )}
+                                                            </div>
                                                         </div>
 
                                                         {/* Player 2 */}
                                                         <div className={`p-3 flex items-center justify-between transition-colors flex-1 ${match.winner_id === match.player2_id ? 'bg-emerald-50' : ''}`}>
-                                                            <div className="flex items-center gap-2">
+                                                            <div className="flex items-center gap-2 flex-1">
                                                                 <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${match.player2_id ? 'bg-slate-100' : 'bg-slate-50 border border-dashed border-slate-200'}`}>
                                                                     <User className="w-3 h-3 text-slate-500" />
                                                                 </div>
@@ -320,24 +354,41 @@ export default function TournamentMatchesModal({ tournament, onClose }: Props) {
                                                                 </span>
                                                             </div>
                                                             
-                                                            {match.player2_id && match.status !== 'completed' && match.player1_id && (
-                                                                <button 
-                                                                    onClick={() => handleAdvanceWinner(match.id, match.player2_id!, match.round, match.match_number)}
-                                                                    className="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded hover:bg-emerald-200 transition-colors cursor-pointer shrink-0 ml-2"
-                                                                >
-                                                                    فوز
-                                                                </button>
-                                                            )}
-                                                            {match.winner_id === match.player2_id && (
-                                                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 ml-2" />
-                                                            )}
+                                                            <div className="flex items-center gap-3">
+                                                                {match.player1_id && match.player2_id && match.status !== 'completed' && (
+                                                                    <input 
+                                                                        type="number"
+                                                                        min="0"
+                                                                        className="w-12 h-7 text-center font-bold text-sm border border-slate-200 rounded bg-slate-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                                                                        value={scores.s2}
+                                                                        onChange={(e) => handleScoreChange(match.id, 's2', e.target.value)}
+                                                                        dir="ltr"
+                                                                    />
+                                                                )}
+                                                                {match.status === 'completed' && match.player2_id && (
+                                                                    <div className="w-8 text-center font-bold text-slate-700">{match.score2}</div>
+                                                                )}
+                                                                
+                                                                {match.player2_id && match.status !== 'completed' && match.player1_id && (
+                                                                    <button 
+                                                                        onClick={() => handleAdvanceWinner(match.id, match.player2_id!, match.round, match.match_number)}
+                                                                        className="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded hover:bg-emerald-200 transition-colors cursor-pointer shrink-0"
+                                                                    >
+                                                                        فوز
+                                                                    </button>
+                                                                )}
+                                                                {match.winner_id === match.player2_id && (
+                                                                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                                                )}
+                                                            </div>
                                                         </div>
                                                         
                                                         {rIdx < rounds.length - 1 && (
                                                             <div className="absolute -left-6 top-1/2 -translate-y-1/2 w-6 border-b-2 border-slate-200 hidden md:block" />
                                                         )}
                                                     </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     );

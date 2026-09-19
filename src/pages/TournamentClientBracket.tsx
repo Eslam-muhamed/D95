@@ -95,9 +95,15 @@ export default function TournamentClientBracket({ tournamentId }: Props) {
                                                     {getPlayerName(match.player1_id)}
                                                 </span>
                                             </div>
-                                            {match.winner_id === match.player1_id && (
-                                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 ml-2" />
-                                            )}
+                                            
+                                            <div className="flex items-center gap-2">
+                                                {match.status === 'completed' && match.player2_id && (
+                                                    <span className="font-black text-sm text-neutral-600 dark:text-neutral-300 w-6 text-center">{match.score1}</span>
+                                                )}
+                                                {match.winner_id === match.player1_id && (
+                                                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 ml-1" />
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* Player 2 */}
@@ -110,9 +116,15 @@ export default function TournamentClientBracket({ tournamentId }: Props) {
                                                     {getPlayerName(match.player2_id)}
                                                 </span>
                                             </div>
-                                            {match.winner_id === match.player2_id && (
-                                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 ml-2" />
-                                            )}
+                                            
+                                            <div className="flex items-center gap-2">
+                                                {match.status === 'completed' && match.player2_id && (
+                                                    <span className="font-black text-sm text-neutral-600 dark:text-neutral-300 w-6 text-center">{match.score2}</span>
+                                                )}
+                                                {match.winner_id === match.player2_id && (
+                                                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 ml-1" />
+                                                )}
+                                            </div>
                                         </div>
                                         
                                         {/* Connector Line for Desktop */}

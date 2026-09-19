@@ -133,12 +133,18 @@ export const tournamentService = {
     const participants = await this.fetchParticipants(tournamentId);
     const confirmed = participants.filter(p => p.status === 'confirmed');
 
-    if (confirmed.length < 2) {
+    const N = confirmed.length;
+    if (N < 2) {
       throw new Error('يجب أن يكون هناك لاعبان على الأقل لإنشاء بطولة');
     }
-    if (confirmed.length % 2 !== 0) {
-      throw new Error('يجب أن يكون عدد اللاعبين المؤكدين زوجياً (مثلاً 2, 4, 8, 16...) لإنشاء القرعة');
-    }
+
+    // Find next power of 2 (e.g., 2, 4, 8, 16, 32)
+    let P = 2;
+    while (P < N) P *= 2;
+
+    const M = P / 2; // number of matches in round 1
+    const byeMatchesCount = P - N;
+    const regularMatchesCount = M - byeMatchesCount;
 
     // Shuffle players
     const shuffled = [...confirmed].sort(() => Math.random() - 0.5);
@@ -148,20 +154,44 @@ export const tournamentService = {
 
     // Create First Round matches (Round 1)
     const matchesToInsert = [];
-    let matchNumber = 1;
-    for (let i = 0; i < shuffled.length; i += 2) {
+    let playerIndex = 0;
+    
+    // Distribute matches: we'll spread out the byes if possible, but for simplicity we can put regular first then byes
+    for (let i = 1; i <= M; i++) {
+      let p1 = null;
+      let p2 = null;
+      let winner = null;
+      let status = 'pending';
+
+      if (i <= regularMatchesCount) {
+        p1 = shuffled[playerIndex++].id;
+        p2 = shuffled[playerIndex++].id;
+      } else {
+        p1 = shuffled[playerIndex++].id;
+        winner = p1;
+        status = 'completed'; // Bye match
+      }
+
       matchesToInsert.push({
         tournament_id: tournamentId,
         round: 1,
-        match_number: matchNumber++,
-        player1_id: shuffled[i].id,
-        player2_id: shuffled[i + 1].id,
-        status: 'pending'
+        match_number: i,
+        player1_id: p1,
+        player2_id: p2,
+        winner_id: winner,
+        status: status
       });
     }
 
-    const { error } = await supabase.from('tournament_matches').insert(matchesToInsert);
+    const { data: insertedMatches, error } = await supabase.from('tournament_matches').insert(matchesToInsert).select();
     if (error) throw error;
+
+    // Auto-advance byes to Round 2
+    for (const match of insertedMatches || []) {
+      if (match.status === 'completed' && match.winner_id) {
+         await this.advanceWinner(match.id, match.winner_id, tournamentId, 1, match.match_number, 0, 0);
+      }
+    }
   },
 
   async clearMatches(tournamentId: string): Promise<void> {
@@ -178,7 +208,7 @@ export const tournamentService = {
     if (error) throw error;
   },
 
-  async advanceWinner(matchId: string, winnerId: string, tournamentId: string, currentRound: number, currentMatchNumber: number): Promise<void> {
+  async advanceWinner(matchId: string, winnerId: string, tournamentId: string, currentRound: number, currentMatchNumber: number, score1: number = 0, score2: number = 0): Promise<void> {
     const nextRound = currentRound + 1;
     const nextMatchNumber = Math.ceil(currentMatchNumber / 2);
 
@@ -216,6 +246,8 @@ export const tournamentService = {
     await this.updateMatch(matchId, { 
       winner_id: winnerId,
       status: 'completed',
+      score1: score1,
+      score2: score2,
       next_match_id: nextMatch.id
     });
   }
