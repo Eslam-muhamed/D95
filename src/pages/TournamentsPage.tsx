@@ -13,7 +13,7 @@ const getGameBackground = (gameName: string) => {
         return 'https://images.unsplash.com/photo-1505705694340-019e1e335916?q=80&w=1000&auto=format&fit=crop'; 
     }
     // Default to Football/FC/FIFA
-    return 'https://images.unsplash.com/photo-1511882150382-421056c89033?q=80&w=1000&auto=format&fit=crop'; 
+    return 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?q=80&w=1000&auto=format&fit=crop'; 
 };
 
 export default function TournamentsPage() {
@@ -49,7 +49,7 @@ export default function TournamentsPage() {
                 <div className="absolute inset-0 bg-black/60 z-10" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#F6F5F2] dark:from-[#050505] via-transparent to-transparent z-10" />
                 <img 
-                    src="https://images.unsplash.com/photo-1511882150382-421056c89033?q=80&w=2000&auto=format&fit=crop" 
+                    src="https://images.unsplash.com/photo-1522778119026-d647f0596c20?q=80&w=2000&auto=format&fit=crop" 
                     alt="Esports Arena" 
                     className="absolute inset-0 w-full h-full object-cover"
                 />

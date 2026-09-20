@@ -22,7 +22,7 @@ const getGameBackground = (gameName: string) => {
         return 'https://images.unsplash.com/photo-1505705694340-019e1e335916?q=80&w=1000&auto=format&fit=crop'; 
     }
     // Default to Football/FC/FIFA
-    return 'https://images.unsplash.com/photo-1511882150382-421056c89033?q=80&w=1000&auto=format&fit=crop'; 
+    return 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?q=80&w=1000&auto=format&fit=crop'; 
 };
 
 export default function TournamentRegistrationPage() {
