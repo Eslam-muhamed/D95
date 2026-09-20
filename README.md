@@ -28,7 +28,10 @@
 ## 🛠️ التقنيات المستخدمة
 
 - **Framework**: React 18 + Vite (SWC)
+- **Language**: TypeScript
 - **Styling**: Tailwind CSS + Vanilla CSS Tokens
+- **State Management**: Zustand
+- **Backend / Database**: Supabase
 - **Animations**: Framer Motion
 - **Icons**: Lucide React
 - **Notifications**: Sonner
