@@ -1,8 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, X } from 'lucide-react';
+import { Trophy, X, Gamepad2, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTournamentStore } from '@/stores/tournamentStore';
+
+const getGameBackground = (gameName: string) => {
+    const name = gameName.toLowerCase();
+    if (name.includes('fc') || name.includes('fifa') || name.includes('pes')) {
+        return 'https://images.unsplash.com/photo-1511882150382-421056c89033?q=80&w=1000&auto=format&fit=crop'; 
+    }
+    if (name.includes('tekken') || name.includes('kombat') || name.includes('street fighter')) {
+        return 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1000&auto=format&fit=crop'; 
+    }
+    if (name.includes('call of duty') || name.includes('cod') || name.includes('valorant')) {
+        return 'https://images.unsplash.com/photo-1505705694340-019e1e335916?q=80&w=1000&auto=format&fit=crop'; 
+    }
+    return 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1000&auto=format&fit=crop'; 
+};
 
 export default function TournamentAnnouncementPopup() {
     const { activeTournaments } = useTournamentStore();
@@ -45,41 +59,61 @@ export default function TournamentAnnouncementPopup() {
                 className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
             >
                 <motion.div
-                    initial={{ scale: 0.9, y: 20 }}
-                    animate={{ scale: 1, y: 0 }}
-                    exit={{ scale: 0.9, y: 20 }}
-                    className="relative w-full max-w-sm overflow-hidden bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl border border-red-500/20"
+                    initial={{ scale: 0.9, y: 20, opacity: 0 }}
+                    animate={{ scale: 1, y: 0, opacity: 1 }}
+                    exit={{ scale: 0.9, y: 20, opacity: 0 }}
+                    transition={{ type: "spring", duration: 0.6 }}
+                    className="relative w-full max-w-sm overflow-hidden bg-black rounded-[2rem] shadow-2xl border border-red-500/30"
                 >
-                    {/* Decorative Background */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 via-transparent to-red-600/5 pointer-events-none" />
+                    {/* Background Image */}
+                    <div className="absolute inset-0 z-0">
+                        <img 
+                            src={getGameBackground(latestTournament.game)} 
+                            alt={latestTournament.game}
+                            className="w-full h-full object-cover opacity-50"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/20" />
+                    </div>
                     
                     {/* Close Button */}
                     <button
                         onClick={handleClose}
-                        className="absolute top-4 left-4 p-2 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors z-20 cursor-pointer"
+                        className="absolute top-4 left-4 p-2 rounded-full bg-black/20 hover:bg-black/40 border border-white/10 transition-colors z-20 cursor-pointer backdrop-blur-md"
                     >
-                        <X className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+                        <X className="w-5 h-5 text-white/70" />
                     </button>
 
-                    <div className="p-6 pt-10 text-center relative z-10">
-                        <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg shadow-red-500/30 mb-4">
-                            <Trophy className="w-8 h-8 text-white" />
+                    <div className="p-6 pt-12 text-center relative z-10 flex flex-col items-center">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600/20 border border-red-500/30 text-red-100 text-[10px] font-bold mb-4 backdrop-blur-sm uppercase tracking-widest">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                            بطولة جديدة
+                        </div>
+
+                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-red-600/40 to-transparent flex items-center justify-center mb-6 shadow-xl border border-red-500/30 backdrop-blur-sm transform -rotate-6">
+                            <Trophy className="w-10 h-10 text-yellow-500 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]" />
                         </div>
                         
-                        <h2 className="text-2xl font-black text-neutral-900 dark:text-white mb-2">
-                            بطولة جديدة!
+                        <div className="flex items-center gap-2 text-red-400 font-black text-xs mb-2 uppercase tracking-wider">
+                            <Gamepad2 className="w-4 h-4" />
+                            <span>{latestTournament.game}</span>
+                        </div>
+
+                        <h2 className="text-3xl font-black text-white mb-2 leading-tight drop-shadow-lg">
+                            {latestTournament.name}
                         </h2>
                         
-                        <p className="text-neutral-600 dark:text-neutral-300 mb-6 leading-relaxed">
-                            تم إطلاق بطولة <span className="font-bold text-red-600 dark:text-red-400">{latestTournament.name}</span> في لعبة {latestTournament.game}.
-                            انضم الآن وتحدى أبطال D95.
+                        <p className="text-neutral-300 text-sm mb-8 leading-relaxed max-w-[250px]">
+                            التسجيل مفتوح الآن! أثبت مهارتك واربح جوائز قيمة في أقوى بطولات D95.
                         </p>
 
                         <button
                             onClick={handleJoin}
-                            className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-red-600 to-red-700 text-white font-bold text-lg shadow-lg shadow-red-600/30 hover:shadow-xl hover:shadow-red-600/40 active:scale-95 transition-all duration-200"
+                            className="w-full flex items-center justify-between px-6 py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold rounded-2xl transition-all shadow-[0_0_20px_rgba(220,38,38,0.4)] active:scale-95 group/btn"
                         >
-                            سجل الآن 🔥
+                            <span className="flex items-center gap-2 text-lg">
+                                اشترك الآن 🔥
+                            </span>
+                            <ArrowRight className="w-5 h-5 rotate-180 transition-transform group-hover/btn:-translate-x-1" />
                         </button>
                     </div>
                 </motion.div>
