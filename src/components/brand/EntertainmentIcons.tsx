@@ -1,4 +1,4 @@
-import beinSportsImg from '@/assets/brand/bein-sports.png';
+import beinSportsImg from '@/assets/brand/bein-sports.webp';
 
 export function BeinSportsIcon({ className = 'w-4 h-4' }: { className?: string }) {
     return (

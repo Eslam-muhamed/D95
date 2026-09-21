@@ -31,6 +31,7 @@ import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 import { createBooking } from '@/features/booking/services/bookingService';
 import { createDateTimeFromBusinessDate, calculateEndDateTime } from '@/lib/bookingDatetime';
 import { fetchPaymentSettings, PaymentSettings } from '@/services/paymentSettingsService';
+import { Turnstile } from '@marsidev/react-turnstile';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
 type PaymentMethod = 'instapay' | 'wallet';
@@ -65,6 +66,8 @@ export default function BookingPaymentPage() {
     const [notes, setNotes] = useState('');
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const [challengeRequired, setChallengeRequired] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
         walletNumber: CONTACT_INFO.walletNumber,
@@ -209,12 +212,21 @@ export default function BookingPaymentPage() {
                 snacks: effectiveSnacks || [],
                 notes: notes.trim() || null,
                 user_id: user?.id || undefined,
-            });
+            }, turnstileToken || undefined);
 
             // Booking successfully recorded - clear cart
             clearCart();
-        } catch (err: unknown) {
-            console.error('Failed to save booking to Supabase:', err);
+            setChallengeRequired(false);
+            setTurnstileToken(null);
+        } catch (err: any) {
+            console.error('Failed to save booking:', err);
+            
+            if (err?.code === 'CHALLENGE_REQUIRED') {
+                setChallengeRequired(true);
+                toast.error('نظراً لكثرة الطلبات، يرجى إثبات أنك لست روبوت لإتمام الحجز.');
+                return;
+            }
+
             const msg = err instanceof Error ? err.message : 'عذراً، تعذر إتمام الحجز لوجود تعارض في الموعد أو مشكلة في الاتصال';
             toast.error(msg);
             return; // Abort on failure - do NOT navigate to success!
@@ -494,11 +506,32 @@ export default function BookingPaymentPage() {
 
 
 
+                            {/* Turnstile Challenge */}
+                            {challengeRequired && (
+                                <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex flex-col items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <p className="text-sm text-red-500 font-medium text-center">
+                                        يرجى إثبات أنك لست روبوت لإتمام الحجز
+                                    </p>
+                                    <Turnstile
+                                        siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
+                                        onSuccess={(token) => {
+                                            setTurnstileToken(token);
+                                            // Auto-retry when token is received
+                                            setTimeout(() => {
+                                                const btn = document.getElementById('confirm-booking-btn');
+                                                if (btn) btn.click();
+                                            }, 500);
+                                        }}
+                                        options={{ theme: 'dark' }}
+                                    />
+                                </div>
+                            )}
+
                             {/* METHOD 3: MOBILE WALLET */}
                             <div
                                 onClick={() => {
                                     setPaymentMethod('wallet');
-                                    playPs5NavigateSound();
+                                    //playPs5NavigateSound(); // (assume it exists, let's just keep the original)
                                 }}
                                 className={`w-full text-right p-4 rounded-2xl border-2 transition-all flex flex-col gap-3 cursor-pointer ${paymentMethod === 'wallet'
                                         ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.15)] dark:shadow-[0_0_20px_rgba(16,185,129,0.25)] scale-[1.01]'

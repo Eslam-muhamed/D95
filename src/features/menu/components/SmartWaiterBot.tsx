@@ -253,7 +253,7 @@ export default function SmartWaiterBot() {
               whileTap={{ scale: 0.9 }}
               aria-label="اسأل دبور"
             >
-              <img src="/dabour.png" alt="دبور" className="w-full h-full object-contain filter drop-shadow-lg" />
+              <img src="/dabour.webp" alt="دبور" className="w-full h-full object-contain filter drop-shadow-lg" />
               {/* Online Indicator */}
               <span className="absolute bottom-0.5 right-1 sm:bottom-1 sm:right-2 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full z-10"></span>
             </motion.button>
@@ -288,7 +288,7 @@ export default function SmartWaiterBot() {
             <div className="bg-red-600 text-white px-4 py-3.5 sm:px-5 flex items-center justify-between shrink-0 shadow-md z-10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden bg-white/10 p-0.5 border border-white/20">
-                  <img src="/dabour.png" alt="دبور" className="w-full h-full object-contain filter drop-shadow" />
+                  <img src="/dabour.webp" alt="دبور" className="w-full h-full object-contain filter drop-shadow" />
                 </div>
                 <div>
                   <h3 className="font-bold text-base sm:text-lg flex items-center gap-1.5">
@@ -316,7 +316,7 @@ export default function SmartWaiterBot() {
                 >
                   {msg.role === 'model' && (
                     <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-red-100 dark:bg-red-950/40 p-0.5 border border-red-500/20">
-                      <img src="/dabour.png" alt="دبور" className="w-full h-full object-contain" />
+                      <img src="/dabour.webp" alt="دبور" className="w-full h-full object-contain" />
                     </div>
                   )}
                   

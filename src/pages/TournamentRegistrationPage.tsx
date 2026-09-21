@@ -22,7 +22,7 @@ const getGameBackground = (gameName: string) => {
         return 'https://images.unsplash.com/photo-1505705694340-019e1e335916?q=80&w=1000&auto=format&fit=crop'; 
     }
     // Default to Football/FC/FIFA
-    return '/images/tournaments/fifa_hero.jpg'; 
+    return '/images/tournaments/fifa_hero.webp'; 
 };
 
 export default function TournamentRegistrationPage() {

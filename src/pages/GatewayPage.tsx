@@ -14,6 +14,7 @@ import {
     type VenueStatus,
 } from '@/services/venueStatusService';
 import { useTournamentStore } from '@/stores/tournamentStore';
+import { preloadPlaystationRoute, preloadMenuRoute, preloadTournamentsRoute } from '@/lib/routePreloaders';
 
 export default function GatewayPage() {
     const navigate = useNavigate();
@@ -225,6 +226,8 @@ export default function GatewayPage() {
                     <Link
                         to="/playstation"
                         onClick={handlePlaystationClick}
+                        onMouseEnter={preloadPlaystationRoute}
+                        onTouchStart={preloadPlaystationRoute}
                         className={`group relative flex flex-col items-center justify-between p-3.5 sm:p-6 concrete-card rounded-2xl sm:rounded-3xl border transition-all duration-300 active:scale-95 cursor-pointer h-60 sm:h-76 shadow-sm ${
                             isBootingPs5
                                 ? 'border-red-500 scale-[0.97] shadow-[0_0_45px_rgba(225,29,72,0.85)] brightness-110'
@@ -273,6 +276,8 @@ export default function GatewayPage() {
                     <Link
                         to="/menu"
                         onClick={handleMenuClick}
+                        onMouseEnter={preloadMenuRoute}
+                        onTouchStart={preloadMenuRoute}
                         className={`group relative flex flex-col items-center justify-between p-3.5 sm:p-6 concrete-card rounded-2xl sm:rounded-3xl border transition-all duration-300 active:scale-95 cursor-pointer h-60 sm:h-76 shadow-sm ${
                             isEnteringMenu
                                 ? 'border-amber-500 shadow-[0_0_35px_rgba(212,160,23,0.6)] scale-[1.02]'
@@ -322,6 +327,8 @@ export default function GatewayPage() {
                 {hasTournaments && (
                     <Link
                         to="/tournaments"
+                        onMouseEnter={preloadTournamentsRoute}
+                        onTouchStart={preloadTournamentsRoute}
                         className="mt-3 sm:mt-6 group relative w-full flex items-center justify-between p-3.5 sm:p-6 concrete-card rounded-2xl sm:rounded-3xl border border-neutral-300/80 dark:border-white/10 hover:border-amber-500/60 transition-all duration-300 active:scale-[0.98] cursor-pointer shadow-sm hover:shadow-[0_0_35px_rgba(245,158,11,0.25)] overflow-hidden"
                     >
                         {/* Background subtle glow */}

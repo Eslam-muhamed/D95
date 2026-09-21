@@ -7,19 +7,32 @@ import BottomNav from '@/components/layout/BottomNav';
 import AdminProtectedRoute from '@/features/auth/components/AdminProtectedRoute';
 import SplashScreen from '@/components/features/SplashScreen';
 
+import {
+    preloadPlaystationRoute,
+    preloadMenuRoute,
+    preloadTournamentsRoute,
+    preloadBookingDetailsRoute,
+    preloadBookingPaymentRoute,
+    preloadBookingSuccessRoute,
+    preloadTournamentRegistrationRoute,
+    preloadCustomerDashboardRoute,
+    preloadCustomerLoginRoute
+} from '@/lib/routePreloaders';
+
 // Statically import primary public tabs & customer booking flow for 0ms instantaneous navigation
 import GatewayPage from '@/pages/GatewayPage';
-import PlaystationPage from '@/pages/PlaystationPage';
-import MenuPage from '@/features/menu/pages/MenuPage';
-import BookingDetailsPage from '@/features/booking/pages/BookingDetailsPage';
-import BookingPaymentPage from '@/features/booking/pages/BookingPaymentPage';
-import BookingSuccessPage from '@/features/booking/pages/BookingSuccessPage';
 
-import CustomerDashboardPage from '@/pages/CustomerDashboardPage';
-import CustomerLoginPage from '@/features/auth/pages/CustomerLoginPage';
+const PlaystationPage = lazy(preloadPlaystationRoute);
+const MenuPage = lazy(preloadMenuRoute);
+const BookingDetailsPage = lazy(preloadBookingDetailsRoute);
+const BookingPaymentPage = lazy(preloadBookingPaymentRoute);
+const BookingSuccessPage = lazy(preloadBookingSuccessRoute);
 
-import TournamentsPage from '@/pages/TournamentsPage';
-import TournamentRegistrationPage from '@/pages/TournamentRegistrationPage';
+const CustomerDashboardPage = lazy(preloadCustomerDashboardRoute);
+const CustomerLoginPage = lazy(preloadCustomerLoginRoute);
+
+const TournamentsPage = lazy(preloadTournamentsRoute);
+const TournamentRegistrationPage = lazy(preloadTournamentRegistrationRoute);
 
 // Route-level Code Splitting for back-office admin routes only
 const AdminDashboardPage = lazy(() => import('@/features/admin/pages/AdminDashboardPage'));

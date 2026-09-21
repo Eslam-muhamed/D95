@@ -3,6 +3,12 @@ import { Gamepad2, Coffee, ShoppingBag, Home, Star, Trophy } from 'lucide-react'
 import { useCart } from '@/features/cart/stores/cartStore';
 import { preloadMenuData } from '@/features/menu/services/menuService';
 import { useTournamentStore } from '@/stores/tournamentStore';
+import {
+    preloadPlaystationRoute,
+    preloadMenuRoute,
+    preloadCustomerDashboardRoute,
+    preloadTournamentsRoute
+} from '@/lib/routePreloaders';
 
 export default function BottomNav() {
     const location = useLocation();
@@ -73,7 +79,22 @@ export default function BottomNav() {
                                 type="button"
                                 onClick={() => handleTabSelect(item.path, item.isExact)}
                                 onMouseEnter={() => {
-                                    if (item.path === '/menu') preloadMenuData();
+                                    if (item.path === '/menu') {
+                                        preloadMenuData();
+                                        preloadMenuRoute();
+                                    }
+                                    if (item.path === '/playstation') preloadPlaystationRoute();
+                                    if (item.path === '/customer') preloadCustomerDashboardRoute();
+                                    if (item.path === '/tournaments') preloadTournamentsRoute();
+                                }}
+                                onTouchStart={() => {
+                                    if (item.path === '/menu') {
+                                        preloadMenuData();
+                                        preloadMenuRoute();
+                                    }
+                                    if (item.path === '/playstation') preloadPlaystationRoute();
+                                    if (item.path === '/customer') preloadCustomerDashboardRoute();
+                                    if (item.path === '/tournaments') preloadTournamentsRoute();
                                 }}
                                 className="relative flex-1 flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-150 active:scale-95 cursor-pointer group touch-manipulation select-none"
                             >
