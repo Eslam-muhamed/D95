@@ -512,18 +512,24 @@ export default function BookingPaymentPage() {
                                     <p className="text-sm text-red-500 font-medium text-center">
                                         يرجى إثبات أنك لست روبوت لإتمام الحجز
                                     </p>
-                                    <Turnstile
-                                        siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
-                                        onSuccess={(token) => {
-                                            setTurnstileToken(token);
-                                            // Auto-retry when token is received
-                                            setTimeout(() => {
-                                                const btn = document.getElementById('confirm-booking-btn');
-                                                if (btn) btn.click();
-                                            }, 500);
-                                        }}
-                                        options={{ theme: 'dark' }}
-                                    />
+                                    {!import.meta.env.VITE_TURNSTILE_SITE_KEY ? (
+                                        <div className="text-sm text-white font-bold bg-red-600 p-3 rounded-lg text-center shadow-sm">
+                                            عذراً، إعدادات الأمان غير مكتملة حالياً (Missing Turnstile Key). يرجى التواصل مع الإدارة.
+                                        </div>
+                                    ) : (
+                                        <Turnstile
+                                            siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                                            onSuccess={(token) => {
+                                                setTurnstileToken(token);
+                                                // Auto-retry when token is received
+                                                setTimeout(() => {
+                                                    const btn = document.getElementById('confirm-booking-btn');
+                                                    if (btn) btn.click();
+                                                }, 500);
+                                            }}
+                                            options={{ theme: 'dark' }}
+                                        />
+                                    )}
                                 </div>
                             )}
 
