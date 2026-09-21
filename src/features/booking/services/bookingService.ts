@@ -41,7 +41,7 @@ export async function fetchRoomOccupiedIntervals(
     }
 }
 
-export async function createBooking(booking: Omit<DBBooking, 'id' | 'created_at'>, turnstileToken?: string): Promise<DBBooking> {
+export async function createBooking(booking: Omit<DBBooking, 'id' | 'created_at'>): Promise<DBBooking> {
     const cleanBooking = {
         ...booking,
         customer_name: booking.customer_name.trim(),
@@ -51,20 +51,14 @@ export async function createBooking(booking: Omit<DBBooking, 'id' | 'created_at'
         room_id: booking.room_id || 'room-1',
     };
 
-    // Call the Edge Function Gateway instead of direct RPC to enforce Anti-Hoarding and Progressive Security
+    // Call the Edge Function Gateway instead of direct RPC to enforce Anti-Hoarding Security
     const { data, error } = await supabase.functions.invoke('create-booking', {
-        body: { p_booking: cleanBooking, turnstile_token: turnstileToken }
+        body: { p_booking: cleanBooking }
     });
 
     if (error) {
         console.warn('Edge Function create-booking failed, inspecting error:', error);
         
-        // Specific handling for Progressive Security Challenge
-        if (error.message?.includes('challenge_required') || error.context?.status === 403) {
-            const err = new Error('CHALLENGE_REQUIRED');
-            (err as any).code = 'CHALLENGE_REQUIRED';
-            throw err;
-        }
         if (error.code === '23P01' || error.message.includes('23P01') || error.message.includes('تعارض') || error.message.includes('محجوز')) {
             throw new Error('عذراً، هذا الموعد تم حجزه للتو أو يتعارض مع حجز قائم. يرجى اختيار موعد آخر.');
         }

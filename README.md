@@ -64,20 +64,17 @@ npm run build
 
 - `VITE_SUPABASE_URL`: رابط مشروع Supabase.
 - `VITE_SUPABASE_ANON_KEY`: المفتاح العام (Publishable Key).
-- `VITE_TURNSTILE_SITE_KEY`: مفتاح الموقع لخدمة Cloudflare Turnstile (مطلوب لحماية بوابة الدفع من البوتات).
 
 ⚠️ **تنبيه هام:** لا تقم أبداً بإضافة أي مفتاح سرّي (Secret Key) في ملف `.env`.
 
 ### 2. أسرار الخوادم الطرفية (Edge Function Secrets)
-هذه المتغيرات تستخدم حصراً في الواجهة الخلفية (Backend) عبر وظائف Supabase Edge Functions. يجب حقنها مباشرة عبر واجهة سطر الأوامر (CLI) الخاصة بـ Supabase، ولا يجب إضافتها لأي ملف في الكود המصدري.
+هذه المتغيرات تستخدم حصراً في الواجهة الخلفية (Backend) عبر وظائف Supabase Edge Functions. يجب حقنها مباشرة عبر واجهة سطر الأوامر (CLI) الخاصة بـ Supabase، ولا يجب إضافتها لأي ملف في الكود المصدري.
 
 المتغيرات المطلوبة:
-- `TURNSTILE_SECRET_KEY`: يستخدم للتحقق من مصداقية حجوزات العملاء.
 - `GEMINI_API_KEY`: يستخدم لتشغيل مساعد الذكاء الاصطناعي "دبور" في المنيو.
 
 **خطوات حقن المتغيرات:**
 ```bash
-supabase secrets set TURNSTILE_SECRET_KEY=your_secret_key
 supabase secrets set GEMINI_API_KEY=your_gemini_key
 ```
 

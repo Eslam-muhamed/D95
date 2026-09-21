@@ -20,7 +20,7 @@ serve(async (req) => {
 
     const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1'
     
-    const { p_booking, turnstile_token } = await req.json()
+    const { p_booking } = await req.json()
     
     if (!p_booking || !p_booking.reservation_id) {
       return new Response(JSON.stringify({ error: 'Missing booking payload or reservation_id' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })
@@ -58,59 +58,7 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
     }
 
-    // 2. IP Rate Limiting & Quotas
-    // Count active pending bookings
-    const { count: pendingCount } = await serviceClient
-      .from('ps_bookings')
-      .select('id', { count: 'exact', head: true })
-      .eq('client_ip', clientIp)
-      .eq('status', 'pending')
-
-    // Count hourly velocity
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
-    const { count: hourlyCount } = await serviceClient
-      .from('ps_bookings')
-      .select('id', { count: 'exact', head: true })
-      .eq('client_ip', clientIp)
-      .gte('created_at', oneHourAgo)
-
-    const activePending = pendingCount || 0
-    const activeHourly = hourlyCount || 0
-
-    // Abusive Tier (Hard Block)
-    if (activePending >= 15 || activeHourly >= 40) {
-      return new Response(JSON.stringify({ error: 'Too many requests from this IP.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 })
-    }
-
-    // Suspicious Tier (Challenge Required)
-    if (activePending >= 5 || activeHourly >= 10) {
-      if (!turnstile_token) {
-        return new Response(JSON.stringify({ error: 'challenge_required' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 })
-      }
-
-      // Verify Turnstile (Fail-Closed)
-      const turnstileSecret = Deno.env.get('TURNSTILE_SECRET_KEY')
-      if (!turnstileSecret) {
-        return new Response(JSON.stringify({ error: 'Security configuration missing. Please try again later.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 503 })
-      }
-
-      const formData = new FormData();
-      formData.append('secret', turnstileSecret);
-      formData.append('response', turnstile_token);
-      formData.append('remoteip', clientIp);
-
-      const verifyResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-        method: 'POST',
-        body: formData
-      });
-
-      const verifyOutcome = await verifyResponse.json();
-      if (!verifyOutcome.success) {
-        return new Response(JSON.stringify({ error: 'Invalid captcha token' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 })
-      }
-    }
-
-    // 3. Inject Client IP into payload
+    // 2. Inject Client IP into payload (Rate limiting removed by user request)
     p_booking.client_ip = clientIp;
 
     // 4. Execution Routing

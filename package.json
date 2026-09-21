@@ -11,7 +11,6 @@
         "test": "npx tsx tests/cart_logic_test.ts && npx tsx tests/booking_edge_cases.ts"
     },
     "dependencies": {
-        "@marsidev/react-turnstile": "^1.6.1",
         "@supabase/supabase-js": "^2.116.0",
         "clsx": "^2.1.1",
         "framer-motion": "^12.23.24",

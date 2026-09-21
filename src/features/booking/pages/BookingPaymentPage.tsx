@@ -31,7 +31,6 @@ import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 import { createBooking } from '@/features/booking/services/bookingService';
 import { createDateTimeFromBusinessDate, calculateEndDateTime } from '@/lib/bookingDatetime';
 import { fetchPaymentSettings, PaymentSettings } from '@/services/paymentSettingsService';
-import { Turnstile } from '@marsidev/react-turnstile';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
 type PaymentMethod = 'instapay' | 'wallet';
@@ -66,8 +65,6 @@ export default function BookingPaymentPage() {
     const [notes, setNotes] = useState('');
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
-    const [challengeRequired, setChallengeRequired] = useState(false);
-    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
         walletNumber: CONTACT_INFO.walletNumber,
@@ -212,20 +209,12 @@ export default function BookingPaymentPage() {
                 snacks: effectiveSnacks || [],
                 notes: notes.trim() || null,
                 user_id: user?.id || undefined,
-            }, turnstileToken || undefined);
+            });
 
             // Booking successfully recorded - clear cart
             clearCart();
-            setChallengeRequired(false);
-            setTurnstileToken(null);
         } catch (err: any) {
             console.error('Failed to save booking:', err);
-            
-            if (err?.code === 'CHALLENGE_REQUIRED') {
-                setChallengeRequired(true);
-                toast.error('نظراً لكثرة الطلبات، يرجى إثبات أنك لست روبوت لإتمام الحجز.');
-                return;
-            }
 
             const msg = err instanceof Error ? err.message : 'عذراً، تعذر إتمام الحجز لوجود تعارض في الموعد أو مشكلة في الاتصال';
             toast.error(msg);
@@ -504,34 +493,6 @@ export default function BookingPaymentPage() {
                                 )}
                             </div>
 
-
-
-                            {/* Turnstile Challenge */}
-                            {challengeRequired && (
-                                <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex flex-col items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <p className="text-sm text-red-500 font-medium text-center">
-                                        يرجى إثبات أنك لست روبوت لإتمام الحجز
-                                    </p>
-                                    {!import.meta.env.VITE_TURNSTILE_SITE_KEY ? (
-                                        <div className="text-sm text-white font-bold bg-red-600 p-3 rounded-lg text-center shadow-sm">
-                                            عذراً، إعدادات الأمان غير مكتملة حالياً (Missing Turnstile Key). يرجى التواصل مع الإدارة.
-                                        </div>
-                                    ) : (
-                                        <Turnstile
-                                            siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-                                            onSuccess={(token) => {
-                                                setTurnstileToken(token);
-                                                // Auto-retry when token is received
-                                                setTimeout(() => {
-                                                    const btn = document.getElementById('confirm-booking-btn');
-                                                    if (btn) btn.click();
-                                                }, 500);
-                                            }}
-                                            options={{ theme: 'dark' }}
-                                        />
-                                    )}
-                                </div>
-                            )}
 
                             {/* METHOD 3: MOBILE WALLET */}
                             <div
