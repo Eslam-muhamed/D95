@@ -269,27 +269,51 @@ export async function uploadProductImage(file: File): Promise<string> {
         throw new Error('حجم الملف يتجاوز الحد المسموح به (5 ميجابايت)');
     }
 
-    const rawExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'];
-    const fileExt = allowedExtensions.includes(rawExt) ? rawExt : 'jpg';
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-    const filePath = `products/${fileName}`;
+    if (!cloudName || !uploadPreset) {
+        throw new Error('إعدادات Cloudinary غير مكتملة، يرجى إضافتها في ملف .env');
+    }
 
-    const { error: uploadError } = await supabase.storage
-        .from('menu-images')
-        .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false
-        });
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
 
-    if (uploadError) throw uploadError;
+    // Upload to Cloudinary Unsigned API
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData,
+    });
 
-    const { data: publicUrlData } = supabase.storage
-        .from('menu-images')
-        .getPublicUrl(filePath);
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'حدث خطأ أثناء رفع الصورة');
+    }
 
-    return publicUrlData.publicUrl;
+    const data = await response.json();
+    return data.secure_url;
+}
+
+export async function deleteProductImage(imageUrl: string): Promise<void> {
+    if (!imageUrl) return;
+
+    try {
+        if (imageUrl.includes('supabase.co')) {
+            // Legacy Supabase Storage image deletion
+            const filePath = imageUrl.split('/menu-images/')[1];
+            if (filePath) {
+                await supabase.storage.from('menu-images').remove([filePath]);
+            }
+        } else if (imageUrl.includes('cloudinary.com')) {
+            // New Cloudinary image deletion (calls Edge Function)
+            await supabase.functions.invoke('delete-cloudinary-image', {
+                body: { imageUrl }
+            });
+        }
+    } catch (err) {
+        console.error('Failed to delete image:', err);
+    }
 }
 
 // ================= OFFERS =================

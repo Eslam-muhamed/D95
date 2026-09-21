@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { X, Upload, Image as ImageIcon, Flame, Snowflake, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { createProduct, updateProduct, uploadProductImage } from '@/features/menu/services/menuService';
+import { createProduct, updateProduct, uploadProductImage, deleteProductImage } from '@/features/menu/services/menuService';
 import type { DBCategory, DBProduct } from '@/types/database';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -90,6 +90,13 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
             let saved: DBProduct;
             if (isEdit && product) {
                 saved = await updateProduct(product.id, productData);
+                
+                // If image changed, delete the old one
+                if (product.image_url && product.image_url !== productData.image_url) {
+                    // Fire and forget (don't block the UI)
+                    deleteProductImage(product.image_url).catch(console.error);
+                }
+                
                 toast.success('تم تحديث بيانات المنتج بنجاح!');
             } else {
                 saved = await createProduct(productData);

@@ -22,6 +22,7 @@ import {
     fetchOffers,
     deleteOffer,
     updateOffer,
+    deleteProductImage,
 } from '@/features/menu/services/menuService';
 import ProductModal from './ProductModal';
 import CategoryModal from './CategoryModal';
@@ -108,6 +109,9 @@ export default function SimpleMenuSettingsTab() {
         if (!confirm(`هل أنت متأكد من رغبتك في حذف "${p.name}" من المنيو نهائياً؟`)) return;
         try {
             await deleteProduct(p.id);
+            if (p.image_url) {
+                deleteProductImage(p.image_url).catch(console.error);
+            }
             toast.success('تم حذف الصنف بنجاح');
             setProducts((prev) => prev.filter((item) => item.id !== p.id));
         } catch {
