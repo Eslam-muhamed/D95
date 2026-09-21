@@ -1,3 +1,4 @@
+// @ts-ignore
 import { chromium } from 'playwright';
 
 async function runQA() {
@@ -7,13 +8,13 @@ async function runQA() {
     const context = await browser.newContext();
     const page = await context.newPage();
     
-    const results = {
+    const results: { PASS: string[], FAILED: string[], UNVERIFIED: string[] } = {
         PASS: [],
         FAILED: [],
         UNVERIFIED: []
     };
     
-    function assert(condition, successMsg, failMsg) {
+    function assert(condition: any, successMsg: string, failMsg: string) {
         if (condition) {
             console.log('✅ ' + successMsg);
             results.PASS.push(successMsg);
