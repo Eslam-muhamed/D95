@@ -82,17 +82,22 @@ export default function TournamentClientBracket({ tournamentId }: TournamentClie
     }
 
     const rounds = [...new Set(matches.map(m => m.round))].sort((a, b) => a - b);
+    
+    // Calculate a good initial scale based on screen size so the whole map is visible
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    const defaultScale = isMobile ? 0.4 : 0.8;
 
     return (
-        <div className="relative w-full h-[600px] md:h-[700px] rounded-3xl overflow-hidden bg-black/20 border border-white/5" dir="rtl">
+        <div className="relative w-full h-[600px] md:h-[700px] rounded-3xl overflow-hidden bg-[#0a0a0a] border border-white/5" dir="ltr">
             {/* Background elements */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(239,68,68,0.05),transparent_50%)] pointer-events-none" />
             
             <TransformWrapper
-                initialScale={0.8}
-                minScale={0.3}
+                initialScale={defaultScale}
+                minScale={0.2}
                 maxScale={2}
                 centerOnInit={true}
+                limitToBounds={false}
                 wheel={{ step: 0.1 }}
             >
                 {({ zoomIn, zoomOut, resetTransform }) => (
@@ -132,14 +137,14 @@ export default function TournamentClientBracket({ tournamentId }: TournamentClie
                                                     return (
                                                     <div key={pairIdx} className="relative flex flex-col justify-around flex-1 gap-6 py-2">
                                                         
-                                                        {/* Connector to next round (Left line in RTL) */}
+                                                        {/* Connector to next round (Right line in LTR) */}
                                                         {rIdx < rounds.length - 1 && (
-                                                            <div className="absolute -left-12 top-1/2 w-12 border-t-2 border-white/20 z-0" />
+                                                            <div className="absolute -right-12 top-1/2 w-12 border-t-2 border-white/20 z-0" />
                                                         )}
                                                         
                                                         {/* Vertical Connector for the pair */}
                                                         {pair.length === 2 && rIdx < rounds.length - 1 && (
-                                                            <div className="absolute -left-6 top-[25%] bottom-[25%] w-6 border-l-2 border-y-2 border-white/20 rounded-l-xl z-0" />
+                                                            <div className="absolute -right-6 top-[25%] bottom-[25%] w-6 border-r-2 border-y-2 border-white/20 rounded-r-xl z-0" />
                                                         )}
 
                                                         {pair.map(match => {
@@ -161,12 +166,12 @@ export default function TournamentClientBracket({ tournamentId }: TournamentClie
                                                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${match.player1_id && match.player1_id !== 'BYE' ? 'bg-black/50 border-white/10' : 'bg-transparent border-dashed border-white/20'}`}>
                                                                             <User className={`w-4 h-4 ${match.winner_id === match.player1_id ? 'text-yellow-500' : 'text-neutral-400'}`} />
                                                                         </div>
-                                                                        <span className={`font-black text-sm tracking-wide line-clamp-1 ${!match.player1_id || match.player1_id === 'BYE' ? 'text-neutral-500 italic font-medium' : match.winner_id === match.player1_id ? 'text-yellow-400' : 'text-white'}`}>
+                                                                        <span className={`font-black text-sm tracking-wide line-clamp-1 ${!match.player1_id || match.player1_id === 'BYE' ? 'text-neutral-500 italic font-medium' : match.winner_id === match.player1_id ? 'text-yellow-400' : 'text-white'}`} dir="rtl">
                                                                             {getPlayerName(match.player1_id)}
                                                                         </span>
                                                                     </div>
                                                                     
-                                                                    <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center gap-3" dir="rtl">
                                                                         {isMatchCompleted && match.player2_id && match.player2_id !== 'BYE' && (
                                                                             <span className="font-black text-lg text-white w-8 text-center bg-black/50 rounded-lg py-0.5 border border-white/10">{match.score1}</span>
                                                                         )}
@@ -182,12 +187,12 @@ export default function TournamentClientBracket({ tournamentId }: TournamentClie
                                                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${match.player2_id && match.player2_id !== 'BYE' ? 'bg-black/50 border-white/10' : 'bg-transparent border-dashed border-white/20'}`}>
                                                                             <User className={`w-4 h-4 ${match.winner_id === match.player2_id ? 'text-yellow-500' : 'text-neutral-400'}`} />
                                                                         </div>
-                                                                        <span className={`font-black text-sm tracking-wide line-clamp-1 ${!match.player2_id || match.player2_id === 'BYE' ? 'text-neutral-500 italic font-medium' : match.winner_id === match.player2_id ? 'text-yellow-400' : 'text-white'}`}>
+                                                                        <span className={`font-black text-sm tracking-wide line-clamp-1 ${!match.player2_id || match.player2_id === 'BYE' ? 'text-neutral-500 italic font-medium' : match.winner_id === match.player2_id ? 'text-yellow-400' : 'text-white'}`} dir="rtl">
                                                                             {getPlayerName(match.player2_id)}
                                                                         </span>
                                                                     </div>
                                                                     
-                                                                    <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center gap-3" dir="rtl">
                                                                         {isMatchCompleted && match.player2_id && match.player2_id !== 'BYE' && (
                                                                             <span className="font-black text-lg text-white w-8 text-center bg-black/50 rounded-lg py-0.5 border border-white/10">{match.score2}</span>
                                                                         )}
