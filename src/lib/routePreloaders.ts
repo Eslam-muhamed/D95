@@ -10,6 +10,7 @@ export const preloadBookingSuccessRoute = () => import('@/features/booking/pages
 
 // Additional Tournament Routes
 export const preloadTournamentRegistrationRoute = () => import('@/pages/TournamentRegistrationPage');
+export const preloadTournamentDetailRoute = () => import('@/pages/TournamentDetailPage');
 
 // Customer Profile Flow
 export const preloadCustomerDashboardRoute = () => import('@/pages/CustomerDashboardPage');

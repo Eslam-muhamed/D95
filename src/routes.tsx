@@ -15,6 +15,7 @@ import {
     preloadBookingPaymentRoute,
     preloadBookingSuccessRoute,
     preloadTournamentRegistrationRoute,
+    preloadTournamentDetailRoute,
     preloadCustomerDashboardRoute,
     preloadCustomerLoginRoute
 } from '@/lib/routePreloaders';
@@ -33,6 +34,7 @@ const CustomerLoginPage = lazy(preloadCustomerLoginRoute);
 
 const TournamentsPage = lazy(preloadTournamentsRoute);
 const TournamentRegistrationPage = lazy(preloadTournamentRegistrationRoute);
+const TournamentDetailPage = lazy(preloadTournamentDetailRoute);
 
 // Route-level Code Splitting for back-office admin routes only
 const AdminDashboardPage = lazy(() => import('@/features/admin/pages/AdminDashboardPage'));
@@ -75,6 +77,7 @@ export function AppRoutes() {
                     <Route path="/login" element={<CustomerLoginPage />} />
                     <Route path="/tournaments" element={<TournamentsPage />} />
                     <Route path="/tournaments/register/:id" element={<TournamentRegistrationPage />} />
+                    <Route path="/tournament/:id" element={<TournamentDetailPage />} />
                     <Route
                         path="/admin"
                         element={
