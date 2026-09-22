@@ -1,4 +1,8 @@
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+
+// @ts-ignore
+declare const Deno: any;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,7 +27,7 @@ function extractPublicId(url: string): string {
   return rest;
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
