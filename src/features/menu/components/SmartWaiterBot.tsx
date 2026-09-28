@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, X, Send, User, Sparkles, AlertCircle, ShoppingCart } from 'lucide-react';
+import { Bot, X, Send, User, Sparkles, AlertCircle, ShoppingCart, ArrowLeftRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/features/cart/stores/cartStore';
 
@@ -13,40 +13,49 @@ export type Persona = 'dabour' | 'abu_malaz';
 interface PersonaConfig {
   id: Persona;
   name: string;
+  realName: string;
   badge: string;
   avatar: string;
   headerBg: string;
-  activeTabClass: string;
+  cardBorder: string;
+  cardHoverBg: string;
   userBubbleBg: string;
   sendBtnBg: string;
   welcome: string;
   placeholder: string;
+  description: string;
 }
 
 const PERSONAS: Record<Persona, PersonaConfig> = {
   dabour: {
     id: 'dabour',
     name: 'دبور',
-    badge: 'محمد',
+    realName: 'محمد',
+    badge: 'ويتر المنيو ☕',
     avatar: '/dabour.webp',
     headerBg: 'bg-gradient-to-r from-red-600 via-rose-600 to-red-700',
-    activeTabClass: 'bg-red-600 text-white shadow-lg shadow-red-900/40 border-red-500',
+    cardBorder: 'hover:border-red-500 hover:shadow-red-500/20',
+    cardHoverBg: 'hover:bg-red-500/10',
     userBubbleBg: 'bg-red-600',
     sendBtnBg: 'bg-red-600 hover:bg-red-700',
     welcome: 'أهلاً بك في D95 ☕🎮! أنا دبور، إزاي أقدر أساعدك وأرشحلك من المنيو النهارده؟',
     placeholder: 'اسأل دبور عن المنيو أو الأسعار...',
+    description: 'ويتر شبابي ومرح، هيظبطلك أحسن مشروبات وسناكس للعب والرواقان 🔥'
   },
   abu_malaz: {
     id: 'abu_malaz',
     name: 'أبو ملاذ',
-    badge: 'احمد',
+    realName: 'أحمد',
+    badge: 'الويتر المضياف ✨',
     avatar: '/abu-malaz.webp',
     headerBg: 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700',
-    activeTabClass: 'bg-amber-600 text-white shadow-lg shadow-amber-900/40 border-amber-500',
+    cardBorder: 'hover:border-amber-500 hover:shadow-amber-500/20',
+    cardHoverBg: 'hover:bg-amber-500/10',
     userBubbleBg: 'bg-amber-600',
     sendBtnBg: 'bg-amber-600 hover:bg-amber-700',
     welcome: 'يا مية أهلاً وسهلاً بيك في D95! أنا أبو ملاذ هنا عشان اساعدك تختار المشروب اللي يعدل مزاجك، قولي نفسك في إيه يروّق عليك وهجهزهولك بأحسن جودة ✨',
     placeholder: 'اسأل أبو ملاذ عن أحسن طلب ليك...',
+    description: 'ويتر راقي وشهم ومضياف، هيعدل مزاجك بأحلى ترشيحات مخدومة بحب 🎩'
   }
 };
 
@@ -57,7 +66,8 @@ interface Message {
 }
 
 export default function SmartWaiterBot() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [hasOpened, setHasOpened] = useState(false);
   const [activePersona, setActivePersona] = useState<Persona>('dabour');
 
@@ -105,7 +115,7 @@ export default function SmartWaiterBot() {
   };
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isChatOpen) return;
 
     if (messages.length <= 1) {
       scrollToBottom('auto');
@@ -124,7 +134,26 @@ export default function SmartWaiterBot() {
     } else {
       scrollToBottom('smooth');
     }
-  }, [isOpen, messages]);
+  }, [isChatOpen, messages]);
+
+  const handleOpenSelector = () => {
+    setHasOpened(true);
+    if (isChatOpen) {
+      setIsChatOpen(false);
+    }
+    setIsSelectorOpen(true);
+  };
+
+  const handleSelectPersona = (persona: Persona) => {
+    setActivePersona(persona);
+    setIsSelectorOpen(false);
+    setIsChatOpen(true);
+  };
+
+  const handleSwitchWaiter = () => {
+    setIsChatOpen(false);
+    setIsSelectorOpen(true);
+  };
 
   const generateMenuContext = () => {
     const categories = getCachedCategories();
@@ -186,7 +215,7 @@ export default function SmartWaiterBot() {
       const historyToPass = currentMessages.slice(1).map(m => ({ role: m.role, text: m.text }));
       const menuContext = generateMenuContext();
 
-      // Call Supabase Edge Function with persona
+      // Call Supabase Edge Function with selected persona
       const { data, error } = await supabase.functions.invoke('smart-waiter', {
         body: {
           message: userText,
@@ -264,7 +293,7 @@ export default function SmartWaiterBot() {
         quantity: 1
       }
     });
-    // Add a small confirmation message
+    // Add confirmation message
     setPersonaMessages(prev => ({
       ...prev,
       [activePersona]: [
@@ -328,9 +357,9 @@ export default function SmartWaiterBot() {
 
   return (
     <>
-      {/* Floating Action Button (Twin Capsule) */}
+      {/* 1. Floating Action Button (Twin Capsule) */}
       <AnimatePresence>
-        {!isOpen && (
+        {!isChatOpen && !isSelectorOpen && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -338,10 +367,7 @@ export default function SmartWaiterBot() {
             className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-3"
           >
             <motion.button
-              onClick={() => {
-                setIsOpen(true);
-                setHasOpened(true);
-              }}
+              onClick={handleOpenSelector}
               className="group relative flex items-center gap-2 p-1.5 sm:p-2 bg-slate-900/90 hover:bg-slate-900 dark:bg-slate-800/95 backdrop-blur-md border border-slate-700/60 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -355,7 +381,7 @@ export default function SmartWaiterBot() {
                   <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-slate-900 rounded-full"></span>
                 </div>
                 {/* Abu Malaz Avatar */}
-                <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 p-0.5 shadow-md transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1">
+                <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 p-0.5 shadow-md transition-transform group-hover:translate-x-1 rtl:group-hover:translate-x-1">
                   <img src="/abu-malaz.webp" alt="أبو ملاذ" className="w-full h-full object-contain filter drop-shadow" />
                   <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-slate-900 rounded-full"></span>
                 </div>
@@ -376,7 +402,8 @@ export default function SmartWaiterBot() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 1, duration: 0.5 }}
-                className="relative flex bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 font-bold text-xs sm:text-sm whitespace-nowrap"
+                className="relative flex bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 font-bold text-xs sm:text-sm whitespace-nowrap cursor-pointer"
+                onClick={handleOpenSelector}
               >
                 <AnimatePresence mode="wait">
                   <motion.span
@@ -397,75 +424,141 @@ export default function SmartWaiterBot() {
         )}
       </AnimatePresence>
 
-      {/* Chat Window */}
+      {/* 2. Waiter Selection Modal (Popup) */}
       <AnimatePresence>
-        {isOpen && (
+        {isSelectorOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="relative w-full max-w-sm sm:max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col gap-4 overflow-hidden"
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => setIsSelectorOpen(false)}
+                className="absolute top-4 left-4 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                aria-label="إغلاق"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Modal Title */}
+              <div className="text-center pt-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-xs font-bold mb-2">
+                  <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
+                  D95 Smart Waiters
+                </span>
+                <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white">
+                  مين تحب يخدمك النهارده؟ ☕
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  اختر الويتر اللي تحب يدردش معاك ويرشحلك من المنيو
+                </p>
+              </div>
+
+              {/* Two Waiter Cards */}
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-2">
+                
+                {/* 1. Dabour Card */}
+                <motion.button
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleSelectPersona('dabour')}
+                  className="group flex flex-col items-center text-center p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-800 hover:border-red-500 dark:hover:border-red-500 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-all shadow-sm hover:shadow-lg hover:shadow-red-500/10"
+                >
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-red-600 to-rose-500 p-0.5 shadow-md mb-3 group-hover:scale-105 transition-transform">
+                    <img src="/dabour.webp" alt="دبور" className="w-full h-full object-contain filter drop-shadow" />
+                    <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full"></span>
+                  </div>
+
+                  <span className="font-extrabold text-base text-slate-900 dark:text-white flex items-center gap-1">
+                    دبور
+                  </span>
+                  <span className="text-[11px] font-bold text-red-600 dark:text-red-400 mb-1">
+                    (محمد)
+                  </span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                    ويتر المنيو ☕
+                  </span>
+                </motion.button>
+
+                {/* 2. Abu Malaz Card */}
+                <motion.button
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleSelectPersona('abu_malaz')}
+                  className="group flex flex-col items-center text-center p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-800 hover:border-amber-500 dark:hover:border-amber-500 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-amber-50/50 dark:hover:bg-amber-950/20 transition-all shadow-sm hover:shadow-lg hover:shadow-amber-500/10"
+                >
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 p-0.5 shadow-md mb-3 group-hover:scale-105 transition-transform">
+                    <img src="/abu-malaz.webp" alt="أبو ملاذ" className="w-full h-full object-contain filter drop-shadow" />
+                    <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full"></span>
+                  </div>
+
+                  <span className="font-extrabold text-base text-slate-900 dark:text-white flex items-center gap-1">
+                    أبو ملاذ
+                  </span>
+                  <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mb-1">
+                    (أحمد)
+                  </span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                    الويتر المضياف ✨
+                  </span>
+                </motion.button>
+
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 3. Dedicated Chat Window (Focused on Selected Waiter Only) */}
+      <AnimatePresence>
+        {isChatOpen && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             className="fixed bottom-0 left-0 right-0 sm:bottom-6 sm:left-auto sm:right-6 w-full sm:w-[460px] md:w-[480px] h-[88dvh] sm:h-[660px] sm:max-h-[85vh] z-50 bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl shadow-black/30 border border-slate-200/80 dark:border-slate-800/80 flex flex-col overflow-hidden"
           >
-            {/* Dynamic Header */}
-            <div className={`${currentPersona.headerBg} text-white px-4 py-3 sm:px-5 transition-all duration-300 shrink-0 shadow-md z-10 flex flex-col gap-2.5`}>
+            {/* Header (100% Dedicated to Selected Waiter) */}
+            <div className={`${currentPersona.headerBg} text-white px-4 py-3.5 sm:px-5 transition-all duration-300 shrink-0 shadow-md z-10 flex items-center justify-between`}>
               
-              {/* Top Bar with Title and Close Button */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-sm sm:text-base tracking-wide flex items-center gap-1.5">
-                    الويتر الذكي <Sparkles className="w-4 h-4 text-yellow-300" />
-                  </span>
-                  <span className="text-[11px] bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full font-medium">
-                    D95 Menu
-                  </span>
+              {/* Waiter Info */}
+              <div className="flex items-center gap-3">
+                <div className="relative w-11 h-11 rounded-full flex items-center justify-center overflow-hidden bg-white/15 p-0.5 border-2 border-white/30 shadow-md">
+                  <img src={currentPersona.avatar} alt={currentPersona.name} className="w-full h-full object-contain filter drop-shadow" />
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-white rounded-full"></span>
                 </div>
+                <div>
+                  <h3 className="font-extrabold text-base sm:text-lg flex items-center gap-1.5 leading-tight">
+                    {currentPersona.name}
+                    <span className="text-xs font-semibold opacity-90">({currentPersona.realName})</span>
+                    <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+                  </h3>
+                  <p className="text-white/80 text-[11px] font-medium">{currentPersona.badge}</p>
+                </div>
+              </div>
+
+              {/* Action Buttons: Switch Waiter & Close */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleSwitchWaiter}
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-black/20 hover:bg-black/35 text-white/90 hover:text-white rounded-full text-xs font-bold transition-all border border-white/10"
+                  title="تغيير الويتر"
+                >
+                  <ArrowLeftRight className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">تغيير</span>
+                </button>
+
                 <button 
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => setIsChatOpen(false)}
                   className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
                   aria-label="إغلاق المحادثة"
                 >
                   <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Segmented Persona Switcher (Tabs) */}
-              <div className="grid grid-cols-2 p-1 bg-black/25 backdrop-blur-md rounded-2xl gap-1 border border-white/10">
-                {/* Dabour Tab */}
-                <button
-                  type="button"
-                  onClick={() => setActivePersona('dabour')}
-                  className={`flex items-center justify-center gap-2 py-1.5 px-3 rounded-xl transition-all font-bold text-xs border ${
-                    activePersona === 'dabour'
-                      ? PERSONAS.dabour.activeTabClass
-                      : 'text-white/70 hover:text-white border-transparent hover:bg-white/10'
-                  }`}
-                >
-                  <div className="w-6 h-6 rounded-full overflow-hidden bg-white/10 p-0.5 shrink-0 border border-white/20">
-                    <img src={PERSONAS.dabour.avatar} alt="دبور" className="w-full h-full object-contain" />
-                  </div>
-                  <div className="flex flex-col text-right leading-tight">
-                    <span>دبور</span>
-                    <span className="text-[9px] font-normal opacity-80">ويتر المنيو ☕</span>
-                  </div>
-                </button>
-
-                {/* Abu Malaz Tab */}
-                <button
-                  type="button"
-                  onClick={() => setActivePersona('abu_malaz')}
-                  className={`flex items-center justify-center gap-2 py-1.5 px-3 rounded-xl transition-all font-bold text-xs border ${
-                    activePersona === 'abu_malaz'
-                      ? PERSONAS.abu_malaz.activeTabClass
-                      : 'text-white/70 hover:text-white border-transparent hover:bg-white/10'
-                  }`}
-                >
-                  <div className="w-6 h-6 rounded-full overflow-hidden bg-white/10 p-0.5 shrink-0 border border-white/20">
-                    <img src={PERSONAS.abu_malaz.avatar} alt="أبو ملاذ" className="w-full h-full object-contain" />
-                  </div>
-                  <div className="flex flex-col text-right leading-tight">
-                    <span>أبو ملاذ</span>
-                    <span className="text-[9px] font-normal opacity-80">الويتر المضياف 🎩</span>
-                  </div>
                 </button>
               </div>
             </div>
