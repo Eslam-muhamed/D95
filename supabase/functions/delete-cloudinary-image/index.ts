@@ -1,5 +1,6 @@
 // @ts-ignore
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 // @ts-ignore
 declare const Deno: any;
@@ -34,6 +35,32 @@ serve(async (req: Request) => {
   }
 
   try {
+    // 1. Authenticate User
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized: Missing Authorization header' }), { 
+        status: 401, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized user' }), { 
+        status: 401, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
+
+    // 2. Process image deletion
     const { imageUrl } = await req.json();
 
     if (!imageUrl || !imageUrl.includes('cloudinary.com')) {
@@ -63,7 +90,7 @@ serve(async (req: Request) => {
     }
 
     // Cloudinary Admin API deletion requires Basic Auth
-    const authHeader = `Basic ${btoa(`${apiKey}:${apiSecret}`)}`;
+    const cloudinaryAuthHeader = `Basic ${btoa(`${apiKey}:${apiSecret}`)}`;
     
     // Using Admin API to delete the resource
     // DELETE /v1_1/<cloud_name>/resources/image/upload
@@ -75,7 +102,7 @@ serve(async (req: Request) => {
     const deleteRes = await fetch(cloudinaryApiUrl, {
       method: 'DELETE',
       headers: {
-        'Authorization': authHeader,
+        'Authorization': cloudinaryAuthHeader,
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: formData.toString()
