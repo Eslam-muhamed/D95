@@ -107,9 +107,29 @@ interface Message {
 export default function SmartWaiterBot() {
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [activePersona, setActivePersona] = useState<Persona>('dabour');
 
-  // Spotlight animation state: alternates heads & sentences inside floating bubble
+  // User's default chosen persona for the session (persists until they leave the site)
+  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('d95_selected_persona');
+      if (saved === 'dabour' || saved === 'abu_malaz') {
+        return saved as Persona;
+      }
+    }
+    return null;
+  });
+
+  const [activePersona, setActivePersona] = useState<Persona>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('d95_selected_persona');
+      if (saved === 'dabour' || saved === 'abu_malaz') {
+        return saved as Persona;
+      }
+    }
+    return 'dabour';
+  });
+
+  // Spotlight animation state: alternates heads & sentences inside floating bubble (only before a persona is chosen)
   const [spotlightPersona, setSpotlightPersona] = useState<Persona>('dabour');
   const [quoteCycle, setQuoteCycle] = useState(0);
   const [isQuoteDismissed, setIsQuoteDismissed] = useState(false);
@@ -142,14 +162,15 @@ export default function SmartWaiterBot() {
   const currentPersona = PERSONAS[activePersona];
   const messages = personaMessages[activePersona];
 
-  // Alternating spotlight timer (smooth head focus & sentence change every 4.2s)
+  // Alternating spotlight timer (active only before a persona is selected)
   useEffect(() => {
+    if (selectedPersona) return; // Do not cycle once a persona is selected
     const timer = setInterval(() => {
       setSpotlightPersona(prev => (prev === 'dabour' ? 'abu_malaz' : 'dabour'));
       setQuoteCycle(prev => prev + 1);
     }, 4200);
     return () => clearInterval(timer);
-  }, []);
+  }, [selectedPersona]);
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior });
@@ -186,13 +207,20 @@ export default function SmartWaiterBot() {
 
   const handleSelectPersona = (persona: Persona) => {
     setActivePersona(persona);
+    setSelectedPersona(persona);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('d95_selected_persona', persona);
+    }
     setIsSelectorOpen(false);
     setIsChatOpen(true);
   };
 
-  const handleSwitchWaiter = () => {
-    setIsChatOpen(false);
-    setIsSelectorOpen(true);
+  const handleSwitchToPersona = (persona: Persona) => {
+    setActivePersona(persona);
+    setSelectedPersona(persona);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('d95_selected_persona', persona);
+    }
   };
 
   const generateMenuContext = () => {
@@ -403,172 +431,53 @@ export default function SmartWaiterBot() {
       {/* 1. Floating Action Bubble with Dual Heads & Alternating Spotlight */}
       <AnimatePresence>
         {!isChatOpen && !isSelectorOpen && (
-          <motion.div
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-20 right-3 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2.5 sm:gap-3.5 select-none"
-          >
-            {/* The Glass Bubble Orb with Both Heads Inside */}
+          selectedPersona ? (
+            /* Selected Persona Default: Clean Cutout Head WITHOUT ANY Background, Yellow, Red, or Bubble */
             <motion.div
-              animate={{
-                y: [0, -7, 0],
-                rotate: [0, 1.2, 0, -1.2, 0],
-              }}
-              transition={{
-                duration: 3.8,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className="relative cursor-pointer group"
-              onClick={handleOpenSelector}
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.95 }}
-              title="اضغط للتحدث مع أصحاب المكان"
-              aria-label="اسأل أصحاب المكان"
+              key="selected-persona-floating"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              className="fixed bottom-20 right-3 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2.5 sm:gap-3.5 select-none"
             >
-              {/* Outer Breathing Aura (Harmonized with Active Founder) */}
-              <motion.div
+              {/* Clean Cutout Head - Strictly NO background, NO red, NO yellow, NO bubble container */}
+              <motion.button
+                type="button"
+                onClick={() => setIsChatOpen(true)}
                 animate={{
-                  scale: [1, 1.1, 1],
-                  opacity: [0.35, 0.7, 0.35],
+                  y: [0, -7, 0],
                 }}
                 transition={{
-                  duration: 3,
+                  duration: 3.2,
                   repeat: Infinity,
                   ease: 'easeInOut',
                 }}
-                className={`absolute -inset-1.5 rounded-full blur-lg transition-colors duration-700 pointer-events-none ${
-                  spotlightPersona === 'dabour'
-                    ? 'bg-gradient-to-tr from-red-600/40 via-rose-500/30 to-amber-500/10'
-                    : 'bg-gradient-to-tr from-amber-500/40 via-orange-500/30 to-red-500/10'
-                }`}
-              />
-
-              {/* Orbiting micro-bubbles */}
-              <motion.div
-                animate={{ y: [0, -10, 0], x: [0, -3, 0], opacity: [0.3, 0.85, 0.3] }}
-                transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute -top-1.5 right-2 w-2.5 h-2.5 rounded-full bg-white/40 border border-white/60 blur-[0.2px] pointer-events-none z-30 shadow-sm"
-              />
-              <motion.div
-                animate={{ y: [0, 8, 0], x: [0, 4, 0], opacity: [0.2, 0.75, 0.2] }}
-                transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut', delay: 0.8 }}
-                className="absolute bottom-1 -left-1.5 w-2 h-2 rounded-full bg-white/30 border border-white/50 blur-[0.2px] pointer-events-none z-30 shadow-sm"
-              />
-
-              {/* The Glass Bubble Sphere */}
-              <div
-                className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-full backdrop-blur-xl bg-slate-950/80 dark:bg-slate-950/90 border-2 transition-all duration-700 shadow-2xl flex items-center justify-center overflow-hidden ${currentSpotlight.glowClass}`}
+                whileHover={{ scale: 1.12, rotate: 2 }}
+                whileTap={{ scale: 0.92 }}
+                className="relative p-0 bg-transparent border-0 cursor-pointer select-none focus:outline-none group"
+                aria-label={`تحدث مع ${currentPersona.name}`}
+                title={`تحدث مع ${currentPersona.name} (${currentPersona.realName})`}
               >
-                {/* Specular glass reflection highlight at top of bubble */}
-                <div className="absolute top-1 left-2.5 right-2.5 h-6 sm:h-7 rounded-full bg-gradient-to-b from-white/35 via-white/10 to-transparent pointer-events-none z-30" />
-                {/* Subtle bottom glass reflection */}
-                <div className="absolute bottom-1.5 right-3 w-5 h-2 rounded-full bg-white/10 blur-[1px] pointer-events-none z-30" />
+                <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
+                  <img
+                    src={currentPersona.avatar}
+                    alt={currentPersona.name}
+                    className="w-full h-full object-contain filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.35)] dark:drop-shadow-[0_8px_20px_rgba(0,0,0,0.6)] group-hover:drop-shadow-[0_12px_24px_rgba(0,0,0,0.5)] transition-all pointer-events-none"
+                  />
+                  {/* Live online dot indicator */}
+                  <span className="absolute bottom-0 right-1 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full shadow-md animate-pulse" />
+                </div>
+              </motion.button>
 
-                {/* 1. Dabour Head inside bubble */}
+              {/* Thought/Speech Bubble from the selected owner */}
+              {!isQuoteDismissed && (
                 <motion.div
-                  animate={
-                    spotlightPersona === 'dabour'
-                      ? {
-                          x: -2,
-                          y: 3,
-                          scale: 1.18,
-                          zIndex: 25,
-                          opacity: 1,
-                          filter: 'drop-shadow(0 4px 10px rgba(239, 68, 68, 0.6))',
-                        }
-                      : {
-                          x: -16,
-                          y: -10,
-                          scale: 0.65,
-                          zIndex: 10,
-                          opacity: 0.55,
-                          filter: 'blur(0.4px) drop-shadow(0 2px 4px rgba(0,0,0,0.4))',
-                        }
-                  }
-                  transition={{
-                    type: 'spring',
-                    stiffness: 190,
-                    damping: 22,
-                  }}
-                  className="absolute w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-red-600 to-rose-500 p-0.5 border border-white/30"
-                >
-                  {/* Gentle continuous float */}
-                  <motion.div
-                    animate={{ y: [0, -3.5, 0] }}
-                    transition={{ duration: 2.7, repeat: Infinity, ease: 'easeInOut' }}
-                    className="w-full h-full relative"
-                  >
-                    <img
-                      src="/dabour.webp"
-                      alt="دبور"
-                      className="w-full h-full object-contain filter drop-shadow select-none pointer-events-none"
-                    />
-                    {spotlightPersona === 'dabour' && (
-                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-slate-950 rounded-full shadow-sm" />
-                    )}
-                  </motion.div>
-                </motion.div>
-
-                {/* 2. Abu Malaz Head inside bubble */}
-                <motion.div
-                  animate={
-                    spotlightPersona === 'abu_malaz'
-                      ? {
-                          x: 2,
-                          y: 3,
-                          scale: 1.18,
-                          zIndex: 25,
-                          opacity: 1,
-                          filter: 'drop-shadow(0 4px 10px rgba(245, 158, 11, 0.6))',
-                        }
-                      : {
-                          x: 16,
-                          y: -10,
-                          scale: 0.65,
-                          zIndex: 10,
-                          opacity: 0.55,
-                          filter: 'blur(0.4px) drop-shadow(0 2px 4px rgba(0,0,0,0.4))',
-                        }
-                  }
-                  transition={{
-                    type: 'spring',
-                    stiffness: 190,
-                    damping: 22,
-                  }}
-                  className="absolute w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 p-0.5 border border-white/30"
-                >
-                  {/* Gentle continuous float */}
-                  <motion.div
-                    animate={{ y: [0, 3.5, 0] }}
-                    transition={{ duration: 3.1, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
-                    className="w-full h-full relative"
-                  >
-                    <img
-                      src="/abu-malaz.webp"
-                      alt="أبو ملاذ"
-                      className="w-full h-full object-contain filter drop-shadow select-none pointer-events-none"
-                    />
-                    {spotlightPersona === 'abu_malaz' && (
-                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-slate-950 rounded-full shadow-sm" />
-                    )}
-                  </motion.div>
-                </motion.div>
-              </div>
-            </motion.div>
-
-            {/* 2. Thought / Speech Bubble with the Alternating Sentence */}
-            {!isQuoteDismissed && (
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={`${spotlightPersona}-${quoteCycle}`}
                   initial={{ opacity: 0, scale: 0.88, x: 15 }}
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.88, x: -15 }}
                   transition={{ duration: 0.35, ease: 'easeOut' }}
-                  onClick={handleOpenSelector}
-                  className={`relative max-w-[195px] sm:max-w-[270px] p-2.5 sm:p-3.5 rounded-2xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/95 border ${currentSpotlight.bubbleBorder} shadow-2xl cursor-pointer text-right transition-all duration-300 hover:scale-[1.02]`}
+                  onClick={() => setIsChatOpen(true)}
+                  className={`relative max-w-[195px] sm:max-w-[260px] p-2.5 sm:p-3.5 rounded-2xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/95 border ${currentPersona.id === 'dabour' ? 'border-red-500/30 shadow-red-500/10' : 'border-amber-500/30 shadow-amber-500/10'} shadow-2xl cursor-pointer text-right transition-all duration-300 hover:scale-[1.02]`}
                 >
                   {/* Dismiss button */}
                   <button
@@ -585,18 +494,20 @@ export default function SmartWaiterBot() {
 
                   {/* Speaker Identity Badge */}
                   <div className="flex items-center gap-1.5 mb-1 pl-4">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-extrabold ${currentSpotlight.badgeBg}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${spotlightPersona === 'dabour' ? 'bg-red-500' : 'bg-amber-500'} animate-ping`} />
-                      {currentSpotlight.name} ({currentSpotlight.realName})
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-extrabold ${currentPersona.id === 'dabour' ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${currentPersona.id === 'dabour' ? 'bg-red-500' : 'bg-amber-500'} animate-ping`} />
+                      {currentPersona.name} ({currentPersona.realName})
                     </span>
                     <span className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-                      {currentSpotlight.role.includes('☕') ? '☕' : '✨'}
+                      صاحب المكان
                     </span>
                   </div>
 
                   {/* Spoken Quote */}
                   <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 leading-snug">
-                    {activeQuote}
+                    {currentPersona.id === 'dabour'
+                      ? 'شاورلي ع اللي ف خاطرك ونظبطك يا غالي ☕'
+                      : 'المكان مكانك ومنورنا.. قولي نفسك في إيه ✨'}
                   </p>
 
                   {/* Tap hint */}
@@ -605,12 +516,223 @@ export default function SmartWaiterBot() {
                     <Sparkles className="w-3 h-3 text-yellow-400" />
                   </div>
 
-                  {/* Bubble Tail pointing toward the glass orb */}
+                  {/* Bubble Tail pointing toward the head */}
                   <div className="absolute top-1/2 -right-1.5 sm:-right-2 -translate-y-1/2 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-white dark:bg-slate-900 border-r border-t border-slate-200 dark:border-slate-700 transform rotate-45" />
                 </motion.div>
-              </AnimatePresence>
-            )}
-          </motion.div>
+              )}
+            </motion.div>
+          ) : (
+            /* Initial Dual-Head Bubble: Shown only before a persona is selected */
+            <motion.div
+              key="dual-bubble-initial"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              className="fixed bottom-20 right-3 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2.5 sm:gap-3.5 select-none"
+            >
+              {/* The Glass Bubble Orb with Both Heads Inside */}
+              <motion.div
+                animate={{
+                  y: [0, -7, 0],
+                  rotate: [0, 1.2, 0, -1.2, 0],
+                }}
+                transition={{
+                  duration: 3.8,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className="relative cursor-pointer group"
+                onClick={handleOpenSelector}
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.95 }}
+                title="اضغط للتحدث مع أصحاب المكان"
+                aria-label="اسأل أصحاب المكان"
+              >
+                {/* Outer Breathing Aura (Harmonized with Active Founder) */}
+                <motion.div
+                  animate={{
+                    scale: [1, 1.1, 1],
+                    opacity: [0.35, 0.7, 0.35],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                  className={`absolute -inset-1.5 rounded-full blur-lg transition-colors duration-700 pointer-events-none ${
+                    spotlightPersona === 'dabour'
+                      ? 'bg-gradient-to-tr from-red-600/40 via-rose-500/30 to-amber-500/10'
+                      : 'bg-gradient-to-tr from-amber-500/40 via-orange-500/30 to-red-500/10'
+                  }`}
+                />
+
+                {/* Orbiting micro-bubbles */}
+                <motion.div
+                  animate={{ y: [0, -10, 0], x: [0, -3, 0], opacity: [0.3, 0.85, 0.3] }}
+                  transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+                  className="absolute -top-1.5 right-2 w-2.5 h-2.5 rounded-full bg-white/40 border border-white/60 blur-[0.2px] pointer-events-none z-30 shadow-sm"
+                />
+                <motion.div
+                  animate={{ y: [0, 8, 0], x: [0, 4, 0], opacity: [0.2, 0.75, 0.2] }}
+                  transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut', delay: 0.8 }}
+                  className="absolute bottom-1 -left-1.5 w-2 h-2 rounded-full bg-white/30 border border-white/50 blur-[0.2px] pointer-events-none z-30 shadow-sm"
+                />
+
+                {/* The Glass Bubble Sphere */}
+                <div
+                  className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-full backdrop-blur-xl bg-slate-950/80 dark:bg-slate-950/90 border-2 transition-all duration-700 shadow-2xl flex items-center justify-center overflow-hidden ${currentSpotlight.glowClass}`}
+                >
+                  {/* Specular glass reflection highlight at top of bubble */}
+                  <div className="absolute top-1 left-2.5 right-2.5 h-6 sm:h-7 rounded-full bg-gradient-to-b from-white/35 via-white/10 to-transparent pointer-events-none z-30" />
+                  {/* Subtle bottom glass reflection */}
+                  <div className="absolute bottom-1.5 right-3 w-5 h-2 rounded-full bg-white/10 blur-[1px] pointer-events-none z-30" />
+
+                  {/* 1. Dabour Head inside bubble */}
+                  <motion.div
+                    animate={
+                      spotlightPersona === 'dabour'
+                        ? {
+                            x: -2,
+                            y: 3,
+                            scale: 1.18,
+                            zIndex: 25,
+                            opacity: 1,
+                            filter: 'drop-shadow(0 4px 10px rgba(239, 68, 68, 0.6))',
+                          }
+                        : {
+                            x: -16,
+                            y: -10,
+                            scale: 0.65,
+                            zIndex: 10,
+                            opacity: 0.55,
+                            filter: 'blur(0.4px) drop-shadow(0 2px 4px rgba(0,0,0,0.4))',
+                          }
+                    }
+                    transition={{
+                      type: 'spring',
+                      stiffness: 190,
+                      damping: 22,
+                    }}
+                    className="absolute w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-red-600 to-rose-500 p-0.5 border border-white/30"
+                  >
+                    {/* Gentle continuous float */}
+                    <motion.div
+                      animate={{ y: [0, -3.5, 0] }}
+                      transition={{ duration: 2.7, repeat: Infinity, ease: 'easeInOut' }}
+                      className="w-full h-full relative"
+                    >
+                      <img
+                        src="/dabour.webp"
+                        alt="دبور"
+                        className="w-full h-full object-contain filter drop-shadow select-none pointer-events-none"
+                      />
+                      {spotlightPersona === 'dabour' && (
+                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-slate-950 rounded-full shadow-sm" />
+                      )}
+                    </motion.div>
+                  </motion.div>
+
+                  {/* 2. Abu Malaz Head inside bubble */}
+                  <motion.div
+                    animate={
+                      spotlightPersona === 'abu_malaz'
+                        ? {
+                            x: 2,
+                            y: 3,
+                            scale: 1.18,
+                            zIndex: 25,
+                            opacity: 1,
+                            filter: 'drop-shadow(0 4px 10px rgba(245, 158, 11, 0.6))',
+                          }
+                        : {
+                            x: 16,
+                            y: -10,
+                            scale: 0.65,
+                            zIndex: 10,
+                            opacity: 0.55,
+                            filter: 'blur(0.4px) drop-shadow(0 2px 4px rgba(0,0,0,0.4))',
+                          }
+                    }
+                    transition={{
+                      type: 'spring',
+                      stiffness: 190,
+                      damping: 22,
+                    }}
+                    className="absolute w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 p-0.5 border border-white/30"
+                  >
+                    {/* Gentle continuous float */}
+                    <motion.div
+                      animate={{ y: [0, 3.5, 0] }}
+                      transition={{ duration: 3.1, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
+                      className="w-full h-full relative"
+                    >
+                      <img
+                        src="/abu-malaz.webp"
+                        alt="أبو ملاذ"
+                        className="w-full h-full object-contain filter drop-shadow select-none pointer-events-none"
+                      />
+                      {spotlightPersona === 'abu_malaz' && (
+                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-slate-950 rounded-full shadow-sm" />
+                      )}
+                    </motion.div>
+                  </motion.div>
+                </div>
+              </motion.div>
+
+              {/* 2. Thought / Speech Bubble with the Alternating Sentence */}
+              {!isQuoteDismissed && (
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={`${spotlightPersona}-${quoteCycle}`}
+                    initial={{ opacity: 0, scale: 0.88, x: 15 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.88, x: -15 }}
+                    transition={{ duration: 0.35, ease: 'easeOut' }}
+                    onClick={handleOpenSelector}
+                    className={`relative max-w-[195px] sm:max-w-[270px] p-2.5 sm:p-3.5 rounded-2xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/95 border ${currentSpotlight.bubbleBorder} shadow-2xl cursor-pointer text-right transition-all duration-300 hover:scale-[1.02]`}
+                  >
+                    {/* Dismiss button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsQuoteDismissed(true);
+                      }}
+                      className="absolute top-1.5 left-1.5 p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full transition-colors"
+                      title="إغلاق التلميح"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+
+                    {/* Speaker Identity Badge */}
+                    <div className="flex items-center gap-1.5 mb-1 pl-4">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-extrabold ${currentSpotlight.badgeBg}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${spotlightPersona === 'dabour' ? 'bg-red-500' : 'bg-amber-500'} animate-ping`} />
+                        {currentSpotlight.name} ({currentSpotlight.realName})
+                      </span>
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                        {currentSpotlight.role.includes('☕') ? '☕' : '✨'}
+                      </span>
+                    </div>
+
+                    {/* Spoken Quote */}
+                    <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 leading-snug">
+                      {activeQuote}
+                    </p>
+
+                    {/* Tap hint */}
+                    <div className="flex items-center justify-end gap-1 mt-1.5 text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-semibold">
+                      <span>اضغط للتحدث</span>
+                      <Sparkles className="w-3 h-3 text-yellow-400" />
+                    </div>
+
+                    {/* Bubble Tail pointing toward the glass orb */}
+                    <div className="absolute top-1/2 -right-1.5 sm:-right-2 -translate-y-1/2 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-white dark:bg-slate-900 border-r border-t border-slate-200 dark:border-slate-700 transform rotate-45" />
+                  </motion.div>
+                </AnimatePresence>
+              )}
+            </motion.div>
+          )
         )}
       </AnimatePresence>
 
@@ -731,22 +853,50 @@ export default function SmartWaiterBot() {
                 </div>
               </div>
 
-              {/* Action Buttons: Switch Waiter & Close */}
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={handleSwitchWaiter}
-                  className="flex items-center gap-1 px-2.5 py-1.5 bg-black/20 hover:bg-black/35 text-white/90 hover:text-white rounded-full text-xs font-bold transition-all border border-white/10"
-                  title="اختيار شخص آخر"
-                >
-                  <ArrowLeftRight className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">تغيير</span>
-                </button>
+              {/* Action Buttons: The Two Avatar Marks Switcher & Close */}
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                {/* Switcher with the Two Marks ("ال علامتين اللي جوا الشات") */}
+                <div className="flex items-center p-0.5 sm:p-1 bg-black/25 backdrop-blur-md rounded-full border border-white/20 shadow-inner">
+                  {/* Mark 1: Dabour */}
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchToPersona('dabour')}
+                    className={`group relative flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-bold transition-all ${
+                      activePersona === 'dabour'
+                        ? 'bg-red-600 text-white shadow-md ring-2 ring-white/70 scale-105'
+                        : 'text-white/70 hover:text-white hover:bg-white/10 opacity-60 hover:opacity-100'
+                    }`}
+                    title="التبديل إلى دبور (محمد)"
+                  >
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full overflow-hidden flex items-center justify-center bg-white/20">
+                      <img src="/dabour.webp" alt="دبور" className="w-full h-full object-contain filter drop-shadow" />
+                    </div>
+                    <span className="text-[11px] hidden sm:inline">دبور</span>
+                  </button>
+
+                  {/* Mark 2: Abu Malaz */}
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchToPersona('abu_malaz')}
+                    className={`group relative flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-bold transition-all ${
+                      activePersona === 'abu_malaz'
+                        ? 'bg-amber-600 text-white shadow-md ring-2 ring-white/70 scale-105'
+                        : 'text-white/70 hover:text-white hover:bg-white/10 opacity-60 hover:opacity-100'
+                    }`}
+                    title="التبديل إلى أبو ملاذ (أحمد)"
+                  >
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full overflow-hidden flex items-center justify-center bg-white/20">
+                      <img src="/abu-malaz.webp" alt="أبو ملاذ" className="w-full h-full object-contain filter drop-shadow" />
+                    </div>
+                    <span className="text-[11px] hidden sm:inline">أبو ملاذ</span>
+                  </button>
+                </div>
 
                 <button 
                   onClick={() => setIsChatOpen(false)}
-                  className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
+                  className="p-1.5 hover:bg-white/20 rounded-full transition-colors text-white"
                   aria-label="إغلاق المحادثة"
+                  title="إغلاق"
                 >
                   <X className="w-5 h-5" />
                 </button>
