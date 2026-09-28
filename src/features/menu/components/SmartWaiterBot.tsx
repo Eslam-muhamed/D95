@@ -143,8 +143,8 @@ export default function SmartWaiterBot() {
   });
 
   // Spotlight animation state: alternates heads & sentences inside floating bubble (only before a persona is chosen)
-  const [spotlightPersona, setSpotlightPersona] = useState<Persona>('dabour');
   const [quoteCycle, setQuoteCycle] = useState(0);
+  const spotlightPersona: Persona = quoteCycle % 2 === 0 ? 'dabour' : 'abu_malaz';
   const [isQuoteDismissed, setIsQuoteDismissed] = useState(false);
 
   const [personaMessages, setPersonaMessages] = useState<Record<Persona, Message[]>>({
@@ -179,9 +179,8 @@ export default function SmartWaiterBot() {
   useEffect(() => {
     if (selectedPersona) return; // Do not cycle once a persona is selected
     const timer = setInterval(() => {
-      setSpotlightPersona(prev => (prev === 'dabour' ? 'abu_malaz' : 'dabour'));
       setQuoteCycle(prev => prev + 1);
-    }, 4200);
+    }, 4500);
     return () => clearInterval(timer);
   }, [selectedPersona]);
 
@@ -437,7 +436,8 @@ export default function SmartWaiterBot() {
   };
 
   const currentSpotlight = SPOTLIGHT_DATA[spotlightPersona];
-  const activeQuote = currentSpotlight.quotes[quoteCycle % currentSpotlight.quotes.length];
+  const personaTurn = Math.floor(quoteCycle / 2);
+  const activeQuote = currentSpotlight.quotes[personaTurn % currentSpotlight.quotes.length];
 
   return (
     <>
@@ -494,8 +494,10 @@ export default function SmartWaiterBot() {
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.88, x: -15 }}
                   transition={{ duration: 0.35, ease: 'easeOut' }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setIsChatOpen(true)}
-                  className={`relative max-w-[195px] sm:max-w-[260px] p-2.5 sm:p-3.5 rounded-2xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/95 border ${currentPersona.id === 'dabour' ? 'border-red-500/30 shadow-red-500/10' : 'border-amber-500/30 shadow-amber-500/10'} shadow-2xl cursor-pointer text-right transition-all duration-300 hover:scale-[1.02]`}
+                  className={`relative max-w-[195px] sm:max-w-[260px] p-2.5 sm:p-3.5 rounded-2xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/95 border ${currentPersona.id === 'dabour' ? 'border-red-500/30 shadow-red-500/10' : 'border-amber-500/30 shadow-amber-500/10'} shadow-2xl cursor-pointer text-right transition-colors duration-500`}
                 >
                   {/* Dismiss button */}
                   <button
@@ -709,55 +711,65 @@ export default function SmartWaiterBot() {
 
               {/* 2. Thought / Speech Bubble with the Alternating Sentence */}
               {!isQuoteDismissed && (
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={`${spotlightPersona}-${quoteCycle}`}
-                    initial={{ opacity: 0, scale: 0.88, x: 15 }}
-                    animate={{ opacity: 1, scale: 1, x: 0 }}
-                    exit={{ opacity: 0, scale: 0.88, x: -15 }}
-                    transition={{ duration: 0.35, ease: 'easeOut' }}
-                    onClick={handleOpenSelector}
-                    className={`relative max-w-[195px] sm:max-w-[270px] p-2.5 sm:p-3.5 rounded-2xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/95 border ${currentSpotlight.bubbleBorder} shadow-2xl cursor-pointer text-right transition-all duration-300 hover:scale-[1.02]`}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.88, x: 15 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.88, x: -15 }}
+                  transition={{ duration: 0.35, ease: 'easeOut' }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleOpenSelector}
+                  className={`relative max-w-[195px] sm:max-w-[270px] p-2.5 sm:p-3.5 rounded-2xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/95 border ${currentSpotlight.bubbleBorder} shadow-2xl cursor-pointer text-right transition-colors duration-500`}
+                >
+                  {/* Dismiss button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsQuoteDismissed(true);
+                    }}
+                    className="absolute top-1.5 left-1.5 p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full transition-colors z-10"
+                    title="إغلاق التلميح"
                   >
-                    {/* Dismiss button */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsQuoteDismissed(true);
-                      }}
-                      className="absolute top-1.5 left-1.5 p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full transition-colors"
-                      title="إغلاق التلميح"
+                    <X className="w-3 h-3" />
+                  </button>
+
+                  {/* Inner dynamic content: smoothly cross-fades quote and badge on cycle change */}
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.div
+                      key={quoteCycle}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ duration: 0.22, ease: 'easeOut' }}
                     >
-                      <X className="w-3 h-3" />
-                    </button>
+                      {/* Speaker Identity Badge */}
+                      <div className="flex items-center gap-1.5 mb-1 pl-4">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-extrabold ${currentSpotlight.badgeBg}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${spotlightPersona === 'dabour' ? 'bg-red-500' : 'bg-amber-500'} animate-ping`} />
+                          {currentSpotlight.name} ({currentSpotlight.realName})
+                        </span>
+                        <span className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                          {currentSpotlight.role.includes('☕') ? '☕' : '✨'}
+                        </span>
+                      </div>
 
-                    {/* Speaker Identity Badge */}
-                    <div className="flex items-center gap-1.5 mb-1 pl-4">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-extrabold ${currentSpotlight.badgeBg}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${spotlightPersona === 'dabour' ? 'bg-red-500' : 'bg-amber-500'} animate-ping`} />
-                        {currentSpotlight.name} ({currentSpotlight.realName})
-                      </span>
-                      <span className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-                        {currentSpotlight.role.includes('☕') ? '☕' : '✨'}
-                      </span>
-                    </div>
+                      {/* Spoken Quote */}
+                      <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 leading-snug">
+                        {activeQuote}
+                      </p>
+                    </motion.div>
+                  </AnimatePresence>
 
-                    {/* Spoken Quote */}
-                    <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 leading-snug">
-                      {activeQuote}
-                    </p>
+                  {/* Tap hint */}
+                  <div className="flex items-center justify-end gap-1 mt-1.5 text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-semibold">
+                    <span>اضغط للتحدث</span>
+                    <Sparkles className="w-3 h-3 text-yellow-400" />
+                  </div>
 
-                    {/* Tap hint */}
-                    <div className="flex items-center justify-end gap-1 mt-1.5 text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-semibold">
-                      <span>اضغط للتحدث</span>
-                      <Sparkles className="w-3 h-3 text-yellow-400" />
-                    </div>
-
-                    {/* Bubble Tail pointing toward the glass orb */}
-                    <div className="absolute top-1/2 -right-1.5 sm:-right-2 -translate-y-1/2 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-white dark:bg-slate-900 border-r border-t border-slate-200 dark:border-slate-700 transform rotate-45" />
-                  </motion.div>
-                </AnimatePresence>
+                  {/* Bubble Tail pointing toward the glass orb */}
+                  <div className="absolute top-1/2 -right-1.5 sm:-right-2 -translate-y-1/2 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-white dark:bg-slate-900 border-r border-t border-slate-200 dark:border-slate-700 transform rotate-45" />
+                </motion.div>
               )}
             </motion.div>
           )
