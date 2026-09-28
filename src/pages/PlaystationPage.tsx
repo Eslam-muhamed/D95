@@ -32,6 +32,7 @@ import { CONTACT_INFO } from '@/constants/contactInfo';
 import { playPs5SelectSound } from '@/lib/sound';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';
 import { useTournamentStore } from '@/stores/tournamentStore';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 interface RoomData {
     id: string;
@@ -313,17 +314,7 @@ export default function PlaystationPage() {
 
                     {/* Actions: Theme Toggle & Cart */}
                     <div className="flex items-center gap-2">
-                        <button
-                            onClick={toggleTheme}
-                            className="w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/20 border border-neutral-200 dark:border-white/15 text-neutral-800 dark:text-neutral-200 shadow-sm active:scale-95"
-                            aria-label="تبديل المظهر"
-                        >
-                            {theme === 'dark' ? (
-                                <Sun size={17} className="text-amber-400" />
-                            ) : (
-                                <Moon size={17} className="text-neutral-800" />
-                            )}
-                        </button>
+                        <ThemeToggle />
 
                         <button
                             onClick={() => openCart('playstation')}
