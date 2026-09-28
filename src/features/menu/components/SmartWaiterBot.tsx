@@ -59,6 +59,19 @@ const PERSONAS: Record<Persona, PersonaConfig> = {
   }
 };
 
+// Eagerly preload and decode persona images into browser GPU memory for instant 0ms render
+if (typeof window !== 'undefined') {
+  const preloadPersona = (src: string) => {
+    const img = new Image();
+    img.src = src;
+    if ('decode' in img) {
+      img.decode().catch(() => {});
+    }
+  };
+  preloadPersona('/dabour.webp');
+  preloadPersona('/abu-malaz.webp');
+}
+
 interface SpotlightInfo {
   name: string;
   realName: string;
@@ -462,6 +475,11 @@ export default function SmartWaiterBot() {
                   <img
                     src={currentPersona.avatar}
                     alt={currentPersona.name}
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
+                    width={80}
+                    height={80}
                     className="w-full h-full object-contain filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.35)] dark:drop-shadow-[0_8px_20px_rgba(0,0,0,0.6)] group-hover:drop-shadow-[0_12px_24px_rgba(0,0,0,0.5)] transition-all pointer-events-none"
                   />
                   {/* Live online dot indicator */}
@@ -624,6 +642,11 @@ export default function SmartWaiterBot() {
                       <img
                         src="/dabour.webp"
                         alt="دبور"
+                        loading="eager"
+                        decoding="async"
+                        fetchPriority="high"
+                        width={56}
+                        height={56}
                         className="w-full h-full object-contain filter drop-shadow select-none pointer-events-none"
                       />
                       {spotlightPersona === 'dabour' && (
@@ -669,6 +692,11 @@ export default function SmartWaiterBot() {
                       <img
                         src="/abu-malaz.webp"
                         alt="أبو ملاذ"
+                        loading="eager"
+                        decoding="async"
+                        fetchPriority="high"
+                        width={56}
+                        height={56}
                         className="w-full h-full object-contain filter drop-shadow select-none pointer-events-none"
                       />
                       {spotlightPersona === 'abu_malaz' && (
@@ -790,6 +818,11 @@ export default function SmartWaiterBot() {
                     <img 
                       src="/dabour.webp" 
                       alt="دبور" 
+                      loading="eager"
+                      decoding="async"
+                      fetchPriority="high"
+                      width={88}
+                      height={88}
                       className="relative w-16 h-16 sm:w-20 sm:h-20 object-contain filter drop-shadow-[0_8px_14px_rgba(0,0,0,0.45)] group-hover:scale-108 transition-transform duration-300 pointer-events-none" 
                     />
                     <span className="absolute bottom-1 right-2 w-3 h-3 bg-green-500 border-2 border-slate-900 rounded-full shadow-sm"></span>
@@ -827,6 +860,11 @@ export default function SmartWaiterBot() {
                     <img 
                       src="/abu-malaz.webp" 
                       alt="أبو ملاذ" 
+                      loading="eager"
+                      decoding="async"
+                      fetchPriority="high"
+                      width={88}
+                      height={88}
                       className="relative w-16 h-16 sm:w-20 sm:h-20 object-contain filter drop-shadow-[0_8px_14px_rgba(0,0,0,0.45)] group-hover:scale-108 transition-transform duration-300 pointer-events-none" 
                     />
                     <span className="absolute bottom-1 right-2 w-3 h-3 bg-green-500 border-2 border-slate-900 rounded-full shadow-sm"></span>
