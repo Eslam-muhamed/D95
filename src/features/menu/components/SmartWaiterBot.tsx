@@ -27,7 +27,7 @@ const PERSONAS: Record<Persona, PersonaConfig> = {
   dabour: {
     id: 'dabour',
     name: 'دبور',
-    badge: 'الويتر الذكي ☕',
+    badge: 'محمد',
     avatar: '/dabour.webp',
     headerBg: 'bg-gradient-to-r from-red-600 via-rose-600 to-red-700',
     activeTabClass: 'bg-red-600 text-white shadow-lg shadow-red-900/40 border-red-500',
@@ -39,7 +39,7 @@ const PERSONAS: Record<Persona, PersonaConfig> = {
   abu_malaz: {
     id: 'abu_malaz',
     name: 'أبو ملاذ',
-    badge: 'الويتر المضياف 🎩',
+    badge: 'احمد',
     avatar: '/abu-malaz.webp',
     headerBg: 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700',
     activeTabClass: 'bg-amber-600 text-white shadow-lg shadow-amber-900/40 border-amber-500',
