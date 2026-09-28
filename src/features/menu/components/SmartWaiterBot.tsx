@@ -8,6 +8,48 @@ import { useCart } from '@/features/cart/stores/cartStore';
 import { getCachedCategories, getCachedProducts } from '@/features/menu/services/menuService';
 import type { DBProduct } from '@/types/database';
 
+export type Persona = 'dabour' | 'abu_malaz';
+
+interface PersonaConfig {
+  id: Persona;
+  name: string;
+  badge: string;
+  avatar: string;
+  headerBg: string;
+  activeTabClass: string;
+  userBubbleBg: string;
+  sendBtnBg: string;
+  welcome: string;
+  placeholder: string;
+}
+
+const PERSONAS: Record<Persona, PersonaConfig> = {
+  dabour: {
+    id: 'dabour',
+    name: 'دبور',
+    badge: 'الويتر الذكي ☕',
+    avatar: '/dabour.webp',
+    headerBg: 'bg-gradient-to-r from-red-600 via-rose-600 to-red-700',
+    activeTabClass: 'bg-red-600 text-white shadow-lg shadow-red-900/40 border-red-500',
+    userBubbleBg: 'bg-red-600',
+    sendBtnBg: 'bg-red-600 hover:bg-red-700',
+    welcome: 'أهلاً بك في D95 ☕🎮! أنا دبور، إزاي أقدر أساعدك وأرشحلك من المنيو النهارده؟',
+    placeholder: 'اسأل دبور عن المنيو أو الأسعار...',
+  },
+  abu_malaz: {
+    id: 'abu_malaz',
+    name: 'أبو ملاذ',
+    badge: 'الويتر المضياف 🎩',
+    avatar: '/abu-malaz.webp',
+    headerBg: 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700',
+    activeTabClass: 'bg-amber-600 text-white shadow-lg shadow-amber-900/40 border-amber-500',
+    userBubbleBg: 'bg-amber-600',
+    sendBtnBg: 'bg-amber-600 hover:bg-amber-700',
+    welcome: 'يا مية أهلاً وسهلاً بيك في D95! أنا أبو ملاذ في خدمتك، قولي نفسك في إيه يروّق عليك وهجهزهولك بأحسن جودة ☕✨',
+    placeholder: 'اسأل أبو ملاذ عن أحسن طلب ليك...',
+  }
+};
+
 interface Message {
   id: string;
   role: 'user' | 'model';
@@ -17,20 +59,46 @@ interface Message {
 export default function SmartWaiterBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [hasOpened, setHasOpened] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'welcome',
-      role: 'model',
-      text: 'أهلاً بك في D95 ☕🎮! أنا دبور، إزاي أقدر أساعدك وأرشحلك من المنيو النهارده؟'
-    }
-  ]);
+  const [activePersona, setActivePersona] = useState<Persona>('dabour');
+
+  const [personaMessages, setPersonaMessages] = useState<Record<Persona, Message[]>>({
+    dabour: [
+      {
+        id: 'welcome-dabour',
+        role: 'model',
+        text: PERSONAS.dabour.welcome
+      }
+    ],
+    abu_malaz: [
+      {
+        id: 'welcome-abu-malaz',
+        role: 'model',
+        text: PERSONAS.abu_malaz.welcome
+      }
+    ]
+  });
+
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [bubbleTextIndex, setBubbleTextIndex] = useState(0);
   const { addItem } = useCart();
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const currentPersona = PERSONAS[activePersona];
+  const messages = personaMessages[activePersona];
+
+  // Alternating thought bubble slogans
+  const bubblePhrases = ['اسأل دبور ☕', 'اسأل أبو ملاذ 🎩'];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setBubbleTextIndex(prev => (prev + 1) % bubblePhrases.length);
+    }, 3500);
+    return () => clearInterval(timer);
+  }, [bubblePhrases.length]);
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior });
@@ -83,11 +151,17 @@ export default function SmartWaiterBot() {
     }
 
     if (usage.count >= 1000) {
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        role: 'model',
-        text: 'يسعدنا جداً تواصلك معانا! 🤩 وصلنا للحد الأقصى المسموح به للمحادثة.'
-      }]);
+      setPersonaMessages(prev => ({
+        ...prev,
+        [activePersona]: [
+          ...prev[activePersona],
+          {
+            id: Date.now().toString(),
+            role: 'model',
+            text: 'يسعدنا جداً تواصلك معانا! 🤩 وصلنا للحد الأقصى المسموح به للمحادثة اليوم.'
+          }
+        ]
+      }));
       setInput('');
       return;
     }
@@ -100,20 +174,25 @@ export default function SmartWaiterBot() {
     setInput('');
     
     const newUserMsg: Message = { id: Date.now().toString(), role: 'user', text: userText };
-    setMessages(prev => [...prev, newUserMsg]);
+    setPersonaMessages(prev => ({
+      ...prev,
+      [activePersona]: [...prev[activePersona], newUserMsg]
+    }));
     setIsLoading(true);
 
     try {
-      // Build history for context (excluding the very first welcome msg to save tokens, or include it)
-      const historyToPass = messages.slice(1).map(m => ({ role: m.role, text: m.text }));
+      // Build history for context (excluding initial welcome msg)
+      const currentMessages = personaMessages[activePersona];
+      const historyToPass = currentMessages.slice(1).map(m => ({ role: m.role, text: m.text }));
       const menuContext = generateMenuContext();
 
-      // Call Supabase Edge Function
+      // Call Supabase Edge Function with persona
       const { data, error } = await supabase.functions.invoke('smart-waiter', {
         body: {
           message: userText,
           history: historyToPass,
-          menuContext
+          menuContext,
+          persona: activePersona
         }
       });
 
@@ -122,15 +201,24 @@ export default function SmartWaiterBot() {
       const replyText = data?.reply || 'عذراً، حصلت مشكلة في الرد.';
       const botMsg: Message = { id: (Date.now() + 1).toString(), role: 'model', text: replyText };
       
-      setMessages(prev => [...prev, botMsg]);
+      setPersonaMessages(prev => ({
+        ...prev,
+        [activePersona]: [...prev[activePersona], botMsg]
+      }));
 
     } catch (err) {
       console.error('Smart Waiter Error:', err);
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        role: 'model',
-        text: 'عذراً، أواجه مشكلة في الاتصال حالياً 😔. برجاء المحاولة لاحقاً.'
-      }]);
+      setPersonaMessages(prev => ({
+        ...prev,
+        [activePersona]: [
+          ...prev[activePersona],
+          {
+            id: Date.now().toString(),
+            role: 'model',
+            text: 'عذراً، أواجه مشكلة في الاتصال حالياً 😔. برجاء المحاولة لاحقاً.'
+          }
+        ]
+      }));
     } finally {
       setIsLoading(false);
     }
@@ -176,12 +264,18 @@ export default function SmartWaiterBot() {
         quantity: 1
       }
     });
-    // Add a small temporary confirmation message
-    setMessages(prev => [...prev, {
-      id: Date.now().toString(),
-      role: 'model',
-      text: `تم إضافة ${product.name} للسلة بنجاح! 🛒`
-    }]);
+    // Add a small confirmation message
+    setPersonaMessages(prev => ({
+      ...prev,
+      [activePersona]: [
+        ...prev[activePersona],
+        {
+          id: Date.now().toString(),
+          role: 'model',
+          text: `تم إضافة ${product.name} للسلة بنجاح! 🛒`
+        }
+      ]
+    }));
   };
 
   const renderMessageContent = (text: string) => {
@@ -234,7 +328,7 @@ export default function SmartWaiterBot() {
 
   return (
     <>
-      {/* Floating Action Button */}
+      {/* Floating Action Button (Twin Capsule) */}
       <AnimatePresence>
         {!isOpen && (
           <motion.div
@@ -248,27 +342,55 @@ export default function SmartWaiterBot() {
                 setIsOpen(true);
                 setHasOpened(true);
               }}
-              className="relative w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform drop-shadow-xl"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              aria-label="اسأل دبور"
+              className="group relative flex items-center gap-2 p-1.5 sm:p-2 bg-slate-900/90 hover:bg-slate-900 dark:bg-slate-800/95 backdrop-blur-md border border-slate-700/60 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              aria-label="اسأل الويتر الذكي"
             >
-              <img src="/dabour.webp" alt="دبور" className="w-full h-full object-contain filter drop-shadow-lg" />
-              {/* Online Indicator */}
-              <span className="absolute bottom-0.5 right-1 sm:bottom-1 sm:right-2 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full z-10"></span>
+              {/* Dual Avatars with Overlapping Rings */}
+              <div className="flex items-center -space-x-3 rtl:space-x-reverse">
+                {/* Dabour Avatar */}
+                <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-red-600 to-rose-500 p-0.5 shadow-md z-10 transition-transform group-hover:-translate-x-1 rtl:group-hover:translate-x-1">
+                  <img src="/dabour.webp" alt="دبور" className="w-full h-full object-contain filter drop-shadow" />
+                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-slate-900 rounded-full"></span>
+                </div>
+                {/* Abu Malaz Avatar */}
+                <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 p-0.5 shadow-md transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1">
+                  <img src="/abu-malaz.webp" alt="أبو ملاذ" className="w-full h-full object-contain filter drop-shadow" />
+                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-slate-900 rounded-full"></span>
+                </div>
+              </div>
+
+              {/* Text Badge (visible on desktop) */}
+              <div className="hidden sm:flex flex-col text-right pl-2 pr-1">
+                <span className="text-xs font-bold text-white flex items-center gap-1">
+                  الويتر الذكي <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+                </span>
+                <span className="text-[10px] text-slate-300 font-medium">دبور & أبو ملاذ</span>
+              </div>
             </motion.button>
             
-            {/* Thought Bubble */}
+            {/* Thought Bubble with smooth alternating text */}
             {!hasOpened && (
               <motion.div 
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 1, duration: 0.5 }}
-                className="relative flex bg-white text-slate-800 px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl shadow-lg border border-slate-100 font-bold text-xs sm:text-sm whitespace-nowrap"
+                className="relative flex bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 font-bold text-xs sm:text-sm whitespace-nowrap"
               >
-                اسأل دبور 🐝
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={bubbleTextIndex}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {bubblePhrases[bubbleTextIndex]}
+                  </motion.span>
+                </AnimatePresence>
                 {/* Bubble Arrow */}
-                <div className="absolute top-1/2 -right-1.5 sm:-right-2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 bg-white border-r border-t border-slate-100 transform rotate-45"></div>
+                <div className="absolute top-1/2 -right-1.5 sm:-right-2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 bg-white dark:bg-slate-800 border-r border-t border-slate-100 dark:border-slate-700 transform rotate-45"></div>
               </motion.div>
             )}
           </motion.div>
@@ -284,26 +406,68 @@ export default function SmartWaiterBot() {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             className="fixed bottom-0 left-0 right-0 sm:bottom-6 sm:left-auto sm:right-6 w-full sm:w-[460px] md:w-[480px] h-[88dvh] sm:h-[660px] sm:max-h-[85vh] z-50 bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl shadow-black/30 border border-slate-200/80 dark:border-slate-800/80 flex flex-col overflow-hidden"
           >
-            {/* Header */}
-            <div className="bg-red-600 text-white px-4 py-3.5 sm:px-5 flex items-center justify-between shrink-0 shadow-md z-10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden bg-white/10 p-0.5 border border-white/20">
-                  <img src="/dabour.webp" alt="دبور" className="w-full h-full object-contain filter drop-shadow" />
+            {/* Dynamic Header */}
+            <div className={`${currentPersona.headerBg} text-white px-4 py-3 sm:px-5 transition-all duration-300 shrink-0 shadow-md z-10 flex flex-col gap-2.5`}>
+              
+              {/* Top Bar with Title and Close Button */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-sm sm:text-base tracking-wide flex items-center gap-1.5">
+                    الويتر الذكي <Sparkles className="w-4 h-4 text-yellow-300" />
+                  </span>
+                  <span className="text-[11px] bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full font-medium">
+                    D95 Menu
+                  </span>
                 </div>
-                <div>
-                  <h3 className="font-bold text-base sm:text-lg flex items-center gap-1.5">
-                    اسأل دبور <Sparkles className="w-4 h-4 text-yellow-300" />
-                  </h3>
-                  <p className="text-red-100 text-[11px] sm:text-xs">يجيب على استفساراتك من المنيو</p>
-                </div>
+                <button 
+                  onClick={() => setIsOpen(false)}
+                  className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
+                  aria-label="إغلاق المحادثة"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button 
-                onClick={() => setIsOpen(false)}
-                className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                aria-label="إغلاق المحادثة"
-              >
-                <X className="w-5 h-5" />
-              </button>
+
+              {/* Segmented Persona Switcher (Tabs) */}
+              <div className="grid grid-cols-2 p-1 bg-black/25 backdrop-blur-md rounded-2xl gap-1 border border-white/10">
+                {/* Dabour Tab */}
+                <button
+                  type="button"
+                  onClick={() => setActivePersona('dabour')}
+                  className={`flex items-center justify-center gap-2 py-1.5 px-3 rounded-xl transition-all font-bold text-xs border ${
+                    activePersona === 'dabour'
+                      ? PERSONAS.dabour.activeTabClass
+                      : 'text-white/70 hover:text-white border-transparent hover:bg-white/10'
+                  }`}
+                >
+                  <div className="w-6 h-6 rounded-full overflow-hidden bg-white/10 p-0.5 shrink-0 border border-white/20">
+                    <img src={PERSONAS.dabour.avatar} alt="دبور" className="w-full h-full object-contain" />
+                  </div>
+                  <div className="flex flex-col text-right leading-tight">
+                    <span>دبور</span>
+                    <span className="text-[9px] font-normal opacity-80">ويتر المنيو ☕</span>
+                  </div>
+                </button>
+
+                {/* Abu Malaz Tab */}
+                <button
+                  type="button"
+                  onClick={() => setActivePersona('abu_malaz')}
+                  className={`flex items-center justify-center gap-2 py-1.5 px-3 rounded-xl transition-all font-bold text-xs border ${
+                    activePersona === 'abu_malaz'
+                      ? PERSONAS.abu_malaz.activeTabClass
+                      : 'text-white/70 hover:text-white border-transparent hover:bg-white/10'
+                  }`}
+                >
+                  <div className="w-6 h-6 rounded-full overflow-hidden bg-white/10 p-0.5 shrink-0 border border-white/20">
+                    <img src={PERSONAS.abu_malaz.avatar} alt="أبو ملاذ" className="w-full h-full object-contain" />
+                  </div>
+                  <div className="flex flex-col text-right leading-tight">
+                    <span>أبو ملاذ</span>
+                    <span className="text-[9px] font-normal opacity-80">الويتر المضياف 🎩</span>
+                  </div>
+                </button>
+              </div>
             </div>
 
             {/* Chat Messages */}
@@ -315,14 +479,14 @@ export default function SmartWaiterBot() {
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-4 items-end gap-2`}
                 >
                   {msg.role === 'model' && (
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-red-100 dark:bg-red-950/40 p-0.5 border border-red-500/20">
-                      <img src="/dabour.webp" alt="دبور" className="w-full h-full object-contain" />
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-slate-200 dark:bg-slate-800 p-0.5 border border-slate-300 dark:border-slate-700 shadow-sm">
+                      <img src={currentPersona.avatar} alt={currentPersona.name} className="w-full h-full object-contain" />
                     </div>
                   )}
                   
                   <div className={`max-w-[88%] sm:max-w-[84%] rounded-2xl p-3.5 sm:p-4 text-sm leading-relaxed shadow-sm ${
                     msg.role === 'user' 
-                      ? 'bg-red-600 text-white rounded-tl-none' 
+                      ? `${currentPersona.userBubbleBg} text-white rounded-tl-none` 
                       : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-tr-none'
                   }`}>
                     {renderMessageContent(msg.text)}
@@ -338,8 +502,8 @@ export default function SmartWaiterBot() {
               
               {isLoading && (
                 <div className="flex justify-start gap-2">
-                  <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
-                    <Bot className="w-4 h-4 text-red-600" />
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden bg-slate-200 dark:bg-slate-800 p-0.5 border border-slate-300 dark:border-slate-700">
+                    <img src={currentPersona.avatar} alt={currentPersona.name} className="w-full h-full object-contain animate-pulse" />
                   </div>
                   <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tr-none p-3 shadow-sm flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-red-600/60 animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -352,33 +516,33 @@ export default function SmartWaiterBot() {
             </div>
 
             {/* Disclaimer */}
-            <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900 text-[10px] text-center text-slate-500 border-t border-slate-100 dark:border-slate-800 flex justify-center items-center gap-1">
-              <AlertCircle className="w-3 h-3" />
+            <div className="px-4 py-1.5 bg-slate-50 dark:bg-slate-900/80 text-[10px] text-center text-slate-400 border-t border-slate-100 dark:border-slate-800/60 flex justify-center items-center gap-1 shrink-0">
+              <AlertCircle className="w-3 h-3 text-slate-400" />
               <span>هذا المساعد مدعوم بالذكاء الاصطناعي وقد يُخطئ أحياناً</span>
             </div>
 
             {/* Input Area */}
-            <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+            <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0">
               <form 
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleSend();
                 }}
-                className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-full p-1 border border-slate-200 dark:border-slate-700 focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-500/20 transition-all"
+                className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-full p-1 border border-slate-200 dark:border-slate-700 focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-500/20 transition-all"
               >
                 <input
                   ref={inputRef}
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="اسأل عن المنيو أو الأسعار..."
+                  placeholder={currentPersona.placeholder}
                   className="flex-1 bg-transparent px-4 py-2 text-sm text-slate-900 dark:text-white outline-none"
                   disabled={isLoading}
                 />
                 <button
                   type="submit"
                   disabled={!input.trim() || isLoading}
-                  className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`w-10 h-10 rounded-full ${currentPersona.sendBtnBg} text-white flex items-center justify-center shrink-0 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md`}
                 >
                   <Send className="w-4 h-4 rtl:-scale-x-100" />
                 </button>
