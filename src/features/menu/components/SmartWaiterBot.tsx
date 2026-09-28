@@ -739,83 +739,115 @@ export default function SmartWaiterBot() {
       {/* 2. Waiter Selection Modal (Popup) */}
       <AnimatePresence>
         {isSelectorOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.92, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="relative w-full max-w-sm sm:max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col gap-4 overflow-hidden"
+              exit={{ opacity: 0, scale: 0.92, y: 15 }}
+              transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+              className="relative w-full max-w-sm sm:max-w-md bg-slate-900/95 dark:bg-slate-950/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 sm:p-6 shadow-2xl shadow-black/80 flex flex-col gap-4 overflow-hidden text-white"
             >
+              {/* Subtle Ambient Top Rim Light */}
+              <div className="absolute top-0 left-1/4 right-1/4 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
+
               {/* Close Button */}
               <button
                 onClick={() => setIsSelectorOpen(false)}
-                className="absolute top-4 left-4 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="absolute top-4 left-4 p-2 rounded-full text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
                 aria-label="إغلاق"
+                title="إغلاق"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
 
               {/* Modal Title */}
-              <div className="text-center pt-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-xs font-bold mb-2">
-                  <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
+              <div className="text-center pt-1">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-bold mb-2">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                   أصحاب ومؤسسي D95
                 </span>
-                <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white">
-                  مين تحب يساعدك النهارده؟ ☕
+                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
+                  مع مين تحب تدردش؟ ☕
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  اختر المسئول اللي تحب يدردش معاك ويرشحلك من المنيو
+                <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">
+                  اختر صاحب المكان اللي حابب يقترحلك ويظبطلك طلبك من المنيو
                 </p>
               </div>
 
-              {/* Two Waiter Cards */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-2">
+              {/* Two Owner Selection Cards */}
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-1">
                 
                 {/* 1. Dabour Card */}
                 <motion.button
-                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileHover={{ y: -3, scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => handleSelectPersona('dabour')}
-                  className="group flex flex-col items-center text-center p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-800 hover:border-red-500 dark:hover:border-red-500 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-all shadow-sm hover:shadow-lg hover:shadow-red-500/10"
+                  className="group relative flex flex-col items-center text-center p-3.5 sm:p-4 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-gradient-to-b hover:from-red-500/10 hover:to-transparent hover:border-red-500/50 hover:shadow-xl hover:shadow-red-500/10 transition-all duration-300 cursor-pointer overflow-hidden"
                 >
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-red-600 to-rose-500 p-0.5 shadow-md mb-3 group-hover:scale-105 transition-transform">
-                    <img src="/dabour.webp" alt="دبور" className="w-full h-full object-contain filter drop-shadow" />
-                    <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full"></span>
+                  {/* Avatar with Ambient Backlight Glow - NO harsh solid circle */}
+                  <div className="relative w-18 h-18 sm:w-22 sm:h-22 flex items-center justify-center mb-1">
+                    <div className="absolute inset-1 bg-red-600/25 rounded-full blur-xl group-hover:bg-red-500/40 transition-colors pointer-events-none" />
+                    <img 
+                      src="/dabour.webp" 
+                      alt="دبور" 
+                      className="relative w-16 h-16 sm:w-20 sm:h-20 object-contain filter drop-shadow-[0_8px_14px_rgba(0,0,0,0.45)] group-hover:scale-108 transition-transform duration-300 pointer-events-none" 
+                    />
+                    <span className="absolute bottom-1 right-2 w-3 h-3 bg-green-500 border-2 border-slate-900 rounded-full shadow-sm"></span>
                   </div>
 
-                  <span className="font-extrabold text-base text-slate-900 dark:text-white flex items-center gap-1">
+                  {/* Name & Identity */}
+                  <span className="font-extrabold text-base text-white group-hover:text-red-400 transition-colors leading-tight">
                     دبور
                   </span>
-                  <span className="text-[11px] font-bold text-red-600 dark:text-red-400 mb-1">
-                    (محمد)
+                  <span className="text-[11px] font-bold text-red-400/90 mb-1.5">
+                    (محمد) · صاحب المكان ☕
                   </span>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-                    صاحب المكان ☕
+
+                  {/* Vibe Tagline */}
+                  <span className="text-[10px] text-slate-300 bg-white/[0.05] border border-white/10 px-2 py-0.5 rounded-full mb-3 leading-tight">
+                    مزاج القهوة والجيمنج 🔥
+                  </span>
+
+                  {/* Selection Button */}
+                  <span className="w-full py-1.5 px-2 rounded-xl bg-red-600/20 group-hover:bg-red-600 border border-red-500/30 group-hover:border-red-500 text-red-300 group-hover:text-white font-bold text-xs transition-all shadow-sm">
+                    اختيار دبور
                   </span>
                 </motion.button>
 
                 {/* 2. Abu Malaz Card */}
                 <motion.button
-                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileHover={{ y: -3, scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => handleSelectPersona('abu_malaz')}
-                  className="group flex flex-col items-center text-center p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-800 hover:border-amber-500 dark:hover:border-amber-500 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-amber-50/50 dark:hover:bg-amber-950/20 transition-all shadow-sm hover:shadow-lg hover:shadow-amber-500/10"
+                  className="group relative flex flex-col items-center text-center p-3.5 sm:p-4 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-gradient-to-b hover:from-amber-500/10 hover:to-transparent hover:border-amber-500/50 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300 cursor-pointer overflow-hidden"
                 >
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 p-0.5 shadow-md mb-3 group-hover:scale-105 transition-transform">
-                    <img src="/abu-malaz.webp" alt="أبو ملاذ" className="w-full h-full object-contain filter drop-shadow" />
-                    <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full"></span>
+                  {/* Avatar with Ambient Backlight Glow - NO harsh solid circle */}
+                  <div className="relative w-18 h-18 sm:w-22 sm:h-22 flex items-center justify-center mb-1">
+                    <div className="absolute inset-1 bg-amber-500/25 rounded-full blur-xl group-hover:bg-amber-400/40 transition-colors pointer-events-none" />
+                    <img 
+                      src="/abu-malaz.webp" 
+                      alt="أبو ملاذ" 
+                      className="relative w-16 h-16 sm:w-20 sm:h-20 object-contain filter drop-shadow-[0_8px_14px_rgba(0,0,0,0.45)] group-hover:scale-108 transition-transform duration-300 pointer-events-none" 
+                    />
+                    <span className="absolute bottom-1 right-2 w-3 h-3 bg-green-500 border-2 border-slate-900 rounded-full shadow-sm"></span>
                   </div>
 
-                  <span className="font-extrabold text-base text-slate-900 dark:text-white flex items-center gap-1">
+                  {/* Name & Identity */}
+                  <span className="font-extrabold text-base text-white group-hover:text-amber-400 transition-colors leading-tight">
                     أبو ملاذ
                   </span>
-                  <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mb-1">
-                    (أحمد)
+                  <span className="text-[11px] font-bold text-amber-400/90 mb-1.5">
+                    (أحمد) · صاحب المكان ✨
                   </span>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-                    صاحب المكان ✨
+
+                  {/* Vibe Tagline */}
+                  <span className="text-[10px] text-slate-300 bg-white/[0.05] border border-white/10 px-2 py-0.5 rounded-full mb-3 leading-tight">
+                    الترويق والضيافة الملكية 👑
+                  </span>
+
+                  {/* Selection Button */}
+                  <span className="w-full py-1.5 px-2 rounded-xl bg-amber-600/20 group-hover:bg-amber-600 border border-amber-500/30 group-hover:border-amber-500 text-amber-300 group-hover:text-white font-bold text-xs transition-all shadow-sm">
+                    اختيار أبو ملاذ
                   </span>
                 </motion.button>
 
