@@ -265,6 +265,10 @@ export async function deleteProduct(id: string): Promise<void> {
 // ================= STORAGE (IMAGE UPLOAD) =================
 
 export async function uploadProductImage(file: File): Promise<string> {
+    if (!file.type.startsWith('image/')) {
+        throw new Error('الرجاء رفع ملف صورة صالح.');
+    }
+
     if (file.size > 5 * 1024 * 1024) {
         throw new Error('حجم الملف يتجاوز الحد المسموح به (5 ميجابايت)');
     }
@@ -292,7 +296,15 @@ export async function uploadProductImage(file: File): Promise<string> {
     }
 
     const data = await response.json();
-    return data.secure_url;
+    
+    // تحسين الرابط لتصغير الحجم والضغط التلقائي
+    // سيتم تحويل الصورة لتكون بعرض أقصى 600 بكسل مع ضغط الجودة تلقائياً
+    const optimizedUrl = data.secure_url.replace(
+        '/upload/',
+        '/upload/w_600,c_limit,q_auto,f_auto/'
+    );
+    
+    return optimizedUrl;
 }
 
 export async function deleteProductImage(imageUrl: string): Promise<void> {
