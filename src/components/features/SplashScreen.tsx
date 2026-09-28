@@ -55,16 +55,16 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                         transition={{ duration: 1.2, ease: [0.25, 1, 0.5, 1] }}
                         className="absolute top-0 left-0 bottom-0 w-[55%] z-20 origin-left"
                         style={{
-                            background: 'linear-gradient(90deg, #2a0000 0%, #700000 50%, #3a0000 100%)',
-                            boxShadow: '10px 0 20px rgba(0,0,0,0.6)',
-                            borderRight: '2px solid rgba(255,100,100,0.2)',
-                            borderBottomRightRadius: '5% 10%',
+                            background: 'linear-gradient(90deg, #2a0000 0%, #600000 15%, #3a0000 30%, #700000 45%, #400000 60%, #800000 75%, #4a0000 90%, #900000 100%)',
+                            boxShadow: 'inset -30px 0 60px rgba(0,0,0,0.9), 20px 0 40px rgba(0,0,0,0.9)',
+                            borderRight: '3px solid rgba(255,100,100,0.2)',
+                            borderBottomRightRadius: '10% 20%',
                             willChange: 'transform'
                         }}
                     >
-                        {/* Simplified Folds */}
-                        <div className="absolute inset-0 opacity-40 bg-[repeating-linear-gradient(90deg,transparent,transparent_40px,rgba(0,0,0,0.3)_60px,transparent_80px)]" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                        {/* Folds */}
+                        <div className="absolute inset-0 opacity-50 bg-[repeating-linear-gradient(90deg,transparent,transparent_20px,rgba(0,0,0,0.5)_40px,transparent_60px)]" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
                     </motion.div>
 
                     {/* Right Curtain */}
@@ -74,16 +74,16 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                         transition={{ duration: 1.2, ease: [0.25, 1, 0.5, 1] }}
                         className="absolute top-0 right-0 bottom-0 w-[55%] z-20 origin-right"
                         style={{
-                            background: 'linear-gradient(-90deg, #2a0000 0%, #700000 50%, #3a0000 100%)',
-                            boxShadow: '-10px 0 20px rgba(0,0,0,0.6)',
-                            borderLeft: '2px solid rgba(255,100,100,0.2)',
-                            borderBottomLeftRadius: '5% 10%',
+                            background: 'linear-gradient(-90deg, #2a0000 0%, #600000 15%, #3a0000 30%, #700000 45%, #400000 60%, #800000 75%, #4a0000 90%, #900000 100%)',
+                            boxShadow: 'inset 30px 0 60px rgba(0,0,0,0.9), -20px 0 40px rgba(0,0,0,0.9)',
+                            borderLeft: '3px solid rgba(255,100,100,0.2)',
+                            borderBottomLeftRadius: '10% 20%',
                             willChange: 'transform'
                         }}
                     >
-                        {/* Simplified Folds */}
-                        <div className="absolute inset-0 opacity-40 bg-[repeating-linear-gradient(-90deg,transparent,transparent_40px,rgba(0,0,0,0.3)_60px,transparent_80px)]" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                        {/* Folds */}
+                        <div className="absolute inset-0 opacity-50 bg-[repeating-linear-gradient(-90deg,transparent,transparent_20px,rgba(0,0,0,0.5)_40px,transparent_60px)]" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
                     </motion.div>
 
                     {/* Center Content (Fades out when opening) */}
@@ -109,7 +109,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                         {/* Logo & Main Title */}
                         <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm relative mt-8">
                             {/* Glowing backdrop for logo */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 sm:w-64 h-48 sm:h-64 bg-red-600/20 blur-2xl rounded-full" />
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-red-600/20 blur-3xl rounded-full" />
                             
                             <picture className="w-64 sm:w-80 z-10">
                                 <source srcSet="/new-logo.webp" type="image/webp" />
@@ -119,7 +119,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                                     loading="eager"
                                     fetchPriority="high"
                                     decoding="async"
-                                    className="w-full h-auto object-contain drop-shadow-md" 
+                                    className="w-full h-auto object-contain drop-shadow-[0_0_40px_rgba(220,38,38,0.6)]" 
                                 />
                             </picture>
                             
@@ -133,7 +133,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                                 <h1 className="font-bebas text-2xl sm:text-3xl font-bold tracking-[0.4em] text-neutral-300 mb-2">
                                     GRAND OPENING
                                 </h1>
-                                <h2 className="font-brush text-5xl sm:text-6xl text-red-600 drop-shadow-md transform -rotate-2">
+                                <h2 className="font-brush text-5xl sm:text-6xl text-red-600 drop-shadow-[0_0_20px_rgba(220,38,38,0.8)] transform -rotate-2">
                                     WELCOME
                                 </h2>
                             </div>
