@@ -45,7 +45,7 @@ const PERSONAS: Record<Persona, PersonaConfig> = {
     activeTabClass: 'bg-amber-600 text-white shadow-lg shadow-amber-900/40 border-amber-500',
     userBubbleBg: 'bg-amber-600',
     sendBtnBg: 'bg-amber-600 hover:bg-amber-700',
-    welcome: 'يا مية أهلاً وسهلاً بيك في D95! أنا أبو ملاذ في خدمتك، قولي نفسك في إيه يروّق عليك وهجهزهولك بأحسن جودة ☕✨',
+    welcome: 'يا مية أهلاً وسهلاً بيك في D95! أنا أبو ملاذ هنا عشان اساعدك تختار المشروب اللي يعدل مزاجك، قولي نفسك في إيه يروّق عليك وهجهزهولك بأحسن جودة ✨',
     placeholder: 'اسأل أبو ملاذ عن أحسن طلب ليك...',
   }
 };
@@ -91,7 +91,7 @@ export default function SmartWaiterBot() {
   const messages = personaMessages[activePersona];
 
   // Alternating thought bubble slogans
-  const bubblePhrases = ['اسأل دبور ☕', 'اسأل أبو ملاذ 🎩'];
+  const bubblePhrases = ['اسأل دبور ✨', 'اسأل أبو ملاذ ✨'];
 
   useEffect(() => {
     const timer = setInterval(() => {
