@@ -587,7 +587,7 @@ export default function SmartWaiterBot() {
                   {/* Subtle bottom glass reflection */}
                   <div className="absolute bottom-1.5 right-3 w-5 h-2 rounded-full bg-white/10 blur-[1px] pointer-events-none z-30" />
 
-                  {/* 1. Dabour Head inside bubble - Pure Transparent Cutout without any background */}
+                  {/* 1. Dabour Head inside bubble */}
                   <motion.div
                     animate={
                       spotlightPersona === 'dabour'
@@ -597,7 +597,7 @@ export default function SmartWaiterBot() {
                             scale: 1.18,
                             zIndex: 25,
                             opacity: 1,
-                            filter: 'drop-shadow(0 6px 12px rgba(0, 0, 0, 0.55))',
+                            filter: 'drop-shadow(0 4px 10px rgba(239, 68, 68, 0.6))',
                           }
                         : {
                             x: -16,
@@ -605,7 +605,7 @@ export default function SmartWaiterBot() {
                             scale: 0.65,
                             zIndex: 10,
                             opacity: 0.55,
-                            filter: 'blur(0.4px) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))',
+                            filter: 'blur(0.4px) drop-shadow(0 2px 4px rgba(0,0,0,0.4))',
                           }
                     }
                     transition={{
@@ -613,13 +613,13 @@ export default function SmartWaiterBot() {
                       stiffness: 190,
                       damping: 22,
                     }}
-                    className="absolute w-13 h-13 sm:w-15 sm:h-15 flex items-center justify-center bg-transparent border-0 select-none pointer-events-none"
+                    className="absolute w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-red-600 to-rose-500 p-0.5 border border-white/30"
                   >
                     {/* Gentle continuous float */}
                     <motion.div
                       animate={{ y: [0, -3.5, 0] }}
                       transition={{ duration: 2.7, repeat: Infinity, ease: 'easeInOut' }}
-                      className="w-full h-full relative flex items-center justify-center"
+                      className="w-full h-full relative"
                     >
                       <img
                         src="/dabour.webp"
@@ -627,12 +627,12 @@ export default function SmartWaiterBot() {
                         className="w-full h-full object-contain filter drop-shadow select-none pointer-events-none"
                       />
                       {spotlightPersona === 'dabour' && (
-                        <span className="absolute bottom-0 right-1 w-3 h-3 bg-green-500 border-2 border-slate-950 rounded-full shadow-sm" />
+                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-slate-950 rounded-full shadow-sm" />
                       )}
                     </motion.div>
                   </motion.div>
 
-                  {/* 2. Abu Malaz Head inside bubble - Pure Transparent Cutout without any background */}
+                  {/* 2. Abu Malaz Head inside bubble */}
                   <motion.div
                     animate={
                       spotlightPersona === 'abu_malaz'
@@ -642,7 +642,7 @@ export default function SmartWaiterBot() {
                             scale: 1.18,
                             zIndex: 25,
                             opacity: 1,
-                            filter: 'drop-shadow(0 6px 12px rgba(0, 0, 0, 0.55))',
+                            filter: 'drop-shadow(0 4px 10px rgba(245, 158, 11, 0.6))',
                           }
                         : {
                             x: 16,
@@ -650,7 +650,7 @@ export default function SmartWaiterBot() {
                             scale: 0.65,
                             zIndex: 10,
                             opacity: 0.55,
-                            filter: 'blur(0.4px) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))',
+                            filter: 'blur(0.4px) drop-shadow(0 2px 4px rgba(0,0,0,0.4))',
                           }
                     }
                     transition={{
@@ -658,13 +658,13 @@ export default function SmartWaiterBot() {
                       stiffness: 190,
                       damping: 22,
                     }}
-                    className="absolute w-13 h-13 sm:w-15 sm:h-15 flex items-center justify-center bg-transparent border-0 select-none pointer-events-none"
+                    className="absolute w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 p-0.5 border border-white/30"
                   >
                     {/* Gentle continuous float */}
                     <motion.div
                       animate={{ y: [0, 3.5, 0] }}
                       transition={{ duration: 3.1, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
-                      className="w-full h-full relative flex items-center justify-center"
+                      className="w-full h-full relative"
                     >
                       <img
                         src="/abu-malaz.webp"
@@ -672,7 +672,7 @@ export default function SmartWaiterBot() {
                         className="w-full h-full object-contain filter drop-shadow select-none pointer-events-none"
                       />
                       {spotlightPersona === 'abu_malaz' && (
-                        <span className="absolute bottom-0 right-1 w-3 h-3 bg-green-500 border-2 border-slate-950 rounded-full shadow-sm" />
+                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-slate-950 rounded-full shadow-sm" />
                       )}
                     </motion.div>
                   </motion.div>
