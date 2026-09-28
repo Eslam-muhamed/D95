@@ -31,7 +31,7 @@ const PERSONAS: Record<Persona, PersonaConfig> = {
     id: 'dabour',
     name: 'دبور',
     realName: 'محمد',
-    badge: 'ويتر المنيو ☕',
+    badge: 'صاحب المكان ☕',
     avatar: '/dabour.webp',
     headerBg: 'bg-gradient-to-r from-red-600 via-rose-600 to-red-700',
     cardBorder: 'hover:border-red-500 hover:shadow-red-500/20',
@@ -40,13 +40,13 @@ const PERSONAS: Record<Persona, PersonaConfig> = {
     sendBtnBg: 'bg-red-600 hover:bg-red-700',
     welcome: 'أهلاً بك في D95 ☕🎮! أنا دبور، إزاي أقدر أساعدك وأرشحلك من المنيو النهارده؟',
     placeholder: 'اسأل دبور عن المنيو أو الأسعار...',
-    description: 'ويتر شبابي ومرح، هيظبطلك أحسن مشروبات وسناكس للعب والرواقان 🔥'
+    description: 'شاب مرح وصاحب المكان، هيظبطلك أحسن مشروبات وسناكس للعب والرواقان 🔥'
   },
   abu_malaz: {
     id: 'abu_malaz',
     name: 'أبو ملاذ',
     realName: 'أحمد',
-    badge: 'الويتر المضياف ✨',
+    badge: 'صاحب المكان ✨',
     avatar: '/abu-malaz.webp',
     headerBg: 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700',
     cardBorder: 'hover:border-amber-500 hover:shadow-amber-500/20',
@@ -55,7 +55,7 @@ const PERSONAS: Record<Persona, PersonaConfig> = {
     sendBtnBg: 'bg-amber-600 hover:bg-amber-700',
     welcome: 'يا مية أهلاً وسهلاً بيك في D95! أنا أبو ملاذ هنا عشان اساعدك تختار المشروب اللي يعدل مزاجك، قولي نفسك في إيه يروّق عليك وهجهزهولك بأحسن جودة ✨',
     placeholder: 'اسأل أبو ملاذ عن أحسن طلب ليك...',
-    description: 'ويتر راقي وشهم ومضياف، هيعدل مزاجك بأحلى ترشيحات مخدومة بحب 🎩'
+    description: 'راقي وشهم ومضياف، هيعدل مزاجك بأحلى ترشيحات مخدومة بحب في مكانه 🎩'
   }
 };
 
@@ -371,7 +371,7 @@ export default function SmartWaiterBot() {
               className="group relative flex items-center gap-2 p-1.5 sm:p-2 bg-slate-900/90 hover:bg-slate-900 dark:bg-slate-800/95 backdrop-blur-md border border-slate-700/60 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              aria-label="اسأل الويتر الذكي"
+              aria-label="اسأل أصحاب المكان"
             >
               {/* Dual Avatars with Overlapping Rings */}
               <div className="flex items-center -space-x-3 rtl:space-x-reverse">
@@ -390,7 +390,7 @@ export default function SmartWaiterBot() {
               {/* Text Badge (visible on desktop) */}
               <div className="hidden sm:flex flex-col text-right pl-2 pr-1">
                 <span className="text-xs font-bold text-white flex items-center gap-1">
-                  الويتر الذكي <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+                  أصحاب المكان <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
                 </span>
                 <span className="text-[10px] text-slate-300 font-medium">دبور & أبو ملاذ</span>
               </div>
@@ -448,13 +448,13 @@ export default function SmartWaiterBot() {
               <div className="text-center pt-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-xs font-bold mb-2">
                   <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
-                  D95 Smart Waiters
+                  أصحاب ومؤسسي D95
                 </span>
                 <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white">
-                  مين تحب يخدمك النهارده؟ ☕
+                  مين تحب يساعدك النهارده؟ ☕
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  اختر الويتر اللي تحب يدردش معاك ويرشحلك من المنيو
+                  اختر المسئول اللي تحب يدردش معاك ويرشحلك من المنيو
                 </p>
               </div>
 
@@ -480,7 +480,7 @@ export default function SmartWaiterBot() {
                     (محمد)
                   </span>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-                    ويتر المنيو ☕
+                    صاحب المكان ☕
                   </span>
                 </motion.button>
 
@@ -503,7 +503,7 @@ export default function SmartWaiterBot() {
                     (أحمد)
                   </span>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-                    الويتر المضياف ✨
+                    صاحب المكان ✨
                   </span>
                 </motion.button>
 
@@ -547,7 +547,7 @@ export default function SmartWaiterBot() {
                   type="button"
                   onClick={handleSwitchWaiter}
                   className="flex items-center gap-1 px-2.5 py-1.5 bg-black/20 hover:bg-black/35 text-white/90 hover:text-white rounded-full text-xs font-bold transition-all border border-white/10"
-                  title="تغيير الويتر"
+                  title="اختيار شخص آخر"
                 >
                   <ArrowLeftRight className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">تغيير</span>
