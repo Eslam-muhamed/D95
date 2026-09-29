@@ -111,75 +111,40 @@ export default function ItemCustomizerModal({ item, onClose }: Props) {
             }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Close button (Absolute positioning) */}
-            <button
-              type="button"
-              onClick={handleClose}
-              className={`absolute top-4 left-4 z-20 w-8 h-8 flex items-center justify-center rounded-full transition-colors cursor-pointer active:scale-95 ${
-                item.image 
-                  ? 'bg-black/40 text-white hover:bg-black/60 backdrop-blur-md' 
-                  : 'bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/15 text-neutral-700 dark:text-neutral-300'
-              }`}
-              aria-label="إغلاق النافذة"
-            >
-              <X size={18} />
-            </button>
+            {/* Grab handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-neutral-300/40 dark:bg-white/20" />
+            </div>
 
-            {item.image ? (
-              <div className="relative w-full h-48 sm:h-56 bg-black">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 pb-3 border-b border-neutral-200/80 dark:border-white/10">
+              <div className="flex items-center gap-3">
                 <img
                   src={item.image}
                   alt={item.name}
-                  className="w-full h-full object-contain rounded-t-3xl"
+                  className="w-14 h-14 rounded-xl object-cover shadow-sm bg-neutral-100 dark:bg-black/30 border border-neutral-200 dark:border-white/10"
                 />
-                {/* Background blur for a nice effect if object-contain leaves space */}
-                <div 
-                  className="absolute inset-0 bg-cover bg-center opacity-40 blur-2xl -z-10 rounded-t-3xl"
-                  style={{ backgroundImage: `url(${item.image})` }}
-                />
-                {/* Gradient overlay for text readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/10 rounded-t-3xl pointer-events-none" />
-                
-                {/* Grab handle over image */}
-                <div className="absolute top-3 inset-x-0 flex justify-center z-10">
-                  <div className="w-12 h-1.5 rounded-full bg-white/40 backdrop-blur-sm shadow-sm" />
-                </div>
-
-                <div className="absolute bottom-3 right-5 left-5 text-white z-10">
-                  <h3 className="font-bold text-xl sm:text-2xl font-body mb-1 shadow-sm">
+                <div>
+                  <h3 className="font-bold text-base text-neutral-900 dark:text-white font-body">
                     {item.name}
                   </h3>
-                  <div className="flex items-center gap-2 text-red-400">
-                    <p className="font-sans font-black text-xl drop-shadow-sm" dir="ltr">
-                      {item.price}
-                    </p>
-                    <span className="text-sm font-body font-normal text-neutral-300">ج.م</span>
-                  </div>
+                  <p className="font-sans font-black text-red-600 dark:text-red-400 text-base" dir="ltr">
+                    {item.price} <span className="text-xs font-body font-normal text-neutral-500">ج.م</span>
+                  </p>
                 </div>
               </div>
-            ) : (
-              <>
-                {/* Grab handle for no-image state */}
-                <div className="flex justify-center pt-3 pb-1">
-                  <div className="w-10 h-1.5 rounded-full bg-neutral-300/40 dark:bg-white/20" />
-                </div>
-                {/* Header for no-image state */}
-                <div className="px-5 pt-4 pb-4 border-b border-neutral-200/80 dark:border-white/10">
-                  <h3 className="font-bold text-2xl text-neutral-900 dark:text-white font-body mb-1">
-                    {item.name}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <p className="font-sans font-black text-red-600 dark:text-red-400 text-xl" dir="ltr">
-                      {item.price}
-                    </p>
-                    <span className="text-sm font-body font-normal text-neutral-500">ج.م</span>
-                  </div>
-                </div>
-              </>
-            )}
+              <button
+                type="button"
+                onClick={handleClose}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 dark:hover:bg-white/15 text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer active:scale-95"
+                aria-label="إغلاق النافذة"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
             {/* Body */}
-            <div className="px-5 py-5 space-y-5">
+            <div className="px-4 py-4 space-y-4">
               {/* Notes only */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
