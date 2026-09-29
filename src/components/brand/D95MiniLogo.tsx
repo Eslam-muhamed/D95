@@ -27,7 +27,6 @@ export default function D95MiniLogo({
           width="840"
           height="460"
           loading="eager"
-          decoding="async"
           className="h-full w-auto object-contain drop-shadow-[0_1px_8px_rgba(229,37,42,0.4)]"
         />
       </picture>
@@ -40,7 +39,6 @@ export default function D95MiniLogo({
           width="840"
           height="460"
           loading="eager"
-          decoding="async"
           className="h-full w-auto object-contain"
         />
       </picture>

@@ -62,7 +62,6 @@ export default function D95BrushLogo({
           height="460"
           loading="eager"
           fetchPriority="high"
-          decoding="async"
           className="w-full h-auto object-contain drop-shadow-[0_2px_16px_rgba(229,37,42,0.65)]" 
         />
       </picture>
@@ -77,7 +76,6 @@ export default function D95BrushLogo({
           height="460"
           loading="eager"
           fetchPriority="high"
-          decoding="async"
           className="w-full h-auto object-contain drop-shadow-[0_1px_6px_rgba(114,1,11,0.2)]" 
         />
       </picture>

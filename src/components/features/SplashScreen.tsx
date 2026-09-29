@@ -118,8 +118,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                                     alt="D95" 
                                     loading="eager"
                                     fetchPriority="high"
-                                    decoding="async"
-                                    className="w-full h-auto object-contain drop-shadow-[0_0_40px_rgba(220,38,38,0.6)]" 
+                                    className="w-full h-auto object-contain drop-shadow-[0_0_20px_rgba(220,38,38,0.4)]" 
                                 />
                             </picture>
                             
@@ -166,7 +165,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                                 <ArrowLeft className="w-4 h-4 text-white/80 group-hover:-translate-x-1 transition-transform" />
                                 
                                 {/* Button Ripple/Glow */}
-                                <div className="absolute inset-0 rounded-full border-2 border-red-400/50 animate-ping opacity-30" />
+                                <div className="absolute inset-0 rounded-full border-2 border-red-400/50 animate-pulse opacity-30" />
                             </button>
                         </div>
                     </motion.div>

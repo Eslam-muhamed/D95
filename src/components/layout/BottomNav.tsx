@@ -1,3 +1,4 @@
+import { startTransition } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Gamepad2, Coffee, ShoppingBag, Home, Star, Trophy } from 'lucide-react';
 import { useCart } from '@/features/cart/stores/cartStore';
@@ -52,7 +53,9 @@ export default function BottomNav() {
             preloadMenuData();
         }
 
-        navigate(path);
+        startTransition(() => {
+            navigate(path);
+        });
     };
 
     return (

@@ -516,7 +516,6 @@ export default function SmartWaiterBot() {
                     src={currentPersona.avatar}
                     alt={currentPersona.name}
                     loading="eager"
-                    decoding="async"
                     fetchPriority="high"
                     width={80}
                     height={80}
@@ -555,7 +554,7 @@ export default function SmartWaiterBot() {
                   {/* Speaker Identity Badge */}
                   <div className="flex items-center gap-1.5 mb-1 pl-4">
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-extrabold ${currentPersona.id === 'dabour' ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${currentPersona.id === 'dabour' ? 'bg-red-500' : 'bg-emerald-500'} animate-ping`} />
+                      <span className={`w-1.5 h-1.5 rounded-full ${currentPersona.id === 'dabour' ? 'bg-red-500' : 'bg-emerald-500'} animate-pulse`} />
                       {currentPersona.name} ({currentPersona.realName})
                     </span>
                     <span className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
@@ -685,7 +684,6 @@ export default function SmartWaiterBot() {
                         src="/dabour.webp"
                         alt="دبور"
                         loading="eager"
-                        decoding="async"
                         fetchPriority="high"
                         width={56}
                         height={56}
@@ -735,7 +733,6 @@ export default function SmartWaiterBot() {
                         src="/abu-malaz.webp"
                         alt="أبو ملاذ"
                         loading="eager"
-                        decoding="async"
                         fetchPriority="high"
                         width={56}
                         height={56}
@@ -786,7 +783,7 @@ export default function SmartWaiterBot() {
                       {/* Speaker Identity Badge */}
                       <div className="flex items-center gap-1.5 mb-1 pl-4">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-extrabold ${currentSpotlight.badgeBg}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${spotlightPersona === 'dabour' ? 'bg-red-500' : 'bg-emerald-500'} animate-ping`} />
+                          <span className={`w-1.5 h-1.5 rounded-full ${spotlightPersona === 'dabour' ? 'bg-red-500' : 'bg-emerald-500'} animate-pulse`} />
                           {currentSpotlight.name} ({currentSpotlight.realName})
                         </span>
                         <span className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
@@ -871,7 +868,6 @@ export default function SmartWaiterBot() {
                       src="/dabour.webp" 
                       alt="دبور" 
                       loading="eager"
-                      decoding="async"
                       fetchPriority="high"
                       width={88}
                       height={88}
@@ -913,7 +909,6 @@ export default function SmartWaiterBot() {
                       src="/abu-malaz.webp" 
                       alt="أبو ملاذ" 
                       loading="eager"
-                      decoding="async"
                       fetchPriority="high"
                       width={88}
                       height={88}
