@@ -48,11 +48,11 @@ const PERSONAS: Record<Persona, PersonaConfig> = {
     realName: 'أحمد',
     badge: 'صاحب المكان ✨',
     avatar: '/abu-malaz.webp',
-    headerBg: 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700',
-    cardBorder: 'hover:border-amber-500 hover:shadow-amber-500/20',
-    cardHoverBg: 'hover:bg-amber-500/10',
-    userBubbleBg: 'bg-amber-600',
-    sendBtnBg: 'bg-amber-600 hover:bg-amber-700',
+    headerBg: 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700',
+    cardBorder: 'hover:border-emerald-500 hover:shadow-emerald-500/20',
+    cardHoverBg: 'hover:bg-emerald-500/10',
+    userBubbleBg: 'bg-emerald-600',
+    sendBtnBg: 'bg-emerald-600 hover:bg-emerald-700',
     welcome: 'يا مية أهلاً وسهلاً بيك في D95! أنا أبو ملاذ هنا عشان اساعدك تختار المشروب اللي يعدل مزاجك، قولي نفسك في إيه يروّق عليك وهجهزهولك بأحسن جودة ✨',
     placeholder: 'اسأل أبو ملاذ عن أحسن طلب ليك...',
     description: 'راقي وشهم ومضياف، هيعدل مزاجك بأحلى ترشيحات مخدومة بحب في مكانه 🎩'
@@ -100,9 +100,9 @@ const SPOTLIGHT_DATA: Record<Persona, SpotlightInfo> = {
     name: 'أبو ملاذ',
     realName: 'أحمد',
     role: 'صاحب ومؤسس المكان ✨',
-    badgeBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
-    bubbleBorder: 'border-amber-500/30 shadow-amber-500/10',
-    glowClass: 'shadow-[0_0_28px_rgba(245,158,11,0.4)] border-amber-500/50',
+    badgeBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+    bubbleBorder: 'border-emerald-500/30 shadow-emerald-500/10',
+    glowClass: 'shadow-[0_0_28px_rgba(16,185,129,0.45)] border-emerald-500/50',
     quotes: [
       'المكان مكانك ومنورنا! قولي نفسك في إيه ✨',
       'يا مرحب بيك في D95.. طلبك متظبط بأعلى جودة 🎩',
@@ -497,7 +497,7 @@ export default function SmartWaiterBot() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setIsChatOpen(true)}
-                  className={`relative max-w-[195px] sm:max-w-[260px] p-2.5 sm:p-3.5 rounded-2xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/95 border ${currentPersona.id === 'dabour' ? 'border-red-500/30 shadow-red-500/10' : 'border-amber-500/30 shadow-amber-500/10'} shadow-2xl cursor-pointer text-right transition-colors duration-500`}
+                  className={`relative max-w-[195px] sm:max-w-[260px] p-2.5 sm:p-3.5 rounded-2xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/95 border ${currentPersona.id === 'dabour' ? 'border-red-500/30 shadow-red-500/10' : 'border-emerald-500/30 shadow-emerald-500/10'} shadow-2xl cursor-pointer text-right transition-colors duration-500`}
                 >
                   {/* Dismiss button */}
                   <button
@@ -514,8 +514,8 @@ export default function SmartWaiterBot() {
 
                   {/* Speaker Identity Badge */}
                   <div className="flex items-center gap-1.5 mb-1 pl-4">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-extrabold ${currentPersona.id === 'dabour' ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${currentPersona.id === 'dabour' ? 'bg-red-500' : 'bg-amber-500'} animate-ping`} />
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-extrabold ${currentPersona.id === 'dabour' ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${currentPersona.id === 'dabour' ? 'bg-red-500' : 'bg-emerald-500'} animate-ping`} />
                       {currentPersona.name} ({currentPersona.realName})
                     </span>
                     <span className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
@@ -581,8 +581,8 @@ export default function SmartWaiterBot() {
                   }}
                   className={`absolute -inset-1.5 rounded-full blur-lg transition-colors duration-700 pointer-events-none ${
                     spotlightPersona === 'dabour'
-                      ? 'bg-gradient-to-tr from-red-600/40 via-rose-500/30 to-amber-500/10'
-                      : 'bg-gradient-to-tr from-amber-500/40 via-orange-500/30 to-red-500/10'
+                      ? 'bg-gradient-to-tr from-red-600/40 via-rose-500/30 to-emerald-500/10'
+                      : 'bg-gradient-to-tr from-emerald-500/40 via-teal-500/30 to-red-500/10'
                   }`}
                 />
 
@@ -667,7 +667,7 @@ export default function SmartWaiterBot() {
                             scale: 1.18,
                             zIndex: 25,
                             opacity: 1,
-                            filter: 'drop-shadow(0 4px 10px rgba(245, 158, 11, 0.6))',
+                            filter: 'drop-shadow(0 4px 10px rgba(16, 185, 129, 0.6))',
                           }
                         : {
                             x: 16,
@@ -683,7 +683,7 @@ export default function SmartWaiterBot() {
                       stiffness: 190,
                       damping: 22,
                     }}
-                    className="absolute w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 p-0.5 border border-white/30"
+                    className="absolute w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-600 p-0.5 border border-white/30"
                   >
                     {/* Gentle continuous float */}
                     <motion.div
@@ -746,7 +746,7 @@ export default function SmartWaiterBot() {
                       {/* Speaker Identity Badge */}
                       <div className="flex items-center gap-1.5 mb-1 pl-4">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-extrabold ${currentSpotlight.badgeBg}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${spotlightPersona === 'dabour' ? 'bg-red-500' : 'bg-amber-500'} animate-ping`} />
+                          <span className={`w-1.5 h-1.5 rounded-full ${spotlightPersona === 'dabour' ? 'bg-red-500' : 'bg-emerald-500'} animate-ping`} />
                           {currentSpotlight.name} ({currentSpotlight.realName})
                         </span>
                         <span className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
@@ -802,8 +802,8 @@ export default function SmartWaiterBot() {
 
               {/* Modal Title */}
               <div className="text-center pt-1">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-bold mb-2">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-slate-200 text-xs font-bold mb-2">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                   أصحاب ومؤسسي D95
                 </span>
                 <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
@@ -864,11 +864,11 @@ export default function SmartWaiterBot() {
                   whileHover={{ y: -3, scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => handleSelectPersona('abu_malaz')}
-                  className="group relative flex flex-col items-center text-center p-3.5 sm:p-4 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-gradient-to-b hover:from-amber-500/10 hover:to-transparent hover:border-amber-500/50 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300 cursor-pointer overflow-hidden"
+                  className="group relative flex flex-col items-center text-center p-3.5 sm:p-4 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-gradient-to-b hover:from-emerald-500/10 hover:to-transparent hover:border-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 cursor-pointer overflow-hidden"
                 >
                   {/* Avatar with Ambient Backlight Glow - NO harsh solid circle */}
                   <div className="relative w-18 h-18 sm:w-22 sm:h-22 flex items-center justify-center mb-1">
-                    <div className="absolute inset-1 bg-amber-500/25 rounded-full blur-xl group-hover:bg-amber-400/40 transition-colors pointer-events-none" />
+                    <div className="absolute inset-1 bg-emerald-500/25 rounded-full blur-xl group-hover:bg-emerald-400/40 transition-colors pointer-events-none" />
                     <img 
                       src="/abu-malaz.webp" 
                       alt="أبو ملاذ" 
@@ -883,10 +883,10 @@ export default function SmartWaiterBot() {
                   </div>
 
                   {/* Name & Identity */}
-                  <span className="font-extrabold text-base text-white group-hover:text-amber-400 transition-colors leading-tight">
+                  <span className="font-extrabold text-base text-white group-hover:text-emerald-400 transition-colors leading-tight">
                     أبو ملاذ
                   </span>
-                  <span className="text-[11px] font-bold text-amber-400/90 mb-1.5">
+                  <span className="text-[11px] font-bold text-emerald-400/90 mb-1.5">
                     (أحمد) · صاحب المكان ✨
                   </span>
 
@@ -896,7 +896,7 @@ export default function SmartWaiterBot() {
                   </span>
 
                   {/* Selection Button */}
-                  <span className="w-full py-1.5 px-2 rounded-xl bg-amber-600/20 group-hover:bg-amber-600 border border-amber-500/30 group-hover:border-amber-500 text-amber-300 group-hover:text-white font-bold text-xs transition-all shadow-sm">
+                  <span className="w-full py-1.5 px-2 rounded-xl bg-emerald-600/20 group-hover:bg-emerald-600 border border-emerald-500/30 group-hover:border-emerald-500 text-emerald-300 group-hover:text-white font-bold text-xs transition-all shadow-sm">
                     اختيار أبو ملاذ
                   </span>
                 </motion.button>
@@ -962,7 +962,7 @@ export default function SmartWaiterBot() {
                     onClick={() => handleSwitchToPersona('abu_malaz')}
                     className={`group relative flex items-center gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-bold transition-all ${
                       activePersona === 'abu_malaz'
-                        ? 'bg-amber-600 text-white shadow-md ring-2 ring-white/70 scale-105'
+                        ? 'bg-emerald-600 text-white shadow-md ring-2 ring-white/70 scale-105'
                         : 'text-white/70 hover:text-white hover:bg-white/10 opacity-60 hover:opacity-100'
                     }`}
                     title="التبديل إلى أبو ملاذ (أحمد)"
@@ -1021,9 +1021,9 @@ export default function SmartWaiterBot() {
                     <img src={currentPersona.avatar} alt={currentPersona.name} className="w-full h-full object-contain animate-pulse" />
                   </div>
                   <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tr-none p-3 shadow-sm flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-red-600/60 animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 rounded-full bg-red-600/60 animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-2 h-2 rounded-full bg-red-600/60 animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <span className={`w-2 h-2 rounded-full ${currentPersona.id === 'dabour' ? 'bg-red-600/60' : 'bg-emerald-600/60'} animate-bounce`} style={{ animationDelay: '0ms' }} />
+                    <span className={`w-2 h-2 rounded-full ${currentPersona.id === 'dabour' ? 'bg-red-600/60' : 'bg-emerald-600/60'} animate-bounce`} style={{ animationDelay: '150ms' }} />
+                    <span className={`w-2 h-2 rounded-full ${currentPersona.id === 'dabour' ? 'bg-red-600/60' : 'bg-emerald-600/60'} animate-bounce`} style={{ animationDelay: '300ms' }} />
                   </div>
                 </div>
               )}
