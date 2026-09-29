@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -25,6 +25,7 @@ import { useAuth } from '@/features/auth/stores/authStore';
 import { getItemUnitPrice } from '@/lib/cartUtils';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { createOrder } from '@/services/orderService';
+import { fetchPaymentSettings, PaymentSettings } from '@/services/paymentSettingsService';
 
 const CAFE_NAME = CONTACT_INFO.fullName;
 const WHATSAPP_PHONE = CONTACT_INFO.whatsappNumber;
@@ -83,6 +84,27 @@ function formatCustomization(c: import('@/types/cart').ItemCustomization): strin
 export default function CartSheet({ open: propOpen, onClose: propOnClose }: Props) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
+    walletNumber: CONTACT_INFO.walletNumber,
+    instapayHandle: CONTACT_INFO.instapayHandle,
+    instapayLink: '',
+  });
+
+  useEffect(() => {
+    fetchPaymentSettings().then((res) => {
+      if (res) {
+        setPaymentSettings(res);
+      }
+    });
+  }, []);
+
+  const dynamicPaymentOptions = PAYMENT_OPTIONS.map(opt => {
+    if (opt.value === 'wallet') return { ...opt, account: paymentSettings.walletNumber || CONTACT_INFO.walletNumber };
+    if (opt.value === 'instapay') return { ...opt, account: paymentSettings.instapayHandle || CONTACT_INFO.instapayHandle };
+    return opt;
+  });
+
   const {
     items,
     booking,
@@ -137,7 +159,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
 
   // Build WhatsApp Message specifically for Café Orders
   const buildCafeWhatsAppMsg = (orderNum?: string) => {
-    const payFull = PAYMENT_OPTIONS.find(p => p.value === paymentMethod)?.fullLabel ?? '';
+    const payFull = dynamicPaymentOptions.find(p => p.value === paymentMethod)?.fullLabel ?? '';
     const itemLines = items
       .map(i => {
         const custom = formatCustomization(i.customization);
@@ -999,7 +1021,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
                   <div>
                     <p className="text-sm font-semibold mb-2" style={{ color: 'var(--c-on-card)', fontFamily: 'Cairo, sans-serif' }}>💳 طريقة الدفع المفضلة</p>
                     <div className="flex gap-2 mb-3">
-                      {PAYMENT_OPTIONS.map(opt => (
+                      {dynamicPaymentOptions.map(opt => (
                         <button
                           key={opt.value}
                           onClick={() => setPaymentMethod(opt.value)}
@@ -1024,7 +1046,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
 
                     {/* Account number display */}
                     {(() => {
-                      const selected = PAYMENT_OPTIONS.find(p => p.value === paymentMethod)!;
+                      const selected = dynamicPaymentOptions.find(p => p.value === paymentMethod)!;
                       return (
                         <div
                           className="rounded-xl p-3 space-y-2"

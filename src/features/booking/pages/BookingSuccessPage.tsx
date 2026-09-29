@@ -16,6 +16,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useTheme } from '@/stores/themeStore';
 import { CONTACT_INFO } from '@/constants/contactInfo';
+import { fetchPaymentSettings, PaymentSettings } from '@/services/paymentSettingsService';
 import { fetchBookingByReservationId } from '@/features/booking/services/bookingService';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
@@ -43,6 +44,20 @@ export default function BookingSuccessPage() {
     });
 
     const [isLoading, setIsLoading] = useState(!bookingData && !!idFromParam);
+
+    const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
+        walletNumber: CONTACT_INFO.walletNumber,
+        instapayHandle: CONTACT_INFO.instapayHandle,
+        instapayLink: '',
+    });
+
+    useEffect(() => {
+        fetchPaymentSettings().then((res) => {
+            if (res) {
+                setPaymentSettings(res);
+            }
+        });
+    }, []);
 
     useEffect(() => {
         if (bookingData) return;
@@ -119,13 +134,16 @@ export default function BookingSuccessPage() {
         status = 'pending',
     } = bookingData;
 
+    const activeWalletNumber = paymentSettings.walletNumber || CONTACT_INFO.walletNumber;
+    const activeInstapayHandle = paymentSettings.instapayHandle || CONTACT_INFO.instapayHandle;
+
     const paymentLabel =
         paymentMethod === 'cash'
             ? 'كاش في الصالة عند الوصول'
             : paymentMethod === 'instapay'
-            ? `إنستاباي (InstaPay - ${CONTACT_INFO.instapayHandle})`
-            : CONTACT_INFO.walletNumber
-            ? `محفظة إلكترونية (${CONTACT_INFO.walletNumber})`
+            ? `إنستاباي (InstaPay - ${activeInstapayHandle})`
+            : activeWalletNumber
+            ? `محفظة إلكترونية (${activeWalletNumber})`
             : 'محفظة إلكترونية (فودافون كاش)';
 
     const handleSendWhatsApp = () => {
