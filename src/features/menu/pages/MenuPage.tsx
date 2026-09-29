@@ -221,10 +221,6 @@ export default function MenuPage() {
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-auto">
-            <span className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200 dark:border-white/10 text-neutral-700 dark:text-neutral-300 text-xs font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-              <span>مفتوح 24/7</span>
-            </span>
             <span className="text-xs text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200 dark:border-white/10 px-2.5 py-1 rounded-md font-medium">
               خدمة الصالة والغرف
             </span>
