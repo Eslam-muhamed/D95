@@ -59,6 +59,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                             boxShadow: 'inset -30px 0 60px rgba(0,0,0,0.9), 20px 0 40px rgba(0,0,0,0.9)',
                             borderRight: '3px solid rgba(255,100,100,0.2)',
                             borderBottomRightRadius: '10% 20%',
+                            willChange: 'transform'
                         }}
                     >
                         {/* Folds */}
@@ -77,6 +78,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                             boxShadow: 'inset 30px 0 60px rgba(0,0,0,0.9), -20px 0 40px rgba(0,0,0,0.9)',
                             borderLeft: '3px solid rgba(255,100,100,0.2)',
                             borderBottomLeftRadius: '10% 20%',
+                            willChange: 'transform'
                         }}
                     >
                         {/* Folds */}
