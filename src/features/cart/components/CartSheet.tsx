@@ -294,7 +294,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
         >
           <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)' }} />
           <motion.div
-            className="relative w-full rounded-t-3xl max-h-[92vh] overflow-y-auto scrollbar-hide max-w-lg mx-auto"
+            className="relative w-full rounded-t-3xl max-h-[92dvh] overflow-y-auto scrollbar-hide max-w-lg mx-auto"
             style={{
               background: 'var(--c-card)',
               border: '1px solid rgba(139,26,42,0.3)',
