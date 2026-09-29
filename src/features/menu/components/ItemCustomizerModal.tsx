@@ -126,26 +126,31 @@ export default function ItemCustomizerModal({ item, onClose }: Props) {
             </button>
 
             {item.image ? (
-              <div className="relative w-full h-64 sm:h-72">
+              <div className="relative w-full aspect-square max-h-[50vh] sm:max-h-[60vh] bg-black">
                 <img
                   src={item.image}
                   alt={item.name}
-                  className="w-full h-full object-cover rounded-t-3xl"
+                  className="w-full h-full object-contain sm:object-cover rounded-t-3xl"
+                />
+                {/* Background blur for a nice effect if object-contain leaves space */}
+                <div 
+                  className="absolute inset-0 bg-cover bg-center opacity-40 blur-2xl -z-10 rounded-t-3xl"
+                  style={{ backgroundImage: `url(${item.image})` }}
                 />
                 {/* Gradient overlay for text readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/10 rounded-t-3xl" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/10 rounded-t-3xl pointer-events-none" />
                 
                 {/* Grab handle over image */}
                 <div className="absolute top-3 inset-x-0 flex justify-center z-10">
-                  <div className="w-12 h-1.5 rounded-full bg-white/40 backdrop-blur-sm" />
+                  <div className="w-12 h-1.5 rounded-full bg-white/40 backdrop-blur-sm shadow-sm" />
                 </div>
 
-                <div className="absolute bottom-4 right-5 left-5 text-white">
-                  <h3 className="font-bold text-2xl font-body mb-1 shadow-sm">
+                <div className="absolute bottom-4 right-5 left-5 text-white z-10">
+                  <h3 className="font-bold text-2xl sm:text-3xl font-body mb-1.5 shadow-sm">
                     {item.name}
                   </h3>
                   <div className="flex items-center gap-2 text-red-400">
-                    <p className="font-sans font-black text-xl drop-shadow-sm" dir="ltr">
+                    <p className="font-sans font-black text-2xl drop-shadow-sm" dir="ltr">
                       {item.price}
                     </p>
                     <span className="text-sm font-body font-normal text-neutral-300">ج.م</span>
