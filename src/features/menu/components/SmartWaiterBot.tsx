@@ -117,9 +117,53 @@ interface Message {
   text: string;
 }
 
+const DAILY_MESSAGE_LIMIT = 20;
+
+function getDailyUsage(): { date: string; count: number } {
+  if (typeof window === 'undefined') return { date: '', count: 0 };
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    const usageStr = localStorage.getItem('d95_bot_usage');
+    if (!usageStr) return { date: today, count: 0 };
+    const usage = JSON.parse(usageStr);
+    if (usage.date !== today || typeof usage.count !== 'number') {
+      return { date: today, count: 0 };
+    }
+    return usage;
+  } catch {
+    return { date: today, count: 0 };
+  }
+}
+
+function incrementDailyUsage(): number {
+  if (typeof window === 'undefined') return 0;
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    const current = getDailyUsage();
+    const nextCount = (current.date === today ? current.count : 0) + 1;
+    localStorage.setItem('d95_bot_usage', JSON.stringify({ date: today, count: nextCount }));
+    return nextCount;
+  } catch {
+    return 1;
+  }
+}
+
 export default function SmartWaiterBot() {
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+
+  // Daily message limit state (persisted per device in localStorage)
+  const [dailyUsageCount, setDailyUsageCount] = useState<number>(() => getDailyUsage().count);
+
+  // Sync daily usage count whenever chat is opened or rendered
+  useEffect(() => {
+    if (isChatOpen) {
+      setDailyUsageCount(getDailyUsage().count);
+    }
+  }, [isChatOpen]);
+
+  const isLimitReached = dailyUsageCount >= DAILY_MESSAGE_LIMIT;
+  const remainingMessages = Math.max(0, DAILY_MESSAGE_LIMIT - dailyUsageCount);
 
   // User's default chosen persona for the session (persists until they leave the site)
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(() => {
@@ -250,16 +294,10 @@ export default function SmartWaiterBot() {
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
-    // Check daily message limit (max 1000 messages per day)
-    const today = new Date().toISOString().split('T')[0];
-    const usageStr = localStorage.getItem('d95_bot_usage');
-    let usage = usageStr ? JSON.parse(usageStr) : { date: today, count: 0 };
-    
-    if (usage.date !== today) {
-      usage = { date: today, count: 0 };
-    }
-
-    if (usage.count >= 1000) {
+    // Check daily message limit (max 20 messages per day per device)
+    const currentUsage = getDailyUsage();
+    if (currentUsage.count >= DAILY_MESSAGE_LIMIT) {
+      setDailyUsageCount(currentUsage.count);
       setPersonaMessages(prev => ({
         ...prev,
         [activePersona]: [
@@ -267,7 +305,9 @@ export default function SmartWaiterBot() {
           {
             id: Date.now().toString(),
             role: 'model',
-            text: 'يسعدنا جداً تواصلك معانا! 🤩 وصلنا للحد الأقصى المسموح به للمحادثة اليوم.'
+            text: activePersona === 'dabour'
+              ? 'يسعدنا جداً تواصلك يا بطل! 🤩 وصلت للحد الأقصى المسموح به اليوم (20 رسالة لهذا الجهاز). شرفتنا ومنور مكانك، وتقدر تطلب مباشرة من المنيو ☕🎮'
+              : 'يا مية أهلاً وسهلاً بيك يا غالي! 🎩 وصلت للحد الأقصى اليومي المسموح به (20 رسالة لهذا الجهاز). نورتنا وشرفتنا، وتقدر تطلب مباشرة من المنيو بأعلى جودة ✨'
           }
         ]
       }));
@@ -276,8 +316,8 @@ export default function SmartWaiterBot() {
     }
 
     // Increment usage
-    usage.count += 1;
-    localStorage.setItem('d95_bot_usage', JSON.stringify(usage));
+    const nextCount = incrementDailyUsage();
+    setDailyUsageCount(nextCount);
 
     const userText = input.trim();
     setInput('');
@@ -1030,10 +1070,21 @@ export default function SmartWaiterBot() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Disclaimer */}
-            <div className="px-4 py-1.5 bg-slate-50 dark:bg-slate-900/80 text-[10px] text-center text-slate-400 border-t border-slate-100 dark:border-slate-800/60 flex justify-center items-center gap-1 shrink-0">
-              <AlertCircle className="w-3 h-3 text-slate-400" />
-              <span>هذا المساعد مدعوم بالذكاء الاصطناعي وقد يُخطئ أحياناً</span>
+            {/* Disclaimer & Usage Quota */}
+            <div className="px-4 py-1.5 bg-slate-50 dark:bg-slate-900/80 text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between shrink-0 select-none">
+              <div className="flex items-center gap-1">
+                <AlertCircle className="w-3 h-3 text-slate-400 shrink-0" />
+                <span className="truncate">مساعد ذكي للطلب من المنيو</span>
+              </div>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors ${
+                isLimitReached 
+                  ? 'bg-red-500/10 text-red-500 border border-red-500/20' 
+                  : remainingMessages <= 5 
+                    ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' 
+                    : 'bg-slate-200/50 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+              }`}>
+                {isLimitReached ? 'تم استهلاك الحد اليومي (20/20)' : `متبقي اليوم: ${remainingMessages}/${DAILY_MESSAGE_LIMIT}`}
+              </span>
             </div>
 
             {/* Input Area */}
@@ -1043,20 +1094,28 @@ export default function SmartWaiterBot() {
                   e.preventDefault();
                   handleSend();
                 }}
-                className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-full p-1 border border-slate-200 dark:border-slate-700 focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-500/20 transition-all"
+                className={`flex items-center gap-2 rounded-full p-1 border transition-all ${
+                  isLimitReached
+                    ? 'bg-slate-100/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 opacity-80'
+                    : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-500/20'
+                }`}
               >
                 <input
                   ref={inputRef}
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder={currentPersona.placeholder}
-                  className="flex-1 bg-transparent px-4 py-2 text-sm text-slate-900 dark:text-white outline-none"
-                  disabled={isLoading}
+                  placeholder={
+                    isLimitReached
+                      ? 'تم الوصول للحد اليومي (٢٠ رسالة لهذا الجهاز)'
+                      : currentPersona.placeholder
+                  }
+                  className="flex-1 bg-transparent px-4 py-2 text-sm text-slate-900 dark:text-white outline-none disabled:cursor-not-allowed"
+                  disabled={isLoading || isLimitReached}
                 />
                 <button
                   type="submit"
-                  disabled={!input.trim() || isLoading}
+                  disabled={!input.trim() || isLoading || isLimitReached}
                   className={`w-10 h-10 rounded-full ${currentPersona.sendBtnBg} text-white flex items-center justify-center shrink-0 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md`}
                 >
                   <Send className="w-4 h-4 rtl:-scale-x-100" />
