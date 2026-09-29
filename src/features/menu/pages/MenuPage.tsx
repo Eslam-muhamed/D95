@@ -204,43 +204,26 @@ export default function MenuPage() {
       <TopHeader />
 
       {/* ─────────────────────────────────────────────────────────────
-          PREMIUM HERO HEADER CARD
+          COMPACT ATHLETIC MENU HEADER (HERO REMOVED FOR MAXIMUM SPEED)
          ───────────────────────────────────────────────────────────── */}
-      <div className="pt-20 px-4 max-w-4xl mx-auto mb-4">
-        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-gradient-to-br dark:from-[#150a0c] dark:via-[#0f090b] dark:to-black border border-neutral-200/80 dark:border-red-900/20 p-5 sm:p-7 shadow-sm dark:shadow-lg dark:shadow-red-900/10">
-          {/* Decorative Background Elements */}
-          <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 rounded-full bg-red-600/5 dark:bg-red-600/10 blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-56 h-56 rounded-full bg-red-900/5 dark:bg-red-900/10 blur-3xl pointer-events-none" />
-          
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 rounded-xl bg-neutral-50 dark:bg-white/5 backdrop-blur-sm border border-neutral-100 dark:border-white/10 shadow-sm dark:shadow-inner">
-                  <D95MiniLogo size="md" />
-                </div>
-                <h1 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white font-body tracking-wide drop-shadow-sm">
-                  القائمة الرقمية <span className="text-red-600 dark:text-red-500">D95</span>
-                </h1>
-              </div>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400 font-medium leading-relaxed max-w-lg mt-3">
-                استمتع بأجود أنواع المشروبات الساخنة، والمشروبات الساقعة المنعشة، والحلويات الفاخرة المحضرة بعناية لتجربة لا تُنسى.
-              </p>
+      <div className="pt-20 px-4 max-w-4xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-200 dark:border-white/[0.08]">
+          <div>
+            <div className="flex items-center gap-2">
+              <D95MiniLogo size="sm" />
+              <h1 className="text-lg sm:text-2xl font-bold text-neutral-900 dark:text-white font-body tracking-wide">
+                قائمة المشروبات والحلويات
+              </h1>
             </div>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 font-medium">
+              أجود أنواع المشروبات الساخنة، المشروبات الساقعة المنعشة، والحلويات الفاخرة
+            </p>
+          </div>
 
-            <div className="flex items-center gap-3 self-start sm:self-auto shrink-0 mt-2 sm:mt-0">
-              <div className="flex flex-col sm:items-end gap-2.5">
-                <span className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold font-mono shadow-sm dark:shadow-inner backdrop-blur-md">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                  </span>
-                  <span>مفتوح 24/7</span>
-                </span>
-                <span className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10 text-neutral-700 dark:text-white/90 text-xs font-medium backdrop-blur-md">
-                  خدمة الصالة والغرف
-                </span>
-              </div>
-            </div>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <span className="text-xs text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200 dark:border-white/10 px-2.5 py-1 rounded-md font-medium">
+              خدمة الصالة والغرف
+            </span>
           </div>
         </div>
       </div>
