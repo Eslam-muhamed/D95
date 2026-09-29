@@ -126,11 +126,11 @@ export default function ItemCustomizerModal({ item, onClose }: Props) {
             </button>
 
             {item.image ? (
-              <div className="relative w-full aspect-square max-h-[50vh] sm:max-h-[60vh] bg-black">
+              <div className="relative w-full h-48 sm:h-56 bg-black">
                 <img
                   src={item.image}
                   alt={item.name}
-                  className="w-full h-full object-contain sm:object-cover rounded-t-3xl"
+                  className="w-full h-full object-contain rounded-t-3xl"
                 />
                 {/* Background blur for a nice effect if object-contain leaves space */}
                 <div 
@@ -145,12 +145,12 @@ export default function ItemCustomizerModal({ item, onClose }: Props) {
                   <div className="w-12 h-1.5 rounded-full bg-white/40 backdrop-blur-sm shadow-sm" />
                 </div>
 
-                <div className="absolute bottom-4 right-5 left-5 text-white z-10">
-                  <h3 className="font-bold text-2xl sm:text-3xl font-body mb-1.5 shadow-sm">
+                <div className="absolute bottom-3 right-5 left-5 text-white z-10">
+                  <h3 className="font-bold text-xl sm:text-2xl font-body mb-1 shadow-sm">
                     {item.name}
                   </h3>
                   <div className="flex items-center gap-2 text-red-400">
-                    <p className="font-sans font-black text-2xl drop-shadow-sm" dir="ltr">
+                    <p className="font-sans font-black text-xl drop-shadow-sm" dir="ltr">
                       {item.price}
                     </p>
                     <span className="text-sm font-body font-normal text-neutral-300">ج.م</span>
