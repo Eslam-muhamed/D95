@@ -10,6 +10,7 @@ export interface MenuItem {
     tags?: string[];
     isHot?: boolean;
     isCold?: boolean;
+    isAvailable?: boolean;
 }
 
 export interface MenuCategory {

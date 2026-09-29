@@ -65,7 +65,7 @@ export default function MenuPage() {
   const [allItems, setAllItems] = useState<MenuItem[]>(() => {
     const cached = getCachedProducts();
     if (cached && cached.length > 0) {
-      return cached.filter(p => p.is_available).map(p => ({
+      return cached.map(p => ({
         id: p.slug || p.id,
         name: p.name,
         description: p.description || '',
@@ -76,7 +76,8 @@ export default function MenuPage() {
         badge: (p.badge as MenuItem['badge']) || undefined,
         tags: p.tags || [],
         isHot: p.is_hot,
-        isCold: p.is_cold
+        isCold: p.is_cold,
+        isAvailable: p.is_available
       }));
     }
     return [];
@@ -107,7 +108,7 @@ export default function MenuPage() {
         })));
       }
       if (prods) {
-        const formattedProds = prods.filter(p => p.is_available).map(p => ({
+        const formattedProds = prods.map(p => ({
           id: p.slug || p.id,
           name: p.name,
           description: p.description || '',
@@ -118,7 +119,8 @@ export default function MenuPage() {
           badge: (p.badge as import('@/types/menu').MenuItem['badge']) || undefined,
           tags: p.tags || [],
           isHot: p.is_hot,
-          isCold: p.is_cold
+          isCold: p.is_cold,
+          isAvailable: p.is_available
         }));
         setAllItems(formattedProds);
         validateItems(formattedProds);
@@ -268,8 +270,9 @@ export default function MenuPage() {
                 {searchResults.map(item => (
                   <button
                     key={item.id}
-                    className="w-full text-right flex items-center gap-3 rounded-xl p-3 bg-white dark:bg-[#130f11] border border-neutral-200 dark:border-white/[0.08] hover:border-red-600/40 hover:bg-neutral-50 dark:hover:bg-[#181215] transition-all cursor-pointer shadow-sm group"
-                    onClick={() => setSelectedItem(item)}
+                    disabled={!item.isAvailable}
+                    className={`w-full text-right flex items-center gap-3 rounded-xl p-3 bg-white dark:bg-[#130f11] border border-neutral-200 dark:border-white/[0.08] transition-all shadow-sm group ${item.isAvailable ? 'hover:border-red-600/40 hover:bg-neutral-50 dark:hover:bg-[#181215] cursor-pointer' : 'opacity-60 cursor-not-allowed grayscale-[0.5]'}`}
+                    onClick={() => item.isAvailable && setSelectedItem(item)}
                   >
                     <img
                       src={item.image}
@@ -292,9 +295,15 @@ export default function MenuPage() {
                         </span>
                       </div>
                     </div>
-                    <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-red-600 text-white flex-shrink-0 shadow-sm border border-red-500/50">
-                      أضف +
-                    </span>
+                    {item.isAvailable ? (
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-red-600 text-white flex-shrink-0 shadow-sm border border-red-500/50">
+                        أضف +
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-neutral-200 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 flex-shrink-0">
+                        غير متوفر
+                      </span>
+                    )}
                   </button>
                 ))}
 

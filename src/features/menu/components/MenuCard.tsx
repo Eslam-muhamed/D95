@@ -18,9 +18,9 @@ export default function MenuCard({ item, onAdd }: Props) {
 
   return (
     <div
-      className="flex items-center gap-3 rounded-xl p-3 bg-white dark:bg-[#130f11] border border-neutral-200 dark:border-white/[0.08] hover:border-red-600/40 hover:bg-neutral-50 dark:hover:bg-[#181215] active:scale-[0.99] transition-all cursor-pointer shadow-sm group"
+      className={`flex items-center gap-3 rounded-xl p-3 bg-white dark:bg-[#130f11] border border-neutral-200 dark:border-white/[0.08] transition-all shadow-sm group ${item.isAvailable ? 'hover:border-red-600/40 hover:bg-neutral-50 dark:hover:bg-[#181215] active:scale-[0.99] cursor-pointer' : 'opacity-60 grayscale-[0.5] cursor-not-allowed'}`}
       dir="rtl"
-      onClick={() => onAdd(item)}
+      onClick={() => item.isAvailable && onAdd(item)}
     >
       {/* Image or Category Fallback Icon */}
       <div className="relative shrink-0 rounded-lg overflow-hidden w-20 h-20 bg-neutral-100 dark:bg-black/40 border border-neutral-200 dark:border-white/10 flex items-center justify-center">
@@ -68,17 +68,23 @@ export default function MenuCard({ item, onAdd }: Props) {
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAdd(item);
-            }}
-            className="flex items-center gap-1 px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 active:scale-95 text-white text-xs font-bold transition-all shadow-sm cursor-pointer border border-red-500/60 font-body"
-          >
-            <Plus size={13} className="stroke-[3]" />
-            <span>أضف</span>
-          </button>
+          {item.isAvailable ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAdd(item);
+              }}
+              className="flex items-center gap-1 px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 active:scale-95 text-white text-xs font-bold transition-all shadow-sm cursor-pointer border border-red-500/60 font-body"
+            >
+              <Plus size={13} className="stroke-[3]" />
+              <span>أضف</span>
+            </button>
+          ) : (
+            <span className="flex items-center px-2 py-1 rounded-lg bg-neutral-200 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 text-[10px] font-bold">
+              غير متوفر
+            </span>
+          )}
         </div>
       </div>
     </div>
