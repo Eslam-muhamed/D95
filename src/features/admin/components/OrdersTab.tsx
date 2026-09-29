@@ -41,6 +41,17 @@ function formatTimeAgo(dateStr: string): string {
     return `منذ ${Math.floor(hours / 24)} يوم`;
 }
 
+function buildAdminWhatsAppMsg(order: DBOrder): string {
+    const lines = [
+        `أهلاً بحضرتك يا فندم ${order.customer_name || ''} ☕️`,
+        `استلمنا طلبك رقم #${order.order_number}`,
+        `جاري تحضير الأوردر وهيكون جاهز في أسرع وقت.`,
+        `لأي استفسار إحنا معاك!`,
+        `*D95 Cafe & Lounge* 🎮`
+    ];
+    return encodeURIComponent(lines.join('\n'));
+}
+
 function getStatusBadge(status: string) {
     switch (status) {
         case 'pending':
@@ -437,7 +448,7 @@ export default function OrdersTab() {
                                                     <span>{order.customer_phone}</span>
                                                 </div>
                                                 <a
-                                                    href={`https://wa.me/2${order.customer_phone.replace(/\D/g, '')}`}
+                                                    href={`https://wa.me/2${order.customer_phone.replace(/\D/g, '')}?text=${buildAdminWhatsAppMsg(order)}`}
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     className="inline-flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 transition-colors font-bold"
