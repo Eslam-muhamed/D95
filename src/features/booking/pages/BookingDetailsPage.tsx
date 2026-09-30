@@ -246,16 +246,32 @@ export default function BookingDetailsPage() {
     const { theme, toggleTheme } = useTheme();
     const { items: cartItems, booking: cartBooking, cafeTotal, setBooking, openCart, itemCount } = useCart();
 
-    // Initial room fallback from navigation state
+    // Initial room fallback from URL query param or navigation state
+    const queryRoom = new URLSearchParams(location.search).get('room');
     const initialRoom = location.state?.room || { name: 'غرفة 01 (Play Room)' };
     const [selectedRoomId, setSelectedRoomId] = useState<string>(() => {
+        if (queryRoom) {
+            if (queryRoom === 'room-2' || queryRoom.includes('02') || queryRoom.includes('stars') || queryRoom.includes('papel')) return 'room-2';
+            if (queryRoom === 'room-1' || queryRoom.includes('01') || queryRoom.includes('breaking')) return 'room-1';
+        }
         if (initialRoom.id) {
-            if (initialRoom.id === 'room-2' || initialRoom.id.includes('02') || initialRoom.id.includes('stars')) return 'room-2';
+            if (initialRoom.id === 'room-2' || initialRoom.id.includes('02') || initialRoom.id.includes('stars') || initialRoom.id.includes('papel')) return 'room-2';
             return 'room-1';
         }
-        if (initialRoom.name && (initialRoom.name.includes('02') || initialRoom.name.includes('النجوم') || initialRoom.name.includes('VIP'))) return 'room-2';
+        if (initialRoom.name && (initialRoom.name.includes('02') || initialRoom.name.includes('النجوم') || initialRoom.name.includes('VIP') || initialRoom.name.includes('بابيل') || initialRoom.name.includes('Casa'))) return 'room-2';
         return 'room-1';
     });
+
+    useEffect(() => {
+        const param = new URLSearchParams(location.search).get('room');
+        if (param) {
+            if (param === 'room-2' || param.includes('02') || param.includes('stars') || param.includes('papel')) {
+                setSelectedRoomId('room-2');
+            } else if (param === 'room-1' || param.includes('01') || param.includes('breaking')) {
+                setSelectedRoomId('room-1');
+            }
+        }
+    }, [location.search]);
 
     const [isRoomMenuOpen, setIsRoomMenuOpen] = useState(false);
     const roomMenuRef = useRef<HTMLDivElement>(null);

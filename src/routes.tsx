@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
 import CartSheet from '@/features/cart/components/CartSheet';
@@ -70,6 +70,7 @@ export function AppRoutes() {
                     <Route path="/" element={<GatewayPage />} />
                     <Route path="/playstation" element={<PlaystationPage />} />
                     <Route path="/playstation/booking" element={<BookingDetailsPage />} />
+                    <Route path="/booking" element={<Navigate to="/playstation/booking" replace />} />
                     <Route path="/playstation/payment" element={<BookingPaymentPage />} />
                     <Route path="/playstation/success" element={<BookingSuccessPage />} />
                     <Route path="/menu" element={<MenuPage />} />

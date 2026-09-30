@@ -583,7 +583,16 @@ ${formatIntervalList(room2Intervals)}
                   type="button"
                   onClick={() => {
                     setIsChatOpen(false);
-                    navigate(targetRoomId ? `/booking?room=${targetRoomId}` : '/booking');
+                    const roomPath = targetRoomId ? `/playstation/booking?room=${targetRoomId}` : '/playstation/booking';
+                    navigate(roomPath, {
+                      state: {
+                        room: {
+                          id: targetRoomId || 'room-1',
+                          name: isRoom2 ? 'غرفة لا كاسا دي بابيل (La Casa De Papel)' : 'غرفة بريكينج باد (Breaking Bad)',
+                          rate: 100,
+                        },
+                      },
+                    });
                   }}
                   className={`w-full sm:w-auto px-4 py-2 rounded-xl text-white font-bold text-xs transition-all shadow flex items-center justify-center gap-1.5 cursor-pointer ${buttonBg}`}
                 >
