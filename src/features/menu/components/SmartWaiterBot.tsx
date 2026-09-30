@@ -1,8 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, X, Send, User, Sparkles, AlertCircle, ShoppingCart, ArrowLeftRight } from 'lucide-react';
+import { 
+  Bot, X, Send, User, Sparkles, AlertCircle, ShoppingCart, 
+  ArrowLeftRight, MapPin, ExternalLink, Gamepad2, Calendar, MessageSquare 
+} from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/features/cart/stores/cartStore';
+import { CONTACT_INFO } from '@/constants/contactInfo';
+import { fetchRoomOccupiedIntervals } from '@/features/booking/services/bookingService';
+import { 
+  getCairoTodayDateString, 
+  getBusinessOperatingWindow, 
+  formatArabicTimeFromDate 
+} from '@/lib/bookingDatetime';
 
 // We import items to pass as context
 import { getCachedCategories, getCachedProducts } from '@/features/menu/services/menuService';
@@ -38,8 +49,8 @@ const PERSONAS: Record<Persona, PersonaConfig> = {
     cardHoverBg: 'hover:bg-red-500/10',
     userBubbleBg: 'bg-red-600',
     sendBtnBg: 'bg-red-600 hover:bg-red-700',
-    welcome: 'أهلاً بك في D95 ☕🎮! أنا دبور، إزاي أقدر أساعدك وأرشحلك من المنيو النهارده؟',
-    placeholder: 'اسأل دبور عن المنيو أو الأسعار...',
+    welcome: 'أهلاً بك في D95 ☕🎮! أنا دبور، إزاي أقدر أساعدك؟ تسألني عن المنيو، أو تحجز رومات البلايستيشن، أو تسأل عن مكاننا ومطور موقعنا!',
+    placeholder: 'اسأل دبور عن المنيو، الرومات، أو المكان...',
     description: 'شاب مرح وصاحب المكان، هيظبطلك أحسن مشروبات وسناكس للعب والرواقان 🔥'
   },
   abu_malaz: {
@@ -53,8 +64,8 @@ const PERSONAS: Record<Persona, PersonaConfig> = {
     cardHoverBg: 'hover:bg-emerald-500/10',
     userBubbleBg: 'bg-emerald-600',
     sendBtnBg: 'bg-emerald-600 hover:bg-emerald-700',
-    welcome: 'يا مية أهلاً وسهلاً بيك في D95! أنا أبو ملاذ هنا عشان اساعدك تختار المشروب اللي يعدل مزاجك، قولي نفسك في إيه يروّق عليك وهجهزهولك بأحسن جودة ✨',
-    placeholder: 'اسأل أبو ملاذ عن أحسن طلب ليك...',
+    welcome: 'يا مية أهلاً وسهلاً بيك في D95! أنا أبو ملاذ، هنا عشان أساعدك تختار طلبك من المنيو، وأعرفك على مواعيد ورومات البلايستيشن ومكاننا في أي وقت تشرفنا فيه ✨',
+    placeholder: 'اسأل أبو ملاذ عن الطلبات، الرومات، أو اللوكيشن...',
     description: 'راقي وشهم ومضياف، هيعدل مزاجك بأحلى ترشيحات مخدومة بحب في مكانه 🎩'
   }
 };
@@ -149,6 +160,7 @@ function incrementDailyUsage(): number {
 }
 
 export default function SmartWaiterBot() {
+  const navigate = useNavigate();
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
@@ -291,6 +303,63 @@ export default function SmartWaiterBot() {
     }).join('\n');
   };
 
+  const generateRoomsContext = async () => {
+    try {
+      const todayDate = getCairoTodayDateString();
+      const { opening, closing } = getBusinessOperatingWindow(todayDate);
+      const [room1Intervals, room2Intervals] = await Promise.all([
+        fetchRoomOccupiedIntervals('room-1', todayDate, opening, closing).catch(() => []),
+        fetchRoomOccupiedIntervals('room-2', todayDate, opening, closing).catch(() => [])
+      ]);
+
+      const now = new Date();
+      const nowArabic = formatArabicTimeFromDate(now);
+
+      const formatIntervalList = (intervals: Array<{ start: Date; end: Date }>) => {
+        if (!intervals || intervals.length === 0) {
+          return 'لا توجد أي حجوزات مسجلة اليوم حتى الآن، الغرفة متاحة بالكامل للعب والحجز.';
+        }
+        return intervals.map((inv, idx) => 
+          `- الحجز رقم ${idx + 1}: من الساعة ${formatArabicTimeFromDate(new Date(inv.start))} إلى الساعة ${formatArabicTimeFromDate(new Date(inv.end))}`
+        ).join('\n');
+      };
+
+      const isRoomOccupiedNow = (intervals: Array<{ start: Date; end: Date }>) => {
+        const nowTime = now.getTime();
+        return intervals.some(inv => {
+          const s = new Date(inv.start).getTime();
+          const e = new Date(inv.end).getTime();
+          return nowTime >= s && nowTime < e;
+        });
+      };
+
+      const room1NowOccupied = isRoomOccupiedNow(room1Intervals);
+      const room2NowOccupied = isRoomOccupiedNow(room2Intervals);
+
+      return `
+تاريخ اليوم: ${todayDate}
+الوقت الحالي في مصر الآن: ${nowArabic}
+
+1. غرفة بريكينج باد (Breaking Bad - Room 01):
+- السعر: 100 ج.م / ساعة.
+- المواصفات: شاشة 65 بوصة 4K 120Hz، صوت محيطي 3D وعزل تام، 4 دراعات PS5، قنوات بين سبورتس ونتفلكس مجاناً، تكييف مستقل، ثيم كيميائي أخضر زمردي.
+- الحالة الآن في هذه اللحظة: ${room1NowOccupied ? 'الغرفة مشغولة حالياً بحجز قائم' : 'الغرفة فاضية ومتاحة الآن للعب'}
+- جدول الحجوزات المسجلة اليوم:
+${formatIntervalList(room1Intervals)}
+
+2. غرفة لا كاسا دي بابيل (La Casa De Papel - Room 02):
+- السعر: 100 ج.م / ساعة.
+- المواصفات: شاشة 65 بوصة 4K 120Hz، سقف نجوم VIP سينمائي، عزل صوتي كامل، 4 دراعات PS5، قنوات بين سبورتس ونتفلكس مجاناً، تكييف، ثيم بروفيسور أحمر.
+- الحالة الآن في هذه اللحظة: ${room2NowOccupied ? 'الغرفة مشغولة حالياً بحجز قائم' : 'الغرفة فاضية ومتاحة الآن للعب'}
+- جدول الحجوزات المسجلة اليوم:
+${formatIntervalList(room2Intervals)}
+`.trim();
+    } catch (e) {
+      console.warn('Failed to generate rooms context:', e);
+      return 'غرفة بريكينج باد (100 ج/ساعة) وغرفة لا كاسا دي بابيل (100 ج/ساعة) متاحتان للحجز اليوم.';
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -334,14 +403,16 @@ export default function SmartWaiterBot() {
       const currentMessages = personaMessages[activePersona];
       const historyToPass = currentMessages.slice(1).map(m => ({ role: m.role, text: m.text }));
       const menuContext = generateMenuContext();
+      const roomsContext = await generateRoomsContext();
 
-      // Call Supabase Edge Function with selected persona
+      // Call Supabase Edge Function with selected persona and rich room context
       const { data, error } = await supabase.functions.invoke('smart-waiter', {
         body: {
           message: userText,
           history: historyToPass,
           menuContext,
-          persona: activePersona
+          persona: activePersona,
+          roomsContext
         }
       });
 
@@ -428,47 +499,162 @@ export default function SmartWaiterBot() {
   };
 
   const renderMessageContent = (text: string) => {
-    const parts = text.split(/(\[ADD_TO_CART:[a-zA-Z0-9-]+\])/g);
+    const tokenRegex = /(\[ADD_TO_CART:[a-zA-Z0-9-]+\]|\[BOOK_ROOM(?::[a-zA-Z0-9-]+)?\]|\[LOCATION_MAP\]|\[DEVELOPER_CONTACT\])/g;
+    const parts = text.split(tokenRegex);
     const products = getCachedProducts();
 
     return (
       <div className="flex flex-col gap-2">
         {parts.map((part, index) => {
-          const match = part.match(/\[ADD_TO_CART:([a-zA-Z0-9-]+)\]/);
-          if (match) {
-            const productIdStr = match[1];
+          // 1. ADD_TO_CART
+          const cartMatch = part.match(/\[ADD_TO_CART:([a-zA-Z0-9-]+)\]/);
+          if (cartMatch) {
+            const productIdStr = cartMatch[1];
             const product = products.find(p => String(p.id) === productIdStr);
-            
             if (product) {
               return (
-                <div key={index} className="mt-2 flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 shadow-sm">
-                  <div className="flex items-center gap-2">
+                <div key={index} className="mt-2 flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-700/80 border border-slate-200 dark:border-slate-600 shadow-sm">
+                  <div className="flex items-center gap-2 min-w-0">
                     {product.image_url ? (
-                      <img src={product.image_url} alt={product.name} className="w-10 h-10 rounded-lg object-cover" />
+                      <img src={product.image_url} alt={product.name} className="w-10 h-10 rounded-lg object-cover shrink-0" />
                     ) : (
-                      <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
                         <ShoppingCart className="w-5 h-5 text-red-600" />
                       </div>
                     )}
-                    <div className="flex flex-col">
-                      <span className="font-bold text-xs text-slate-900 dark:text-white">{product.name}</span>
-                      <span className="font-bold text-[10px] text-red-600">{product.price} ج.م</span>
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-bold text-xs text-slate-900 dark:text-white truncate">{product.name}</span>
+                      <span className="font-bold text-[10px] text-red-600 dark:text-red-400">{product.price} ج.م</span>
                     </div>
                   </div>
                   <button 
                     onClick={() => handleAddToCart(product)}
-                    className="p-2 sm:p-2.5 rounded-xl bg-red-600 text-white hover:bg-red-700 hover:scale-105 active:scale-95 transition-all shadow-md flex items-center gap-2"
+                    className="p-2 sm:px-3 sm:py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 hover:scale-105 active:scale-95 transition-all shadow-md flex items-center gap-1.5 shrink-0"
                     title="أضف للسلة"
                   >
                     <span className="text-xs font-bold hidden sm:inline-block">أضف</span>
-                    <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <ShoppingCart className="w-4 h-4" />
                   </button>
                 </div>
               );
             }
             return <span key={index} className="text-red-500 font-bold text-xs whitespace-pre-wrap mx-1">(عذراً، المنتج غير متوفر)</span>;
           }
-          
+
+          // 2. BOOK_ROOM
+          const bookMatch = part.match(/\[BOOK_ROOM(?::([a-zA-Z0-9-]+))?\]/);
+          if (bookMatch) {
+            const targetRoomId = bookMatch[1]; // "room-1" | "room-2" | undefined
+            const isRoom1 = targetRoomId === 'room-1';
+            const isRoom2 = targetRoomId === 'room-2';
+            
+            const roomTitle = isRoom1 
+              ? 'غرفة بريكينج باد (Breaking Bad)' 
+              : isRoom2 
+                ? 'غرفة لا كاسا دي بابيل (La Casa De Papel)' 
+                : 'رومات البلايستيشن VIP';
+                
+            const roomDesc = isRoom1
+              ? 'شاشة 65" 4K • ثيم كيميائي أخضر • 100 ج.م/ساعة'
+              : isRoom2
+                ? 'شاشة 65" 4K • سقف نجوم VIP • 100 ج.م/ساعة'
+                : 'شاشات 65 بوصة 4K • 4 دراعات PS5 • 100 ج.م/ساعة';
+
+            const buttonBg = isRoom1
+              ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-900/30'
+              : 'bg-red-600 hover:bg-red-500 shadow-red-900/30';
+
+            return (
+              <div key={index} className="mt-2.5 p-3 rounded-2xl bg-white dark:bg-slate-800/95 border border-slate-200/90 dark:border-slate-700 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-right">
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isRoom1 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'}`}>
+                    <Gamepad2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white leading-tight">
+                      {roomTitle}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {roomDesc}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsChatOpen(false);
+                    navigate(targetRoomId ? `/booking?room=${targetRoomId}` : '/booking');
+                  }}
+                  className={`w-full sm:w-auto px-4 py-2 rounded-xl text-white font-bold text-xs transition-all shadow flex items-center justify-center gap-1.5 cursor-pointer ${buttonBg}`}
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>احجز موعدك الآن</span>
+                </button>
+              </div>
+            );
+          }
+
+          // 3. LOCATION_MAP
+          if (part === '[LOCATION_MAP]') {
+            return (
+              <div key={index} className="mt-2.5 p-3 rounded-2xl bg-white dark:bg-slate-800/95 border border-slate-200/90 dark:border-slate-700 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-right">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                    <MapPin className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white leading-tight">
+                      D95 Gaming Lounge & Café
+                    </h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      القضاة، مركز كفر صقر، محافظة الشرقية
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={CONTACT_INFO.googleMapsLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-900 hover:bg-black dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold text-xs transition-all shadow flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <span>فتح في Google Maps</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            );
+          }
+
+          // 4. DEVELOPER_CONTACT
+          if (part === '[DEVELOPER_CONTACT]') {
+            return (
+              <div key={index} className="mt-2.5 p-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700 shadow-lg text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-right">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs sm:text-sm text-white flex items-center gap-1.5">
+                      <span>المهندس إسلام</span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">Eng. Eslam</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-300 mt-0.5">
+                      مطور ومبرمج منصة وسيستم D95 الذكي
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href="https://wa.me/201090992723"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-md shadow-emerald-900/40 flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>تواصل واتساب (01090992723)</span>
+                </a>
+              </div>
+            );
+          }
+
           return part ? <span key={index} className="whitespace-pre-wrap">{part}</span> : null;
         })}
       </div>
