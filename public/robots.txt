@@ -14,3 +14,5 @@ User-agent: *
 Disallow: /admin
 Disallow: /admin/login
 Allow: /
+
+Sitemap: https://d95cafe.com/sitemap.xml
