@@ -51,14 +51,7 @@
         } catch (e) {}
       })();
     </script>
-    <script>
-      window.onerror = function(message, source, lineno, colno, error) {
-        document.body.innerHTML = '<div style="color:red;background:black;padding:20px;z-index:999999;position:fixed;top:0;left:0;right:0;bottom:0;font-size:20px;"><h1>GLOBAL ERROR</h1><p>' + message + '</p><pre>' + (error ? error.stack : '') + '</pre></div>';
-      };
-      window.onunhandledrejection = function(event) {
-        document.body.innerHTML = '<div style="color:red;background:black;padding:20px;z-index:999999;position:fixed;top:0;left:0;right:0;bottom:0;font-size:20px;"><h1>UNHANDLED REJECTION</h1><p>' + event.reason + '</p></div>';
-      };
-    </script>
+
 
     <script type="application/ld+json">
     {
