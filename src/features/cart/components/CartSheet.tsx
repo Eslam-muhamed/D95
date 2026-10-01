@@ -209,6 +209,13 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
       return;
     }
 
+    if (orderType === 'dine') {
+      if (!tableNo.trim()) {
+        toast.error('يرجى كتابة رقم الطاولة أو مكان الجلوس');
+        return;
+      }
+    }
+
     if (orderType === 'delivery') {
       if (!delivName.trim()) {
         toast.error('يرجى كتابة الاسم');
@@ -998,7 +1005,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
               {/* Dine-in */}
               {orderType === 'dine' && (
                 <div>
-                  <p className="text-sm mb-1 font-semibold" style={{ color: 'var(--c-on-card)', fontFamily: 'Cairo, sans-serif' }}>🪑 رقم الطاولة أو مكان الجلوس</p>
+                  <p className="text-sm mb-1 font-semibold" style={{ color: 'var(--c-on-card)', fontFamily: 'Cairo, sans-serif' }}>🪑 رقم الطاولة أو مكان الجلوس <span className="text-red-500">*</span></p>
                   <input
                     value={tableNo}
                     onChange={e => setTableNo(e.target.value)}
