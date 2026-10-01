@@ -1262,6 +1262,20 @@ export default function BookingDetailsPage() {
                     </div>
                 )}
 
+                {/* Developer Credit */}
+                <div className="pt-4 pb-20 sm:pb-24 text-[10px] sm:text-[11px] text-neutral-500 font-body flex items-center justify-center gap-1 opacity-80 hover:opacity-100 transition-opacity" dir="ltr">
+                    Developed by
+                    <a 
+                        href="https://wa.me/201090992723" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="font-bold text-neutral-700 dark:text-neutral-300 hover:text-red-600 dark:hover:text-red-500 transition-colors"
+                        title="Contact Developer on WhatsApp"
+                    >
+                        ESLAM
+                    </a>
+                </div>
+
             </main>
 
             {/* Sticky Mobile-First Bottom Bar */}

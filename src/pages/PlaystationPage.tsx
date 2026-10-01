@@ -699,6 +699,19 @@ export default function PlaystationPage() {
                             D95 GAMING LOUNGE &amp; CAFÉ • CAIRO
                         </p>
                     </div>
+
+                    <div className="pt-2 text-[10px] sm:text-[11px] text-neutral-500 font-body flex items-center justify-center gap-1 opacity-80 hover:opacity-100 transition-opacity" dir="ltr">
+                        Developed by
+                        <a 
+                            href="https://wa.me/201090992723" 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="font-bold text-neutral-700 dark:text-neutral-300 hover:text-red-600 dark:hover:text-red-500 transition-colors"
+                            title="Contact Developer on WhatsApp"
+                        >
+                            ESLAM
+                        </a>
+                    </div>
                 </footer>
             </main>
         </div>
