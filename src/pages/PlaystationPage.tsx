@@ -224,6 +224,18 @@ export default function PlaystationPage() {
         },
     ], [roomRates]);
 
+    const dynamicWalkInItems = useMemo(() => {
+        return WALK_IN_ITEMS.map(item => {
+            if (item.id === 'ps-outside') {
+                return { ...item, price: roomRates['ps-outside'] || 80 };
+            }
+            if (item.id === 'billiards') {
+                return { ...item, price: roomRates['billiards'] || 15 };
+            }
+            return item;
+        });
+    }, [roomRates]);
+
     // ─────────────────────────────────────────────────────────────
     // FAST & INSTANT ROOM ENTER (ZERO LAG • 60FPS SMOOTH)
     // ─────────────────────────────────────────────────────────────
@@ -573,7 +585,7 @@ export default function PlaystationPage() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2.5 sm:gap-4 max-w-2xl mx-auto">
-                        {WALK_IN_ITEMS.map((item) => {
+                        {dynamicWalkInItems.map((item) => {
                             const Icon = item.icon;
                             return (
                                 <div

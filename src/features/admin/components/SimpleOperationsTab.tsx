@@ -140,6 +140,8 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
     const [, setRoomRates] = useState<RoomRates>({ 'room-1': 100, 'room-2': 100 });
     const [rateRoom1, setRateRoom1] = useState<number>(100);
     const [rateRoom2, setRateRoom2] = useState<number>(100);
+    const [ratePsOutside, setRatePsOutside] = useState<number>(80);
+    const [rateBilliards, setRateBilliards] = useState<number>(15);
     const [savingRates, setSavingRates] = useState<boolean>(false);
 
     // Filters for Section 1: Today's Confirmed Schedule
@@ -215,6 +217,8 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
             setRoomRates(rates);
             setRateRoom1(rates['room-1'] || 100);
             setRateRoom2(rates['room-2'] || 100);
+            setRatePsOutside(rates['ps-outside'] || 80);
+            setRateBilliards(rates['billiards'] || 15);
             setPolicy(pol);
         } catch {
             if (!isSilent) toast.error('تعذر جلب بيانات الحجوزات');
@@ -441,6 +445,8 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
             const updated = await updateRoomRates({
                 'room-1': Number(rateRoom1) || 100,
                 'room-2': Number(rateRoom2) || 100,
+                'ps-outside': Number(ratePsOutside) || 80,
+                'billiards': Number(rateBilliards) || 15,
             });
             setRoomRates(updated);
             toast.success('تم حفظ وتطبيق أسعار ساعات الغرف بنجاح! 🎮');
@@ -2305,6 +2311,38 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
                                         className="w-full bg-slate-50 text-slate-900 font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
                                     />
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">ج.م / ساعة</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-700 block mb-1">
+                                    سعر ساعة البلايستيشن الخارجي (Open Floor):
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={ratePsOutside}
+                                        onChange={(e) => setRatePsOutside(Number(e.target.value))}
+                                        className="w-full bg-slate-50 text-slate-900 font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
+                                    />
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">ج.م / ساعة</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-700 block mb-1">
+                                    سعر جيم البلياردو:
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={rateBilliards}
+                                        onChange={(e) => setRateBilliards(Number(e.target.value))}
+                                        className="w-full bg-slate-50 text-slate-900 font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
+                                    />
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">ج.م / جيم</span>
                                 </div>
                             </div>
                         </div>

@@ -209,9 +209,19 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
       return;
     }
 
-    if (orderType === 'delivery' && !delivPhone.trim()) {
-      toast.error('يرجى كتابة رقم الموبايل للتوصيل');
-      return;
+    if (orderType === 'delivery') {
+      if (!delivName.trim()) {
+        toast.error('يرجى كتابة الاسم');
+        return;
+      }
+      if (!delivPhone.trim()) {
+        toast.error('يرجى كتابة رقم الموبايل للتوصيل');
+        return;
+      }
+      if (!delivAddr.trim()) {
+        toast.error('يرجى كتابة عنوان التوصيل بالتفصيل');
+        return;
+      }
     }
 
     setSubmittingCafeOrder(true);
@@ -1003,18 +1013,18 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
               {orderType === 'delivery' && (
                 <div className="space-y-3">
                   <div>
-                    <p className="text-sm mb-1 font-semibold" style={{ color: 'var(--c-on-card)', fontFamily: 'Cairo, sans-serif' }}>👤 الاسم</p>
+                    <p className="text-sm mb-1 font-semibold" style={{ color: 'var(--c-on-card)', fontFamily: 'Cairo, sans-serif' }}>👤 الاسم <span className="text-red-500">*</span></p>
                     <input value={delivName} onChange={e => setDelivName(e.target.value)} placeholder="اسمك الكريم"
                       className="w-full rounded-xl px-3 py-2.5 text-sm outline-none" style={{ ...inputStyle }} />
                   </div>
                   <div>
-                    <p className="text-sm mb-1 font-semibold" style={{ color: 'var(--c-on-card)', fontFamily: 'Cairo, sans-serif' }}>📱 الموبايل</p>
+                    <p className="text-sm mb-1 font-semibold" style={{ color: 'var(--c-on-card)', fontFamily: 'Cairo, sans-serif' }}>📱 الموبايل <span className="text-red-500">*</span></p>
                     <input value={delivPhone} onChange={e => setDelivPhone(e.target.value)} placeholder="01xxxxxxxxx" type="tel"
                       className="w-full rounded-xl px-3 py-2.5 text-sm outline-none" style={{ ...inputStyle }} />
                   </div>
                   <div>
-                    <p className="text-sm mb-1 font-semibold" style={{ color: 'var(--c-on-card)', fontFamily: 'Cairo, sans-serif' }}>📍 العنوان</p>
-                    <textarea value={delivAddr} onChange={e => setDelivAddr(e.target.value)} placeholder="عنوان التوصيل بالتفصيل" rows={2}
+                    <p className="text-sm mb-1 font-semibold" style={{ color: 'var(--c-on-card)', fontFamily: 'Cairo, sans-serif' }}>📍 العنوان بالتفصيل <span className="text-red-500">*</span></p>
+                    <textarea value={delivAddr} onChange={e => setDelivAddr(e.target.value)} placeholder="رقم العمارة، الشارع، الدور، الشقة..." rows={2}
                       className="w-full rounded-xl px-3 py-2 text-sm resize-none outline-none"
                       style={{ ...inputStyle, caretColor: '#C45C6A' }} />
                   </div>
