@@ -28,7 +28,6 @@ import { createOrder } from '@/services/orderService';
 import { fetchPaymentSettings, PaymentSettings } from '@/services/paymentSettingsService';
 
 const CAFE_NAME = CONTACT_INFO.fullName;
-const WHATSAPP_PHONE = CONTACT_INFO.whatsappNumber;
 
 interface Props {
   open?: boolean;
@@ -88,6 +87,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
   const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
     walletNumber: CONTACT_INFO.walletNumber,
     instapayHandle: CONTACT_INFO.instapayHandle,
+    whatsappNumber: CONTACT_INFO.whatsappNumber,
     instapayLink: '',
   });
 
@@ -216,7 +216,8 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
 
     setSubmittingCafeOrder(true);
     const orderNumber = `D95-ORD-${Date.now().toString(36).slice(-4).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${buildCafeWhatsAppMsg(orderNumber)}`;
+    const waPhone = paymentSettings.whatsappNumber || CONTACT_INFO.whatsappNumber;
+    const whatsappUrl = `https://wa.me/${waPhone}?text=${buildCafeWhatsAppMsg(orderNumber)}`;
 
     try {
       await createOrder({
@@ -264,7 +265,8 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
   };
 
   const sendPsOrder = () => {
-    const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${buildPsWhatsAppMsg()}`;
+    const waPhone = paymentSettings.whatsappNumber || CONTACT_INFO.whatsappNumber;
+    const whatsappUrl = `https://wa.me/${waPhone}?text=${buildPsWhatsAppMsg()}`;
     const newTab = window.open(whatsappUrl, '_blank');
     if (!newTab || newTab.closed || typeof newTab.closed === 'undefined') {
       window.location.href = whatsappUrl;

@@ -27,7 +27,6 @@ interface SnackAddon {
     icon?: string;
 }
 
-const WHATSAPP_NUMBER = CONTACT_INFO.whatsappNumber;
 
 export default function BookingSuccessPage() {
     const navigate = useNavigate();
@@ -48,6 +47,7 @@ export default function BookingSuccessPage() {
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
         walletNumber: CONTACT_INFO.walletNumber,
         instapayHandle: CONTACT_INFO.instapayHandle,
+        whatsappNumber: CONTACT_INFO.whatsappNumber,
         instapayLink: '',
     });
 
@@ -175,7 +175,8 @@ export default function BookingSuccessPage() {
             msg += `📌 *سأقوم بالدفع كاش بالصالة - برجاء مراجعة الطلب وتأكيد الحجز لقفل الموعد.*`;
         }
 
-        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+        const waPhone = paymentSettings.whatsappNumber || CONTACT_INFO.whatsappNumber;
+        window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(msg)}`, '_blank');
     };
 
     const handleShare = () => {

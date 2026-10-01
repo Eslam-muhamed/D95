@@ -4,6 +4,7 @@ import { CONTACT_INFO } from '@/constants/contactInfo';
 export interface PaymentSettings {
     walletNumber: string;
     instapayHandle: string;
+    whatsappNumber: string;
     instapayLink?: string;
     updatedAt?: string;
 }
@@ -11,6 +12,7 @@ export interface PaymentSettings {
 const DEFAULT_PAYMENT_SETTINGS: PaymentSettings = {
     walletNumber: CONTACT_INFO.walletNumber,
     instapayHandle: CONTACT_INFO.instapayHandle,
+    whatsappNumber: CONTACT_INFO.whatsappNumber,
     instapayLink: '',
 };
 
@@ -39,6 +41,7 @@ export async function fetchPaymentSettings(): Promise<PaymentSettings> {
             const settings: PaymentSettings = {
                 walletNumber: data.value.walletNumber || DEFAULT_PAYMENT_SETTINGS.walletNumber,
                 instapayHandle: data.value.instapayHandle || DEFAULT_PAYMENT_SETTINGS.instapayHandle,
+                whatsappNumber: data.value.whatsappNumber || DEFAULT_PAYMENT_SETTINGS.whatsappNumber,
                 instapayLink: data.value.instapayLink || '',
                 updatedAt: data.updated_at,
             };
@@ -60,6 +63,7 @@ export async function updatePaymentSettings(settings: PaymentSettings): Promise<
     const payload = {
         walletNumber: settings.walletNumber.trim(),
         instapayHandle: settings.instapayHandle.trim(),
+        whatsappNumber: settings.whatsappNumber.trim(),
         instapayLink: (settings.instapayLink || '').trim(),
     };
 
@@ -81,6 +85,7 @@ export async function updatePaymentSettings(settings: PaymentSettings): Promise<
     const updated: PaymentSettings = {
         walletNumber: data?.value?.walletNumber || payload.walletNumber,
         instapayHandle: data?.value?.instapayHandle || payload.instapayHandle,
+        whatsappNumber: data?.value?.whatsappNumber || payload.whatsappNumber,
         instapayLink: data?.value?.instapayLink || payload.instapayLink,
         updatedAt: data?.updated_at,
     };

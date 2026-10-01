@@ -10,7 +10,8 @@ import {
     AlertCircle,
     Info,
     PhoneCall,
-    ShieldCheck
+    ShieldCheck,
+    MessageCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { fetchPaymentSettings, updatePaymentSettings, PaymentSettings } from '@/services/paymentSettingsService';
@@ -21,6 +22,7 @@ export default function PaymentSettingsTab() {
     const [settings, setSettings] = useState<PaymentSettings>({
         walletNumber: CONTACT_INFO.walletNumber,
         instapayHandle: CONTACT_INFO.instapayHandle,
+        whatsappNumber: CONTACT_INFO.whatsappNumber,
         instapayLink: '',
     });
     const [loading, setLoading] = useState(true);
@@ -52,6 +54,11 @@ export default function PaymentSettingsTab() {
             return;
         }
 
+        if (!settings.whatsappNumber.trim()) {
+            toast.error('يرجى إدخال رقم واتساب لاستقبال الطلبات');
+            return;
+        }
+
         if (!settings.instapayHandle.trim()) {
             toast.error('يرجى إدخال معرف إنستاباي');
             return;
@@ -77,6 +84,7 @@ export default function PaymentSettingsTab() {
         setSettings({
             walletNumber: CONTACT_INFO.walletNumber,
             instapayHandle: CONTACT_INFO.instapayHandle,
+            whatsappNumber: CONTACT_INFO.whatsappNumber,
             instapayLink: '',
         });
         toast.info('تمت استعادة القيم الافتراضية، اضغط حفظ لتطبيقها.');
@@ -233,6 +241,40 @@ export default function PaymentSettingsTab() {
                                 />
                                 <p className="text-[11px] text-slate-400 mt-1">
                                     إذا تم إدخال رابط دفع مخصص، سيتم توجيه العميل إليه فوراً، وإلا فسيتم فتح تطبيق إنستاباي مباشرة.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 3. WhatsApp Number Section */}
+                    <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+                        <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                            <MessageCircle className="w-5 h-5 text-emerald-500" />
+                            <div>
+                                <h3 className="font-bold text-sm text-slate-900">
+                                    رقم استقبال طلبات الواتساب
+                                </h3>
+                                <p className="text-xs text-slate-500">
+                                    هذا الرقم سيصل عليه طلبات الكافيه وحجوزات البلايستيشن
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                    رقم الواتساب (متضمناً كود الدولة):
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={settings.whatsappNumber}
+                                    onChange={(e) => setSettings({ ...settings, whatsappNumber: e.target.value })}
+                                    placeholder="مثال: 201000000095"
+                                    dir="ltr"
+                                    className="w-full bg-slate-50 text-slate-900 font-mono font-bold text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:bg-white focus:border-emerald-500 outline-none transition-colors"
+                                />
+                                <p className="text-[11px] text-slate-400 mt-1">
+                                    يجب إدخال الرقم بكود الدولة (مثال 20 لمصر) لضمان عمل الرابط بشكل صحيح.
                                 </p>
                             </div>
                         </div>
