@@ -116,6 +116,8 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                                 <img 
                                     src="/new-logo.png" 
                                     alt="D95" 
+                                    width="840"
+                                    height="460"
                                     loading="eager"
                                     fetchPriority="high"
                                     className="w-full h-auto object-contain drop-shadow-[0_0_20px_rgba(220,38,38,0.4)]" 
