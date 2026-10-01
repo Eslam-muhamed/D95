@@ -45,10 +45,52 @@ function buildAdminWhatsAppMsg(order: DBOrder): string {
     const lines = [
         `أهلاً بحضرتك يا فندم ${order.customer_name || ''} ☕️`,
         `استلمنا طلبك رقم #${order.order_number}`,
-        `جاري تحضير الأوردر وهيكون جاهز في أسرع وقت.`,
-        `لأي استفسار إحنا معاك!`,
-        `*D95 Cafe & Lounge* 🎮`
+        ``,
+        `📋 *تفاصيل الطلب:*`
     ];
+
+    if (Array.isArray(order.items)) {
+        order.items.forEach(item => {
+            lines.push(`- ${item.quantity}x ${item.name} (${item.price} ج.م)`);
+            // Add customization tags if present
+            if (item.customization && Object.keys(item.customization).length > 0 && typeof formatCustomizationTags === 'function') {
+                try {
+                    const tags = formatCustomizationTags(item.customization as unknown as ItemCustomization);
+                    if (tags.length > 0) {
+                        lines.push(`  └ [ ${tags.join(' - ')} ]`);
+                    }
+                } catch {
+                    // Ignore format errors
+                }
+            }
+        });
+    }
+
+    lines.push(``);
+    lines.push(`💰 *المبلغ الإجمالي:* ${order.total_amount} ج.م`);
+
+    let orderTypeAr = 'صالة';
+    if (order.order_type === 'delivery') orderTypeAr = 'دليفري';
+    if (order.order_type === 'takeaway') orderTypeAr = 'تيك أواي';
+    
+    let typeDetails = orderTypeAr;
+    if (order.order_type === 'dine' && order.table_number) {
+        typeDetails += ` (طاولة ${order.table_number})`;
+    } else if (order.order_type === 'delivery' && order.delivery_address) {
+        typeDetails += ` - ${order.delivery_address}`;
+    }
+    
+    lines.push(`📌 *نوع الطلب:* ${typeDetails}`);
+
+    if (order.notes) {
+        lines.push(`📝 *ملاحظات:* ${order.notes}`);
+    }
+
+    lines.push(``);
+    lines.push(`جاري تحضير الأوردر وهيكون جاهز في أسرع وقت.`);
+    lines.push(`لأي استفسار إحنا معاك!`);
+    lines.push(`*D95 Cafe & Lounge* 🎮`);
+
     return encodeURIComponent(lines.join('\n'));
 }
 
