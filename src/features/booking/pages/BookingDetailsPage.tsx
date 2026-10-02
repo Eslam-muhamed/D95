@@ -36,6 +36,7 @@ import {
     getBusinessOperatingWindow,
     checkAvailability,
     formatArabicTimeFromDate,
+    getCairoTodayDateString,
     OPERATING_HOURS,
 } from '@/lib/bookingDatetime';
 import { fetchRoomOccupiedIntervals, fetchRoomRates, type RoomRates } from '@/features/booking/services/bookingService';
@@ -367,8 +368,7 @@ export default function BookingDetailsPage() {
     }, [isDurationMenuOpen]);
 
     const getTodayIso = () => {
-        const now = new Date();
-        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        return getCairoTodayDateString();
     };
 
     const [selectedDate, setSelectedDate] = useState(getTodayIso);
@@ -376,16 +376,18 @@ export default function BookingDetailsPage() {
     // Quick select shortcuts (اليوم، غداً، بعد غد)
     const quickShortcuts = useMemo(() => {
         const shortcuts = [];
-        const now = new Date();
+        const todayStr = getCairoTodayDateString();
+        const [y, m, d] = todayStr.split('-').map(Number);
+        
         for (let i = 0; i < 3; i++) {
-            const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
-            const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const dt = new Date(y, m - 1, d + i);
+            const iso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
             const label = i === 0 ? 'اليوم' : i === 1 ? 'غداً' : 'بعد غد';
             shortcuts.push({
                 iso,
                 label,
-                dayNumber: d.getDate(),
-                monthName: ARABIC_MONTHS[d.getMonth()],
+                dayNumber: dt.getDate(),
+                monthName: ARABIC_MONTHS[dt.getMonth()],
             });
         }
         return shortcuts;
@@ -395,8 +397,11 @@ export default function BookingDetailsPage() {
     const formattedDate = useMemo(() => {
         const [y, m, d] = selectedDate.split('-').map(Number);
         const date = new Date(y, m - 1, d);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        
+        const todayStr = getCairoTodayDateString();
+        const [ty, tm, td] = todayStr.split('-').map(Number);
+        const today = new Date(ty, tm - 1, td);
+        
         const target = new Date(y, m - 1, d);
         target.setHours(0, 0, 0, 0);
 
@@ -422,8 +427,9 @@ export default function BookingDetailsPage() {
         const emptyCount = (firstDayOfWeek + 1) % 7;
         const totalDays = new Date(year, month + 1, 0).getDate();
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const todayStr = getCairoTodayDateString();
+        const [ty, tm, td] = todayStr.split('-').map(Number);
+        const today = new Date(ty, tm - 1, td);
 
         const cells: Array<{
             iso: string;
