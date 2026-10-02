@@ -828,7 +828,7 @@ BEGIN
   -- Run automatic cleanup of expired pending bookings
   PERFORM public.auto_cancel_expired_pending_bookings();
 
-  v_cairo_today := (now() AT TIME ZONE 'Africa/Cairo')::DATE;
+  v_cairo_today := ((now() AT TIME ZONE 'Africa/Cairo') - interval '4 hours')::DATE;
 
   SELECT count(*) INTO v_total_count
   FROM public.ps_bookings

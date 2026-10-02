@@ -62,6 +62,12 @@ export function addDaysToDateString(dateStr: string, days: number): string {
  * Get today's calendar date string in YYYY-MM-DD pinned to Africa/Cairo timezone.
  */
 export function getCairoTodayDateString(): string {
+    // Business logic: The day ends at 4:00 AM.
+    // So any time before 4:00 AM should be considered the previous day.
+    // We can achieve this by subtracting 4 hours from the current time.
+    const now = new Date();
+    const businessDate = new Date(now.getTime() - OPERATING_HOURS.CLOSING_HOUR * 3600 * 1000);
+    
     try {
         const formatter = new Intl.DateTimeFormat('en-CA', {
             timeZone: 'Africa/Cairo',
@@ -69,9 +75,9 @@ export function getCairoTodayDateString(): string {
             month: '2-digit',
             day: '2-digit',
         });
-        return formatter.format(new Date()); // Outputs "YYYY-MM-DD"
+        return formatter.format(businessDate); // Outputs "YYYY-MM-DD"
     } catch {
-        return new Date().toISOString().split('T')[0];
+        return businessDate.toISOString().split('T')[0];
     }
 }
 

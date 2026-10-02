@@ -6,6 +6,7 @@ import {
     calculateEndDateTime,
     getBusinessOperatingWindow,
     formatArabicTimeFromDate,
+    getCairoTodayDateString,
 } from '@/lib/bookingDatetime';
 
 export async function fetchRoomOccupiedIntervals(
@@ -237,7 +238,7 @@ export async function fetchBookingMetrics(): Promise<BookingMetrics> {
         // Fallback: in case RPC is unavailable, run direct query safely
         await autoCancelExpiredPendingBookings();
 
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getCairoTodayDateString();
         const nowIso = new Date().toISOString();
 
         const [
@@ -288,7 +289,7 @@ export async function fetchBookingMetrics(): Promise<BookingMetrics> {
 
 export async function fetchPendingCountsByDate(): Promise<Record<string, number>> {
     try {
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getCairoTodayDateString();
         const nowIso = new Date().toISOString();
         const { data, error } = await supabase
             .from('ps_bookings')
@@ -359,7 +360,7 @@ export async function fetchRecentBookings(options?: {
     try {
         await autoCancelExpiredPendingBookings();
         const nowIso = new Date().toISOString();
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getCairoTodayDateString();
         const targetStatus = options?.status || 'pending';
 
         let query = supabase
