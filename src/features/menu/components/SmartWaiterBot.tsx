@@ -419,11 +419,20 @@ ${formatIntervalList(room2Intervals)}
 
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => setIsListening(false);
-    recognition.onerror = (e: any) => {
+    recognition.onerror = async (e: any) => {
       console.error('Speech recognition error', e.error);
       setIsListening(false);
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-        toast.error('يرجى السماح للمتصفح باستخدام المايكروفون.');
+        // The browser blocked it. Let's force a native permission prompt!
+        try {
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(t => t.stop()); // close immediately
+            toast.success('تم تفعيل المايكروفون بنجاح! 🎤 اضغط على المايك مرة أخرى لتبدأ التحدث.');
+          }
+        } catch (err) {
+          toast.error('يرجى السماح للمتصفح باستخدام المايكروفون من إعدادات الموقع.');
+        }
       } else if (e.error !== 'no-speech') {
         toast.error('حدث خطأ في المايكروفون.');
       }
