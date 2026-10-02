@@ -728,9 +728,8 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
     const filteredRecentBookings = useMemo(() => {
         const nowMs = Date.now();
         return recentBookings.filter(b => {
-            // Strictly only pending requests that have not expired and are for today or future
+            // Strictly only pending requests that have not expired
             if (b.status !== 'pending') return false;
-            if (b.booking_date < todayStr) return false;
             const { end } = getBookingDates(b);
             if (end.getTime() <= nowMs) return false;
 

@@ -837,8 +837,7 @@ BEGIN
   SELECT count(*) INTO v_pending_count
   FROM public.ps_bookings
   WHERE status = 'pending'
-    AND end_datetime > now()
-    AND booking_date >= v_cairo_today;
+    AND end_datetime > now();
 
   SELECT count(*) INTO v_confirmed_count
   FROM public.ps_bookings
@@ -862,7 +861,6 @@ BEGIN
     SELECT * FROM public.ps_bookings
     WHERE status = 'pending'
       AND end_datetime > now()
-      AND booking_date >= v_cairo_today
     ORDER BY created_at DESC
     LIMIT 50
   ) b;
@@ -873,7 +871,6 @@ BEGIN
     FROM public.ps_bookings
     WHERE status = 'pending'
       AND end_datetime > now()
-      AND booking_date >= v_cairo_today
     GROUP BY booking_date
   ) p;
 

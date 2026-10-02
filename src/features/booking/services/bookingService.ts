@@ -251,13 +251,13 @@ export async function fetchBookingMetrics(): Promise<BookingMetrics> {
             pendingDatesRes,
         ] = await Promise.all([
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).neq('status', 'cancelled'),
-            supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('status', 'pending').gt('end_datetime', nowIso).gte('booking_date', todayStr),
+            supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('status', 'pending').gt('end_datetime', nowIso),
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('status', 'confirmed'),
             supabase.from('ps_bookings').select('id', { count: 'exact', head: true }).eq('booking_date', todayStr),
             supabase.from('ps_bookings').select('total_amount').eq('status', 'confirmed').limit(1000),
             supabase.from('ps_bookings').select('total_amount').eq('booking_date', todayStr).eq('status', 'confirmed').limit(1000),
-            supabase.from('ps_bookings').select('*').eq('status', 'pending').gt('end_datetime', nowIso).gte('booking_date', todayStr).order('created_at', { ascending: false }).limit(50),
-            supabase.from('ps_bookings').select('booking_date').eq('status', 'pending').gt('end_datetime', nowIso).gte('booking_date', todayStr),
+            supabase.from('ps_bookings').select('*').eq('status', 'pending').gt('end_datetime', nowIso).order('created_at', { ascending: false }).limit(50),
+            supabase.from('ps_bookings').select('booking_date').eq('status', 'pending').gt('end_datetime', nowIso),
         ]);
 
         const totalRevenue = (revenueRes.data || []).reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
@@ -294,8 +294,7 @@ export async function fetchPendingCountsByDate(): Promise<Record<string, number>
             .from('ps_bookings')
             .select('booking_date')
             .eq('status', 'pending')
-            .gt('end_datetime', nowIso)
-            .gte('booking_date', todayStr);
+            .gt('end_datetime', nowIso);
         if (error) {
             console.error('Error fetching pending counts by date:', error);
             return {};
