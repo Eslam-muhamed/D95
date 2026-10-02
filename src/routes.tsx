@@ -6,6 +6,7 @@ import CartSheet from '@/features/cart/components/CartSheet';
 import BottomNav from '@/components/layout/BottomNav';
 import AdminProtectedRoute from '@/features/auth/components/AdminProtectedRoute';
 import SplashScreen from '@/components/features/SplashScreen';
+import FloatingWhatsApp from '@/components/features/FloatingWhatsApp';
 
 import {
     preloadPlaystationRoute,
@@ -92,6 +93,7 @@ export function AppRoutes() {
                 </Routes>
             </Suspense>
             {!isAdminRoute && <BottomNav />}
+            {!isAdminRoute && <FloatingWhatsApp />}
             <Toaster position="top-center" richColors />
         </div>
     );
