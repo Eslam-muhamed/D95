@@ -371,7 +371,12 @@ export async function fetchRecentBookings(options?: {
         if (targetStatus !== 'all') {
             query = query.eq('status', targetStatus);
             if (targetStatus === 'pending') {
-                query = query.gt('end_datetime', nowIso).gte('booking_date', todayStr);
+                // IMPORTANT: We use end_datetime to filter out past/expired bookings.
+                // We do NOT filter by booking_date >= todayStr here, because bookings
+                // that happen after midnight (e.g., 3:00 AM) still belong to yesterday's
+                // business date. If we filter by booking_date, they will disappear from
+                // the admin dashboard right after midnight!
+                query = query.gt('end_datetime', nowIso);
             }
         }
 
