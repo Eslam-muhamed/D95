@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Bot, X, Send, User, Sparkles, AlertCircle, ShoppingCart, 
-  ArrowLeftRight, MapPin, ExternalLink, Gamepad2, Calendar, MessageSquare 
+  ArrowLeftRight, MapPin, ExternalLink, Gamepad2, Calendar, MessageSquare, Mic, Volume2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/features/cart/stores/cartStore';
@@ -222,6 +222,9 @@ export default function SmartWaiterBot() {
 
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isSpeechSupported, setIsSpeechSupported] = useState(true);
   const { addItem } = useCart();
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -360,8 +363,84 @@ ${formatIntervalList(room2Intervals)}
     }
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  // -------- Web Speech API --------
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        setIsSpeechSupported(false);
+      }
+    }
+  }, []);
+
+  const speakText = (text: string) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    
+    // Clean markup for speaking
+    const cleanText = text
+      .replace(/\[.*?\]/g, '') // Remove interactive tokens
+      .replace(/\*/g, '') // Remove markdown bold/italic
+      .replace(/_/g, '')
+      .replace(/#/g, '')
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'ar-EG';
+    utterance.rate = 1.05;
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeaking = () => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+  };
+
+  const startListening = () => {
+    if (isLimitReached || !isSpeechSupported) return;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    stopSpeaking(); // stop bot talking if user wants to speak
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ar-EG';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = (e: any) => {
+      console.error('Speech recognition error', e.error);
+      setIsListening(false);
+    };
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      if (transcript) {
+        setInput(transcript);
+        // Send message slightly after setting input
+        setTimeout(() => handleSend(transcript), 100);
+      }
+    };
+
+    try {
+      recognition.start();
+    } catch (e) {
+      console.warn('Recognition already started');
+    }
+  };
+  // --------------------------------
+
+  const handleSend = async (overrideInput?: string) => {
+    const textToSend = overrideInput || input;
+    if (!textToSend.trim() || isLoading) return;
 
     // Check daily message limit (max 20 messages per day per device)
     const currentUsage = getDailyUsage();
@@ -388,8 +467,8 @@ ${formatIntervalList(room2Intervals)}
     const nextCount = incrementDailyUsage();
     setDailyUsageCount(nextCount);
 
-    const userText = input.trim();
-    setInput('');
+    const userText = textToSend.trim();
+    if (!overrideInput) setInput('');
     
     const newUserMsg: Message = { id: Date.now().toString(), role: 'user', text: userText };
     setPersonaMessages(prev => ({
@@ -425,6 +504,9 @@ ${formatIntervalList(room2Intervals)}
         ...prev,
         [activePersona]: [...prev[activePersona], botMsg]
       }));
+
+      // Speak the response!
+      speakText(replyText);
 
     } catch (err) {
       console.error('Smart Waiter Error:', err);
@@ -1296,13 +1378,38 @@ ${formatIntervalList(room2Intervals)}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={
-                    isLimitReached
-                      ? 'تم الوصول للحد اليومي (٢٠ رسالة لهذا الجهاز)'
-                      : currentPersona.placeholder
+                    isListening
+                      ? 'جاري الاستماع...'
+                      : isLimitReached
+                        ? 'تم الوصول للحد اليومي (٢٠ رسالة لهذا الجهاز)'
+                        : currentPersona.placeholder
                   }
                   className="flex-1 bg-transparent px-4 py-2 text-sm text-slate-900 dark:text-white outline-none disabled:cursor-not-allowed"
-                  disabled={isLoading || isLimitReached}
+                  disabled={isLoading || isLimitReached || isListening}
                 />
+                
+                {isSpeechSupported && (
+                  <button
+                    type="button"
+                    onClick={isListening ? () => {
+                      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+                      if(SpeechRecognition) {
+                          const r = new SpeechRecognition();
+                          r.stop();
+                      }
+                      setIsListening(false);
+                    } : startListening}
+                    disabled={isLoading || isLimitReached}
+                    title={isListening ? "إيقاف التسجيل" : "تحدث بالصوت"}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                      isListening 
+                        ? 'bg-red-500 text-white animate-[pulse_1s_ease-in-out_infinite] shadow-[0_0_15px_rgba(239,68,68,0.6)] scale-110' 
+                        : 'bg-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    } disabled:opacity-30 disabled:cursor-not-allowed`}
+                  >
+                    <Mic className="w-5 h-5" />
+                  </button>
+                )}
                 <button
                   type="submit"
                   disabled={!input.trim() || isLoading || isLimitReached}
