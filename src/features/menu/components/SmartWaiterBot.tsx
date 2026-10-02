@@ -413,7 +413,7 @@ ${formatIntervalList(room2Intervals)}
     stopSpeaking(); // stop bot talking if user wants to speak
 
     const recognition = new SpeechRecognition();
-    recognition.lang = 'ar-EG';
+    recognition.lang = 'ar';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
@@ -423,18 +423,17 @@ ${formatIntervalList(room2Intervals)}
       console.error('Speech recognition error', e.error);
       setIsListening(false);
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-        // The browser blocked it. Let's force a native permission prompt!
         try {
           if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            stream.getTracks().forEach(t => t.stop()); // close immediately
+            stream.getTracks().forEach(t => t.stop());
             toast.success('تم تفعيل المايكروفون بنجاح! 🎤 اضغط على المايك مرة أخرى لتبدأ التحدث.');
           }
         } catch (err) {
-          toast.error('يرجى السماح للمتصفح باستخدام المايكروفون من إعدادات الموقع.');
+          toast.error('يرجى السماح للمتصفح باستخدام المايكروفون.');
         }
       } else if (e.error !== 'no-speech') {
-        toast.error('حدث خطأ في المايكروفون.');
+        toast.error(`حدث خطأ في المايكروفون: ${e.error}`);
       }
     };
     recognition.onresult = (event: any) => {
