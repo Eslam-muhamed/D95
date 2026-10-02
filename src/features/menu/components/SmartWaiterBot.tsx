@@ -404,8 +404,22 @@ ${formatIntervalList(room2Intervals)}
     }
   };
 
-  const startListening = () => {
+  const startListening = async () => {
     if (isLimitReached || !isSpeechSupported) return;
+
+    // Force browser to ask for microphone permission explicitly FIRST
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Close the stream immediately since SpeechRecognition will use its own
+        stream.getTracks().forEach(track => track.stop());
+      }
+    } catch (err) {
+      console.error('Microphone access denied or not supported:', err);
+      toast.error('يرجى السماح للمتصفح باستخدام المايكروفون من إعدادات الموقع.');
+      return;
+    }
+
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
 
