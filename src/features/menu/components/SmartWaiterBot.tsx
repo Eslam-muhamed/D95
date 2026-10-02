@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/features/cart/stores/cartStore';
+import { toast } from 'sonner';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { fetchRoomOccupiedIntervals } from '@/features/booking/services/bookingService';
 import { 
@@ -420,6 +421,11 @@ ${formatIntervalList(room2Intervals)}
     recognition.onerror = (e: any) => {
       console.error('Speech recognition error', e.error);
       setIsListening(false);
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        toast.error('يرجى السماح للمتصفح باستخدام المايكروفون.');
+      } else if (e.error !== 'no-speech') {
+        toast.error('حدث خطأ في المايكروفون.');
+      }
     };
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
@@ -431,9 +437,12 @@ ${formatIntervalList(room2Intervals)}
     };
 
     try {
+      setIsListening(true); // Optimistic UI update
       recognition.start();
     } catch (e) {
-      console.warn('Recognition already started');
+      console.warn('Recognition start failed', e);
+      setIsListening(false);
+      toast.error('تعذر تشغيل المايكروفون. تأكد من إعطاء الصلاحية للمتصفح.');
     }
   };
   // --------------------------------
