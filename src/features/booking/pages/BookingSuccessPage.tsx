@@ -18,6 +18,7 @@ import { useTheme } from '@/stores/themeStore';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { fetchPaymentSettings, PaymentSettings } from '@/services/paymentSettingsService';
 import { fetchBookingByReservationId } from '@/features/booking/services/bookingService';
+import { formatWhatsAppNumber } from '@/lib/utils';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
 interface SnackAddon {
@@ -176,7 +177,7 @@ export default function BookingSuccessPage() {
         }
 
         const waPhone = paymentSettings.whatsappNumber || CONTACT_INFO.whatsappNumber;
-        window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+        window.open(`https://wa.me/${formatWhatsAppNumber(waPhone)}?text=${encodeURIComponent(msg)}`, '_blank');
     };
 
     const handleShare = () => {

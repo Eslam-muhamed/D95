@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { formatWhatsAppNumber } from '@/lib/utils';
 import {
     fetchPaginatedOrders,
     updateOrderStatus,
@@ -490,7 +491,7 @@ export default function OrdersTab() {
                                                     <span>{order.customer_phone}</span>
                                                 </div>
                                                 <a
-                                                    href={`https://wa.me/2${order.customer_phone.replace(/\D/g, '')}?text=${buildAdminWhatsAppMsg(order)}`}
+                                                    href={`https://wa.me/${formatWhatsAppNumber(order.customer_phone)}?text=${buildAdminWhatsAppMsg(order)}`}
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     className="inline-flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 transition-colors font-bold"

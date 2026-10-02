@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import { fetchPaymentSettings } from '@/services/paymentSettingsService';
 import { CONTACT_INFO } from '@/constants/contactInfo';
+import { formatWhatsAppNumber } from '@/lib/utils';
 
 export default function FloatingWhatsApp() {
     const [waNumber, setWaNumber] = useState<string>('');
@@ -19,7 +20,7 @@ export default function FloatingWhatsApp() {
 
     if (!waNumber || !isVisible) return null;
 
-    const waUrl = `https://wa.me/${waNumber.startsWith('+2') ? waNumber.substring(2) : waNumber}`;
+    const waUrl = `https://wa.me/${formatWhatsAppNumber(waNumber)}`;
 
     return (
         <div className="fixed bottom-20 left-4 sm:bottom-6 sm:left-6 z-40 flex flex-col items-end gap-1">

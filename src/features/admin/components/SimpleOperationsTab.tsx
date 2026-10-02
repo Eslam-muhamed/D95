@@ -31,6 +31,7 @@ import {
     Eye,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatWhatsAppNumber } from '@/lib/utils';
 import {
     fetchBookingsForDate,
     fetchRecentBookings,
@@ -806,7 +807,7 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
         if (phone.startsWith('0')) phone = '2' + phone;
         else if (!phone.startsWith('20')) phone = '20' + phone;
         const text = `أهلاً بحضرتك يا أستاذ ${b.customer_name} 👋\nمعاك إدارة D95 Gaming Lounge 🎮\n\nبخصوص حجزك (${b.reservation_id}):\n📍 الغرفة: ${getNormalizedRoomName(b)}\n📅 التاريخ: ${b.booking_date}\n⏰ التوقيت: ${b.start_time} - ${b.end_time} (${b.duration_hours} س)\n\nفي انتظارك تنورنا!`;
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+        window.open(`https://wa.me/${formatWhatsAppNumber(phone)}?text=${encodeURIComponent(text)}`, '_blank');
     };
 
     return (

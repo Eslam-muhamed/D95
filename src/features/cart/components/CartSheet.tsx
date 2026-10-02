@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { useCart } from '@/features/cart/stores/cartStore';
 import { useAuth } from '@/features/auth/stores/authStore';
 import { getItemUnitPrice } from '@/lib/cartUtils';
+import { formatWhatsAppNumber } from '@/lib/utils';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { createOrder } from '@/services/orderService';
 import { fetchPaymentSettings, PaymentSettings } from '@/services/paymentSettingsService';
@@ -234,7 +235,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
     setSubmittingCafeOrder(true);
     const orderNumber = `D95-ORD-${Date.now().toString(36).slice(-4).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const waPhone = paymentSettings.whatsappNumber || CONTACT_INFO.whatsappNumber;
-    const whatsappUrl = `https://wa.me/${waPhone}?text=${buildCafeWhatsAppMsg(orderNumber)}`;
+    const whatsappUrl = `https://wa.me/${formatWhatsAppNumber(waPhone)}?text=${buildCafeWhatsAppMsg(orderNumber)}`;
 
     try {
       await createOrder({
@@ -283,7 +284,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
 
   const sendPsOrder = () => {
     const waPhone = paymentSettings.whatsappNumber || CONTACT_INFO.whatsappNumber;
-    const whatsappUrl = `https://wa.me/${waPhone}?text=${buildPsWhatsAppMsg()}`;
+    const whatsappUrl = `https://wa.me/${formatWhatsAppNumber(waPhone)}?text=${buildPsWhatsAppMsg()}`;
     const newTab = window.open(whatsappUrl, '_blank');
     if (!newTab || newTab.closed || typeof newTab.closed === 'undefined') {
       window.location.href = whatsappUrl;

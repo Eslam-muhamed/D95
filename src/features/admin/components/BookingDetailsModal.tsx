@@ -20,6 +20,7 @@ import {
 import { toast } from 'sonner';
 import { getBookingDates } from '@/features/booking/services/bookingService';
 import type { DBBooking } from '@/types/database';
+import { formatWhatsAppNumber } from '@/lib/utils';
 
 interface BookingDetailsModalProps {
     booking: DBBooking | null;
@@ -60,7 +61,7 @@ export default function BookingDetailsModal({
             phone = '20' + phone;
         }
         const text = `أهلاً بحضرتك يا أستاذ ${booking.customer_name} 👋\nمعاك إدارة D95 Gaming Lounge 🎮\n\nبخصوص حجزك رقم (${booking.reservation_id}):\n📍 الغرفة: ${booking.room_name}\n📅 التاريخ: ${booking.booking_date}\n⏰ التوقيت: ${booking.start_time} - ${booking.end_time} (${booking.duration_hours} س)\n💰 الإجمالي: ${booking.total_amount} ج.م (${booking.payment_method === 'instapay' ? 'إنستاباي' : booking.payment_method === 'cash' ? 'كاش بالفرع' : 'محفظة'})\n\nتم تأكيد الحجز وجاهزين لاستقبالك! في انتظارك تنورنا.`;
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+        window.open(`https://wa.me/${formatWhatsAppNumber(phone)}?text=${encodeURIComponent(text)}`, '_blank');
     };
 
     const handleAction = async (newStatus: 'pending' | 'confirmed' | 'cancelled' | 'completed') => {
