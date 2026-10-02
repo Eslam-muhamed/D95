@@ -600,7 +600,15 @@ export default function BookingDetailsPage() {
 
         if (!isReadyToContinue) {
             if (currentAvailability.reason === 'PAST_TIME') {
-                toast.error('هذا الوقت قد مضى، يرجى اختيار موعد قادم ⏳');
+                const now = new Date();
+                const diffMins = currentAvailability.startDateTime 
+                    ? Math.ceil((now.getTime() - currentAvailability.startDateTime.getTime()) / 60000)
+                    : 0;
+                if (diffMins > 0) {
+                    toast.error(`هذا الوقت قد مضى، يرجى التقديم بمقدار ${diffMins} دقيقة على الأقل ⏳`);
+                } else {
+                    toast.error('هذا الوقت قد مضى، يرجى اختيار موعد قادم ⏳');
+                }
             } else if (currentAvailability.reason === 'EXCEEDS_CLOSING') {
                 toast.error('الموعد مع المدة المحددة يتجاوز موعد إغلاق الصالة (04:00 ص) ⚠️');
             } else if (currentAvailability.reason === 'OVERLAP_CONFLICT') {
@@ -646,7 +654,15 @@ export default function BookingDetailsPage() {
 
         if (!isReadyToContinue) {
             if (currentAvailability.reason === 'PAST_TIME') {
-                toast.error('هذا الوقت قد مضى، يرجى اختيار موعد قادم ⏳');
+                const now = new Date();
+                const diffMins = currentAvailability.startDateTime 
+                    ? Math.ceil((now.getTime() - currentAvailability.startDateTime.getTime()) / 60000)
+                    : 0;
+                if (diffMins > 0) {
+                    toast.error(`هذا الوقت قد مضى، يرجى التقديم بمقدار ${diffMins} دقيقة على الأقل ⏳`);
+                } else {
+                    toast.error('هذا الوقت قد مضى، يرجى اختيار موعد قادم ⏳');
+                }
             } else if (currentAvailability.reason === 'EXCEEDS_CLOSING') {
                 toast.error('الموعد مع المدة المحددة يتجاوز موعد إغلاق الصالة (04:00 ص) ⚠️');
             } else if (currentAvailability.reason === 'OVERLAP_CONFLICT') {
@@ -1184,7 +1200,15 @@ export default function BookingDetailsPage() {
                                         <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
                                         <span>
                                             {currentAvailability.reason === 'PAST_TIME'
-                                                ? 'هذا الوقت قد مضى'
+                                                ? (() => {
+                                                    if (!currentAvailability.startDateTime) return 'هذا الوقت قد مضى';
+                                                    const now = new Date();
+                                                    const diffMins = Math.ceil((now.getTime() - currentAvailability.startDateTime.getTime()) / 60000);
+                                                    if (diffMins > 0) {
+                                                        return `هذا الوقت قد مضى (يرجى التقديم بمقدار ${diffMins} دقيقة)`;
+                                                    }
+                                                    return 'هذا الوقت قد مضى';
+                                                })()
                                                 : currentAvailability.reason === 'EXCEEDS_CLOSING'
                                                 ? 'يتجاوز موعد الإغلاق (04:00 ص)'
                                                 : currentAvailability.conflictingInterval
