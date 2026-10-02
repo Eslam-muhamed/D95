@@ -11,6 +11,8 @@ import {
     Coffee,
     Sun,
     Moon,
+    Copy,
+    ExternalLink,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -44,6 +46,14 @@ export default function BookingSuccessPage() {
     });
 
     const [isLoading, setIsLoading] = useState(!bookingData && !!idFromParam);
+    const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+    const handleCopy = (text: string, key: string) => {
+        navigator.clipboard.writeText(text);
+        setCopiedKey(key);
+        toast.success('تم النسخ بنجاح');
+        setTimeout(() => setCopiedKey(null), 2000);
+    };
 
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
         walletNumber: CONTACT_INFO.walletNumber,
@@ -415,6 +425,58 @@ export default function BookingSuccessPage() {
                             </div>
                         </div>
                     </div>
+
+                    {/* PAYMENT INSTRUCTIONS IF NEEDED */}
+                    {(paymentMethod === 'instapay' || paymentMethod === 'wallet') && (
+                        <div className="w-full bg-white dark:bg-[#140e10]/95 rounded-2xl p-4 mb-4 text-right shadow-[0_4px_15px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_15px_rgba(0,0,0,0.5)] border border-neutral-200 dark:border-white/10">
+                            <h3 className="font-bold text-sm text-neutral-900 dark:text-white mb-3">
+                                {paymentMethod === 'instapay' ? 'تعليمات تحويل إنستاباي' : 'تعليمات الدفع عبر المحفظة'}
+                            </h3>
+                            
+                            <div className="bg-neutral-100 dark:bg-black/60 p-3 rounded-xl flex items-center justify-between border border-neutral-200 dark:border-white/10 mb-3">
+                                <div className="flex flex-col min-w-0">
+                                    <span className="text-xs text-neutral-600 dark:text-neutral-400 font-semibold">
+                                        {paymentMethod === 'instapay' ? 'معرف إنستاباي المعتمد (IPA):' : 'رقم المحفظة المعتمد للتحويل:'}
+                                    </span>
+                                    <span className={`text-sm sm:text-base font-bold font-mono tracking-wider select-all ${paymentMethod === 'instapay' ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`} dir="ltr">
+                                        {paymentMethod === 'instapay' ? paymentSettings.instapayHandle : paymentSettings.walletNumber}
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => handleCopy(paymentMethod === 'instapay' ? paymentSettings.instapayHandle : paymentSettings.walletNumber, paymentMethod)}
+                                    className={`shrink-0 flex items-center gap-1.5 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm ${paymentMethod === 'instapay' ? 'bg-red-600 hover:bg-red-500' : 'bg-emerald-600 hover:bg-emerald-500'}`}
+                                >
+                                    {copiedKey === paymentMethod ? (
+                                        <>
+                                            <CheckCircle2 className="w-4 h-4 text-white" />
+                                            <span>تم النسخ</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy className="w-4 h-4" />
+                                            <span>نسخ</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+
+                            {paymentMethod === 'instapay' && paymentSettings.instapayLink && (
+                                <button
+                                    type="button"
+                                    onClick={() => window.open(paymentSettings.instapayLink, '_blank')}
+                                    className="w-full flex items-center justify-center gap-1.5 bg-red-600/10 hover:bg-red-600/20 text-red-600 dark:text-red-400 py-2.5 rounded-xl text-xs font-bold transition-all border border-red-600/20 mb-3"
+                                >
+                                    <ExternalLink className="w-4 h-4" />
+                                    <span>فتح تطبيق InstaPay والدفع مباشرة</span>
+                                </button>
+                            )}
+                            
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400 bg-neutral-50 dark:bg-black/30 p-2.5 rounded-lg border border-neutral-200 dark:border-white/5">
+                                يرجى تحويل مبلغ <strong className="text-neutral-900 dark:text-white">{netTotal} ج.م</strong>. ثم اضغط على زر الواتساب بالأسفل لإرسال صورة التحويل لتأكيد الحجز وتثبيت الموعد.
+                            </p>
+                        </div>
+                    )}
 
                     {/* ACTION BUTTONS */}
                     <div className="w-full space-y-2.5">
