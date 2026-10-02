@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
-import CartSheet from '@/features/cart/components/CartSheet';
+const CartSheet = lazy(() => import('@/features/cart/components/CartSheet'));
 import BottomNav from '@/components/layout/BottomNav';
 import AdminProtectedRoute from '@/features/auth/components/AdminProtectedRoute';
 import SplashScreen from '@/components/features/SplashScreen';
@@ -64,7 +64,11 @@ export function AppRoutes() {
     return (
         <div className="w-full min-h-screen bg-[var(--bg-main)] flex flex-col selection:bg-red-500/30">
             <SplashScreen onComplete={() => console.log('Splash finished')} />
-            {!isAdminRoute && <CartSheet />}
+            {!isAdminRoute && (
+                <Suspense fallback={null}>
+                    <CartSheet />
+                </Suspense>
+            )}
             <Suspense fallback={<PageLoadingFallback />}>
                 <Routes>
                     <Route path="/" element={<GatewayPage />} />

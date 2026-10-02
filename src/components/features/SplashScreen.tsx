@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, LazyMotion, domAnimation, AnimatePresence } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { playGrandOpeningSound } from '@/lib/sound';
 
@@ -42,14 +42,15 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     if (!visible) return null;
 
     return (
-        <AnimatePresence>
-            {visible && (
-                <div className="fixed inset-0 z-[9999] bg-[#0a0505] flex items-center justify-center overflow-hidden selection:bg-red-600/30" dir="ltr">
-                    {/* The Background Spotlight / Stage */}
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(225,29,72,0.15)_0%,rgba(10,5,5,1)_70%)]" />
+        <LazyMotion features={domAnimation}>
+            <AnimatePresence>
+                {visible && (
+                    <div className="fixed inset-0 z-[9999] bg-[#0a0505] flex items-center justify-center overflow-hidden selection:bg-red-600/30" dir="ltr">
+                        {/* The Background Spotlight / Stage */}
+                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(225,29,72,0.15)_0%,rgba(10,5,5,1)_70%)]" />
 
-                    {/* Left Curtain */}
-                    <motion.div
+                        {/* Left Curtain */}
+                        <m.div
                         initial={{ x: 0 }}
                         animate={isOpening ? { x: '-100%' } : { x: 0 }}
                         transition={{ duration: 1.2, ease: [0.25, 1, 0.5, 1] }}
@@ -65,10 +66,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                         {/* Folds */}
                         <div className="absolute inset-0 opacity-50 bg-[repeating-linear-gradient(90deg,transparent,transparent_20px,rgba(0,0,0,0.5)_40px,transparent_60px)]" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
-                    </motion.div>
+                    </m.div>
 
                     {/* Right Curtain */}
-                    <motion.div
+                    <m.div
                         initial={{ x: 0 }}
                         animate={isOpening ? { x: '100%' } : { x: 0 }}
                         transition={{ duration: 1.2, ease: [0.25, 1, 0.5, 1] }}
@@ -84,10 +85,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                         {/* Folds */}
                         <div className="absolute inset-0 opacity-50 bg-[repeating-linear-gradient(-90deg,transparent,transparent_20px,rgba(0,0,0,0.5)_40px,transparent_60px)]" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
-                    </motion.div>
+                    </m.div>
 
                     {/* Center Content (Fades out when opening) */}
-                    <motion.div
+                    <m.div
                         animate={isOpening ? { opacity: 0, scale: 1.1 } : { opacity: 1, scale: 1 }}
                         transition={{ duration: 0.8, ease: "easeOut" }}
                         className="relative z-30 flex flex-col items-center justify-between h-full w-full py-12 px-4"
@@ -170,9 +171,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                                 <div className="absolute inset-0 rounded-full border-2 border-red-400/50 animate-pulse opacity-30" />
                             </button>
                         </div>
-                    </motion.div>
+                    </m.div>
                 </div>
             )}
-        </AnimatePresence>
+            </AnimatePresence>
+        </LazyMotion>
     );
 }
