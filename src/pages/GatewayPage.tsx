@@ -5,9 +5,8 @@ import D95BrushLogo from '@/components/brand/D95BrushLogo';
 import { playPs5StartupSound, playCafeEntranceSound } from '@/lib/sound';
 import { useTheme } from '@/stores/themeStore';
 import { CONTACT_INFO } from '@/constants/contactInfo';
-import { lazy, Suspense } from 'react';
 import { BeinSportsIcon, NetflixIcon, InstagramGradientIcon } from '@/components/brand/EntertainmentIcons';
-const TournamentAnnouncementPopup = lazy(() => import('@/components/features/TournamentAnnouncementPopup'));
+import TournamentAnnouncementPopup from '@/components/features/TournamentAnnouncementPopup';
 import {
     fetchVenueStatus,
     subscribeVenueStatus,
@@ -470,9 +469,7 @@ export default function GatewayPage() {
                 </div>
             </footer>
 
-            <Suspense fallback={null}>
-                <TournamentAnnouncementPopup />
-            </Suspense>
+            <TournamentAnnouncementPopup />
         </main>
     );
 }

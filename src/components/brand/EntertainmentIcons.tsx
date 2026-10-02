@@ -5,10 +5,8 @@ export function BeinSportsIcon({ className = 'w-4 h-4' }: { className?: string }
         <img
             src={beinSportsImg}
             alt="beIN SPORTS"
-            width={40}
-            height={34}
             className={`${className} object-contain inline-block shrink-0`}
-            loading="lazy"
+            loading="eager"
             decoding="async"
         />
     );

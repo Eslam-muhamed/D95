@@ -1149,9 +1149,9 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
   );
 
   return (
-    <LazyMotion features={domAnimation}>
+    <>
       {createPortal(sheet, document.body)}
       {createPortal(waiterView, document.body)}
-    </LazyMotion>
+    </>
   );
 }
