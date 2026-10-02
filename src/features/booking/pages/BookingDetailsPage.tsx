@@ -823,8 +823,9 @@ export default function BookingDetailsPage() {
                                     وقت البدء ومدة الجلسة
                                 </span>
                             </div>
-                            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5">
-                                يبدأ يومنا من ٨ مساءً وحتى ٤ فجراً
+                            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5 leading-relaxed">
+                                مواعيد العمل: ٨ مساءً حتى ٤ فجراً <br />
+                                (الأوقات بعد منتصف الليل تُحسب ضمن يوم الحجز الحالي)
                             </span>
                         </div>
 
