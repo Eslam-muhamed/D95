@@ -429,8 +429,8 @@ ${formatIntervalList(room2Intervals)}
             stream.getTracks().forEach(t => t.stop());
             toast.success('تم تفعيل المايكروفون بنجاح! 🎤 اضغط على المايك مرة أخرى لتبدأ التحدث.');
           }
-        } catch (err) {
-          toast.error('يرجى السماح للمتصفح باستخدام المايكروفون.');
+        } catch (err: any) {
+          toast.error(`خطأ في المايكروفون: ${err.name || 'Unknown'} - ${err.message || ''}`);
         }
       } else if (e.error !== 'no-speech') {
         toast.error(`حدث خطأ في المايكروفون: ${e.error}`);
