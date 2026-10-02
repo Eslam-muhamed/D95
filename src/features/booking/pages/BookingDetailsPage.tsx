@@ -604,7 +604,7 @@ export default function BookingDetailsPage() {
                 const diffMins = currentAvailability.startDateTime 
                     ? Math.ceil((now.getTime() - currentAvailability.startDateTime.getTime()) / 60000)
                     : 0;
-                if (diffMins > 0) {
+                if (diffMins > 0 && diffMins <= 59) {
                     toast.error(`هذا الوقت قد مضى، يرجى التقديم بمقدار ${diffMins} دقيقة على الأقل ⏳`);
                 } else {
                     toast.error('هذا الوقت قد مضى، يرجى اختيار موعد قادم ⏳');
@@ -658,7 +658,7 @@ export default function BookingDetailsPage() {
                 const diffMins = currentAvailability.startDateTime 
                     ? Math.ceil((now.getTime() - currentAvailability.startDateTime.getTime()) / 60000)
                     : 0;
-                if (diffMins > 0) {
+                if (diffMins > 0 && diffMins <= 59) {
                     toast.error(`هذا الوقت قد مضى، يرجى التقديم بمقدار ${diffMins} دقيقة على الأقل ⏳`);
                 } else {
                     toast.error('هذا الوقت قد مضى، يرجى اختيار موعد قادم ⏳');
@@ -1204,7 +1204,7 @@ export default function BookingDetailsPage() {
                                                     if (!currentAvailability.startDateTime) return 'هذا الوقت قد مضى';
                                                     const now = new Date();
                                                     const diffMins = Math.ceil((now.getTime() - currentAvailability.startDateTime.getTime()) / 60000);
-                                                    if (diffMins > 0) {
+                                                    if (diffMins > 0 && diffMins <= 59) {
                                                         return `هذا الوقت قد مضى (يرجى التقديم بمقدار ${diffMins} دقيقة)`;
                                                     }
                                                     return 'هذا الوقت قد مضى';
