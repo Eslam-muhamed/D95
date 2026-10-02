@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { m, LazyMotion, domAnimation, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   Minus,
@@ -304,7 +304,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
   const sheet = (
     <AnimatePresence>
       {isCartOpen && (
-        <m.div
+        <motion.div
           className="fixed inset-0 z-[60] flex items-end"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -313,7 +313,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
           onClick={handleClose}
         >
           <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)' }} />
-          <m.div
+          <motion.div
             className="relative w-full rounded-t-3xl max-h-[92dvh] overflow-y-auto scrollbar-hide max-w-lg mx-auto"
             style={{
               background: 'var(--c-card)',
@@ -602,7 +602,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
                     </button>
 
                     {showSplitter && (
-                      <m.div initial={{ height: 0 }} animate={{ height: 'auto' }} className="overflow-hidden">
+                      <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} className="overflow-hidden">
                         <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(139,26,42,0.07)', border: '1px solid rgba(139,26,42,0.15)' }}>
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold" style={{ color: 'var(--c-on-card)', fontFamily: 'Cairo, sans-serif' }}>عدد الأشخاص</span>
@@ -649,7 +649,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
                             </p>
                           )}
                         </div>
-                      </m.div>
+                      </motion.div>
                     )}
 
                     {/* Cafe Total */}
@@ -664,7 +664,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
                     </div>
 
                     {/* Primary Cafe Checkout Button */}
-                    <m.button
+                    <motion.button
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setShowWaiter(true)}
                       className="w-full py-3.5 rounded-2xl text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-red-900/30 transition-all"
@@ -675,7 +675,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
                     >
                       <Coffee size={18} />
                       <span>إتمام طلب الكافيه ☕ ({cafeTotal} ج.م)</span>
-                    </m.button>
+                    </motion.button>
                   </>
                 )}
               </div>
@@ -883,7 +883,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
 
                     {/* PlayStation Direct Checkout Actions */}
                     <div className="space-y-2 pt-1">
-                      <m.button
+                      <motion.button
                         whileTap={{ scale: 0.98 }}
                         onClick={() => {
                           handleClose();
@@ -920,7 +920,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
                       >
                         <Gamepad2 size={18} />
                         <span>متابعة تأكيد الحجز والدفع 💳 ({playstationGrandTotal} ج.م)</span>
-                      </m.button>
+                      </motion.button>
 
                       <button
                         onClick={sendPsOrder}
@@ -935,8 +935,8 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
                 )}
               </div>
             )}
-          </m.div>
-        </m.div>
+          </motion.div>
+        </motion.div>
       )}
     </AnimatePresence>
   );
@@ -945,7 +945,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
   const waiterView = (
     <AnimatePresence>
       {showWaiter && (
-        <m.div
+        <motion.div
           className="fixed inset-0 z-[70] flex items-end"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -956,7 +956,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
             style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}
             onClick={() => setShowWaiter(false)}
           />
-          <m.div
+          <motion.div
             className="relative w-full rounded-t-3xl max-h-[90vh] overflow-y-auto scrollbar-hide max-w-lg mx-auto"
             style={{
               background: 'var(--c-card-alt)',
@@ -1119,7 +1119,7 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
               </div>
 
               {/* Send Order Button */}
-              <m.button
+              <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={sendCafeOrder}
                 disabled={submittingCafeOrder}
@@ -1141,10 +1141,10 @@ export default function CartSheet({ open: propOpen, onClose: propOnClose }: Prop
                     إرسال الطلب عبر واتساب
                   </>
                 )}
-              </m.button>
+              </motion.button>
             </div>
-          </m.div>
-        </m.div>
+          </motion.div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

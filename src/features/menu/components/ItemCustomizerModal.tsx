@@ -89,7 +89,7 @@ export default function ItemCustomizerModal({ item, onClose }: Props) {
 
           <motion.div
             key={item.id}
-            className="relative w-full rounded-t-3xl max-h-[85dvh] overflow-y-auto scrollbar-hide max-w-lg mx-auto transform-gpu"
+            className="relative w-full rounded-t-3xl max-h-[85vh] overflow-y-auto scrollbar-hide max-w-lg mx-auto transform-gpu"
             style={{
               background: 'var(--c-card)',
               border: '1px solid rgba(139,26,42,0.35)',
@@ -144,7 +144,7 @@ export default function ItemCustomizerModal({ item, onClose }: Props) {
             </div>
 
             {/* Body */}
-            <div className="px-4 py-4 space-y-4 pb-8">
+            <div className="px-4 py-4 space-y-4">
               {/* Notes only */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
@@ -163,12 +163,6 @@ export default function ItemCustomizerModal({ item, onClose }: Props) {
                   id="custom-notes"
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
-                  onFocus={(e) => {
-                    // Scroll into view so the mobile keyboard doesn't cover it
-                    setTimeout(() => {
-                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 300);
-                  }}
                   placeholder="اكتب أي طلب خاص (مثلاً: سكر خفيف، بدون ثلج، حليب نباتي...)"
                   rows={3}
                   className="w-full rounded-xl p-3 text-sm resize-none outline-none transition-colors leading-relaxed bg-neutral-50 dark:bg-[#151012] border border-neutral-200 dark:border-white/10 focus:border-red-500 dark:focus:border-red-500 text-neutral-900 dark:text-white font-body"
