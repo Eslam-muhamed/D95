@@ -816,10 +816,15 @@ export default function BookingDetailsPage() {
                 <div className="bg-white dark:bg-[#120e10] border border-neutral-200/80 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
                     {/* Header with Title and Left-Corner Controls */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pb-2.5 border-b border-neutral-100 dark:border-white/[0.06]">
-                        <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-red-600 dark:text-red-500 shrink-0" />
-                            <span className="font-bold text-sm text-neutral-900 dark:text-white">
-                                وقت البدء ومدة الجلسة
+                        <div className="flex flex-col">
+                            <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-red-600 dark:text-red-500 shrink-0" />
+                                <span className="font-bold text-sm text-neutral-900 dark:text-white">
+                                    وقت البدء ومدة الجلسة
+                                </span>
+                            </div>
+                            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+                                يبدأ يومنا من ٨ مساءً وحتى ٤ فجراً
                             </span>
                         </div>
 
