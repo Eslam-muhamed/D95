@@ -22,7 +22,7 @@ const getGameBackground = (gameName: string) => {
         return 'https://images.unsplash.com/photo-1505705694340-019e1e335916?q=80&w=1000&auto=format&fit=crop'; 
     }
     // Default to Football/FC/FIFA
-    return '/images/tournaments/fifa_hero.webp'; 
+    return '/images/tournaments/fifa_hero.jpg'; 
 };
 
 export default function TournamentRegistrationPage() {
@@ -151,24 +151,164 @@ export default function TournamentRegistrationPage() {
         );
     }
 
+    const netTotal = tournament.entry_fee;
+    const activeWalletNumber = paymentSettings.walletNumber || CONTACT_INFO.walletNumber;
+    const cleanWalletNumber = activeWalletNumber.replace(/\D/g, '');
+    const activeInstapayHandle = paymentSettings.instapayHandle || CONTACT_INFO.instapayHandle;
+    const activeInstapayLink = paymentSettings.instapayLink;
+
+    const ussdTransferCode = `*9*7*${cleanWalletNumber}*${netTotal}#`;
+    const ussdTelUri = `tel:*9*7*${cleanWalletNumber}*${netTotal}%23`;
+
     if (isSuccess) {
         const whatsappMsg = `مرحباً، لقد قمت بالتسجيل في بطولة (${tournament.name}) باسم (${formData.playerName})، ومرفق إيصال الدفع:`;
         const activeWhatsapp = paymentSettings.whatsappNumber || CONTACT_INFO.whatsappNumber;
         const whatsappLink = `https://wa.me/${activeWhatsapp}?text=${encodeURIComponent(whatsappMsg)}`;
 
         return (
-            <div className="min-h-[100dvh] bg-[#050505] flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-500 relative overflow-hidden">
+            <div className="min-h-[100dvh] bg-[#050505] flex flex-col items-center p-4 pt-10 text-center animate-in fade-in zoom-in duration-500 relative overflow-y-auto">
                 <div className="absolute inset-0 bg-emerald-900/10" />
-                <div className="relative z-10 flex flex-col items-center">
-                    <div className="w-24 h-24 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center mb-8 shadow-2xl shadow-emerald-500/20 border-4 border-emerald-400/20">
-                        <CheckCircle2 className="w-12 h-12 text-white" />
+                <div className="relative z-10 flex flex-col items-center w-full max-w-md">
+                    <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center mb-4 shadow-2xl shadow-emerald-500/20 border-4 border-emerald-400/20 shrink-0">
+                        <CheckCircle2 className="w-10 h-10 text-white" />
                     </div>
-                    <h1 className="text-4xl font-black text-white mb-4 drop-shadow-lg">تم تسجيلك بنجاح!</h1>
-                    <p className="text-neutral-400 mb-8 max-w-sm leading-relaxed text-lg">
-                        خطوة واحدة متبقية! أرسل إيصال الدفع عبر واتساب ليقوم مسؤول الصالة بتأكيد مقعدك في البطولة.
+                    <h1 className="text-3xl font-black text-white mb-2 drop-shadow-lg">طلبك قيد المراجعة!</h1>
+                    <p className="text-neutral-400 mb-6 leading-relaxed text-sm">
+                        تم استلام طلبك بنجاح. يرجى إتمام عملية الدفع الآن وإرسال الإيصال لتأكيد مقعدك في البطولة.
                     </p>
                     
-                    <div className="flex flex-col gap-4 w-full max-w-xs">
+                    {/* Payment Details Container in Success Screen */}
+                    <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-5 shadow-xl w-full text-right mb-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <span className="text-sm font-bold text-neutral-300">بيانات الدفع</span>
+                            <span className="bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-xs font-bold border border-red-500/30">
+                                {netTotal} ج.م
+                            </span>
+                        </div>
+                        {formData.paymentMethod === 'instapay' ? (
+                            <div className="flex flex-col gap-4">
+                                <div className="bg-black/40 p-4 rounded-2xl flex items-center justify-between border border-white/10">
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-[11px] text-neutral-400 font-bold mb-1 uppercase tracking-wider">معرف إنستاباي (IPA)</span>
+                                        <span className="text-base font-black text-red-400 font-mono tracking-wider select-all" dir="ltr">
+                                            {activeInstapayHandle}
+                                        </span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleCopy(activeInstapayHandle, 'instapay');
+                                        }}
+                                        className="shrink-0 flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 border border-white/10"
+                                    >
+                                        {copiedKey === 'instapay' ? (
+                                            <>
+                                                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                                <span>تم النسخ</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Copy className="w-4 h-4" />
+                                                <span>نسخ</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleCopy(activeInstapayHandle, 'instapay');
+                                        playPs5SelectSound();
+                                        toast.success(`تم نسخ معرف إنستاباي والمبلغ!`);
+                                        if (activeInstapayLink) {
+                                            window.open(activeInstapayLink, '_blank');
+                                        } else {
+                                            window.location.href = 'instapay://';
+                                        }
+                                    }}
+                                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white px-4 py-4 rounded-2xl text-base font-bold transition-all shadow-lg active:scale-95 cursor-pointer"
+                                >
+                                    <ExternalLink className="w-5 h-5" />
+                                    <span>فتح تطبيق InstaPay للتحويل</span>
+                                </button>
+                                
+                                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 flex items-start gap-2 leading-relaxed">
+                                    <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                                    <div>يرجى تحويل مبلغ <span className="font-bold text-red-400 font-mono">{netTotal} ج.م</span> بالضبط.</div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col gap-4">
+                                <div className="bg-black/40 p-4 rounded-2xl flex items-center justify-between border border-white/10">
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-[11px] text-neutral-400 font-bold mb-1 uppercase tracking-wider">رقم المحفظة للتحويل</span>
+                                        <span className="text-base font-black text-emerald-400 font-mono tracking-wider select-all" dir="ltr">
+                                            {activeWalletNumber}
+                                        </span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleCopy(activeWalletNumber, 'wallet');
+                                        }}
+                                        className="shrink-0 flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 border border-white/10"
+                                    >
+                                        {copiedKey === 'wallet' ? (
+                                            <>
+                                                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                                <span>تم النسخ</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Copy className="w-4 h-4" />
+                                                <span>نسخ</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+
+                                <div className="bg-emerald-500/10 rounded-2xl border border-emerald-500/20 p-4 flex flex-col gap-4">
+                                    <div className="flex flex-col text-center">
+                                        <span className="text-[11px] font-bold text-emerald-400/80 mb-1 uppercase tracking-wider">
+                                            كود التحويل المباشر لـ فودافون كاش
+                                        </span>
+                                        <span className="font-mono font-black text-xl text-white tracking-widest" dir="ltr">
+                                            {ussdTransferCode}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        <a
+                                            href={ussdTelUri}
+                                            onClick={(e) => { e.stopPropagation(); playPs5SelectSound(); }}
+                                            className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white py-3 rounded-xl text-sm font-bold transition-all shadow-lg active:scale-95 cursor-pointer"
+                                        >
+                                            <PhoneCall className="w-5 h-5" />
+                                            <span>اتصال وتحويل</span>
+                                        </a>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); handleCopy(ussdTransferCode, 'ussd'); }}
+                                            className="w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl transition-all cursor-pointer active:scale-95"
+                                        >
+                                            {copiedKey === 'ussd' ? <CheckCircle2 className="w-5 h-5 text-emerald-400" /> : <Copy className="w-5 h-5" />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 flex items-start gap-2 leading-relaxed">
+                                    <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                                    <div>يرجى تحويل مبلغ <span className="font-bold text-emerald-400 font-mono">{netTotal} ج.م</span> بالضبط.</div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex flex-col gap-4 w-full">
                         <a
                             href={whatsappLink}
                             target="_blank"
@@ -176,7 +316,7 @@ export default function TournamentRegistrationPage() {
                             className="w-full px-6 py-4 bg-[#25D366] hover:bg-[#20b858] text-white font-black text-lg rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(37,211,102,0.3)] flex items-center justify-center gap-2"
                         >
                             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.487-1.761-1.66-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
-                            إرسال الوصل
+                            أرسل الوصل لإتمام الاشتراك
                         </a>
                         <button
                             onClick={() => navigate('/tournaments')}
@@ -189,15 +329,6 @@ export default function TournamentRegistrationPage() {
             </div>
         );
     }
-
-    const netTotal = tournament.entry_fee;
-    const activeWalletNumber = paymentSettings.walletNumber || CONTACT_INFO.walletNumber;
-    const cleanWalletNumber = activeWalletNumber.replace(/\D/g, '');
-    const activeInstapayHandle = paymentSettings.instapayHandle || CONTACT_INFO.instapayHandle;
-    const activeInstapayLink = paymentSettings.instapayLink;
-
-    const ussdTransferCode = `*9*7*${cleanWalletNumber}*${netTotal}#`;
-    const ussdTelUri = `tel:*9*7*${cleanWalletNumber}*${netTotal}%23`;
 
     return (
         <div className="min-h-[100dvh] bg-[#050505] text-white pb-24 md:pb-6 font-body">
@@ -335,13 +466,13 @@ export default function TournamentRegistrationPage() {
 
                     <div className="space-y-4 pt-4 border-t border-white/10">
                         <div className="flex items-center justify-between px-1">
-                            <span className="text-sm font-bold text-neutral-300">اختر طريقة الدفع</span>
+                            <span className="text-sm font-bold text-neutral-300">طريقة دفع الرسوم</span>
                             <span className="bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-xs font-bold border border-red-500/30">
                                 {tournament.entry_fee} ج.م
                             </span>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-3 mb-4">
+                        <div className="grid grid-cols-2 gap-3 mb-2">
                             <button
                                 type="button"
                                 onClick={() => handleSelectPayment('instapay')}
@@ -368,144 +499,11 @@ export default function TournamentRegistrationPage() {
                                 <span className="font-bold text-sm">محفظة كاش</span>
                             </button>
                         </div>
-
-                        {/* Payment Details Container */}
-                        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-5 shadow-xl">
-                            <AnimatePresence mode="wait">
-                                {formData.paymentMethod === 'instapay' ? (
-                                    <motion.div
-                                        key="instapay"
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        className="flex flex-col gap-4"
-                                    >
-                                        <div className="bg-black/40 p-4 rounded-2xl flex items-center justify-between border border-white/10">
-                                            <div className="flex flex-col min-w-0">
-                                                <span className="text-[11px] text-neutral-400 font-bold mb-1 uppercase tracking-wider">معرف إنستاباي (IPA)</span>
-                                                <span className="text-base font-black text-red-400 font-mono tracking-wider select-all" dir="ltr">
-                                                    {activeInstapayHandle}
-                                                </span>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleCopy(activeInstapayHandle, 'instapay');
-                                                }}
-                                                className="shrink-0 flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 border border-white/10"
-                                            >
-                                                {copiedKey === 'instapay' ? (
-                                                    <>
-                                                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                                                        <span>تم النسخ</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Copy className="w-4 h-4" />
-                                                        <span>نسخ</span>
-                                                    </>
-                                                )}
-                                            </button>
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleCopy(activeInstapayHandle, 'instapay');
-                                                playPs5SelectSound();
-                                                toast.success(`تم نسخ معرف إنستاباي والمبلغ!`);
-                                                if (activeInstapayLink) {
-                                                    window.open(activeInstapayLink, '_blank');
-                                                } else {
-                                                    window.location.href = 'instapay://';
-                                                }
-                                            }}
-                                            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white px-4 py-4 rounded-2xl text-base font-bold transition-all shadow-lg active:scale-95 cursor-pointer"
-                                        >
-                                            <ExternalLink className="w-5 h-5" />
-                                            <span>فتح تطبيق InstaPay للتحويل</span>
-                                        </button>
-                                        
-                                        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 flex items-start gap-2 leading-relaxed">
-                                            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                                            <div>يرجى تحويل مبلغ <span className="font-bold text-red-400 font-mono">{netTotal} ج.م</span> بالضبط لتأكيد اشتراكك.</div>
-                                        </div>
-                                    </motion.div>
-                                ) : (
-                                    <motion.div
-                                        key="wallet"
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        className="flex flex-col gap-4"
-                                    >
-                                        <div className="bg-black/40 p-4 rounded-2xl flex items-center justify-between border border-white/10">
-                                            <div className="flex flex-col min-w-0">
-                                                <span className="text-[11px] text-neutral-400 font-bold mb-1 uppercase tracking-wider">رقم المحفظة للتحويل</span>
-                                                <span className="text-base font-black text-emerald-400 font-mono tracking-wider select-all" dir="ltr">
-                                                    {activeWalletNumber}
-                                                </span>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleCopy(activeWalletNumber, 'wallet');
-                                                }}
-                                                className="shrink-0 flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 border border-white/10"
-                                            >
-                                                {copiedKey === 'wallet' ? (
-                                                    <>
-                                                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                                                        <span>تم النسخ</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Copy className="w-4 h-4" />
-                                                        <span>نسخ</span>
-                                                    </>
-                                                )}
-                                            </button>
-                                        </div>
-
-                                        <div className="bg-emerald-500/10 rounded-2xl border border-emerald-500/20 p-4 flex flex-col gap-4">
-                                            <div className="flex flex-col text-center">
-                                                <span className="text-[11px] font-bold text-emerald-400/80 mb-1 uppercase tracking-wider">
-                                                    كود التحويل المباشر لـ فودافون كاش
-                                                </span>
-                                                <span className="font-mono font-black text-xl text-white tracking-widest" dir="ltr">
-                                                    {ussdTransferCode}
-                                                </span>
-                                            </div>
-
-                                            <div className="flex items-center gap-3">
-                                                <a
-                                                    href={ussdTelUri}
-                                                    onClick={(e) => { e.stopPropagation(); playPs5SelectSound(); }}
-                                                    className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white py-3 rounded-xl text-sm font-bold transition-all shadow-lg active:scale-95 cursor-pointer"
-                                                >
-                                                    <PhoneCall className="w-5 h-5" />
-                                                    <span>اتصال وتحويل</span>
-                                                </a>
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => { e.stopPropagation(); handleCopy(ussdTransferCode, 'ussd'); }}
-                                                    className="w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl transition-all cursor-pointer active:scale-95"
-                                                >
-                                                    {copiedKey === 'ussd' ? <CheckCircle2 className="w-5 h-5 text-emerald-400" /> : <Copy className="w-5 h-5" />}
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 flex items-start gap-2 leading-relaxed">
-                                            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                                            <div>يرجى تحويل مبلغ <span className="font-bold text-emerald-400 font-mono">{netTotal} ج.م</span> بالضبط لتأكيد اشتراكك.</div>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                        <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-300 flex items-start gap-2 leading-relaxed">
+                            <AlertCircle className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                            <div>
+                                يرجى العلم أنك ستحصل على بيانات الدفع وتقوم بإرسال الإيصال في <span className="font-bold text-blue-400">الخطوة التالية</span> لتأكيد مقعدك في البطولة.
+                            </div>
                         </div>
                     </div>
 
@@ -525,7 +523,7 @@ export default function TournamentRegistrationPage() {
                             <Loader2 className="w-6 h-6 animate-spin" />
                         ) : (
                             <>
-                                <span>تأكيد وانضمام للبطولة</span>
+                                <span>تأكيد واستكمال الدفع</span>
                                 <ArrowRight className="w-5 h-5 rotate-180" />
                             </>
                         )}
