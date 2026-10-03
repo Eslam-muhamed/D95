@@ -251,6 +251,11 @@ export default function OrdersTab() {
     };
 
     const handleDelete = async (orderId: string, orderNumber: string) => {
+        if (orderNumber.startsWith('PS-')) {
+            toast.error('لا يمكن حذف طلب تابع لحجز بلايستيشن من هنا. يتم حذفه تلقائياً عند إلغاء الحجز من قسم البلايستيشن.');
+            return;
+        }
+
         if (!window.confirm(`هل أنت متأكد من حذف الطلب #${orderNumber}؟ لا يمكن التراجع عن هذا الإجراء.`)) {
             return;
         }
