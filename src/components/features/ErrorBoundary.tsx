@@ -90,6 +90,9 @@ ComponentStack: ${this.state.errorInfo?.componentStack || 'No component stack'}`
                         <h2 className="text-lg font-bold text-white mb-2">
                             عذراً، حدث خطأ غير متوقع في النظام
                         </h2>
+                        <p className="text-xs text-neutral-500 mb-6 font-mono text-left bg-neutral-900 p-2 rounded w-full overflow-auto">
+                            {this.state.error?.toString()}
+                        </p>
                         <p className="text-xs text-neutral-400 mb-6 leading-relaxed">
                             {isAdminOrDev 
                                 ? 'حدث خطأ في واجهة الإدارة. يمكنك نسخ تفاصيل الخطأ الفنية وإرسالها للمطور أو إعادة تحميل الصفحة.' 

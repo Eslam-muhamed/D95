@@ -60,19 +60,31 @@ export async function createBooking(booking: Omit<DBBooking, 'id' | 'created_at'
     if (error) {
         console.warn('Edge Function create-booking failed, inspecting error:', error);
         
-        if (error.code === '23P01' || error.message.includes('23P01') || error.message.includes('تعارض') || error.message.includes('محجوز')) {
+        let errorBody = '';
+        if (error.context && typeof error.context.json === 'function') {
+            try {
+                const errData = await error.context.json();
+                errorBody = errData.error || JSON.stringify(errData);
+            } catch (e) {
+                errorBody = 'Could not parse error body';
+            }
+        }
+        
+        const fullErrorMsg = errorBody ? `${error.message}: ${errorBody}` : error.message;
+
+        if (fullErrorMsg.includes('23P01') || fullErrorMsg.includes('تعارض') || fullErrorMsg.includes('محجوز')) {
             throw new Error('عذراً، هذا الموعد تم حجزه للتو أو يتعارض مع حجز قائم. يرجى اختيار موعد آخر.');
         }
-        if (error.message.includes('الحد الأدنى') || error.message.includes('ساعة واحدة')) {
+        if (fullErrorMsg.includes('الحد الأدنى') || fullErrorMsg.includes('ساعة واحدة')) {
             throw new Error('الحد الأدنى للحجز هو ساعة واحدة.');
         }
-        if (error.message.includes('منتج غير صالح')) {
+        if (fullErrorMsg.includes('منتج غير صالح')) {
             throw new Error('أحد المنتجات المختارة غير صالح أو تم تغييره.');
         }
-        if (error.message.includes('مضى')) {
+        if (fullErrorMsg.includes('مضى')) {
             throw new Error('لا يمكن حجز موعد في الماضي.');
         }
-        throw error;
+        throw new Error(fullErrorMsg);
     }
 
     if (data) {
