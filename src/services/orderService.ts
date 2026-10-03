@@ -14,39 +14,100 @@ export async function fetchPaginatedOrders(filter?: {
     search?: string;
     page?: number;
     pageSize?: number;
+    date?: string;
 }): Promise<PaginatedOrdersResult> {
     const page = Math.max(1, filter?.page || 1);
     const pageSize = Math.max(5, Math.min(100, filter?.pageSize || 20));
-    const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
 
     try {
-        let query = supabase
-            .from('orders')
-            .select('*', { count: 'exact' })
-            .order('created_at', { ascending: false });
-
+        // 1. Fetch from regular orders
+        let ordersQuery = supabase.from('orders').select('*');
         if (filter?.status && filter.status !== 'all') {
-            query = query.eq('status', filter.status);
+            ordersQuery = ordersQuery.eq('status', filter.status);
+        }
+        if (filter?.date) {
+            const startOfDay = new Date(filter.date);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(filter.date);
+            endOfDay.setHours(23, 59, 59, 999);
+            ordersQuery = ordersQuery.gte('created_at', startOfDay.toISOString());
+            ordersQuery = ordersQuery.lte('created_at', endOfDay.toISOString());
         }
 
+        // 2. Fetch from ps_bookings that have snacks
+        let psQuery = supabase.from('ps_bookings').select('*').gt('snacks_total', 0);
+        if (filter?.status && filter.status !== 'all') {
+            psQuery = psQuery.eq('status', filter.status);
+        }
+        if (filter?.date) {
+            const startOfDay = new Date(filter.date);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(filter.date);
+            endOfDay.setHours(23, 59, 59, 999);
+            psQuery = psQuery.gte('created_at', startOfDay.toISOString());
+            psQuery = psQuery.lte('created_at', endOfDay.toISOString());
+        }
+
+        const [ordersRes, psRes] = await Promise.all([
+            ordersQuery,
+            psQuery
+        ]);
+
+        if (ordersRes.error) console.error('Error fetching orders:', ordersRes.error);
+        if (psRes.error) console.error('Error fetching ps bookings for cafe:', psRes.error);
+
+        let mergedOrders: DBOrder[] = (ordersRes.data || []) as DBOrder[];
+
+        // Transform PS Bookings into pseudo-orders
+        if (psRes.data) {
+            const psPseudoOrders: DBOrder[] = psRes.data.map(ps => ({
+                id: ps.id,
+                order_number: `PS-${ps.reservation_id}`,
+                customer_name: ps.customer_name,
+                customer_phone: ps.customer_phone,
+                order_type: 'dine',
+                table_number: ps.room_name,
+                delivery_address: null,
+                payment_method: ps.payment_method,
+                items: Array.isArray(ps.snacks) ? ps.snacks.map((s: any) => ({
+                    id: s.id,
+                    name: s.name,
+                    price: s.price,
+                    quantity: s.quantity || 1
+                })) : [],
+                subtotal: ps.snacks_total || 0,
+                total_amount: ps.snacks_total || 0,
+                status: ps.status,
+                notes: `تابع لحجز البلايستيشن: ${ps.reservation_id}`,
+                user_id: ps.user_id,
+                created_at: ps.created_at
+            }));
+            mergedOrders = [...mergedOrders, ...psPseudoOrders];
+        }
+
+        // Search filtering (since we do it in memory now to cover both)
         if (filter?.search) {
-            const s = filter.search.trim();
-            query = query.or(`order_number.ilike.%${s}%,customer_name.ilike.%${s}%,customer_phone.ilike.%${s}%,table_number.ilike.%${s}%`);
+            const s = filter.search.toLowerCase().trim();
+            mergedOrders = mergedOrders.filter(o => 
+                (o.order_number && o.order_number.toLowerCase().includes(s)) ||
+                (o.customer_name && o.customer_name.toLowerCase().includes(s)) ||
+                (o.customer_phone && o.customer_phone.toLowerCase().includes(s)) ||
+                (o.table_number && o.table_number.toLowerCase().includes(s))
+            );
         }
 
-        const { data, count, error } = await query.range(from, to);
+        // Sort by created_at descending
+        mergedOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-        if (error) {
-            console.error('Error fetching orders:', error);
-            return { orders: [], totalCount: 0, page, pageSize, totalPages: 1 };
-        }
-
-        const totalCount = count || 0;
+        const totalCount = mergedOrders.length;
         const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+        
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize;
+        const paginatedOrders = mergedOrders.slice(from, to);
 
         return {
-            orders: (data || []) as DBOrder[],
+            orders: paginatedOrders,
             totalCount,
             page,
             pageSize,
@@ -54,7 +115,7 @@ export async function fetchPaginatedOrders(filter?: {
         };
     } catch (err) {
         console.error('Exception in fetchPaginatedOrders:', err);
-        return { orders: [], totalCount: 0, page, pageSize, totalPages: 1 };
+        return { orders: [], totalCount: 0, page, pageSize: 20, totalPages: 1 };
     }
 }
 

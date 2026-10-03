@@ -146,6 +146,9 @@ export default function OrdersTab() {
     const [pageSize, setPageSize] = useState(15);
     const [totalCount, setTotalCount] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
+    const [selectedDate, setSelectedDate] = useState<string>(
+        new Date().toISOString().split('T')[0]
+    );
 
     // Metrics (instant 0ms render via SWR cache)
     const [metrics, setMetrics] = useState(() => getCachedOrderMetrics() || {
@@ -167,6 +170,7 @@ export default function OrdersTab() {
                 search: searchQuery,
                 page,
                 pageSize,
+                date: selectedDate,
             });
 
             setOrders(result.orders);
@@ -178,7 +182,7 @@ export default function OrdersTab() {
         } finally {
             if (!isSilent) setLoading(false);
         }
-    }, [statusFilter, searchQuery, page, pageSize]);
+    }, [statusFilter, searchQuery, page, pageSize, selectedDate]);
 
     // Initial Load & triggers
     useEffect(() => {
@@ -223,7 +227,12 @@ export default function OrdersTab() {
         };
     }, []);
 
-    const handleStatusChange = async (orderId: string, newStatus: string) => {
+    const handleStatusChange = async (orderId: string, newStatus: string, orderNumber: string) => {
+        if (orderNumber.startsWith('PS-')) {
+            toast.error('هذا الطلب تابع لغرفة بلايستيشن. يتم إدارة حالته من قسم حجوزات البلايستيشن.');
+            return;
+        }
+        
         try {
             setUpdatingId(orderId);
             await updateOrderStatus(orderId, newStatus);
@@ -365,8 +374,17 @@ export default function OrdersTab() {
                         })}
                     </div>
 
-                    {/* Actions: Refresh */}
-                    <div className="flex items-center gap-2 self-end md:self-auto">
+                    {/* Actions: Date Filter & Refresh */}
+                    <div className="flex items-center gap-2 self-end md:self-auto w-full md:w-auto">
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={(e) => {
+                                setSelectedDate(e.target.value);
+                                setPage(1);
+                            }}
+                            className="flex-1 md:flex-none px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold focus:outline-none focus:border-red-500 focus:bg-white transition-colors"
+                        />
                         <button
                             type="button"
                             onClick={() => {
@@ -374,10 +392,10 @@ export default function OrdersTab() {
                                 loadMetrics();
                                 toast.info('تم تحديث البيانات');
                             }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 text-xs font-semibold border border-slate-200 transition-colors cursor-pointer"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 text-xs font-semibold border border-slate-200 transition-colors cursor-pointer shrink-0"
                         >
                             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-red-600' : ''}`} />
-                            <span>تحديث</span>
+                            <span className="hidden sm:inline">تحديث</span>
                         </button>
                     </div>
                 </div>
@@ -593,7 +611,7 @@ export default function OrdersTab() {
                                             <button
                                                 type="button"
                                                 disabled={isUpdating}
-                                                onClick={() => handleStatusChange(order.id, 'preparing')}
+                                                onClick={() => handleStatusChange(order.id, 'preparing', order.order_number)}
                                                 className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
                                             >
                                                 <Coffee className="w-3.5 h-3.5" />
@@ -605,7 +623,7 @@ export default function OrdersTab() {
                                             <button
                                                 type="button"
                                                 disabled={isUpdating}
-                                                onClick={() => handleStatusChange(order.id, 'completed')}
+                                                onClick={() => handleStatusChange(order.id, 'completed', order.order_number)}
                                                 className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
                                             >
                                                 <CheckCircle2 className="w-3.5 h-3.5" />
@@ -617,7 +635,7 @@ export default function OrdersTab() {
                                             <button
                                                 type="button"
                                                 disabled={isUpdating}
-                                                onClick={() => handleStatusChange(order.id, 'cancelled')}
+                                                onClick={() => handleStatusChange(order.id, 'cancelled', order.order_number)}
                                                 className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 text-xs font-semibold transition-colors cursor-pointer border border-slate-200"
                                             >
                                                 إلغاء
@@ -628,7 +646,7 @@ export default function OrdersTab() {
                                         <select
                                             value={order.status}
                                             disabled={isUpdating}
-                                            onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                                            onChange={(e) => handleStatusChange(order.id, e.target.value, order.order_number)}
                                             className="bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-red-500 cursor-pointer shadow-2xs"
                                         >
                                             <option value="pending">قيد الانتظار</option>
