@@ -72,6 +72,9 @@ export async function createBooking(booking: Omit<DBBooking, 'id' | 'created_at'
         
         const fullErrorMsg = errorBody ? `${error.message}: ${errorBody}` : error.message;
 
+        if (fullErrorMsg.includes('بنفس رقم الهاتف')) {
+            throw new Error('لديك حجز معلق بالفعل قيد المراجعة بنفس رقم الهاتف. يرجى انتظار اعتماده أو انتهاء صلاحيته.');
+        }
         if (fullErrorMsg.includes('23P01') || fullErrorMsg.includes('تعارض') || fullErrorMsg.includes('محجوز')) {
             throw new Error('عذراً، هذا الموعد تم حجزه للتو أو يتعارض مع حجز قائم. يرجى اختيار موعد آخر.');
         }
@@ -84,6 +87,17 @@ export async function createBooking(booking: Omit<DBBooking, 'id' | 'created_at'
         if (fullErrorMsg.includes('مضى')) {
             throw new Error('لا يمكن حجز موعد في الماضي.');
         }
+        
+        // If it's a specific Arabic error message from the DB, throw it directly
+        if (errorBody && errorBody.match(/[\u0600-\u06FF]/)) {
+            try {
+                const parsed = JSON.parse(errorBody);
+                if (parsed.error) throw new Error(parsed.error);
+            } catch {
+                throw new Error(errorBody);
+            }
+        }
+        
         throw new Error(fullErrorMsg);
     }
 
