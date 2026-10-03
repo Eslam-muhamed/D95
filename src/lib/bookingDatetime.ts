@@ -17,13 +17,41 @@
 export const OPERATING_HOURS = {
     START_HOUR: 8,      // 08:00 AM
     START_MINUTE: 0,
-    CLOSING_HOUR: 4,    // 04:00 AM next day
+    CLOSING_HOUR: 4,    // 04:00 AM next day (Default)
     CLOSING_MINUTE: 0,
     TOTAL_OPERATING_HOURS: 20,
     INTERVAL_MINUTES: 15,
     MIN_DURATION_HOURS: 1.0,
     MAX_DURATION_HOURS: 12.0,
 };
+
+let hasFetchedSettings = false;
+
+import { supabase } from '@/lib/supabase';
+
+export async function fetchAndSetOperatingHours() {
+    if (hasFetchedSettings) return;
+    try {
+        const { data, error } = await supabase
+            .from('system_settings')
+            .select('setting_value')
+            .eq('setting_key', 'operating_hours')
+            .single();
+            
+        if (!error && data?.setting_value) {
+            const val = data.setting_value as any;
+            if (val.closing_hour !== undefined) {
+                OPERATING_HOURS.CLOSING_HOUR = Number(val.closing_hour);
+            }
+            if (val.start_hour !== undefined) {
+                OPERATING_HOURS.START_HOUR = Number(val.start_hour);
+            }
+        }
+        hasFetchedSettings = true;
+    } catch (err) {
+        console.error('Failed to fetch operating hours:', err);
+    }
+}
 
 export interface BookingInterval {
     start: Date;

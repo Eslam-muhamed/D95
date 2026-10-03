@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { DBOrder } from '@/types/database';
+import { OPERATING_HOURS } from '@/lib/bookingDatetime';
 
 export interface PaginatedOrdersResult {
     orders: DBOrder[];
@@ -26,12 +27,18 @@ export async function fetchPaginatedOrders(filter?: {
             ordersQuery = ordersQuery.eq('status', filter.status);
         }
         if (filter?.date) {
-            const startOfDay = new Date(filter.date);
-            startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(filter.date);
-            endOfDay.setHours(23, 59, 59, 999);
-            ordersQuery = ordersQuery.gte('created_at', startOfDay.toISOString());
-            ordersQuery = ordersQuery.lte('created_at', endOfDay.toISOString());
+            // Business logic: Shift starts at START_HOUR and ends at CLOSING_HOUR next day
+            // But we should use exact UTC timestamps based on Cairo time.
+            // For simplicity and avoiding timezone offsets, we can just use the provided date string.
+            // A quick safe way is to just assume local time start START_HOUR and end CLOSING_HOUR
+            const startOfShift = new Date(filter.date);
+            startOfShift.setHours(OPERATING_HOURS.START_HOUR, 0, 0, 0);
+            const endOfShift = new Date(filter.date);
+            endOfShift.setDate(endOfShift.getDate() + 1);
+            endOfShift.setHours(OPERATING_HOURS.CLOSING_HOUR, 0, 0, 0);
+
+            ordersQuery = ordersQuery.gte('created_at', startOfShift.toISOString());
+            ordersQuery = ordersQuery.lte('created_at', endOfShift.toISOString());
         }
 
         // 2. Fetch from ps_bookings that have snacks
@@ -40,12 +47,14 @@ export async function fetchPaginatedOrders(filter?: {
             psQuery = psQuery.eq('status', filter.status);
         }
         if (filter?.date) {
-            const startOfDay = new Date(filter.date);
-            startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(filter.date);
-            endOfDay.setHours(23, 59, 59, 999);
-            psQuery = psQuery.gte('created_at', startOfDay.toISOString());
-            psQuery = psQuery.lte('created_at', endOfDay.toISOString());
+            const startOfShift = new Date(filter.date);
+            startOfShift.setHours(OPERATING_HOURS.START_HOUR, 0, 0, 0);
+            const endOfShift = new Date(filter.date);
+            endOfShift.setDate(endOfShift.getDate() + 1);
+            endOfShift.setHours(OPERATING_HOURS.CLOSING_HOUR, 0, 0, 0);
+
+            psQuery = psQuery.gte('created_at', startOfShift.toISOString());
+            psQuery = psQuery.lte('created_at', endOfShift.toISOString());
         }
 
         const [ordersRes, psRes] = await Promise.all([

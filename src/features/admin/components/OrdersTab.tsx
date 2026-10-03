@@ -31,6 +31,7 @@ import {
 import type { DBOrder } from '@/types/database';
 import type { ItemCustomization } from '@/types/cart';
 import { formatCustomizationTags } from '@/lib/cartUtils';
+import { getCairoTodayDateString } from '@/lib/bookingDatetime';
 
 function formatTimeAgo(dateStr: string): string {
     const diffMs = Date.now() - new Date(dateStr).getTime();
@@ -147,7 +148,7 @@ export default function OrdersTab() {
     const [totalCount, setTotalCount] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
     const [selectedDate, setSelectedDate] = useState<string>(
-        new Date().toISOString().split('T')[0]
+        getCairoTodayDateString()
     );
 
     // Metrics (instant 0ms render via SWR cache)

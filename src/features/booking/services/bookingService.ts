@@ -883,6 +883,32 @@ export interface RoomRates {
 let cachedRoomRates: RoomRates | null = null;
 const ROOM_RATES_CACHE_KEY = 'd95_room_rates_cache';
 
+export async function fetchOperatingHoursSettings(): Promise<{start_hour: number, closing_hour: number}> {
+    const { data, error } = await supabase
+        .from('system_settings')
+        .select('setting_value')
+        .eq('setting_key', 'operating_hours')
+        .single();
+    if (error || !data) return { start_hour: 8, closing_hour: 4 };
+    const val = data.setting_value as any;
+    return {
+        start_hour: val.start_hour ?? 8,
+        closing_hour: val.closing_hour ?? 4
+    };
+}
+
+export async function updateOperatingHoursSettings(start: number, close: number): Promise<void> {
+    const { error } = await supabase
+        .from('system_settings')
+        .update({ setting_value: { start_hour: start, closing_hour: close } })
+        .eq('setting_key', 'operating_hours');
+    if (error) throw error;
+    // Update local immediately
+    const { OPERATING_HOURS } = await import('@/lib/bookingDatetime');
+    OPERATING_HOURS.START_HOUR = start;
+    OPERATING_HOURS.CLOSING_HOUR = close;
+}
+
 export async function fetchRoomRates(): Promise<RoomRates> {
     if (cachedRoomRates) return cachedRoomRates;
     try {

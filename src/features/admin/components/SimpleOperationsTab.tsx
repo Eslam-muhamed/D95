@@ -44,6 +44,8 @@ import {
     updateBookingPolicy,
     fetchRoomRates,
     updateRoomRates,
+    fetchOperatingHoursSettings,
+    updateOperatingHoursSettings,
     confirmBookingAndResolveConflicts,
     groupConflictingPendingBookings,
     getBookingDates,
@@ -172,6 +174,11 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
     const [archiveBookings, setArchiveBookings] = useState<DBBooking[]>([]);
     const [archiveLoading, setArchiveLoading] = useState<boolean>(false);
 
+    // Operating Hours State
+    const [startHour, setStartHour] = useState<number>(8);
+    const [closingHour, setClosingHour] = useState<number>(4);
+    const [isSavingHours, setIsSavingHours] = useState<boolean>(false);
+
     // Live Clock
     const [currentTimeStr, setCurrentTimeStr] = useState<string>('');
     useEffect(() => {
@@ -206,11 +213,12 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
         }).catch(() => {});
 
         try {
-            const [dayData, recentData, rates, pol] = await Promise.all([
+            const [dayData, recentData, rates, pol, ops] = await Promise.all([
                 fetchBookingsForDate(todayDateFilter), 
                 fetchRecentBookings({ date: recentDateFilter || undefined, limit: 50 }),
                 fetchRoomRates(),
                 fetchBookingPolicy(),
+                fetchOperatingHoursSettings()
             ]);
 
             setTodayBookings(dayData);
@@ -221,6 +229,8 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
             setRatePsOutside(rates['ps-outside'] || 80);
             setRateBilliards(rates['billiards'] || 15);
             setPolicy(pol);
+            setStartHour(ops.start_hour);
+            setClosingHour(ops.closing_hour);
         } catch {
             if (!isSilent) toast.error('تعذر جلب بيانات الحجوزات');
         } finally {
@@ -457,7 +467,19 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
             setSavingRates(false);
         }
     };
-
+    // Save Operating Hours
+    const handleSaveOperatingHours = async () => {
+        setIsSavingHours(true);
+        playPs5SelectSound();
+        try {
+            await updateOperatingHoursSettings(startHour, closingHour);
+            toast.success('تم حفظ توقيت بداية ونهاية الوردية بنجاح! ⏱️');
+        } catch {
+            toast.error('تعذر حفظ إعدادات الوردية');
+        } finally {
+            setIsSavingHours(false);
+        }
+    };
     // Conflict Groups (overlapping pending bookings in recent bookings)
     const conflictGroups = useMemo(() => {
         return groupConflictingPendingBookings(recentBookings);
@@ -2175,10 +2197,73 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
             )}
 
             {/* ========================================================================= */}
-            {/* SUB-TAB 3: SETTINGS (سياسة الـ 10 دقائق وأسعار الغرف) */}
+            {/* SUB-TAB 3: SETTINGS (سياسة الـ 10 دقائق وأسعار الغرف وتوقيت الوردية) */}
             {/* ========================================================================= */}
             {activeSubTab === 'settings' && (
                 <div className="space-y-4">
+                    {/* Operating Hours Settings */}
+                    <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
+                                    <Clock className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-bold text-slate-900">ساعات عمل الوردية (الشيفت)</h3>
+                                    <p className="text-xs text-slate-500">
+                                        يتم حساب إيرادات ومبيعات اليوم بناءً على هذا التوقيت
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleSaveOperatingHours}
+                                disabled={isSavingHours}
+                                className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-colors cursor-pointer shrink-0 disabled:opacity-50 flex items-center gap-1.5 justify-center sm:justify-start"
+                            >
+                                {isSavingHours ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                                حفظ ساعات العمل
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-2 p-3 bg-slate-50 rounded-xl border border-slate-200/60">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">وقت بداية الوردية</label>
+                                <div className="relative">
+                                    <select
+                                        value={startHour}
+                                        onChange={(e) => setStartHour(Number(e.target.value))}
+                                        className="w-full bg-white border border-slate-200 rounded-lg pl-8 pr-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-red-500 transition-colors shadow-2xs appearance-none"
+                                        dir="ltr"
+                                    >
+                                        {[...Array(24)].map((_, i) => (
+                                            <option key={i} value={i}>
+                                                {i === 0 ? '12:00 AM' : i < 12 ? `${i}:00 AM` : i === 12 ? '12:00 PM' : `${i - 12}:00 PM`}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <Clock className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">وقت نهاية الوردية</label>
+                                <div className="relative">
+                                    <select
+                                        value={closingHour}
+                                        onChange={(e) => setClosingHour(Number(e.target.value))}
+                                        className="w-full bg-white border border-slate-200 rounded-lg pl-8 pr-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-red-500 transition-colors shadow-2xs appearance-none"
+                                        dir="ltr"
+                                    >
+                                        {[...Array(24)].map((_, i) => (
+                                            <option key={i} value={i}>
+                                                {i === 0 ? '12:00 AM' : i < 12 ? `${i}:00 AM` : i === 12 ? '12:00 PM' : `${i - 12}:00 PM`}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <Clock className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     {/* Booking Policy Mode */}
                     <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3 shadow-xs">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">

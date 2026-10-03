@@ -8,6 +8,8 @@ import { preloadMenuData } from '@/features/menu/services/menuService';
 import { AppRoutes } from './routes';
 import { useTournamentStore } from '@/stores/tournamentStore';
 
+import { fetchAndSetOperatingHours } from '@/lib/bookingDatetime';
+
 function AppContent() {
     return (
         <BrowserRouter>
@@ -21,6 +23,9 @@ export default function App() {
 
     useEffect(() => {
         initialize();
+        // Fetch global settings
+        fetchAndSetOperatingHours();
+        
         // Fetch active tournaments
         useTournamentStore.getState().fetchActiveTournaments();
         
