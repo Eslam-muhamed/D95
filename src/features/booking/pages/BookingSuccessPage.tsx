@@ -471,6 +471,16 @@ export default function BookingSuccessPage() {
                                     <span>فتح تطبيق InstaPay والدفع مباشرة</span>
                                 </button>
                             )}
+
+                            {paymentMethod === 'wallet' && paymentSettings.walletNumber && (
+                                <a
+                                    href={`tel:*9*7*${paymentSettings.walletNumber}*${netTotal}%23`}
+                                    className="w-full flex items-center justify-center gap-1.5 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-600 dark:text-emerald-400 py-2.5 rounded-xl text-xs font-bold transition-all border border-emerald-600/20 mb-3"
+                                >
+                                    <ExternalLink className="w-4 h-4" />
+                                    <span>دفع سريع بنقرة واحدة (فودافون كاش)</span>
+                                </a>
+                            )}
                             
                             <p className="text-xs text-neutral-500 dark:text-neutral-400 bg-neutral-50 dark:bg-black/30 p-2.5 rounded-lg border border-neutral-200 dark:border-white/5">
                                 يرجى تحويل مبلغ <strong className="text-neutral-900 dark:text-white">{netTotal} ج.م</strong>. ثم اضغط على زر الواتساب بالأسفل لإرسال صورة التحويل لتأكيد الحجز وتثبيت الموعد.
