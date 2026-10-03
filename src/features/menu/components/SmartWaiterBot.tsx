@@ -163,6 +163,12 @@ export default function SmartWaiterBot() {
   const navigate = useNavigate();
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isHidden, setIsHidden] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('d95_bot_hidden') === 'true';
+    }
+    return false;
+  });
 
   // Daily message limit state (persisted per device in localStorage)
   const [dailyUsageCount, setDailyUsageCount] = useState<number>(() => getDailyUsage().count);
@@ -271,6 +277,15 @@ export default function SmartWaiterBot() {
       setIsChatOpen(false);
     }
     setIsSelectorOpen(true);
+  };
+
+  const handleHideBot = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsHidden(true);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('d95_bot_hidden', 'true');
+    }
   };
 
   const handleSelectPersona = (persona: Persona) => {
@@ -674,6 +689,8 @@ ${formatIntervalList(room2Intervals)}
   const personaTurn = Math.floor(quoteCycle / 2);
   const activeQuote = currentSpotlight.quotes[personaTurn % currentSpotlight.quotes.length];
 
+  if (isHidden) return null;
+
   return (
     <>
       {/* 1. Floating Action Bubble with Dual Heads & Alternating Spotlight */}
@@ -720,6 +737,16 @@ ${formatIntervalList(room2Intervals)}
                   <span className="absolute bottom-0 right-1 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full shadow-md animate-pulse" />
                 </div>
               </motion.button>
+
+              {/* Hide completely button */}
+              <button
+                type="button"
+                onClick={handleHideBot}
+                className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 p-1.5 bg-slate-900/80 hover:bg-slate-900 text-slate-300 hover:text-white rounded-full border border-slate-700/50 shadow-md z-50 transition-colors"
+                title="إخفاء البوت بالكامل"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
 
               {/* Thought/Speech Bubble from the selected owner */}
               {!isQuoteDismissed && (
@@ -840,6 +867,16 @@ ${formatIntervalList(room2Intervals)}
                   <div className="absolute top-1 left-2.5 right-2.5 h-6 sm:h-7 rounded-full bg-gradient-to-b from-white/35 via-white/10 to-transparent pointer-events-none z-30" />
                   {/* Subtle bottom glass reflection */}
                   <div className="absolute bottom-1.5 right-3 w-5 h-2 rounded-full bg-white/10 blur-[1px] pointer-events-none z-30" />
+
+                  {/* Hide completely button */}
+                  <button
+                    type="button"
+                    onClick={handleHideBot}
+                    className="absolute top-1 right-1 p-1 bg-black/40 hover:bg-black/60 text-white/70 hover:text-white rounded-full z-50 transition-colors"
+                    title="إخفاء البوت بالكامل"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
 
                   {/* 1. Dabour Head inside bubble */}
                   <motion.div
