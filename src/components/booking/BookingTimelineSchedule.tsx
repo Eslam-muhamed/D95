@@ -231,19 +231,19 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
         if (currentRoom.titleAr) {
             return currentRoom.titleAr.split('•')[0].trim();
         }
-        if (currentRoom.id === 'room-1' || currentRoom.name.includes('01')) {
-            return 'غرفة 01';
+        if (currentRoom.id === 'room-1' || currentRoom.name.includes('02')) {
+            return 'غرفة 02';
         }
-        if (currentRoom.id === 'room-2' || currentRoom.name.includes('02')) {
-            return 'غرفة 02 (VIP)';
+        if (currentRoom.id === 'room-2' || currentRoom.name.includes('01')) {
+            return 'غرفة 01 (VIP)';
         }
         return currentRoom.name;
     }, [currentRoom]);
 
     const roomCodeEn = useMemo(() => {
         if (currentRoom.nameEn) return currentRoom.nameEn;
-        if (currentRoom.id === 'room-1' || currentRoom.name.includes('01')) return 'ROOM 01';
-        if (currentRoom.id === 'room-2' || currentRoom.name.includes('02')) return 'ROOM 02';
+        if (currentRoom.id === 'room-1' || currentRoom.name.includes('02')) return 'ROOM 02';
+        if (currentRoom.id === 'room-2' || currentRoom.name.includes('01')) return 'ROOM 01';
         return 'ROOM';
     }, [currentRoom]);
 

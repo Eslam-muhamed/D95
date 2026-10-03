@@ -56,55 +56,8 @@ interface RoomData {
 
 const ROOMS: RoomData[] = [
     {
-        id: 'room-1',
-        code: 'ROOM 01',
-        titleEn: 'BREAKING BAD',
-        titleAr: 'غرفة بريكينج باد (Breaking Bad)',
-        subtitle: 'أجواء الكيمياء والغموض المستوحاة من مسلسل بريكينج باد',
-        rate: 100,
-        badge: 'Available',
-        accentColor: '#10b981',
-        glowColor: 'rgba(16, 185, 129, 0.45)',
-        neonBorder: 'border-[#10b981]',
-        neonShadow: 'shadow-[0_0_35px_rgba(16,185,129,0.35)]',
-        interiorImg: room01InteriorImg,
-        features: [
-            {
-                icon: Tv,
-                label: 'شاشة 65" 4K 120Hz',
-                desc: 'معدل تحديث فائق مع دعم HDR الكامل وسرعة استجابة 1ms',
-            },
-            {
-                icon: BeinSportsIcon,
-                label: 'beIN SPORTS 4K',
-                desc: 'بث مباشر لكافة البطولات والمباريات بأعلى جودة فائقة',
-            },
-            {
-                icon: NetflixIcon,
-                label: 'NETFLIX Premium 4K',
-                desc: 'مكتبة أفلام ومسلسلات عالمية متاحة مجاناً خلال جلستك',
-            },
-            {
-                icon: Gamepad2,
-                label: '4 دراعات DualSense',
-                desc: 'أذرع تحكم لاسلكية أصلية جاهزة لمباريات اللعب الرباعي',
-            },
-            {
-                icon: Volume2,
-                label: 'صوت محيطي 3D وعزل تام',
-                desc: 'نظام صوت نقي يضعك في قلب المعركة والمباريات',
-            },
-            {
-                icon: Wind,
-                label: 'تكييف مستقل وجلسة VIP',
-                desc: 'كنب مريح مصمم لجلسات اللعب الطويلة مع تحكم كامل بالحرارة',
-            },
-        ],
-        popularGames: ['EA FC 25', 'Tekken 8', 'Mortal Kombat 1', 'GTA V', 'Call of Duty'],
-    },
-    {
         id: 'room-2',
-        code: 'ROOM 02',
+        code: 'ROOM 01',
         titleEn: 'LA CASA DE PAPEL',
         titleAr: 'غرفة لا كاسا دي بابيل (La Casa De Papel)',
         subtitle: 'أجواء حماسية وتخطيط احترافي مستوحاة من مسلسل لا كاسا دي بابيل',
@@ -148,6 +101,53 @@ const ROOMS: RoomData[] = [
             },
         ],
         popularGames: ['EA FC 25', 'Spider-Man 2', 'NBA 2K25', 'Tekken 8', 'Crash Team Racing'],
+    },
+    {
+        id: 'room-1',
+        code: 'ROOM 02',
+        titleEn: 'BREAKING BAD',
+        titleAr: 'غرفة بريكينج باد (Breaking Bad)',
+        subtitle: 'أجواء الكيمياء والغموض المستوحاة من مسلسل بريكينج باد',
+        rate: 100,
+        badge: 'Available',
+        accentColor: '#10b981',
+        glowColor: 'rgba(16, 185, 129, 0.45)',
+        neonBorder: 'border-[#10b981]',
+        neonShadow: 'shadow-[0_0_35px_rgba(16,185,129,0.35)]',
+        interiorImg: room01InteriorImg,
+        features: [
+            {
+                icon: Tv,
+                label: 'شاشة 65" 4K 120Hz',
+                desc: 'معدل تحديث فائق مع دعم HDR الكامل وسرعة استجابة 1ms',
+            },
+            {
+                icon: BeinSportsIcon,
+                label: 'beIN SPORTS 4K',
+                desc: 'بث مباشر لكافة البطولات والمباريات بأعلى جودة فائقة',
+            },
+            {
+                icon: NetflixIcon,
+                label: 'NETFLIX Premium 4K',
+                desc: 'مكتبة أفلام ومسلسلات عالمية متاحة مجاناً خلال جلستك',
+            },
+            {
+                icon: Gamepad2,
+                label: '4 دراعات DualSense',
+                desc: 'أذرع تحكم لاسلكية أصلية جاهزة لمباريات اللعب الرباعي',
+            },
+            {
+                icon: Volume2,
+                label: 'صوت محيطي 3D وعزل تام',
+                desc: 'نظام صوت نقي يضعك في قلب المعركة والمباريات',
+            },
+            {
+                icon: Wind,
+                label: 'تكييف مستقل وجلسة VIP',
+                desc: 'كنب مريح مصمم لجلسات اللعب الطويلة مع تحكم كامل بالحرارة',
+            },
+        ],
+        popularGames: ['EA FC 25', 'Tekken 8', 'Mortal Kombat 1', 'GTA V', 'Call of Duty'],
     },
 ];
 

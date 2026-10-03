@@ -2369,7 +2369,7 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
                         <div className="space-y-3 pt-1">
                             <div>
                                 <label className="text-xs font-bold text-slate-700 block mb-1">
-                                    سعر ساعة الغرفة 1 (PLAY ROOM 01):
+                                    سعر ساعة الغرفة 1 (PLAY ROOM 02):
                                 </label>
                                 <div className="relative">
                                     <input
@@ -2385,7 +2385,7 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
 
                             <div>
                                 <label className="text-xs font-bold text-slate-700 block mb-1">
-                                    سعر ساعة الغرفة 2 (PLAY ROOM 02):
+                                    سعر ساعة الغرفة 2 (PLAY ROOM 01):
                                 </label>
                                 <div className="relative">
                                     <input
