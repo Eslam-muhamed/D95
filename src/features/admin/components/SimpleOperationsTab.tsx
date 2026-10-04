@@ -82,29 +82,20 @@ function formatTimeAgo(dateStr: string): string {
 
 const LOUNGE_ROOM_FILTERS = [
     { id: 'all', label: 'كل الغرف' },
-    { id: 'room-1', label: 'غرفة 01 (PLAY ROOM)' },
-    { id: 'room-2', label: 'غرفة 02 (PLAY ROOM)' },
+    { id: 'room-2', label: 'غرفة 01 (PLAY ROOM)' },
+    { id: 'room-1', label: 'غرفة 02 (PLAY ROOM)' },
 ] as const;
 
 function getNormalizedRoomName(b: DBBooking | null | undefined): string {
     if (!b) return 'غرفة اللعب';
-    const text = `${b.room_id || ''} ${b.room_name || ''}`.toLowerCase();
-    if (text.includes('02') || text.includes('station b') || text.includes('غرفة 2') || text.includes('room 2') || text.includes('room-2')) {
-        return 'غرفة 02 (PLAY ROOM)';
-    }
-    return 'غرفة 01 (PLAY ROOM)';
+    if (b.room_id === 'room-1') return 'غرفة 02 (PLAY ROOM)';
+    if (b.room_id === 'room-2') return 'غرفة 01 (PLAY ROOM)';
+    return 'غرفة اللعب';
 }
 
 function isBookingMatchingRoom(b: DBBooking, roomFilterId: string): boolean {
     if (roomFilterId === 'all') return true;
-    const normalized = getNormalizedRoomName(b);
-    if (roomFilterId === 'room-1') {
-        return normalized === 'غرفة 01 (PLAY ROOM)';
-    }
-    if (roomFilterId === 'room-2') {
-        return normalized === 'غرفة 02 (PLAY ROOM)';
-    }
-    return false;
+    return b.room_id === roomFilterId;
 }
 
 export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: SimpleOperationsTabProps) {
