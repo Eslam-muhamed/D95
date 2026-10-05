@@ -727,7 +727,7 @@ export async function fetchBookingPolicy(): Promise<BookingPolicy> {
     } catch (err) {
         console.error('Error fetching booking policy:', err);
     }
-    return { mode: 'temporary_hold', hold_minutes: 10 };
+    return { mode: 'temporary_hold', hold_minutes: 30 };
 }
 
 export async function updateBookingPolicy(policy: BookingPolicy): Promise<BookingPolicy> {

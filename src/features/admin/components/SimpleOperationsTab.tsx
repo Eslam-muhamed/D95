@@ -429,7 +429,7 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
             setPolicy(updated);
             toast.success(
                 mode === 'temporary_hold'
-                    ? 'تم تفعيل نظام القفل المؤقت لمدة 10 دقائق بنجاح! 🔒'
+                    ? 'تم تفعيل نظام القفل المؤقت لمدة 30 دقيقة بنجاح! 🔒'
                     : 'تم تفعيل نظام الموافقة المسبقة للإدارة بنجاح! 🔓'
             );
         } catch {
@@ -2188,7 +2188,7 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
             )}
 
             {/* ========================================================================= */}
-            {/* SUB-TAB 3: SETTINGS (سياسة الـ 10 دقائق وأسعار الغرف وتوقيت الوردية) */}
+            {/* SUB-TAB 3: SETTINGS (سياسة الـ 30 دقيقة وأسعار الغرف وتوقيت الوردية) */}
             {/* ========================================================================= */}
             {activeSubTab === 'settings' && (
                 <div className="space-y-4">
@@ -2329,8 +2329,8 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
                                             <Lock className="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <span className="font-bold text-sm text-slate-900 block">النظام الثاني: قفل مؤقت لمدة 10 دقائق</span>
-                                            <span className="text-[11px] text-emerald-700 font-medium">قفل فوري ينفك تلقائياً بعد 10 دقائق</span>
+                                            <span className="font-bold text-sm text-slate-900 block">النظام الثاني: قفل مؤقت لمدة 30 دقيقة</span>
+                                            <span className="text-[11px] text-emerald-700 font-medium">قفل فوري ينفك تلقائياً بعد 30 دقيقة</span>
                                         </div>
                                     </div>
                                     {policy?.mode === 'temporary_hold' && (
@@ -2340,7 +2340,7 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
                                     )}
                                 </div>
                                 <p className="text-xs text-slate-500 leading-relaxed">
-                                    الموعد يُقفل فوراً في الموقع بمجرد أن يرسل العميل طلبه لمدة 10 دقائق. إذا لم تؤكده خلال الـ 10 دقائق ينفك القفل تلقائياً ويعود متاحاً للعامة.
+                                    الموعد يُقفل فوراً في الموقع بمجرد أن يرسل العميل طلبه لمدة 30 دقيقة. إذا لم تؤكده خلال الـ 30 دقيقة ينفك القفل تلقائياً ويعود متاحاً للعامة.
                                 </p>
                             </button>
                         </div>
