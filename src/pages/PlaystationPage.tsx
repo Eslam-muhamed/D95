@@ -61,7 +61,7 @@ const ROOMS: RoomData[] = [
         titleEn: 'LA CASA DE PAPEL',
         titleAr: 'غرفة لا كاسا دي بابيل (La Casa De Papel)',
         subtitle: 'أجواء حماسية وتخطيط احترافي مستوحاة من مسلسل لا كاسا دي بابيل',
-        rate: 100,
+        rate: 80,
         badge: 'Available',
         accentColor: '#ff007f',
         glowColor: 'rgba(255, 0, 127, 0.45)',
@@ -108,7 +108,7 @@ const ROOMS: RoomData[] = [
         titleEn: 'BREAKING BAD',
         titleAr: 'غرفة بريكينج باد (Breaking Bad)',
         subtitle: 'أجواء الكيمياء والغموض المستوحاة من مسلسل بريكينج باد',
-        rate: 100,
+        rate: 80,
         badge: 'Available',
         accentColor: '#10b981',
         glowColor: 'rgba(16, 185, 129, 0.45)',
@@ -203,7 +203,7 @@ export default function PlaystationPage() {
     const { itemCount, openCart } = useCart();
     const hasTournaments = useTournamentStore(state => state.hasActiveTournament());
 
-    const [roomRates, setRoomRates] = useState<RoomRates>({ 'room-1': 100, 'room-2': 100 });
+    const [roomRates, setRoomRates] = useState<RoomRates>({ 'room-1': 80, 'room-2': 80 });
 
     useEffect(() => {
         fetchRoomRates().then(rates => {
@@ -216,11 +216,11 @@ export default function PlaystationPage() {
     const rooms: RoomData[] = useMemo(() => [
         {
             ...ROOMS[0],
-            rate: roomRates['room-1'] || 100,
+            rate: roomRates['room-1'] || 80,
         },
         {
             ...ROOMS[1],
-            rate: roomRates['room-2'] || 100,
+            rate: roomRates['room-2'] || 80,
         },
     ], [roomRates]);
 

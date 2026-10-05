@@ -58,7 +58,7 @@ const AVAILABLE_ROOMS: Room[] = [
         name: 'غرفة 02 (Play Room)',
         nameEn: 'ROOM 02',
         titleAr: 'غرفة 02 • The Arena',
-        rate: 100,
+        rate: 80,
         specs: 'شاشة 65" 4K • beIN SPORTS • NETFLIX • 4 دراعات PS5 • ساوند بار',
         interiorImg: room01InteriorImg,
     },
@@ -67,7 +67,7 @@ const AVAILABLE_ROOMS: Room[] = [
         name: 'غرفة 01 (Play Room)',
         nameEn: 'ROOM 01',
         titleAr: 'غرفة 01 • VIP Suite',
-        rate: 100,
+        rate: 80,
         specs: 'شاشة 65" 4K • beIN SPORTS • NETFLIX • سقف نجوم وعزل صوتي VIP',
         interiorImg: room02InteriorImg,
     },
@@ -124,10 +124,10 @@ const HOUR_WHEEL_ITEMS = Array.from({ length: 12 }, (_, i) => ({
     label: String(i + 1).padStart(2, '0'),
 }));
 
-const MINUTE_WHEEL_ITEMS = Array.from({ length: 60 }, (_, i) => ({
-    value: i,
-    label: String(i).padStart(2, '0'),
-}));
+const MINUTE_WHEEL_ITEMS = [
+    { value: 0, label: '00' },
+    { value: 30, label: '30' },
+];
 
 const PERIOD_WHEEL_ITEMS: { value: 'PM' | 'AM'; label: string }[] = [
     { value: 'PM', label: 'مساءً' },
@@ -293,7 +293,7 @@ export default function BookingDetailsPage() {
     }, [isRoomMenuOpen]);
 
     // Dynamic room rates from database settings
-    const [roomRates, setRoomRates] = useState<RoomRates>({ 'room-1': 100, 'room-2': 100 });
+    const [roomRates, setRoomRates] = useState<RoomRates>({ 'room-1': 80, 'room-2': 80 });
 
     useEffect(() => {
         fetchRoomRates().then(rates => {
@@ -309,7 +309,7 @@ export default function BookingDetailsPage() {
             name: 'غرفة 02 (Play Room)',
             nameEn: 'ROOM 02',
             titleAr: 'غرفة 02 • The Arena',
-            rate: roomRates['room-1'] || 100,
+            rate: roomRates['room-1'] || 80,
             specs: 'شاشة 65" 4K • beIN SPORTS • NETFLIX • 4 دراعات PS5 • ساوند بار',
             interiorImg: room01InteriorImg,
         },
@@ -318,7 +318,7 @@ export default function BookingDetailsPage() {
             name: 'غرفة 01 (Play Room)',
             nameEn: 'ROOM 01',
             titleAr: 'غرفة 01 • VIP Suite',
-            rate: roomRates['room-2'] || 100,
+            rate: roomRates['room-2'] || 80,
             specs: 'شاشة 65" 4K • beIN SPORTS • NETFLIX • سقف نجوم وعزل صوتي VIP',
             interiorImg: room02InteriorImg,
         },
