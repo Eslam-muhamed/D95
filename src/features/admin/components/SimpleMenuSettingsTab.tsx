@@ -27,6 +27,7 @@ import {
 import ProductModal from './ProductModal';
 import CategoryModal from './CategoryModal';
 import OfferModal from './OfferModal';
+import BulkDiscountModal from './BulkDiscountModal';
 import CategoryIcon from '@/features/menu/components/CategoryIcon';
 import type { DBCategory, DBProduct, DBOffer } from '@/types/database';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
@@ -50,6 +51,7 @@ export default function SimpleMenuSettingsTab() {
     const [activeModalProduct, setActiveModalProduct] = useState<DBProduct | null | 'new'>(null);
     const [activeModalCategory, setActiveModalCategory] = useState<DBCategory | null | 'new'>(null);
     const [activeModalOffer, setActiveModalOffer] = useState<DBOffer | null | 'new'>(null);
+    const [showBulkDiscountModal, setShowBulkDiscountModal] = useState(false);
 
     // Load All Menu Data
     const loadAllData = async () => {
@@ -281,6 +283,16 @@ export default function SimpleMenuSettingsTab() {
                                     </option>
                                 ))}
                             </select>
+
+                            {/* Bulk Discount Button */}
+                            <button
+                                type="button"
+                                onClick={() => setShowBulkDiscountModal(true)}
+                                className="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0"
+                                title="تطبيق خصم شامل على المنيو"
+                            >
+                                <span>خصم شامل</span>
+                            </button>
 
                             {/* Add Product Button */}
                             <button
@@ -541,6 +553,16 @@ export default function SimpleMenuSettingsTab() {
                     offer={activeModalOffer === 'new' ? null : activeModalOffer}
                     onClose={() => setActiveModalOffer(null)}
                     onSaved={handleSavedOffer}
+                />
+            )}
+
+            {showBulkDiscountModal && (
+                <BulkDiscountModal
+                    onClose={() => setShowBulkDiscountModal(false)}
+                    onSaved={() => {
+                        setShowBulkDiscountModal(false);
+                        loadAllData();
+                    }}
                 />
             )}
         </div>
