@@ -403,8 +403,8 @@ export async function applyGlobalDiscount(discountPercent: number | null, onProg
     if (error || !products) throw error;
     
     const fullUpdates = products.map(p => {
-        let original_price = p.original_price;
-        let price = p.price;
+        let original_price = p.original_price ? Number(p.original_price) : null;
+        let price = Number(p.price) || 0;
         
         if (discountPercent === null) {
             // Remove discount
@@ -421,44 +421,43 @@ export async function applyGlobalDiscount(discountPercent: number | null, onProg
         }
         
         return {
-            ...p,
+            id: p.id,
             price,
             original_price
         };
     });
 
-    
-    // Update in chunks to avoid browser/Supabase rate limits
-    let hasError = false;
-    const CHUNK_SIZE = 10;
     let processed = 0;
     const total = fullUpdates.length;
+    let hasError = false;
     
     if (onProgress) onProgress(0);
 
-    for (let i = 0; i < total; i += CHUNK_SIZE) {
-        const chunk = fullUpdates.slice(i, i + CHUNK_SIZE);
-        const promises = chunk.map(p => 
-            supabase.from('products')
+    for (const p of fullUpdates) {
+        try {
+            // Sequential update, exactly identical to manual update
+            const { error: updateError } = await supabase
+                .from('products')
                 .update({ price: p.price, original_price: p.original_price })
                 .eq('id', p.id)
-        );
-        const results = await Promise.all(promises);
-        if (results.some(r => r.error)) {
+                .select()
+                .single();
+                
+            if (updateError) throw updateError;
+        } catch (err) {
+            console.error("Failed on product", p.id, err);
             hasError = true;
-            console.error("Some updates failed in chunk", i);
         }
         
-        processed += chunk.length;
+        processed++;
         if (onProgress) {
             onProgress(Math.min(100, Math.round((processed / total) * 100)));
         }
     }
     
-    if (hasError) {
-        throw new Error("بعض المنتجات لم يتم تحديثها بسبب الضغط، يرجى المحاولة مرة أخرى");
-    }
-
-    
     invalidateMenuCache();
+    
+    if (hasError) {
+        throw new Error("بعض المنتجات فشل تحديثها");
+    }
 }
