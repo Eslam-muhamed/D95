@@ -95,9 +95,9 @@ export default function MenuPage() {
   // Load live menu items, categories, and offers strictly from Supabase
   useEffect(() => {
     Promise.all([
-      fetchCategories(),
-      fetchProducts('all'),
-      fetchOffers()
+      fetchCategories(true),
+      fetchProducts('all', true),
+      fetchOffers(true)
     ]).then(([cats, prods, offs]) => {
       if (cats && cats.length > 0) {
         setCategories(cats.map(c => ({

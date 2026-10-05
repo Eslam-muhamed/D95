@@ -21,6 +21,11 @@ function getStored<T>(key: string): T | null {
         const itemStr = localStorage.getItem('d95_menu_' + key);
         if (!itemStr) return null;
         const item = JSON.parse(itemStr);
+        // Check if the cache has expired (older than 3 minutes)
+        if (Date.now() - item.time > 1000 * 60 * 3) {
+            localStorage.removeItem('d95_menu_' + key);
+            return null;
+        }
         return item.data as T;
     } catch {
         return null;
