@@ -144,7 +144,7 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="مثال: سبانش لاتيه بارد"
                                 required
-                                className="bg-slate-50 rounded-xl"
+                                className="bg-slate-50 text-slate-900 rounded-xl"
                             />
                         </div>
 
@@ -179,7 +179,7 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
                                 onChange={(e) => setPrice(e.target.value)}
                                 placeholder="مثال: 65"
                                 required
-                                className="bg-slate-50 rounded-xl"
+                                className="bg-slate-50 text-slate-900 rounded-xl"
                             />
                         </div>
 
@@ -193,7 +193,7 @@ export default function ProductModal({ product, categories, onClose, onSaved }: 
                                 value={originalPrice}
                                 onChange={(e) => setOriginalPrice(e.target.value)}
                                 placeholder="مثال: 80 (سيظهر مشطوباً كعرض)"
-                                className="bg-slate-50 rounded-xl"
+                                className="bg-slate-50 text-slate-900 rounded-xl"
                             />
                         </div>
                     </div>
