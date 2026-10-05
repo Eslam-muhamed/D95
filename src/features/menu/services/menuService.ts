@@ -427,8 +427,21 @@ export async function applyGlobalDiscount(discountPercent: number | null) {
         };
     });
 
-    const { error: upsertError } = await supabase.from('products').upsert(fullUpdates, { onConflict: 'id' });
-    if (upsertError) throw upsertError;
+    
+    const updatePromises = fullUpdates.map(p => 
+        supabase.from('products').update({
+            price: p.price,
+            original_price: p.original_price
+        }).eq('id', p.id)
+    );
+    
+    const results = await Promise.all(updatePromises);
+    const errors = results.filter(r => r.error);
+    if (errors.length > 0) {
+        console.error("Errors updating products:", errors.map(e => e.error));
+        throw new Error("Failed to update some products");
+    }
+
     
     invalidateMenuCache();
 }
