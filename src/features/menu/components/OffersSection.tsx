@@ -4,53 +4,6 @@ import { useInView } from '@/hooks/useInView';
 import { useTheme } from '@/stores/themeStore';
 import CategoryIcon from './CategoryIcon';
 
-const offers = [
-  {
-    title: 'Gaming Night Deal',
-    description: 'ساعتين غيمنج + مشروب بارد + ساندوتش طازج',
-    detail: 'وفر 28% على أفضل تجربة سهرة وتنافس',
-    badge: 'وفّر 28%',
-    price: '180 ج.م',
-    originalPrice: '250 ج.م',
-    gradient: 'linear-gradient(135deg, #1e0d11 0%, #140b0e 100%)',
-    icon: '🎮',
-    highlight: true,
-  },
-  {
-    title: 'Café Combo',
-    description: 'قهوة سبيشالتي دبل إسبريسو + حلوى من اختيارك',
-    detail: 'بُن برازيلي فاخر مع تحلية فريش',
-    badge: 'الأكثر طلباً',
-    price: '79 ج.م',
-    originalPrice: '110 ج.م',
-    gradient: 'linear-gradient(135deg, #180e12 0%, #120a0d 100%)',
-    icon: '☕',
-    highlight: false,
-  },
-  {
-    title: 'عرض الأصحاب والشلات',
-    description: '٤ مشروبات مثلجة + ٤ قطع وافل بسعر ترويجي',
-    detail: 'أفضل عرض للجلسات الرباعية والمجموعات',
-    badge: 'للمجموعات',
-    price: '280 ج.م',
-    originalPrice: '400 ج.م',
-    gradient: 'linear-gradient(135deg, #180e12 0%, #120a0d 100%)',
-    icon: '👥',
-    highlight: false,
-  },
-  {
-    title: 'ساعة السعادة (Happy Hour)',
-    description: 'خصم 20% فوري على كافة المشروبات الساخنة والباردة',
-    detail: 'من 2:00 م حتى 5:00 م يومياً',
-    badge: 'يومياً',
-    price: 'خصم 20%',
-    originalPrice: '',
-    gradient: 'linear-gradient(135deg, #1e0d11 0%, #140b0e 100%)',
-    icon: '⚡',
-    highlight: true,
-  },
-];
-
 import type { DBOffer } from '@/types/database';
 
 interface OffersSectionProps {
@@ -61,21 +14,23 @@ export default function OffersSection({ liveOffers }: OffersSectionProps) {
   const [ref, inView] = useInView<HTMLElement>(0.1);
   const { theme } = useTheme();
 
-  const displayOffers = (liveOffers && liveOffers.length > 0)
-    ? liveOffers.filter(o => o.is_active).map(o => ({
-        title: o.title,
-        description: o.description || '',
-        detail: o.detail || '',
-        badge: o.badge || '',
-        price: o.price,
-        originalPrice: o.original_price || '',
-        gradient: o.highlight 
-          ? 'linear-gradient(135deg, #1e0d11 0%, #140b0e 100%)' 
-          : 'linear-gradient(135deg, #180e12 0%, #120a0d 100%)',
-        icon: o.icon || '🎮',
-        highlight: o.highlight
-      }))
-    : offers;
+  const displayOffers = (liveOffers || []).filter(o => o.is_active).map(o => ({
+    title: o.title,
+    description: o.description || '',
+    detail: o.detail || '',
+    badge: o.badge || '',
+    price: o.price,
+    originalPrice: o.original_price || '',
+    gradient: o.highlight 
+      ? 'linear-gradient(135deg, #1e0d11 0%, #140b0e 100%)' 
+      : 'linear-gradient(135deg, #180e12 0%, #120a0d 100%)',
+    icon: o.icon || '🎮',
+    highlight: o.highlight
+  }));
+
+  if (displayOffers.length === 0) {
+    return null;
+  }
 
   return (
     <section id="offers-section" className="px-4 py-8 max-w-4xl mx-auto scroll-mt-28" ref={ref} dir="rtl">

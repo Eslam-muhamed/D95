@@ -236,6 +236,7 @@ export default function MenuPage() {
         onCategoryChange={handleCategoryChange}
         categoriesList={categories}
         onOffersClick={handleOffersClick}
+        hasOffers={liveOffers.filter(o => o.is_active).length > 0}
       />
 
       {/* Modern Search Bar */}

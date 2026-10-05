@@ -13,9 +13,10 @@ interface Props {
   onCategoryChange: (id: string) => void;
   categoriesList?: (MenuCategory | DBCategory)[];
   onOffersClick?: () => void;
+  hasOffers?: boolean;
 }
 
-export default function CategoryNav({ activeCategory, onCategoryChange, categoriesList, onOffersClick }: Props) {
+export default function CategoryNav({ activeCategory, onCategoryChange, categoriesList, onOffersClick, hasOffers = true }: Props) {
   const list = categoriesList && categoriesList.length > 0 ? categoriesList : categories;
   const categoryIds = list.map(c => c.id);
   const scrollSpyId = useScrollSpy(categoryIds);
@@ -60,13 +61,15 @@ export default function CategoryNav({ activeCategory, onCategoryChange, categori
         style={{ direction: 'rtl', scrollSnapType: 'x mandatory' }}
       >
         {/* Offers shortcut */}
-        <button
-          onClick={scrollToOffers}
-          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-bold transition-all whitespace-nowrap cursor-pointer shadow-sm bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 border border-red-500/50 active:scale-95"
-        >
-          <Flame size={14} className="text-amber-300 animate-pulse" />
-          <span>العروض</span>
-        </button>
+        {hasOffers && (
+          <button
+            onClick={scrollToOffers}
+            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-bold transition-all whitespace-nowrap cursor-pointer shadow-sm bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 border border-red-500/50 active:scale-95"
+          >
+            <Flame size={14} className="text-amber-300 animate-pulse" />
+            <span>العروض</span>
+          </button>
+        )}
 
         {/* "الكل" — show all */}
         <button
