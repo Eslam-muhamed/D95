@@ -285,16 +285,19 @@ export default function MenuPage() {
                         alt={item.name}
                         className="w-16 h-16 rounded-lg object-cover flex-shrink-0 bg-neutral-100 dark:bg-black/40 border border-neutral-200 dark:border-white/10 group-hover:scale-105 transition-transform duration-300"
                       />
-                      {isDiscounted && (
-                        <span className="absolute top-0 right-0 bg-red-600 text-white text-[8px] font-bold px-1 py-0.5 rounded-bl-lg rounded-tr-lg shadow-sm whitespace-nowrap z-10">
-                          خصم {Math.round(((item.originalPrice! - item.price) / item.originalPrice!) * 100)}%
-                        </span>
-                      )}
+
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm text-neutral-900 dark:text-white truncate font-body">
-                        {item.name}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-sm text-neutral-900 dark:text-white truncate font-body">
+                          {item.name}
+                        </p>
+                        {isDiscounted && (
+                          <span className="bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm border border-red-200 dark:border-red-500/30 whitespace-nowrap">
+                            خصم {Math.round(((item.originalPrice! - item.price) / item.originalPrice!) * 100)}%
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-1 mt-0.5 font-body">
                         {item.description}
                       </p>

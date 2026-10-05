@@ -44,11 +44,7 @@ export default function MenuCard({ item, onAdd }: Props) {
             />
           </div>
         )}
-        {isDiscounted && (
-          <span className="absolute top-0 left-0 bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br-lg rounded-tl-lg shadow-sm whitespace-nowrap z-10">
-            خصم {discountPercent}%
-          </span>
-        )}
+
         {badgeStyle && !isDiscounted && (
           <span
             className={`absolute bottom-1 right-1 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border ${badgeStyle.bg} ${badgeStyle.color} ${badgeStyle.border} backdrop-blur-sm`}
@@ -60,9 +56,16 @@ export default function MenuCard({ item, onAdd }: Props) {
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-bold text-sm text-neutral-900 dark:text-white mb-0.5 truncate font-body">
-          {item.name}
-        </h3>
+        <div className="flex items-center gap-2 mb-0.5">
+          <h3 className="font-bold text-sm text-neutral-900 dark:text-white truncate font-body">
+            {item.name}
+          </h3>
+          {isDiscounted && (
+            <span className="bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm border border-red-200 dark:border-red-500/30 whitespace-nowrap">
+              خصم {discountPercent}%
+            </span>
+          )}
+        </div>
         <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed line-clamp-2 mb-2 font-body">
           {item.description}
         </p>
