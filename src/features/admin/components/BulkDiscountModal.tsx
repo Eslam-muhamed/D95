@@ -12,6 +12,7 @@ export default function BulkDiscountModal({ onClose, onSaved }: BulkDiscountModa
     const [percentage, setPercentage] = useState('10');
     const [saving, setSaving] = useState(false);
     const [removing, setRemoving] = useState(false);
+    const [progress, setProgress] = useState(0);
 
     const handleApply = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -25,7 +26,7 @@ export default function BulkDiscountModal({ onClose, onSaved }: BulkDiscountModa
 
         setSaving(true);
         try {
-            await applyGlobalDiscount(percent);
+            await applyGlobalDiscount(percent, setProgress);
             toast.success(`تم تطبيق الخصم ${percent}% بنجاح على جميع الأصناف`);
             onSaved();
         } catch (err) {
@@ -41,7 +42,7 @@ export default function BulkDiscountModal({ onClose, onSaved }: BulkDiscountModa
 
         setRemoving(true);
         try {
-            await applyGlobalDiscount(null);
+            await applyGlobalDiscount(null, setProgress);
             toast.success('تم إزالة جميع الخصومات بنجاح');
             onSaved();
         } catch (err) {
@@ -99,6 +100,21 @@ export default function BulkDiscountModal({ onClose, onSaved }: BulkDiscountModa
                         <span>تطبيق الخصم الشامل</span>
                     </button>
                 </form>
+
+                {(saving || removing) && (
+                    <div className="mt-5 space-y-2">
+                        <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
+                            <span>جاري تحديث الأصناف...</span>
+                            <span>{progress}%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div 
+                                className="bg-red-600 h-1.5 rounded-full transition-all duration-300 ease-out" 
+                                style={{ width: `${progress}%` }}
+                            ></div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="mt-6 pt-5 border-t border-slate-100">
                     <button
