@@ -70,6 +70,7 @@ export default function MenuPage() {
         name: p.name,
         description: p.description || '',
         price: Number(p.price),
+        originalPrice: p.original_price ? Number(p.original_price) : undefined,
         currency: p.currency || 'ج.م',
         category: p.category_id || '',
         image: p.image_url || '',
@@ -113,6 +114,7 @@ export default function MenuPage() {
           name: p.name,
           description: p.description || '',
           price: Number(p.price),
+          originalPrice: p.original_price ? Number(p.original_price) : undefined,
           currency: p.currency || 'ج.م',
           category: p.category_id || '',
           image: p.image_url || '',
@@ -268,18 +270,27 @@ export default function MenuPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {searchResults.map(item => (
+                {searchResults.map(item => {
+                  const isDiscounted = item.originalPrice && item.originalPrice > item.price;
+                  return (
                   <button
                     key={item.id}
                     disabled={!item.isAvailable}
                     className={`w-full text-right flex items-center gap-3 rounded-xl p-3 bg-white dark:bg-[#130f11] border border-neutral-200 dark:border-white/[0.08] transition-all shadow-sm group ${item.isAvailable ? 'hover:border-red-600/40 hover:bg-neutral-50 dark:hover:bg-[#181215] cursor-pointer' : 'opacity-60 cursor-not-allowed grayscale-[0.5]'}`}
                     onClick={() => item.isAvailable && setSelectedItem(item)}
                   >
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-16 h-16 rounded-lg object-cover flex-shrink-0 bg-neutral-100 dark:bg-black/40 border border-neutral-200 dark:border-white/10 group-hover:scale-105 transition-transform duration-300"
-                    />
+                    <div className="relative">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-16 h-16 rounded-lg object-cover flex-shrink-0 bg-neutral-100 dark:bg-black/40 border border-neutral-200 dark:border-white/10 group-hover:scale-105 transition-transform duration-300"
+                      />
+                      {isDiscounted && (
+                        <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-bold px-1 py-0.5 rounded shadow-sm">
+                          خصم {Math.round(((item.originalPrice! - item.price) / item.originalPrice!) * 100)}%
+                        </span>
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-sm text-neutral-900 dark:text-white truncate font-body">
                         {item.name}
@@ -288,6 +299,11 @@ export default function MenuPage() {
                         {item.description}
                       </p>
                       <div className="flex items-baseline gap-1 mt-1" dir="ltr">
+                        {isDiscounted && (
+                          <span className="text-[10px] text-neutral-400 line-through tabular-nums ml-1">
+                            {item.originalPrice}
+                          </span>
+                        )}
                         <span className="font-sans font-black text-sm text-red-600 dark:text-red-400 tabular-nums">
                           {item.price}
                         </span>
@@ -306,7 +322,7 @@ export default function MenuPage() {
                       </span>
                     )}
                   </button>
-                ))}
+                )})}
 
                 {searchResults.length === 0 && (
                   <div className="col-span-1 sm:col-span-2 text-center py-12 bg-white dark:bg-[#120e10] border border-neutral-200 dark:border-white/[0.08] rounded-xl my-4">

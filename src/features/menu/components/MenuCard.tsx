@@ -15,6 +15,10 @@ const BADGE_STYLES: Record<string, { bg: string; color: string; border: string }
 
 export default function MenuCard({ item, onAdd }: Props) {
   const badgeStyle = item.badge ? BADGE_STYLES[item.badge] : null;
+  const isDiscounted = item.originalPrice && item.originalPrice > item.price;
+  const discountPercent = isDiscounted 
+    ? Math.round(((item.originalPrice! - item.price) / item.originalPrice!) * 100) 
+    : 0;
 
   return (
     <div
@@ -40,7 +44,12 @@ export default function MenuCard({ item, onAdd }: Props) {
             />
           </div>
         )}
-        {badgeStyle && (
+        {isDiscounted && (
+          <span className="absolute top-1 left-1 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-sm">
+            خصم {discountPercent}%
+          </span>
+        )}
+        {badgeStyle && !isDiscounted && (
           <span
             className={`absolute bottom-1 right-1 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border ${badgeStyle.bg} ${badgeStyle.color} ${badgeStyle.border} backdrop-blur-sm`}
           >
@@ -60,6 +69,11 @@ export default function MenuCard({ item, onAdd }: Props) {
 
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-1" dir="ltr">
+            {isDiscounted && (
+              <span className="text-[10px] text-neutral-400 line-through tabular-nums ml-1">
+                {item.originalPrice}
+              </span>
+            )}
             <span className="font-sans font-black text-base text-red-600 dark:text-red-400 tabular-nums">
               {item.price}
             </span>
