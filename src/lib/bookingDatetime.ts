@@ -114,19 +114,30 @@ export function getCairoTodayDateString(): string {
  * Handles Egypt DST changes accurately.
  */
 export function getCairoOffsetMinutes(d: Date): number {
-    try {
-        const str = d.toLocaleString('en-US', { timeZone: 'Africa/Cairo', timeZoneName: 'shortOffset' });
-        const match = str.match(/GMT([+-]\d+)(?::(\d+))?/);
-        if (match) {
-            const hours = parseInt(match[1], 10);
-            const mins = match[2] ? parseInt(match[2], 10) : 0;
-            return (hours * 60) + (hours < 0 ? -mins : mins);
-        }
-    } catch {
-        // Fallback: Egypt is UTC+3 in summer (Apr-Oct), UTC+2 in winter
+    const y = d.getUTCFullYear();
+    const m = d.getUTCMonth(); // 0=Jan, 3=Apr, 9=Oct
+    const date = d.getUTCDate();
+
+    // Egypt DST Rules: Starts last Friday of April, Ends last Friday of October
+    let isDST = false;
+
+    if (m > 3 && m < 9) {
+        isDST = true;
+    } else if (m === 3) {
+        // Find last Friday of April
+        const lastDay = new Date(Date.UTC(y, 3, 30));
+        const diffToFriday = (lastDay.getUTCDay() + 7 - 5) % 7;
+        const lastFriday = 30 - diffToFriday;
+        isDST = date >= lastFriday;
+    } else if (m === 9) {
+        // Find last Friday of October
+        const lastDay = new Date(Date.UTC(y, 9, 31));
+        const diffToFriday = (lastDay.getUTCDay() + 7 - 5) % 7;
+        const lastFriday = 31 - diffToFriday;
+        isDST = date < lastFriday;
     }
-    const month = d.getUTCMonth();
-    return (month >= 3 && month <= 9) ? 180 : 120;
+
+    return isDST ? 180 : 120; // GMT+3 in DST, GMT+2 otherwise
 }
 
 /**
