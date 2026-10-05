@@ -48,6 +48,8 @@ export interface TimelineSlot {
     isSelected: boolean;
     overlappingBookings: BookingInterval[];
     gradientStyle?: React.CSSProperties;
+    firstHalfBooked?: boolean;
+    secondHalfBooked?: boolean;
 }
 
 // Helper to format detailed time with exact minutes (e.g. "05:30 م" or "11:15 ص")
@@ -200,6 +202,8 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                 isSelected,
                 overlappingBookings,
                 gradientStyle,
+                firstHalfBooked,
+                secondHalfBooked,
             });
         }
 
@@ -253,11 +257,14 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
             playPs5SelectSound();
             // Preserve user's chosen minute, or pick the free minute in partial slot
             let targetMinute = selectedMinute;
-            if (slot.status === 'partial' && slot.overlappingBookings.length > 0) {
-                const firstBooking = slot.overlappingBookings[0];
-                const bStartMins = firstBooking.start.getMinutes();
-                // If booking starts at minute 30, free is 00; otherwise pick 30
-                targetMinute = bStartMins > 0 ? 0 : firstBooking.end.getMinutes();
+            if (slot.status === 'partial') {
+                if (slot.firstHalfBooked && !slot.secondHalfBooked) {
+                    // First half (00-30) is booked, free is 30
+                    targetMinute = 30;
+                } else if (!slot.firstHalfBooked && slot.secondHalfBooked) {
+                    // Second half (30-60) is booked, free is 00
+                    targetMinute = 0;
+                }
             }
             onSelectTimeSlot(slot.hour12, targetMinute, slot.period);
         }
