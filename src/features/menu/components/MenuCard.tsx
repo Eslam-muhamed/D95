@@ -45,7 +45,7 @@ export default function MenuCard({ item, onAdd }: Props) {
           </div>
         )}
         {isDiscounted && (
-          <span className="absolute top-1 left-1 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-sm">
+          <span className="absolute top-0 left-0 bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br-lg rounded-tl-lg shadow-sm whitespace-nowrap z-10">
             خصم {discountPercent}%
           </span>
         )}

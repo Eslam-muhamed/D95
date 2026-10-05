@@ -286,7 +286,7 @@ export default function MenuPage() {
                         className="w-16 h-16 rounded-lg object-cover flex-shrink-0 bg-neutral-100 dark:bg-black/40 border border-neutral-200 dark:border-white/10 group-hover:scale-105 transition-transform duration-300"
                       />
                       {isDiscounted && (
-                        <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-bold px-1 py-0.5 rounded shadow-sm">
+                        <span className="absolute top-0 right-0 bg-red-600 text-white text-[8px] font-bold px-1 py-0.5 rounded-bl-lg rounded-tr-lg shadow-sm whitespace-nowrap z-10">
                           خصم {Math.round(((item.originalPrice! - item.price) / item.originalPrice!) * 100)}%
                         </span>
                       )}
