@@ -306,10 +306,10 @@ export default function BookingPaymentPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm text-amber-900 dark:text-amber-300">
-                                    <span>تنبيه حجز الغرفة المؤقت (مهلة 30 دقيقة)</span>
+                                    <span>تنبيه حجز الغرفة المؤقت (مهلة ساعة)</span>
                                 </div>
                                 <p className="text-[11px] sm:text-xs text-amber-800/90 dark:text-amber-200/80 font-body leading-relaxed mt-1">
-                                    تم تثبيت موعد الغرفة باسمك مؤقتاً لمدة <strong>30 دقيقة</strong> لإتمام التحويل. يرجى تأكيد الدفع قبل انتهاء المهلة لتجنب إلغاء الحجز تلقائياً وإتاحة الغرفة للآخرين.
+                                    تم تثبيت موعد الغرفة باسمك مؤقتاً لمدة <strong>ساعة كاملة</strong> لإتمام التحويل. يرجى تأكيد الدفع قبل انتهاء المهلة لتجنب إلغاء الحجز تلقائياً وإتاحة الغرفة للآخرين.
                                 </p>
                             </div>
                         </div>

@@ -220,7 +220,7 @@ DECLARE
   v_snack_item RECORD;
   v_db_price NUMERIC;
   v_policy_mode TEXT := 'temporary_hold';
-  v_hold_minutes INT := 30;
+  v_hold_minutes INT := 60;
   v_policy_setting JSONB;
   v_rates_setting JSONB;
 BEGIN
@@ -233,7 +233,7 @@ BEGIN
   SELECT value INTO v_policy_setting FROM public.app_settings WHERE key = 'booking_policy';
   IF v_policy_setting IS NOT NULL THEN
     v_policy_mode := COALESCE(v_policy_setting->>'mode', 'temporary_hold');
-    v_hold_minutes := GREATEST(1, COALESCE((v_policy_setting->>'hold_minutes')::INT, 30));
+    v_hold_minutes := GREATEST(1, COALESCE((v_policy_setting->>'hold_minutes')::INT, 60));
   END IF;
 
   -- Read dynamic room rates from app_settings
@@ -948,13 +948,13 @@ CREATE OR REPLACE FUNCTION "public"."get_room_occupied_intervals"("p_room_id" "t
     AS $$
 DECLARE
   v_policy_mode TEXT := 'temporary_hold';
-  v_hold_minutes INT := 30;
+  v_hold_minutes INT := 60;
   v_policy_setting JSONB;
 BEGIN
   SELECT value INTO v_policy_setting FROM public.app_settings WHERE key = 'booking_policy';
   IF v_policy_setting IS NOT NULL THEN
     v_policy_mode := COALESCE(v_policy_setting->>'mode', 'temporary_hold');
-    v_hold_minutes := GREATEST(1, COALESCE((v_policy_setting->>'hold_minutes')::INT, 30));
+    v_hold_minutes := GREATEST(1, COALESCE((v_policy_setting->>'hold_minutes')::INT, 60));
   END IF;
 
   IF v_policy_mode = 'admin_approval_only' THEN
@@ -978,7 +978,7 @@ BEGIN
       ORDER BY b.start_datetime ASC;
     END IF;
   ELSE
-    -- In temporary hold mode (default 30 mins): confirmed/completed OR pending within hold_minutes
+    -- In temporary hold mode (default 60 mins): confirmed/completed OR pending within hold_minutes
     IF p_window_start IS NOT NULL AND p_window_end IS NOT NULL THEN
       RETURN QUERY
       SELECT b.start_datetime, b.end_datetime

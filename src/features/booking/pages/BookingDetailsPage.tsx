@@ -817,11 +817,11 @@ export default function BookingDetailsPage() {
                         <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm text-amber-900 dark:text-amber-300">
                             <span>تنبيه هام بشأن تأكيد الحجز</span>
                             <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-800 dark:text-amber-200">
-                                مهلة 30 دقيقة
+                                مهلة ساعة
                             </span>
                         </div>
                         <p className="text-[11px] sm:text-xs text-amber-800/90 dark:text-amber-200/80 font-body leading-relaxed mt-1">
-                            عند المتابعة لصفحة الدفع، يتم حجز وقت الغرفة مؤقتاً لمدة <strong>30 دقيقة</strong> فقط لإتمام السداد، وفي حال عدم إتمام الدفع خلال هذه المدة يُلغى الحجز تلقائياً لإتاحة الموعد للعملاء الآخرين.
+                            عند المتابعة لصفحة الدفع، يتم حجز وقت الغرفة مؤقتاً لمدة <strong>ساعة كاملة</strong> فقط لإتمام السداد، وفي حال عدم إتمام الدفع خلال هذه المدة يُلغى الحجز تلقائياً لإتاحة الموعد للعملاء الآخرين.
                         </p>
                     </div>
                 </div>
