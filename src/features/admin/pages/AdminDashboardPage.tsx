@@ -9,6 +9,7 @@ import {
     Star,
     ExternalLink,
     LogOut,
+    MessageCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import SimpleOperationsTab from '@/features/admin/components/SimpleOperationsTab';
@@ -19,12 +20,13 @@ import LoyaltyTab from '@/features/admin/components/LoyaltyTab';
 import VenueStatusControl from '@/features/admin/components/VenueStatusControl';
 import UnifiedRevenueCard from '@/features/admin/components/UnifiedRevenueCard';
 import TournamentsTab from '@/features/admin/components/TournamentsTab';
+import MarketingTab from '@/features/admin/components/MarketingTab';
 import SectionErrorBoundary from '@/components/features/SectionErrorBoundary';
 import { supabase } from '@/lib/supabase';
 import { playPs5NavigateSound } from '@/lib/sound';
 import { Trophy } from 'lucide-react';
 
-type TabType = 'operations' | 'orders' | 'menu_settings' | 'payment_settings' | 'loyalty' | 'tournaments';
+type TabType = 'operations' | 'orders' | 'menu_settings' | 'payment_settings' | 'loyalty' | 'tournaments' | 'marketing';
 
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
@@ -99,6 +101,11 @@ export default function AdminDashboardPage() {
             id: 'payment_settings',
             label: 'إعدادات الدفع والمحافظ',
             icon: <Wallet className="w-4 h-4" />,
+        },
+        {
+            id: 'marketing',
+            label: 'التسويق واتساب',
+            icon: <MessageCircle className="w-4 h-4" />,
         },
     ];
 
@@ -231,6 +238,7 @@ export default function AdminDashboardPage() {
                     {activeTab === 'payment_settings' && <PaymentSettingsTab />}
                     {activeTab === 'loyalty' && <LoyaltyTab />}
                     {activeTab === 'tournaments' && <TournamentsTab />}
+                    {activeTab === 'marketing' && <MarketingTab />}
                 </SectionErrorBoundary>
             </main>
 
@@ -323,6 +331,19 @@ export default function AdminDashboardPage() {
                 >
                     <Trophy className="w-5 h-5" />
                     <span className="text-[10px]">البطولات</span>
+                </button>
+                <button
+                    type="button"
+                    onClick={() => {
+                        playPs5NavigateSound();
+                        setActiveTab('marketing');
+                    }}
+                    className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-xl transition-all cursor-pointer ${
+                        activeTab === 'marketing' ? 'text-emerald-500 font-bold' : 'text-slate-500'
+                    }`}
+                >
+                    <MessageCircle className="w-5 h-5" />
+                    <span className="text-[10px]">تسويق</span>
                 </button>
             </nav>
         </div>
