@@ -214,18 +214,18 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
             return currentRoom.titleAr.split('•')[0].trim();
         }
         if (currentRoom.id === 'room-1') {
-            return 'غرفة 02';
+            return 'غرفة 02 (Breaking Bad)';
         }
         if (currentRoom.id === 'room-2') {
-            return 'غرفة 01 (VIP)';
+            return 'غرفة 01 (La Casa)';
         }
         return currentRoom.name;
     }, [currentRoom]);
 
     const roomCodeEn = useMemo(() => {
         if (currentRoom.nameEn) return currentRoom.nameEn;
-        if (currentRoom.id === 'room-1') return 'ROOM 02';
-        if (currentRoom.id === 'room-2') return 'ROOM 01';
+        if (currentRoom.id === 'room-1') return 'ROOM 02 - Breaking Bad';
+        if (currentRoom.id === 'room-2') return 'ROOM 01 - La Casa';
         return 'ROOM';
     }, [currentRoom]);
 

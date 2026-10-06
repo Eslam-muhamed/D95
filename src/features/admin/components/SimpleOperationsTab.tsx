@@ -82,14 +82,14 @@ function formatTimeAgo(dateStr: string): string {
 
 const LOUNGE_ROOM_FILTERS = [
     { id: 'all', label: 'كل الغرف' },
-    { id: 'room-2', label: 'غرفة 01 (PLAY ROOM)' },
-    { id: 'room-1', label: 'غرفة 02 (PLAY ROOM)' },
+    { id: 'room-2', label: 'غرفة 01 (La Casa)' },
+    { id: 'room-1', label: 'غرفة 02 (Breaking Bad)' },
 ] as const;
 
 function getNormalizedRoomName(b: DBBooking | null | undefined): string {
     if (!b) return 'غرفة اللعب';
-    if (b.room_id === 'room-1') return 'غرفة 02 (PLAY ROOM)';
-    if (b.room_id === 'room-2') return 'غرفة 01 (PLAY ROOM)';
+    if (b.room_id === 'room-1') return 'غرفة 02 (Breaking Bad)';
+    if (b.room_id === 'room-2') return 'غرفة 01 (La Casa)';
     return 'غرفة اللعب';
 }
 
@@ -515,7 +515,7 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
             const normName = getNormalizedRoomName(b);
             const dynamicGroup: ConflictGroup = {
                 id: `conflict-${b.id}`,
-                roomId: normName === 'غرفة 02 (PLAY ROOM)' ? 'room-2' : 'room-1',
+                roomId: normName === 'غرفة 02 (Breaking Bad)' ? 'room-1' : 'room-2',
                 roomName: normName,
                 bookingDate: b.booking_date,
                 formattedTimeRange: `${b.start_time} - ${b.end_time}`,
@@ -2360,14 +2360,14 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
                         <div className="space-y-3 pt-1">
                             <div>
                                 <label className="text-xs font-bold text-slate-700 block mb-1">
-                                    سعر ساعة الغرفة 1 (PLAY ROOM 02):
+                                    سعر ساعة غرفة 01 (La Casa):
                                 </label>
                                 <div className="relative">
                                     <input
                                         type="number"
                                         min="1"
-                                        value={rateRoom1}
-                                        onChange={(e) => setRateRoom1(Number(e.target.value))}
+                                        value={rateRoom2}
+                                        onChange={(e) => setRateRoom2(Number(e.target.value))}
                                         className="w-full bg-slate-50 text-slate-900 font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
                                     />
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">ج.م / ساعة</span>
@@ -2376,14 +2376,14 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
 
                             <div>
                                 <label className="text-xs font-bold text-slate-700 block mb-1">
-                                    سعر ساعة الغرفة 2 (PLAY ROOM 01):
+                                    سعر ساعة غرفة 02 (Breaking Bad):
                                 </label>
                                 <div className="relative">
                                     <input
                                         type="number"
                                         min="1"
-                                        value={rateRoom2}
-                                        onChange={(e) => setRateRoom2(Number(e.target.value))}
+                                        value={rateRoom1}
+                                        onChange={(e) => setRateRoom1(Number(e.target.value))}
                                         className="w-full bg-slate-50 text-slate-900 font-mono font-bold text-sm rounded-xl px-3 py-2.5 border border-slate-200 outline-none focus:bg-white focus:border-red-500 transition-colors"
                                     />
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">ج.م / ساعة</span>
