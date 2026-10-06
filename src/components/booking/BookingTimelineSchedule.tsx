@@ -251,15 +251,7 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
         if (slot.status === 'booked' || slot.status === 'past') return;
         if (onSelectTimeSlot) {
             playPs5SelectSound();
-            // Preserve user's chosen minute, or pick the free minute in partial slot
-            let targetMinute = selectedMinute;
-            if (slot.status === 'partial' && slot.overlappingBookings.length > 0) {
-                const firstBooking = slot.overlappingBookings[0];
-                const bStartMins = firstBooking.start.getMinutes();
-                // If booking starts at minute 30, free is 00; otherwise pick 30
-                targetMinute = bStartMins > 0 ? 0 : firstBooking.end.getMinutes();
-            }
-            onSelectTimeSlot(slot.hour12, targetMinute, slot.period);
+            onSelectTimeSlot(slot.hour12, 0, slot.period);
         }
     };
 

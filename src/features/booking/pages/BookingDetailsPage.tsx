@@ -124,10 +124,7 @@ const HOUR_WHEEL_ITEMS = Array.from({ length: 12 }, (_, i) => ({
     label: String(i + 1).padStart(2, '0'),
 }));
 
-const MINUTE_WHEEL_ITEMS = [
-    { value: 0, label: '00' },
-    { value: 30, label: '30' },
-];
+
 
 const PERIOD_WHEEL_ITEMS: { value: 'PM' | 'AM'; label: string }[] = [
     { value: 'PM', label: 'مساءً' },
@@ -1118,18 +1115,6 @@ export default function BookingDetailsPage() {
                                         selectedValue={selectedHour}
                                         onSelect={(h) => {
                                             setSelectedHour(h);
-                                            playPs5NavigateSound();
-                                        }}
-                                    />
-
-                                    <div className="text-neutral-400 dark:text-neutral-600 font-bold text-xl pt-4">:</div>
-
-                                    <DrumWheelColumn
-                                        title="الدقيقة"
-                                        items={MINUTE_WHEEL_ITEMS}
-                                        selectedValue={selectedMinute}
-                                        onSelect={(m) => {
-                                            setSelectedMinute(m);
                                             playPs5NavigateSound();
                                         }}
                                     />
