@@ -1122,18 +1122,6 @@ export default function BookingDetailsPage() {
                                         }}
                                     />
 
-                                    <div className="text-neutral-400 dark:text-neutral-600 font-bold text-xl pt-4">:</div>
-
-                                    <DrumWheelColumn
-                                        title="الدقيقة"
-                                        items={MINUTE_WHEEL_ITEMS}
-                                        selectedValue={selectedMinute}
-                                        onSelect={(m) => {
-                                            setSelectedMinute(m);
-                                            playPs5NavigateSound();
-                                        }}
-                                    />
-
                                     <DrumWheelColumn
                                         title="الفترة"
                                         items={PERIOD_WHEEL_ITEMS}
@@ -1239,11 +1227,11 @@ export default function BookingDetailsPage() {
                     selectedPeriod={selectedPeriod}
                     userStartDateTime={startDateTime}
                     userEndDateTime={currentAvailability.endDateTime}
-                    onSelectTimeSlot={(hour12, minute, period) => {
+                    onSelectTimeSlot={(hour12, _minute, period) => {
                         setSelectedHour(hour12);
-                        setSelectedMinute(minute);
+                        setSelectedMinute(0);
                         setSelectedPeriod(period);
-                        toast.success(`تم اختيار وقت البدء: ${String(hour12).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${period === 'PM' ? 'م' : 'ص'} 🎮`);
+                        toast.success(`تم اختيار وقت البدء: ${String(hour12).padStart(2, '0')}:00 ${period === 'PM' ? 'م' : 'ص'} 🎮`);
                     }}
                 />
 

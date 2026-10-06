@@ -149,27 +149,9 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
 
             if (isPast) {
                 status = 'past';
-            } else if (bookedMinutes >= 55) {
-                // 55+ minutes booked = fully blocked
-                status = 'booked';
             } else if (bookedMinutes > 0) {
-                // Partially booked (minute-aware)
-                status = 'partial';
-                if (firstHalfBooked && !secondHalfBooked) {
-                    // First half is booked (red), second half is free (green)
-                    gradientStyle = {
-                        background: 'linear-gradient(to right, #dc2626 50%, #10b981 50%)',
-                    };
-                } else if (!firstHalfBooked && secondHalfBooked) {
-                    // First half is free (green), second half is booked (red)
-                    gradientStyle = {
-                        background: 'linear-gradient(to right, #10b981 50%, #dc2626 50%)',
-                    };
-                } else {
-                    gradientStyle = {
-                        background: `linear-gradient(to right, #dc2626 ${bookedPercentage}%, #10b981 ${bookedPercentage}%)`,
-                    };
-                }
+                // If any part is booked, block the entire hour since we removed half-hour support
+                status = 'booked';
             }
 
             // Check if slot matches current user session selection
@@ -251,15 +233,7 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
         if (slot.status === 'booked' || slot.status === 'past') return;
         if (onSelectTimeSlot) {
             playPs5SelectSound();
-            // Preserve user's chosen minute, or pick the free minute in partial slot
-            let targetMinute = selectedMinute;
-            if (slot.status === 'partial' && slot.overlappingBookings.length > 0) {
-                const firstBooking = slot.overlappingBookings[0];
-                const bStartMins = firstBooking.start.getMinutes();
-                // If booking starts at minute 30, free is 00; otherwise pick 30
-                targetMinute = bStartMins > 0 ? 0 : firstBooking.end.getMinutes();
-            }
-            onSelectTimeSlot(slot.hour12, targetMinute, slot.period);
+            onSelectTimeSlot(slot.hour12, 0, slot.period);
         }
     };
 
@@ -327,10 +301,7 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.85)] animate-pulse" />
                                     <span className="text-neutral-200 dark:text-neutral-100">متاح بالكامل</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.85)]" />
-                                    <span className="text-neutral-200 dark:text-neutral-100">محجوز جزئياً (بالدقائق)</span>
-                                </div>
+
                                 <div className="flex items-center gap-2">
                                     <span className="w-2.5 h-2.5 rounded-full bg-red-600 shadow-[0_0_10px_rgba(239,68,68,0.85)]" />
                                     <span className="text-neutral-200 dark:text-neutral-100">محجوز بالكامل</span>
@@ -415,8 +386,6 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                                                         title={`${slot.rangeLabel} - ${
                                                             isAvailable
                                                                 ? 'متاح بالكامل'
-                                                                : isPartial
-                                                                ? `محجوز جزئياً (${slot.bookedMinutes} دقيقة محجوزة)`
                                                                 : isBooked
                                                                 ? 'محجوز بالكامل'
                                                                 : 'غير متاح (مضى)'
@@ -454,14 +423,7 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                                                             </span>
                                                         </span>
                                                     )}
-                                                    {hoveredSlot.status === 'partial' && (
-                                                        <span className="inline-flex items-center gap-1 text-amber-400 font-bold">
-                                                            <AlertCircle className="w-3.5 h-3.5" />
-                                                            <span>
-                                                                محجوز جزئياً ({hoveredSlot.bookedMinutes} دقيقة محجوزة، و {hoveredSlot.freeMinutes} دقيقة متاحة)
-                                                            </span>
-                                                        </span>
-                                                    )}
+
                                                     {hoveredSlot.status === 'booked' && (
                                                         <span className="inline-flex items-center gap-1 text-red-400 font-bold">
                                                             <Lock className="w-3.5 h-3.5" />
