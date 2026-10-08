@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 import { useTheme } from '@/stores/themeStore';
 import { CONTACT_INFO } from '@/constants/contactInfo';
 import { fetchPaymentSettings, PaymentSettings } from '@/services/paymentSettingsService';
-import { fetchBookingByReservationId } from '@/features/booking/services/bookingService';
+import { fetchBookingByReservationId, updatePaymentTransferred } from '@/features/booking/services/bookingService';
 import { formatWhatsAppNumber } from '@/lib/utils';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
@@ -47,6 +47,26 @@ export default function BookingSuccessPage() {
 
     const [isLoading, setIsLoading] = useState(!bookingData && !!idFromParam);
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
+    const [localPaymentTransferred, setLocalPaymentTransferred] = useState(bookingData?.paymentTransferred || false);
+
+    // Sync local state if bookingData changes
+    useEffect(() => {
+        if (bookingData && bookingData.paymentTransferred !== undefined) {
+            setLocalPaymentTransferred(bookingData.paymentTransferred);
+        }
+    }, [bookingData]);
+
+    const handleCheckboxChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const checked = e.target.checked;
+        setLocalPaymentTransferred(checked);
+        if (bookingData?.reservationId) {
+            try {
+                await updatePaymentTransferred(bookingData.reservationId, checked);
+            } catch (error) {
+                console.error("Failed to update payment_transferred:", error);
+            }
+        }
+    };
 
     const handleCopy = (text: string, key: string) => {
         navigator.clipboard.writeText(text);
@@ -183,7 +203,7 @@ export default function BookingSuccessPage() {
         msg += `💰 *المبلغ النهائي المستحق:* ${netTotal} ج.م\n\n`;
 
         if (paymentMethod !== 'cash') {
-            msg += paymentTransferred 
+            msg += localPaymentTransferred 
                 ? `✅ *لقد قمت بتحويل المبلغ وإرسال الإيصال. برجاء مراجعة الطلب وتأكيد الحجز لقفل الموعد.*`
                 : `📌 *مرفق مع هذه الرسالة إيصال التحويل لتأكيد الحجز وقفل الموعد.*`;
         } else {
@@ -486,9 +506,31 @@ export default function BookingSuccessPage() {
                                 </a>
                             )}
                             
-                            <p className="text-xs text-neutral-500 dark:text-neutral-400 bg-neutral-50 dark:bg-black/30 p-2.5 rounded-lg border border-neutral-200 dark:border-white/5">
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400 bg-neutral-50 dark:bg-black/30 p-2.5 rounded-lg border border-neutral-200 dark:border-white/5 mb-3">
                                 يرجى تحويل مبلغ <strong className="text-neutral-900 dark:text-white">{netTotal} ج.م</strong>. ثم اضغط على زر الواتساب بالأسفل لإرسال صورة التحويل لتأكيد الحجز وتثبيت الموعد.
                             </p>
+
+                            <div className="p-4 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-xl border border-emerald-200 dark:border-emerald-500/20 text-right">
+                                <label className="flex items-start gap-3 cursor-pointer">
+                                    <div className="relative flex items-center justify-center mt-1">
+                                        <input
+                                            type="checkbox"
+                                            checked={localPaymentTransferred}
+                                            onChange={handleCheckboxChange}
+                                            className="w-5 h-5 appearance-none border-2 border-emerald-300 dark:border-emerald-500/40 rounded bg-white dark:bg-transparent checked:bg-emerald-500 checked:border-emerald-500 transition-colors"
+                                        />
+                                        {localPaymentTransferred && <CheckCircle2 className="absolute w-3.5 h-3.5 text-white pointer-events-none" strokeWidth={3} />}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm text-neutral-900 dark:text-emerald-100 font-bold leading-relaxed font-body">
+                                            لقد قمت بتحويل المبلغ وإرسال إيصال الدفع على الواتساب ✅
+                                        </span>
+                                        <span className="text-[11px] text-neutral-500 dark:text-emerald-300/70 font-medium">
+                                            (اختياري) سيتم إرفاق هذا التأكيد مع طلبك لتسريع عملية المراجعة
+                                        </span>
+                                    </div>
+                                </label>
+                            </div>
                         </div>
                     )}
 
