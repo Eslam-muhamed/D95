@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { MessageCircle, Users, Download, Copy, Send } from 'lucide-react';
+import { MessageCircle, Users, Download, Copy, Send, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Customer {
@@ -13,6 +13,7 @@ interface Customer {
 export default function MarketingTab() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const [messageTemplate, setMessageTemplate] = useState('أهلاً بك في D95 Lounge 🎮☕\n\nحبينا نعرف رأيك في تجربتك معانا وهل في أي ملاحظات نقدر نحسن بيها الخدمة؟ \n\nتقييمك يهمنا جداً!');
 
   useEffect(() => {
@@ -137,6 +138,14 @@ export default function MarketingTab() {
     document.body.removeChild(link);
   };
 
+  const filteredCustomers = customers.filter(c => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    const nameMatch = c.full_name?.toLowerCase().includes(q);
+    const phoneMatch = c.phone_number?.toLowerCase().includes(q);
+    return nameMatch || phoneMatch;
+  });
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500" dir="rtl">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
@@ -195,8 +204,20 @@ export default function MarketingTab() {
 
         {/* Customer List */}
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[600px]">
-           <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-               <h3 className="font-bold text-slate-800">قائمة العملاء (إرسال فردي)</h3>
+           <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/50">
+               <h3 className="font-bold text-slate-800 whitespace-nowrap">قائمة العملاء (إرسال فردي)</h3>
+               <div className="relative w-full sm:w-64">
+                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                       <Search className="w-4 h-4 text-slate-400" />
+                   </div>
+                   <input
+                       type="text"
+                       placeholder="ابحث بالاسم أو الرقم..."
+                       value={searchQuery}
+                       onChange={(e) => setSearchQuery(e.target.value)}
+                       className="w-full bg-white border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 block pr-10 p-2 transition-all outline-none"
+                   />
+               </div>
            </div>
            
            <div className="flex-1 overflow-auto p-0 scrollbar-thin scrollbar-thumb-slate-200">
@@ -204,14 +225,14 @@ export default function MarketingTab() {
                    <div className="flex justify-center items-center h-full">
                        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
                    </div>
-               ) : customers.length === 0 ? (
+               ) : filteredCustomers.length === 0 ? (
                    <div className="flex flex-col items-center justify-center h-full text-slate-500">
                        <Users className="w-12 h-12 text-slate-300 mb-3" />
-                       <p>لا يوجد عملاء مسجلين حتى الآن</p>
+                       <p>{searchQuery ? 'لا توجد نتائج مطابقة للبحث' : 'لا يوجد عملاء مسجلين حتى الآن'}</p>
                    </div>
                ) : (
                    <div className="divide-y divide-slate-100">
-                       {customers.map((customer) => (
+                       {filteredCustomers.map((customer) => (
                            <div key={customer.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
                                <div>
                                    <p className="font-bold text-slate-800">{customer.full_name || 'بدون اسم'}</p>
