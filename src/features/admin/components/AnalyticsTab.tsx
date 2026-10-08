@@ -14,7 +14,8 @@ import {
     Users,
     Filter,
     XCircle,
-    MousePointerClick
+    MousePointerClick,
+    Award
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -35,6 +36,13 @@ interface RoomPopularity {
 interface PeakHour {
     hour: string;
     count: number;
+}
+
+interface TopCustomer {
+    name: string;
+    phone: string;
+    visits: number;
+    revenue: number;
 }
 
 export default function AnalyticsTab() {
@@ -68,7 +76,7 @@ export default function AnalyticsTab() {
             // Fetch Bookings
             let bookingsQuery = supabase
                 .from('ps_bookings')
-                .select('booking_date, start_datetime, status, total_amount, room_name')
+                .select('booking_date, start_datetime, status, total_amount, room_name, customer_name, customer_phone')
                 .gte('booking_date', startDate)
                 .lte('booking_date', endDate);
                 
@@ -84,7 +92,7 @@ export default function AnalyticsTab() {
             if (roomFilter === 'all') {
                 const { data, error: ordersError } = await supabase
                     .from('orders')
-                    .select('created_at, status, total_amount')
+                    .select('created_at, status, total_amount, customer_name, customer_phone')
                     .gte('created_at', startDate)
                     .lte('created_at', endDate + 'T23:59:59');
 
@@ -125,6 +133,7 @@ export default function AnalyticsTab() {
         dailyRevenue, 
         roomStats, 
         peakHours, 
+        topCustomers,
         totalRevenue, 
         psRevenueTotal, 
         cafeRevenueTotal, 
@@ -133,6 +142,7 @@ export default function AnalyticsTab() {
         const dailyMap = new Map<string, { ps: number, cafe: number }>();
         const roomMap = new Map<string, { count: number, revenue: number }>();
         const hoursMap = new Map<number, number>(); // 0-23
+        const customerMap = new Map<string, TopCustomer>();
 
         let tRev = 0;
         let psRev = 0;
@@ -164,6 +174,8 @@ export default function AnalyticsTab() {
             const date = booking.booking_date;
             const amount = Number(booking.total_amount) || 0;
             const rName = booking.room_name || 'غرفة غير معروفة';
+            const cName = booking.customer_name?.trim() || 'عميل غير مسجل';
+            const cPhone = booking.customer_phone?.trim() || 'unknown';
             
             tBookings++;
             psRev += amount;
@@ -183,18 +195,44 @@ export default function AnalyticsTab() {
                 const hour = new Date(booking.start_datetime).getHours();
                 hoursMap.set(hour, (hoursMap.get(hour) || 0) + 1);
             }
+
+            // Customers
+            if (cPhone !== 'unknown' || cName !== 'عميل غير مسجل') {
+                const key = cPhone !== 'unknown' ? cPhone : cName;
+                if (!customerMap.has(key)) {
+                    customerMap.set(key, { name: cName, phone: cPhone !== 'unknown' ? cPhone : '', visits: 0, revenue: 0 });
+                }
+                const cInfo = customerMap.get(key)!;
+                cInfo.visits += 1;
+                cInfo.revenue += amount;
+            }
         });
 
         // Process Orders
         filteredOrders.forEach(order => {
             const date = order.created_at.split('T')[0];
             const amount = Number(order.total_amount) || 0;
+            const cName = order.customer_name?.trim() || 'عميل غير مسجل';
+            const cPhone = order.customer_phone?.trim() || 'unknown';
 
             cafeRev += amount;
             tRev += amount;
 
             if (!dailyMap.has(date)) dailyMap.set(date, { ps: 0, cafe: 0 });
             dailyMap.get(date)!.cafe += amount;
+
+            // Customers
+            if (cPhone !== 'unknown' || cName !== 'عميل غير مسجل') {
+                const key = cPhone !== 'unknown' ? cPhone : cName;
+                if (!customerMap.has(key)) {
+                    customerMap.set(key, { name: cName, phone: cPhone !== 'unknown' ? cPhone : '', visits: 0, revenue: 0 });
+                }
+                const cInfo = customerMap.get(key)!;
+                cInfo.revenue += amount;
+                // If it's just a cafe order, we might not count it as a "visit" to not double count, 
+                // but usually if they order via cafe they are visiting. We will count it.
+                cInfo.visits += 1;
+            }
         });
 
         // Format Outputs
@@ -225,10 +263,16 @@ export default function AnalyticsTab() {
             });
         }
 
+        const topCustomers = Array.from(customerMap.values())
+            .filter(c => c.name !== 'عميل غير مسجل' && c.revenue > 0)
+            .sort((a, b) => b.revenue - a.revenue)
+            .slice(0, 3); // Top 3 customers
+
         return {
             dailyRevenue: formattedDaily,
             roomStats: formattedRooms,
             peakHours: formattedHours,
+            topCustomers,
             totalRevenue: tRev,
             psRevenueTotal: psRev,
             cafeRevenueTotal: cafeRev,
@@ -501,66 +545,105 @@ export default function AnalyticsTab() {
                 </div>
             </div>
 
-            {/* Room Popularity */}
-            {(!interactiveRoom && roomFilter === 'all') && (
-                <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm relative group">
-                    <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2 py-1 rounded-md">
-                        <MousePointerClick className="w-3 h-3" /> اضغط للفلترة بالغرفة
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
-                        <Gamepad2 className="w-4 h-4 text-emerald-500" />
-                        الغرف الأكثر تحقيقاً للإيرادات (اضغط على الغرفة للفلترة)
-                    </h3>
-                    <div className="h-[300px] w-full" dir="ltr">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart 
-                                data={roomStats} 
-                                layout="vertical" 
-                                margin={{ top: 0, right: 10, left: 30, bottom: 0 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                                <YAxis 
-                                    dataKey="name" 
-                                    type="category" 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{ fill: '#475569', fontSize: 12, fontWeight: 'bold' }} 
-                                    width={100}
-                                />
-                                <RechartsTooltip 
-                                    cursor={{ fill: '#f8fafc' }}
-                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', textAlign: 'right' }}
-                                    formatter={(value: number, name: string) => [
-                                        name === 'revenue' ? `${value.toLocaleString()} ج.م` : value,
-                                        name === 'revenue' ? 'الإيرادات' : 'عدد الحجوزات'
-                                    ]}
-                                />
-                                <Legend wrapperStyle={{ fontSize: '12px', fontWeight: 'bold', paddingTop: '10px' }} />
-                                <Bar 
-                                    dataKey="revenue" 
-                                    name="الإيرادات" 
-                                    radius={[0, 4, 4, 0]} 
-                                    barSize={20}
-                                    className="cursor-pointer"
-                                    onClick={(data: any) => {
-                                        const rName = data?.name || data?.payload?.name;
-                                        if (rName) setInteractiveRoom(rName);
-                                    }}
+            {/* Room Popularity & Top Customers */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {(!interactiveRoom && roomFilter === 'all') && (
+                    <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm relative group">
+                        <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2 py-1 rounded-md">
+                            <MousePointerClick className="w-3 h-3" /> اضغط للفلترة بالغرفة
+                        </div>
+                        <h3 className="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <Gamepad2 className="w-4 h-4 text-emerald-500" />
+                            الغرف الأكثر تحقيقاً للإيرادات (اضغط على الغرفة للفلترة)
+                        </h3>
+                        <div className="h-[300px] w-full" dir="ltr">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart 
+                                    data={roomStats} 
+                                    layout="vertical" 
+                                    margin={{ top: 0, right: 10, left: 30, bottom: 0 }}
                                 >
-                                    {roomStats.map((entry, index) => (
-                                        <Cell 
-                                            key={`cell-${index}`} 
-                                            fill="#10b981" 
-                                            className="hover:opacity-80 transition-opacity cursor-pointer" 
-                                        />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                                    <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                                    <YAxis 
+                                        dataKey="name" 
+                                        type="category" 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{ fill: '#475569', fontSize: 12, fontWeight: 'bold' }} 
+                                        width={100}
+                                    />
+                                    <RechartsTooltip 
+                                        cursor={{ fill: '#f8fafc' }}
+                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', textAlign: 'right' }}
+                                        formatter={(value: number, name: string) => [
+                                            name === 'revenue' ? `${value.toLocaleString()} ج.م` : value,
+                                            name === 'revenue' ? 'الإيرادات' : 'عدد الحجوزات'
+                                        ]}
+                                    />
+                                    <Legend wrapperStyle={{ fontSize: '12px', fontWeight: 'bold', paddingTop: '10px' }} />
+                                    <Bar 
+                                        dataKey="revenue" 
+                                        name="الإيرادات" 
+                                        radius={[0, 4, 4, 0]} 
+                                        barSize={20}
+                                        className="cursor-pointer"
+                                        onClick={(data: any) => {
+                                            const rName = data?.name || data?.payload?.name;
+                                            if (rName) setInteractiveRoom(rName);
+                                        }}
+                                    >
+                                        {roomStats.map((entry, index) => (
+                                            <Cell 
+                                                key={`cell-${index}`} 
+                                                fill="#10b981" 
+                                                className="hover:opacity-80 transition-opacity cursor-pointer" 
+                                            />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
+                )}
+
+                {/* Top Customers Leaderboard */}
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-3xl p-5 shadow-sm">
+                    <h3 className="text-sm font-bold text-amber-900 mb-6 flex items-center gap-2">
+                        <Award className="w-5 h-5 text-amber-500" />
+                        أفضل العملاء (VIP) للفترة المحددة
+                    </h3>
+                    
+                    {topCustomers.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-[250px] text-amber-700/50">
+                            <Users className="w-12 h-12 mb-3 opacity-50" />
+                            <p className="font-bold">لا يوجد بيانات كافية للعملاء</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {topCustomers.map((customer, index) => (
+                                <div key={index} className="bg-white p-4 rounded-2xl shadow-sm border border-amber-100 flex items-center gap-4 transition-transform hover:-translate-y-1">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-lg shrink-0 shadow-sm ${
+                                        index === 0 ? 'bg-amber-400 text-amber-900' :
+                                        index === 1 ? 'bg-slate-300 text-slate-800' :
+                                        'bg-orange-300 text-orange-900'
+                                    }`}>
+                                        #{index + 1}
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="font-black text-slate-800">{customer.name}</h4>
+                                        {customer.phone && <p className="text-xs font-bold text-slate-500">{customer.phone}</p>}
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="font-black text-emerald-600 text-lg">{customer.revenue.toLocaleString()} <span className="text-[10px]">ج.م</span></p>
+                                        <p className="text-[10px] font-bold text-slate-400">{customer.visits} زيارات/طلبات</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
         </div>
     );
 }
