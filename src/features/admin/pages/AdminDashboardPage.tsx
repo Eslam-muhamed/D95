@@ -19,12 +19,13 @@ import LoyaltyTab from '@/features/admin/components/LoyaltyTab';
 import VenueStatusControl from '@/features/admin/components/VenueStatusControl';
 import UnifiedRevenueCard from '@/features/admin/components/UnifiedRevenueCard';
 import TournamentsTab from '@/features/admin/components/TournamentsTab';
+import AnalyticsTab from '@/features/admin/components/AnalyticsTab';
 import SectionErrorBoundary from '@/components/features/SectionErrorBoundary';
 import { supabase } from '@/lib/supabase';
 import { playPs5NavigateSound } from '@/lib/sound';
-import { Trophy } from 'lucide-react';
+import { Trophy, Activity } from 'lucide-react';
 
-type TabType = 'operations' | 'orders' | 'menu_settings' | 'payment_settings' | 'loyalty' | 'tournaments';
+type TabType = 'operations' | 'orders' | 'menu_settings' | 'payment_settings' | 'loyalty' | 'tournaments' | 'analytics';
 
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
@@ -94,6 +95,11 @@ export default function AdminDashboardPage() {
             id: 'tournaments',
             label: 'البطولات',
             icon: <Trophy className="w-4 h-4" />,
+        },
+        {
+            id: 'analytics',
+            label: 'التحليلات',
+            icon: <Activity className="w-4 h-4" />,
         },
         {
             id: 'payment_settings',
@@ -231,6 +237,7 @@ export default function AdminDashboardPage() {
                     {activeTab === 'payment_settings' && <PaymentSettingsTab />}
                     {activeTab === 'loyalty' && <LoyaltyTab />}
                     {activeTab === 'tournaments' && <TournamentsTab />}
+                    {activeTab === 'analytics' && <AnalyticsTab />}
                 </SectionErrorBoundary>
             </main>
 
