@@ -1,291 +1,416 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-    PieChart, Pie, Cell
+    PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area
 } from 'recharts';
 import { 
     TrendingUp, 
     CalendarDays, 
     Gamepad2, 
     Activity,
-    CreditCard
+    CreditCard,
+    Coffee,
+    Clock,
+    Users
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface DailyStats {
+interface DailyRevenue {
     date: string;
-    revenue: number;
-    count: number;
+    psRevenue: number;
+    cafeRevenue: number;
+    totalRevenue: number;
     rawDate: string;
 }
 
-interface StatusStats {
+interface RoomPopularity {
     name: string;
-    value: number;
-    color: string;
+    count: number;
+    revenue: number;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-    'confirmed': '#10b981', // emerald
-    'completed': '#64748b', // slate
-    'pending': '#f59e0b',   // amber
-    'cancelled': '#ef4444'  // rose
-};
+interface PeakHour {
+    hour: string;
+    count: number;
+}
 
-const STATUS_LABELS: Record<string, string> = {
-    'confirmed': 'مؤكد',
-    'completed': 'مكتمل',
-    'pending': 'معلق',
-    'cancelled': 'ملغي'
-};
+const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
 
 export default function AnalyticsTab() {
     const [isLoading, setIsLoading] = useState(true);
-    const [dailyData, setDailyData] = useState<DailyStats[]>([]);
-    const [statusData, setStatusData] = useState<StatusStats[]>([]);
+    const [periodDays, setPeriodDays] = useState<number>(30); // Default to 30 days
+    
+    const [dailyRevenue, setDailyRevenue] = useState<DailyRevenue[]>([]);
+    const [roomStats, setRoomStats] = useState<RoomPopularity[]>([]);
+    const [peakHours, setPeakHours] = useState<PeakHour[]>([]);
     
     // Key Metrics
     const [totalRevenue, setTotalRevenue] = useState(0);
-    const [todayRevenue, setTodayRevenue] = useState(0);
+    const [psRevenueTotal, setPsRevenueTotal] = useState(0);
+    const [cafeRevenueTotal, setCafeRevenueTotal] = useState(0);
     const [totalBookings, setTotalBookings] = useState(0);
-    const [todayBookings, setTodayBookings] = useState(0);
+
+    const fetchAnalyticsData = async () => {
+        try {
+            setIsLoading(true);
+            
+            // Calculate start date
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - periodDays);
+            const startDateStr = startDate.toISOString().split('T')[0];
+
+            // Fetch Bookings
+            const { data: bookingsData, error: bookingsError } = await supabase
+                .from('ps_bookings')
+                .select('booking_date, start_datetime, status, total_amount, room_name')
+                .gte('booking_date', startDateStr);
+
+            if (bookingsError) throw bookingsError;
+
+            // Fetch Orders (Cafe)
+            const { data: ordersData, error: ordersError } = await supabase
+                .from('orders')
+                .select('created_at, status, total_amount')
+                .gte('created_at', startDateStr);
+
+            if (ordersError) throw ordersError;
+
+            // --- DATA PROCESSING ---
+            const dailyMap = new Map<string, { ps: number, cafe: number }>();
+            const roomMap = new Map<string, { count: number, revenue: number }>();
+            const hoursMap = new Map<number, number>(); // 0-23
+
+            let tRev = 0;
+            let psRev = 0;
+            let cafeRev = 0;
+            let tBookings = 0;
+
+            // Process Bookings
+            (bookingsData || []).forEach(booking => {
+                if (booking.status !== 'confirmed' && booking.status !== 'completed') return;
+
+                const date = booking.booking_date;
+                const amount = Number(booking.total_amount) || 0;
+                
+                tBookings++;
+                psRev += amount;
+                tRev += amount;
+
+                // Daily Revenue
+                if (!dailyMap.has(date)) dailyMap.set(date, { ps: 0, cafe: 0 });
+                dailyMap.get(date)!.ps += amount;
+
+                // Room Popularity
+                const rName = booking.room_name || 'غرفة غير معروفة';
+                if (!roomMap.has(rName)) roomMap.set(rName, { count: 0, revenue: 0 });
+                roomMap.get(rName)!.count += 1;
+                roomMap.get(rName)!.revenue += amount;
+
+                // Peak Hours (based on start time)
+                if (booking.start_datetime) {
+                    const hour = new Date(booking.start_datetime).getHours();
+                    hoursMap.set(hour, (hoursMap.get(hour) || 0) + 1);
+                }
+            });
+
+            // Process Orders
+            (ordersData || []).forEach(order => {
+                if (order.status !== 'completed' && order.status !== 'delivered' && order.status !== 'paid') return;
+                
+                const date = order.created_at.split('T')[0];
+                const amount = Number(order.total_amount) || 0;
+
+                cafeRev += amount;
+                tRev += amount;
+
+                if (!dailyMap.has(date)) dailyMap.set(date, { ps: 0, cafe: 0 });
+                dailyMap.get(date)!.cafe += amount;
+            });
+
+            // Format Daily Revenue
+            const formattedDaily = Array.from(dailyMap.entries())
+                .map(([date, stats]) => ({
+                    date: new Date(date).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }),
+                    psRevenue: stats.ps,
+                    cafeRevenue: stats.cafe,
+                    totalRevenue: stats.ps + stats.cafe,
+                    rawDate: date
+                }))
+                .sort((a, b) => a.rawDate.localeCompare(b.rawDate));
+
+            // Format Room Popularity
+            const formattedRooms = Array.from(roomMap.entries())
+                .map(([name, stats]) => ({
+                    name,
+                    count: stats.count,
+                    revenue: stats.revenue
+                }))
+                .sort((a, b) => b.revenue - a.revenue); // sort by revenue
+
+            // Format Peak Hours (0-23)
+            const formattedHours: PeakHour[] = [];
+            for (let i = 0; i < 24; i++) {
+                // format hour 00:00 to 23:00
+                const hourStr = `${i.toString().padStart(2, '0')}:00`;
+                formattedHours.push({
+                    hour: hourStr,
+                    count: hoursMap.get(i) || 0
+                });
+            }
+
+            setDailyRevenue(formattedDaily);
+            setRoomStats(formattedRooms);
+            setPeakHours(formattedHours);
+
+            setTotalRevenue(tRev);
+            setPsRevenueTotal(psRev);
+            setCafeRevenueTotal(cafeRev);
+            setTotalBookings(tBookings);
+
+        } catch (err: any) {
+            console.error("Error fetching analytics:", err);
+            toast.error("حدث خطأ أثناء جلب بيانات التحليلات");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchAnalyticsData = async () => {
-            try {
-                setIsLoading(true);
-                
-                // Get date 7 days ago
-                const sevenDaysAgo = new Date();
-                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-                const startDateStr = sevenDaysAgo.toISOString().split('T')[0];
-
-                const { data, error } = await supabase
-                    .from('ps_bookings')
-                    .select('booking_date, status, total_amount')
-                    .gte('booking_date', startDateStr);
-
-                if (error) throw error;
-
-                if (data) {
-                    // Aggregate Daily Revenue
-                    const dailyMap = new Map<string, { revenue: number, count: number }>();
-                    // Aggregate Statuses
-                    const statusMap = new Map<string, number>();
-                    
-                    let totalRev = 0;
-                    let todayRev = 0;
-                    let totalBook = 0;
-                    let todayBook = 0;
-
-                    // Get today's date string in Egypt timezone
-                    const todayDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
-
-                    data.forEach(booking => {
-                        const date = booking.booking_date;
-                        const status = booking.status;
-                        const amount = Number(booking.total_amount) || 0;
-
-                        // Totals
-                        totalBook++;
-                        if (status === 'confirmed' || status === 'completed') {
-                            totalRev += amount;
-                        }
-
-                        if (date === todayDate) {
-                            todayBook++;
-                            if (status === 'confirmed' || status === 'completed') {
-                                todayRev += amount;
-                            }
-                        }
-
-                        // Daily Stats (Only count confirmed/completed for revenue)
-                        if (!dailyMap.has(date)) {
-                            dailyMap.set(date, { revenue: 0, count: 0 });
-                        }
-                        const dayStats = dailyMap.get(date)!;
-                        dayStats.count += 1;
-                        if (status === 'confirmed' || status === 'completed') {
-                            dayStats.revenue += amount;
-                        }
-
-                        // Status Stats
-                        statusMap.set(status, (statusMap.get(status) || 0) + 1);
-                    });
-
-                    // Format Daily Data for Recharts
-                    const formattedDailyData = Array.from(dailyMap.entries())
-                        .map(([date, stats]) => ({
-                            date: new Date(date).toLocaleDateString('ar-EG', { weekday: 'short', month: 'short', day: 'numeric' }),
-                            revenue: stats.revenue,
-                            count: stats.count,
-                            rawDate: date
-                        }))
-                        .sort((a, b) => a.rawDate.localeCompare(b.rawDate));
-
-                    // Format Status Data
-                    const formattedStatusData = Array.from(statusMap.entries()).map(([status, count]) => ({
-                        name: STATUS_LABELS[status] || status,
-                        value: count,
-                        color: STATUS_COLORS[status] || '#cbd5e1'
-                    }));
-
-                    setDailyData(formattedDailyData);
-                    setStatusData(formattedStatusData);
-                    setTotalRevenue(totalRev);
-                    setTodayRevenue(todayRev);
-                    setTotalBookings(totalBook);
-                    setTodayBookings(todayBook);
-                }
-            } catch (err: any) {
-                console.error("Error fetching analytics:", err);
-                toast.error("حدث خطأ أثناء جلب بيانات التحليلات");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
         fetchAnalyticsData();
-    }, []);
+    }, [periodDays]);
 
     if (isLoading) {
         return (
-            <div className="w-full flex justify-center items-center py-20">
+            <div className="w-full flex justify-center items-center py-32">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-slate-500 font-bold text-sm">جاري تحليل البيانات...</p>
+                    <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin shadow-lg" />
+                    <p className="text-slate-600 font-bold text-sm">جاري تجميع البيانات وتحليلها...</p>
                 </div>
             </div>
         );
     }
 
+    // Custom Tooltip for Stacked Bar Chart
+    const CustomTooltip = ({ active, payload, label }: any) => {
+        if (active && payload && payload.length) {
+            return (
+                <div className="bg-white p-3 border border-slate-200 shadow-xl rounded-xl" dir="rtl">
+                    <p className="font-bold text-slate-800 mb-2">{label}</p>
+                    {payload.map((entry: any, index: number) => (
+                        <p key={index} style={{ color: entry.color }} className="text-sm font-semibold flex justify-between gap-4">
+                            <span>{entry.name === 'psRevenue' ? 'البلايستيشن:' : 'الكافيه:'}</span>
+                            <span>{entry.value.toLocaleString()} ج.م</span>
+                        </p>
+                    ))}
+                    <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between gap-4">
+                        <span className="text-sm font-black text-slate-900">الإجمالي:</span>
+                        <span className="text-sm font-black text-slate-900">
+                            {(payload[0].payload.totalRevenue).toLocaleString()} ج.م
+                        </span>
+                    </div>
+                </div>
+            );
+        }
+        return null;
+    };
+
     return (
-        <div className="w-full max-w-7xl mx-auto py-6 px-2 sm:px-4 fade-in">
-            <div className="flex items-center gap-2 mb-6">
-                <Activity className="w-6 h-6 text-red-600" />
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900">التحليلات والإحصائيات</h2>
+        <div className="w-full max-w-7xl mx-auto py-6 px-2 sm:px-4 fade-in" dir="rtl">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <div className="flex items-center gap-3">
+                    <div className="p-3 bg-red-100 rounded-2xl text-red-600">
+                        <Activity className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tight">تحليلات الأعمال (BI)</h2>
+                        <p className="text-xs font-semibold text-slate-500 mt-1">تتبع أداء المكان واتخذ قرارات مبنية على البيانات</p>
+                    </div>
+                </div>
+
+                {/* Period Selector */}
+                <div className="flex bg-slate-200/70 p-1 rounded-xl shadow-inner w-full sm:w-auto">
+                    {[7, 14, 30].map(days => (
+                        <button
+                            key={days}
+                            onClick={() => setPeriodDays(days)}
+                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                                periodDays === days 
+                                    ? 'bg-white text-slate-900 shadow-sm' 
+                                    : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                        >
+                            {days} أيام
+                        </button>
+                    ))}
+                </div>
             </div>
 
-            {/* Key Metrics Cards */}
+            {/* Key Metrics Dashboard */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <MetricCard 
-                    title="إجمالي الإيرادات (7 أيام)" 
+                    title="إجمالي الإيرادات" 
                     value={`${totalRevenue.toLocaleString()} ج.م`} 
+                    subtitle={`خلال ${periodDays} يوماً`}
                     icon={<TrendingUp className="w-6 h-6 text-emerald-600" />}
-                    bgClass="bg-emerald-50 border-emerald-200"
+                    bgClass="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200"
                 />
                 <MetricCard 
-                    title="إيرادات اليوم" 
-                    value={`${todayRevenue.toLocaleString()} ج.م`} 
-                    icon={<CreditCard className="w-6 h-6 text-blue-600" />}
-                    bgClass="bg-blue-50 border-blue-200"
-                />
-                <MetricCard 
-                    title="إجمالي الحجوزات (7 أيام)" 
-                    value={totalBookings.toString()} 
+                    title="إيرادات البلايستيشن" 
+                    value={`${psRevenueTotal.toLocaleString()} ج.م`} 
+                    subtitle={`${((psRevenueTotal / (totalRevenue || 1)) * 100).toFixed(1)}% من الإجمالي`}
                     icon={<Gamepad2 className="w-6 h-6 text-indigo-600" />}
-                    bgClass="bg-indigo-50 border-indigo-200"
+                    bgClass="bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200"
                 />
                 <MetricCard 
-                    title="حجوزات اليوم" 
-                    value={todayBookings.toString()} 
-                    icon={<CalendarDays className="w-6 h-6 text-red-600" />}
-                    bgClass="bg-red-50 border-red-200"
+                    title="إيرادات الكافيه" 
+                    value={`${cafeRevenueTotal.toLocaleString()} ج.م`} 
+                    subtitle={`${((cafeRevenueTotal / (totalRevenue || 1)) * 100).toFixed(1)}% من الإجمالي`}
+                    icon={<Coffee className="w-6 h-6 text-amber-600" />}
+                    bgClass="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200"
+                />
+                <MetricCard 
+                    title="إجمالي الحجوزات (PS)" 
+                    value={totalBookings.toString()} 
+                    subtitle="حجوزات مكتملة ومؤكدة"
+                    icon={<Users className="w-6 h-6 text-blue-600" />}
+                    bgClass="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200"
                 />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Revenue Chart */}
-                <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-xs">
-                    <h3 className="text-base font-bold text-slate-800 mb-6 flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-emerald-600" />
-                        الإيرادات خلال آخر 7 أيام
-                    </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                {/* Revenue Split Chart (Stacked) */}
+                <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <CreditCard className="w-4 h-4 text-indigo-500" />
+                            مقارنة الإيرادات (بلايستيشن vs كافيه)
+                        </h3>
+                    </div>
                     <div className="h-[300px] w-full" dir="ltr">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={dailyData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                            <BarChart data={dailyRevenue} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                 <XAxis 
                                     dataKey="date" 
-                                    tick={{ fill: '#64748b', fontSize: 12 }} 
-                                    tickMargin={15}
+                                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 'bold' }} 
+                                    tickMargin={12}
                                     axisLine={false}
                                     tickLine={false}
                                 />
                                 <YAxis 
-                                    tick={{ fill: '#64748b', fontSize: 12 }} 
-                                    tickFormatter={(value) => `${value}`}
+                                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 'bold' }} 
                                     axisLine={false}
                                     tickLine={false}
                                 />
-                                <RechartsTooltip 
-                                    cursor={{ fill: '#f8fafc' }}
-                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', textAlign: 'right' }}
-                                    formatter={(value: number) => [`${value} ج.م`, 'الإيرادات']}
-                                    labelStyle={{ color: '#0f172a', fontWeight: 'bold', marginBottom: '8px' }}
-                                />
-                                <Bar dataKey="revenue" fill="#10b981" radius={[6, 6, 0, 0]} maxBarSize={50} />
+                                <RechartsTooltip content={<CustomTooltip />} />
+                                <Legend wrapperStyle={{ fontSize: '12px', fontWeight: 'bold', paddingTop: '10px' }} />
+                                <Bar dataKey="psRevenue" name="البلايستيشن" stackId="a" fill="#6366f1" radius={[0, 0, 4, 4]} maxBarSize={40} />
+                                <Bar dataKey="cafeRevenue" name="الكافيه" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={40} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* Status Breakdown Chart */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-xs">
-                    <h3 className="text-base font-bold text-slate-800 mb-6 flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-indigo-600" />
-                        حالات الحجوزات
-                    </h3>
-                    <div className="h-[250px] w-full" dir="ltr">
+                {/* Peak Hours Area Chart */}
+                <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-rose-500" />
+                            ساعات الذروة للحجوزات
+                        </h3>
+                    </div>
+                    <div className="h-[300px] w-full" dir="ltr">
                         <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={statusData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={90}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {statusData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
+                            <AreaChart data={peakHours} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                                <defs>
+                                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis 
+                                    dataKey="hour" 
+                                    tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }} 
+                                    tickMargin={12}
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+                                <YAxis 
+                                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 'bold' }} 
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
                                 <RechartsTooltip 
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', textAlign: 'right' }}
-                                    formatter={(value: number) => [value, 'عدد الحجوزات']}
+                                    formatter={(value: number) => [`${value} حجز`, 'كثافة الحجوزات']}
+                                    labelStyle={{ color: '#0f172a', fontWeight: 'bold', marginBottom: '8px' }}
                                 />
-                            </PieChart>
+                                <Area type="monotone" dataKey="count" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorCount)" />
+                            </AreaChart>
                         </ResponsiveContainer>
-                    </div>
-                    
-                    {/* Custom Legend */}
-                    <div className="flex flex-wrap justify-center gap-4 mt-6">
-                        {statusData.map((entry, idx) => (
-                            <div key={idx} className="flex items-center gap-2">
-                                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
-                                <span className="text-xs font-bold text-slate-700">{entry.name} ({entry.value})</span>
-                            </div>
-                        ))}
                     </div>
                 </div>
             </div>
+
+            {/* Room Popularity */}
+            <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm">
+                <h3 className="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <Gamepad2 className="w-4 h-4 text-emerald-500" />
+                    الغرف الأكثر تحقيقاً للإيرادات
+                </h3>
+                <div className="h-[300px] w-full" dir="ltr">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={roomStats} layout="vertical" margin={{ top: 0, right: 10, left: 30, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                            <YAxis 
+                                dataKey="name" 
+                                type="category" 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{ fill: '#475569', fontSize: 12, fontWeight: 'bold' }} 
+                                width={100}
+                            />
+                            <RechartsTooltip 
+                                cursor={{ fill: '#f8fafc' }}
+                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', textAlign: 'right' }}
+                                formatter={(value: number, name: string) => [
+                                    name === 'revenue' ? `${value.toLocaleString()} ج.م` : value,
+                                    name === 'revenue' ? 'الإيرادات' : 'عدد الحجوزات'
+                                ]}
+                            />
+                            <Legend wrapperStyle={{ fontSize: '12px', fontWeight: 'bold', paddingTop: '10px' }} />
+                            <Bar dataKey="revenue" name="الإيرادات" fill="#10b981" radius={[0, 4, 4, 0]} barSize={20} />
+                            {/* <Bar dataKey="count" name="عدد الحجوزات" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} /> */}
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
         </div>
     );
 }
 
-function MetricCard({ title, value, icon, bgClass }: { title: string, value: string, icon: React.ReactNode, bgClass: string }) {
+function MetricCard({ title, value, subtitle, icon, bgClass }: { title: string, value: string, subtitle: string, icon: React.ReactNode, bgClass: string }) {
     return (
-        <div className={`p-5 rounded-2xl border ${bgClass} shadow-xs`}>
-            <div className="flex justify-between items-start mb-4">
-                <h4 className="text-sm font-bold text-slate-700 opacity-80">{title}</h4>
-                <div className="p-2 bg-white rounded-xl shadow-xs">
+        <div className={`p-5 rounded-3xl border ${bgClass} shadow-sm relative overflow-hidden group`}>
+            {/* Background Decorative element */}
+            <div className="absolute -right-4 -top-4 opacity-10 transform group-hover:scale-110 transition-transform duration-500 pointer-events-none">
+                {icon}
+            </div>
+            
+            <div className="flex justify-between items-start mb-4 relative z-10">
+                <h4 className="text-xs sm:text-sm font-bold text-slate-700 opacity-90">{title}</h4>
+                <div className="p-2 bg-white/60 backdrop-blur-sm rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.05)] text-slate-700">
                     {icon}
                 </div>
             </div>
-            <p className="text-2xl sm:text-3xl font-black text-slate-900">{value}</p>
+            <div className="relative z-10">
+                <p className="text-2xl sm:text-3xl font-black text-slate-900 mb-1 tracking-tight">{value}</p>
+                <p className="text-[10px] sm:text-xs font-bold text-slate-600 opacity-80">{subtitle}</p>
+            </div>
         </div>
     );
 }
