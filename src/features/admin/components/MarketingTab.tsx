@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { MessageCircle, Users, Download, Copy, SendHorizonal } from 'lucide-react';
+import { MessageCircle, Users, Download, Copy, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Customer {
@@ -36,9 +36,10 @@ export default function MarketingTab() {
     }
   };
 
-  const getWhatsAppLink = (phone: string, name: string | null) => {
+  const getWhatsAppLink = (phone: string | null | undefined, name: string | null) => {
     // Basic Egypt phone number formatting for WA link
-    let formattedPhone = phone.replace(/[^0-9]/g, '');
+    const safePhone = phone || '';
+    let formattedPhone = safePhone.replace(/[^0-9]/g, '');
     if (formattedPhone.startsWith('01')) {
       formattedPhone = '2' + formattedPhone;
     }
@@ -94,7 +95,7 @@ export default function MarketingTab() {
         <div className="lg:col-span-1 space-y-4">
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
                 <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <SendHorizonal className="w-5 h-5 text-emerald-500" />
+                    <Send className="w-5 h-5 text-emerald-500" />
                     محتوى الرسالة
                 </h3>
                 <textarea
