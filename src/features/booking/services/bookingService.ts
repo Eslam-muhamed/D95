@@ -427,10 +427,10 @@ export async function updatePaymentTransferred(
     reservationId: string,
     paymentTransferred: boolean
 ): Promise<void> {
-    const { error } = await supabase
-        .from('ps_bookings')
-        .update({ payment_transferred: paymentTransferred })
-        .eq('reservation_id', reservationId);
+    const { error } = await supabase.rpc('confirm_payment_transfer', {
+        p_reservation_id: reservationId,
+        p_payment_transferred: paymentTransferred
+    });
 
     if (error) {
         console.error('Error updating payment_transferred:', error);
