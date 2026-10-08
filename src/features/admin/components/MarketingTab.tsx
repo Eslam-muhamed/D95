@@ -22,15 +22,82 @@ export default function MarketingTab() {
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // 1. Fetch from customers table (New loyalty system)
+      const { data: loyaltyCustomers, error: cError } = await supabase
         .from('customers')
-        .select('*')
+        .select('phone_number, full_name, loyalty_points_balance')
         .order('created_at', { ascending: false });
+        
+      if (cError) throw cError;
 
-      if (error) throw error;
-      setCustomers(data || []);
+      // 2. Fetch from ps_bookings (Historical data)
+      const { data: bookingsData, error: bError } = await supabase
+        .from('ps_bookings')
+        .select('customer_phone, customer_name');
+        
+      if (bError) throw bError;
+
+      // 3. Fetch from orders (Historical data)
+      const { data: ordersData, error: oError } = await supabase
+        .from('orders')
+        .select('customer_phone, customer_name');
+        
+      if (oError) throw oError;
+
+      // Merge and deduplicate by phone number
+      const phoneMap = new Map<string, Customer>();
+
+      // First add loyalty customers (they have points and might have better data)
+      if (loyaltyCustomers) {
+        loyaltyCustomers.forEach(c => {
+           const phone = c.phone_number ? c.phone_number.replace(/[^0-9]/g, '') : '';
+           if (phone && phone.length >= 10) {
+             phoneMap.set(phone, {
+               id: phone, // using phone as unique id for map
+               phone_number: c.phone_number, // original
+               full_name: c.full_name,
+               loyalty_points_balance: c.loyalty_points_balance || 0
+             });
+           }
+        });
+      }
+
+      // Add bookings (if not already added)
+      if (bookingsData) {
+        bookingsData.forEach(b => {
+           const phone = b.customer_phone ? b.customer_phone.replace(/[^0-9]/g, '') : '';
+           if (phone && phone.length >= 10 && !phoneMap.has(phone)) {
+             phoneMap.set(phone, {
+               id: phone,
+               phone_number: b.customer_phone,
+               full_name: b.customer_name,
+               loyalty_points_balance: 0
+             });
+           }
+        });
+      }
+
+      // Add orders (if not already added)
+      if (ordersData) {
+        ordersData.forEach(o => {
+           const phone = o.customer_phone ? o.customer_phone.replace(/[^0-9]/g, '') : '';
+           if (phone && phone.length >= 10 && !phoneMap.has(phone)) {
+             phoneMap.set(phone, {
+               id: phone,
+               phone_number: o.customer_phone,
+               full_name: o.customer_name,
+               loyalty_points_balance: 0
+             });
+           }
+        });
+      }
+
+      const allCustomers = Array.from(phoneMap.values());
+      // Sort to show ones with names or points first maybe, or just as is.
+      setCustomers(allCustomers);
     } catch (err: any) {
-      toast.error('حدث خطأ أثناء تحميل بيانات العملاء');
+      toast.error('حدث خطأ أثناء تجميع أرقام العملاء');
     } finally {
       setLoading(false);
     }
