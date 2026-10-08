@@ -9,10 +9,38 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Define map outside the serve function to persist across requests in the same isolate
+const rateLimitMap = new Map<string, { count: number, resetAt: number }>();
+
 serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
+  }
+
+  // Basic In-Memory Rate Limiting (Per Isolate)
+  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  const now = Date.now();
+  
+  const windowMs = 60 * 1000; // 1 minute
+  const maxRequests = 20; // Max 20 requests per minute per IP
+  
+  const rateLimitInfo = rateLimitMap.get(ip) || { count: 0, resetAt: now + windowMs };
+  
+  if (now > rateLimitInfo.resetAt) {
+    rateLimitInfo.count = 1;
+    rateLimitInfo.resetAt = now + windowMs;
+  } else {
+    rateLimitInfo.count++;
+  }
+  
+  rateLimitMap.set(ip, rateLimitInfo);
+  
+  if (rateLimitInfo.count > maxRequests) {
+    return new Response(JSON.stringify({ error: 'Too many requests, please try again later.' }), {
+      status: 429,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' },
+    });
   }
 
   try {

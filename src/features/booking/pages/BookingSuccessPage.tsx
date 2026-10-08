@@ -94,6 +94,7 @@ export default function BookingSuccessPage() {
                             phone: b.customer_phone,
                             notes: b.notes || '',
                             status: b.status,
+                            paymentTransferred: b.payment_transferred,
                         };
                         setBookingData(normalized);
                     } else {
@@ -139,6 +140,7 @@ export default function BookingSuccessPage() {
         snacks,
         netTotal,
         paymentMethod,
+        paymentTransferred,
         name,
         phone,
         notes,
@@ -181,7 +183,9 @@ export default function BookingSuccessPage() {
         msg += `💰 *المبلغ النهائي المستحق:* ${netTotal} ج.م\n\n`;
 
         if (paymentMethod !== 'cash') {
-            msg += `📌 *مرفق مع هذه الرسالة إيصال التحويل لتأكيد الحجز وقفل الموعد.*`;
+            msg += paymentTransferred 
+                ? `✅ *لقد قمت بتحويل المبلغ وإرسال الإيصال. برجاء مراجعة الطلب وتأكيد الحجز لقفل الموعد.*`
+                : `📌 *مرفق مع هذه الرسالة إيصال التحويل لتأكيد الحجز وقفل الموعد.*`;
         } else {
             msg += `📌 *سأقوم بالدفع كاش بالصالة - برجاء مراجعة الطلب وتأكيد الحجز لقفل الموعد.*`;
         }

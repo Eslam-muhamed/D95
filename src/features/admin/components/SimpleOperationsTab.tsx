@@ -1254,8 +1254,13 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
                                                         </td>
 
                                                         {/* Amount */}
-                                                        <td className="py-3.5 px-3 font-bold text-emerald-700">
-                                                            {b.total_amount} ج.م
+                                                        <td className="py-3.5 px-3">
+                                                            <div className="font-bold text-emerald-700">{b.total_amount} ج.م</div>
+                                                            {b.payment_transferred && (
+                                                                <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded flex items-center w-fit mt-1">
+                                                                    <CheckCircle2 className="w-3 h-3 mr-1" /> إيصال
+                                                                </span>
+                                                            )}
                                                         </td>
 
                                                         {/* Status */}
@@ -1375,9 +1380,14 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
                                                         <span className="text-slate-900 font-bold">{getNormalizedRoomName(b)}</span>
                                                         <span className="text-slate-600 text-[11px] block">{b.start_time} - {b.end_time} ({b.duration_hours} س)</span>
                                                     </div>
-                                                    <div className="text-left">
+                                                    <div className="text-left flex flex-col items-end gap-1">
                                                         <span className="text-slate-500 text-[10px] block">المبلغ:</span>
                                                         <span className="text-emerald-700 font-bold text-sm">{b.total_amount} ج.م</span>
+                                                        {b.payment_transferred && (
+                                                            <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded flex items-center">
+                                                                <CheckCircle2 className="w-3 h-3 mr-1" /> إيصال
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
 
@@ -1654,8 +1664,13 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
                                                             </td>
 
                                                             {/* Amount */}
-                                                            <td className="py-3.5 px-3 font-bold text-emerald-700">
-                                                                {b.total_amount} ج.م
+                                                            <td className="py-3.5 px-3">
+                                                                <div className="font-bold text-emerald-700">{b.total_amount} ج.م</div>
+                                                                {b.payment_transferred && (
+                                                                    <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded flex items-center w-fit mt-1">
+                                                                        <CheckCircle2 className="w-3 h-3 mr-1" /> إيصال
+                                                                    </span>
+                                                                )}
                                                             </td>
 
                                                             {/* Status */}
@@ -1813,9 +1828,14 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
                                                         <span className="text-slate-900 font-bold">{getNormalizedRoomName(b)} - {b.booking_date}</span>
                                                         <span className="text-slate-600 text-[11px] block">{b.start_time} - {b.end_time} ({b.duration_hours} س)</span>
                                                     </div>
-                                                    <div className="text-left">
+                                                    <div className="text-left flex flex-col items-end gap-1">
                                                         <span className="text-slate-500 text-[10px] block">المبلغ:</span>
                                                         <span className="text-emerald-700 font-bold text-sm">{b.total_amount} ج.م</span>
+                                                        {b.payment_transferred && (
+                                                            <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded flex items-center">
+                                                                <CheckCircle2 className="w-3 h-3 mr-1" /> إيصال
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
 
@@ -2110,7 +2130,14 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
                                                     <div className="text-slate-900">{b.booking_date}</div>
                                                     <div className="text-slate-500 text-[11px]">{b.start_time} - {b.end_time}</div>
                                                 </td>
-                                                <td className="py-3.5 px-3 font-bold text-emerald-700">{b.total_amount} ج.م</td>
+                                                <td className="py-3.5 px-3">
+                                                    <div className="font-bold text-emerald-700">{b.total_amount} ج.م</div>
+                                                    {b.payment_transferred && (
+                                                        <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded flex items-center w-fit mt-1">
+                                                            <CheckCircle2 className="w-3 h-3 mr-1" /> إيصال
+                                                        </span>
+                                                    )}
+                                                </td>
                                                 <td className="py-3.5 px-3">
                                                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                                                         b.status === 'confirmed'

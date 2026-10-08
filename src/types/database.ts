@@ -60,6 +60,7 @@ export interface DBBooking {
     discount_amount: number;
     total_amount: number;
     payment_method: 'instapay' | 'cash' | 'wallet' | string;
+    payment_transferred?: boolean;
     status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
     snacks: Array<{
         id: string;

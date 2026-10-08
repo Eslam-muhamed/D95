@@ -61,6 +61,14 @@ serve(async (req: Request) => {
       });
     }
 
+    const { data: isAdmin, error: adminError } = await supabaseClient.rpc('is_admin');
+    if (adminError || !isAdmin) {
+      return new Response(JSON.stringify({ error: 'Forbidden: Admin access required' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     // 2. Process image deletion
     const { imageUrl } = await req.json();
 

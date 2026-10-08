@@ -65,6 +65,7 @@ export default function BookingPaymentPage() {
     const [notes, setNotes] = useState('');
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const [paymentTransferred, setPaymentTransferred] = useState(false);
 
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
         walletNumber: CONTACT_INFO.walletNumber,
@@ -209,6 +210,7 @@ export default function BookingPaymentPage() {
                 status: 'pending',
                 snacks: effectiveSnacks || [],
                 notes: notes.trim() || null,
+                payment_transferred: paymentTransferred,
                 user_id: user?.id || undefined,
             });
 
@@ -237,6 +239,7 @@ export default function BookingPaymentPage() {
                 snacksTotal: effectiveSnacksTotal,
                 netTotal,
                 paymentMethod,
+                paymentTransferred,
                 name: name.trim(),
                 phone: cleanPhone,
                 notes: notes.trim(),
@@ -440,6 +443,31 @@ export default function BookingPaymentPage() {
 
                             </div>
                         </section>
+
+                        {/* PAYMENT CONFIRMATION CHECKBOX */}
+                        {(paymentMethod === 'instapay' || paymentMethod === 'wallet') && (
+                            <div className="mt-4 p-4 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-200 dark:border-emerald-500/20">
+                                <label className="flex items-start gap-3 cursor-pointer">
+                                    <div className="relative flex items-center justify-center mt-1">
+                                        <input
+                                            type="checkbox"
+                                            checked={paymentTransferred}
+                                            onChange={(e) => setPaymentTransferred(e.target.checked)}
+                                            className="w-5 h-5 appearance-none border-2 border-emerald-300 dark:border-emerald-500/40 rounded bg-white dark:bg-transparent checked:bg-emerald-500 checked:border-emerald-500 transition-colors"
+                                        />
+                                        {paymentTransferred && <Check className="absolute w-3.5 h-3.5 text-white pointer-events-none" strokeWidth={3} />}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm text-neutral-900 dark:text-emerald-100 font-bold leading-relaxed font-body">
+                                            لقد قمت بتحويل المبلغ وإرسال إيصال الدفع على الواتساب ✅
+                                        </span>
+                                        <span className="text-[11px] text-neutral-500 dark:text-emerald-300/70 font-medium">
+                                            (اختياري) سيتم إرفاق هذا التأكيد مع طلبك لتسريع عملية المراجعة
+                                        </span>
+                                    </div>
+                                </label>
+                            </div>
+                        )}
                     </div>
 
                     {/* LEFT COLUMN: PREVIEW & TRANSPARENT BILL (5 of 12, sticky on desktop) */}

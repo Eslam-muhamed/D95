@@ -203,6 +203,7 @@ DECLARE
   v_customer_name TEXT;
   v_customer_phone TEXT;
   v_payment_method TEXT;
+  v_payment_transferred BOOLEAN;
   v_status TEXT;
   v_snacks JSONB;
   v_notes TEXT;
@@ -250,6 +251,7 @@ BEGIN
   v_customer_name := TRIM(COALESCE(p_booking->>'customer_name', ''));
   v_customer_phone := REGEXP_REPLACE(COALESCE(p_booking->>'customer_phone', ''), '[^0-9]', '', 'g');
   v_payment_method := COALESCE(p_booking->>'payment_method', 'instapay');
+  v_payment_transferred := COALESCE((p_booking->>'payment_transferred')::BOOLEAN, false);
   v_status := 'pending';
   v_snacks := COALESCE(p_booking->'snacks', '[]'::jsonb);
   v_notes := NULLIF(TRIM(p_booking->>'notes'), '');
@@ -369,7 +371,8 @@ BEGIN
     payment_method,
     status,
     snacks,
-    notes
+    notes,
+    payment_transferred
   ) VALUES (
     v_reservation_id,
     v_customer_name,
@@ -389,7 +392,8 @@ BEGIN
     v_payment_method,
     v_status,
     v_snacks,
-    v_notes
+    v_notes,
+    v_payment_transferred
   )
   RETURNING * INTO v_new_booking;
 
