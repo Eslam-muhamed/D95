@@ -2,17 +2,19 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-    PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area
+    Legend, AreaChart, Area, Cell
 } from 'recharts';
 import { 
     TrendingUp, 
-    CalendarDays, 
     Gamepad2, 
     Activity,
     CreditCard,
     Coffee,
     Clock,
-    Users
+    Users,
+    Filter,
+    XCircle,
+    MousePointerClick
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -35,138 +37,72 @@ interface PeakHour {
     count: number;
 }
 
-const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
-
 export default function AnalyticsTab() {
     const [isLoading, setIsLoading] = useState(true);
-    const [periodDays, setPeriodDays] = useState<number>(30); // Default to 30 days
     
-    const [dailyRevenue, setDailyRevenue] = useState<DailyRevenue[]>([]);
-    const [roomStats, setRoomStats] = useState<RoomPopularity[]>([]);
-    const [peakHours, setPeakHours] = useState<PeakHour[]>([]);
+    // Server Filters State
+    const [startDate, setStartDate] = useState<string>(() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 30);
+        return d.toISOString().split('T')[0];
+    });
+    const [endDate, setEndDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
+    const [roomFilter, setRoomFilter] = useState<string>('all');
+    const [availableRooms, setAvailableRooms] = useState<string[]>([]);
     
-    // Key Metrics
-    const [totalRevenue, setTotalRevenue] = useState(0);
-    const [psRevenueTotal, setPsRevenueTotal] = useState(0);
-    const [cafeRevenueTotal, setCafeRevenueTotal] = useState(0);
-    const [totalBookings, setTotalBookings] = useState(0);
+    // Raw Data State (For Client-Side Interactive Filtering)
+    const [rawBookings, setRawBookings] = useState<any[]>([]);
+    const [rawOrders, setRawOrders] = useState<any[]>([]);
+
+    // Interactive Filters State
+    const [interactiveRoom, setInteractiveRoom] = useState<string | null>(null);
+    const [interactiveDate, setInteractiveDate] = useState<string | null>(null);
 
     const fetchAnalyticsData = async () => {
         try {
             setIsLoading(true);
-            
-            // Calculate start date
-            const startDate = new Date();
-            startDate.setDate(startDate.getDate() - periodDays);
-            const startDateStr = startDate.toISOString().split('T')[0];
+            // Clear interactive filters when fetching new server data
+            setInteractiveRoom(null);
+            setInteractiveDate(null);
 
             // Fetch Bookings
-            const { data: bookingsData, error: bookingsError } = await supabase
+            let bookingsQuery = supabase
                 .from('ps_bookings')
                 .select('booking_date, start_datetime, status, total_amount, room_name')
-                .gte('booking_date', startDateStr);
-
-            if (bookingsError) throw bookingsError;
-
-            // Fetch Orders (Cafe)
-            const { data: ordersData, error: ordersError } = await supabase
-                .from('orders')
-                .select('created_at, status, total_amount')
-                .gte('created_at', startDateStr);
-
-            if (ordersError) throw ordersError;
-
-            // --- DATA PROCESSING ---
-            const dailyMap = new Map<string, { ps: number, cafe: number }>();
-            const roomMap = new Map<string, { count: number, revenue: number }>();
-            const hoursMap = new Map<number, number>(); // 0-23
-
-            let tRev = 0;
-            let psRev = 0;
-            let cafeRev = 0;
-            let tBookings = 0;
-
-            // Process Bookings
-            (bookingsData || []).forEach(booking => {
-                if (booking.status !== 'confirmed' && booking.status !== 'completed') return;
-
-                const date = booking.booking_date;
-                const amount = Number(booking.total_amount) || 0;
+                .gte('booking_date', startDate)
+                .lte('booking_date', endDate);
                 
-                tBookings++;
-                psRev += amount;
-                tRev += amount;
-
-                // Daily Revenue
-                if (!dailyMap.has(date)) dailyMap.set(date, { ps: 0, cafe: 0 });
-                dailyMap.get(date)!.ps += amount;
-
-                // Room Popularity
-                const rName = booking.room_name || 'غرفة غير معروفة';
-                if (!roomMap.has(rName)) roomMap.set(rName, { count: 0, revenue: 0 });
-                roomMap.get(rName)!.count += 1;
-                roomMap.get(rName)!.revenue += amount;
-
-                // Peak Hours (based on start time)
-                if (booking.start_datetime) {
-                    const hour = new Date(booking.start_datetime).getHours();
-                    hoursMap.set(hour, (hoursMap.get(hour) || 0) + 1);
-                }
-            });
-
-            // Process Orders
-            (ordersData || []).forEach(order => {
-                if (order.status !== 'completed' && order.status !== 'delivered' && order.status !== 'paid') return;
-                
-                const date = order.created_at.split('T')[0];
-                const amount = Number(order.total_amount) || 0;
-
-                cafeRev += amount;
-                tRev += amount;
-
-                if (!dailyMap.has(date)) dailyMap.set(date, { ps: 0, cafe: 0 });
-                dailyMap.get(date)!.cafe += amount;
-            });
-
-            // Format Daily Revenue
-            const formattedDaily = Array.from(dailyMap.entries())
-                .map(([date, stats]) => ({
-                    date: new Date(date).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }),
-                    psRevenue: stats.ps,
-                    cafeRevenue: stats.cafe,
-                    totalRevenue: stats.ps + stats.cafe,
-                    rawDate: date
-                }))
-                .sort((a, b) => a.rawDate.localeCompare(b.rawDate));
-
-            // Format Room Popularity
-            const formattedRooms = Array.from(roomMap.entries())
-                .map(([name, stats]) => ({
-                    name,
-                    count: stats.count,
-                    revenue: stats.revenue
-                }))
-                .sort((a, b) => b.revenue - a.revenue); // sort by revenue
-
-            // Format Peak Hours (0-23)
-            const formattedHours: PeakHour[] = [];
-            for (let i = 0; i < 24; i++) {
-                // format hour 00:00 to 23:00
-                const hourStr = `${i.toString().padStart(2, '0')}:00`;
-                formattedHours.push({
-                    hour: hourStr,
-                    count: hoursMap.get(i) || 0
-                });
+            if (roomFilter !== 'all') {
+                bookingsQuery = bookingsQuery.eq('room_name', roomFilter);
             }
 
-            setDailyRevenue(formattedDaily);
-            setRoomStats(formattedRooms);
-            setPeakHours(formattedHours);
+            const { data: bookingsData, error: bookingsError } = await bookingsQuery;
+            if (bookingsError) throw bookingsError;
 
-            setTotalRevenue(tRev);
-            setPsRevenueTotal(psRev);
-            setCafeRevenueTotal(cafeRev);
-            setTotalBookings(tBookings);
+            // Fetch Orders (Cafe) - Only if roomFilter is all
+            let ordersData: any[] = [];
+            if (roomFilter === 'all') {
+                const { data, error: ordersError } = await supabase
+                    .from('orders')
+                    .select('created_at, status, total_amount')
+                    .gte('created_at', startDate)
+                    .lte('created_at', endDate + 'T23:59:59');
+
+                if (ordersError) throw ordersError;
+                ordersData = data || [];
+            }
+
+            setRawBookings(bookingsData || []);
+            setRawOrders(ordersData || []);
+
+            // Update available rooms dropdown
+            const roomsSet = new Set<string>();
+            (bookingsData || []).forEach(b => {
+                if (b.room_name) roomsSet.add(b.room_name);
+            });
+            if (roomFilter === 'all' && roomsSet.size > 0) {
+                setAvailableRooms(Array.from(roomsSet));
+            }
 
         } catch (err: any) {
             console.error("Error fetching analytics:", err);
@@ -176,20 +112,130 @@ export default function AnalyticsTab() {
         }
     };
 
+    // Load on mount
     useEffect(() => {
         fetchAnalyticsData();
-    }, [periodDays]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-    if (isLoading) {
-        return (
-            <div className="w-full flex justify-center items-center py-32">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin shadow-lg" />
-                    <p className="text-slate-600 font-bold text-sm">جاري تجميع البيانات وتحليلها...</p>
-                </div>
-            </div>
-        );
-    }
+    // --------------------------------------------------------
+    // Memoized Data Processing (Applies Interactive Filters)
+    // --------------------------------------------------------
+    const { 
+        dailyRevenue, 
+        roomStats, 
+        peakHours, 
+        totalRevenue, 
+        psRevenueTotal, 
+        cafeRevenueTotal, 
+        totalBookings 
+    } = useMemo(() => {
+        const dailyMap = new Map<string, { ps: number, cafe: number }>();
+        const roomMap = new Map<string, { count: number, revenue: number }>();
+        const hoursMap = new Map<number, number>(); // 0-23
+
+        let tRev = 0;
+        let psRev = 0;
+        let cafeRev = 0;
+        let tBookings = 0;
+
+        // Apply Interactive Filters to Bookings
+        const filteredBookings = rawBookings.filter(booking => {
+            if (booking.status !== 'confirmed' && booking.status !== 'completed') return false;
+            if (interactiveRoom && booking.room_name !== interactiveRoom) return false;
+            if (interactiveDate && booking.booking_date !== interactiveDate) return false;
+            return true;
+        });
+
+        // Apply Interactive Filters to Orders
+        const filteredOrders = rawOrders.filter(order => {
+            if (order.status !== 'completed' && order.status !== 'delivered' && order.status !== 'paid') return false;
+            const orderDate = order.created_at.split('T')[0];
+            // If filtering by room, cafe orders don't have a room, so we might want to hide them OR show them.
+            // Usually, if a room is selected, we hide cafe orders unless they are linked to the room. 
+            // Since we don't have room linking here, we hide them to focus on the room's direct revenue.
+            if (interactiveRoom) return false; 
+            if (interactiveDate && orderDate !== interactiveDate) return false;
+            return true;
+        });
+
+        // Process Bookings
+        filteredBookings.forEach(booking => {
+            const date = booking.booking_date;
+            const amount = Number(booking.total_amount) || 0;
+            const rName = booking.room_name || 'غرفة غير معروفة';
+            
+            tBookings++;
+            psRev += amount;
+            tRev += amount;
+
+            // Daily Revenue
+            if (!dailyMap.has(date)) dailyMap.set(date, { ps: 0, cafe: 0 });
+            dailyMap.get(date)!.ps += amount;
+
+            // Room Popularity
+            if (!roomMap.has(rName)) roomMap.set(rName, { count: 0, revenue: 0 });
+            roomMap.get(rName)!.count += 1;
+            roomMap.get(rName)!.revenue += amount;
+
+            // Peak Hours
+            if (booking.start_datetime) {
+                const hour = new Date(booking.start_datetime).getHours();
+                hoursMap.set(hour, (hoursMap.get(hour) || 0) + 1);
+            }
+        });
+
+        // Process Orders
+        filteredOrders.forEach(order => {
+            const date = order.created_at.split('T')[0];
+            const amount = Number(order.total_amount) || 0;
+
+            cafeRev += amount;
+            tRev += amount;
+
+            if (!dailyMap.has(date)) dailyMap.set(date, { ps: 0, cafe: 0 });
+            dailyMap.get(date)!.cafe += amount;
+        });
+
+        // Format Outputs
+        const formattedDaily = Array.from(dailyMap.entries())
+            .map(([date, stats]) => ({
+                date: new Date(date).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }),
+                psRevenue: stats.ps,
+                cafeRevenue: stats.cafe,
+                totalRevenue: stats.ps + stats.cafe,
+                rawDate: date
+            }))
+            .sort((a, b) => a.rawDate.localeCompare(b.rawDate));
+
+        const formattedRooms = Array.from(roomMap.entries())
+            .map(([name, stats]) => ({
+                name,
+                count: stats.count,
+                revenue: stats.revenue
+            }))
+            .sort((a, b) => b.revenue - a.revenue);
+
+        const formattedHours: PeakHour[] = [];
+        for (let i = 0; i < 24; i++) {
+            const hourStr = `${i.toString().padStart(2, '0')}:00`;
+            formattedHours.push({
+                hour: hourStr,
+                count: hoursMap.get(i) || 0
+            });
+        }
+
+        return {
+            dailyRevenue: formattedDaily,
+            roomStats: formattedRooms,
+            peakHours: formattedHours,
+            totalRevenue: tRev,
+            psRevenueTotal: psRev,
+            cafeRevenueTotal: cafeRev,
+            totalBookings: tBookings
+        };
+
+    }, [rawBookings, rawOrders, interactiveRoom, interactiveDate]);
 
     // Custom Tooltip for Stacked Bar Chart
     const CustomTooltip = ({ active, payload, label }: any) => {
@@ -217,41 +263,112 @@ export default function AnalyticsTab() {
 
     return (
         <div className="w-full max-w-7xl mx-auto py-6 px-2 sm:px-4 fade-in" dir="rtl">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div className="flex items-center gap-3">
                     <div className="p-3 bg-red-100 rounded-2xl text-red-600">
                         <Activity className="w-6 h-6" />
                     </div>
                     <div>
                         <h2 className="text-2xl font-black text-slate-900 tracking-tight">تحليلات الأعمال (BI)</h2>
-                        <p className="text-xs font-semibold text-slate-500 mt-1">تتبع أداء المكان واتخذ قرارات مبنية على البيانات</p>
+                        <p className="text-xs font-semibold text-slate-500 mt-1">
+                            تتبع أداء المكان واتخذ قرارات مبنية على البيانات. <span className="text-indigo-600 font-bold hidden sm:inline">يمكنك الضغط على أي عمود في الرسوم البيانية لفلترة باقي الداتا!</span>
+                        </p>
                     </div>
                 </div>
-
-                {/* Period Selector */}
-                <div className="flex bg-slate-200/70 p-1 rounded-xl shadow-inner w-full sm:w-auto">
-                    {[7, 14, 30].map(days => (
-                        <button
-                            key={days}
-                            onClick={() => setPeriodDays(days)}
-                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                                periodDays === days 
-                                    ? 'bg-white text-slate-900 shadow-sm' 
-                                    : 'text-slate-500 hover:text-slate-700'
-                            }`}
-                        >
-                            {days} أيام
-                        </button>
-                    ))}
-                </div>
             </div>
+
+            {/* Server Filter Controls */}
+            <div className="bg-white p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-200 mb-6 flex flex-col lg:flex-row items-end gap-4 w-full relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-red-50 rounded-bl-full flex justify-end items-start p-3 -z-10">
+                    <Filter className="w-5 h-5 text-red-200" />
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+                    <div className="flex flex-col gap-1.5 w-full">
+                        <label className="text-xs font-bold text-slate-600 mr-1">تاريخ البداية</label>
+                        <input 
+                            type="date" 
+                            value={startDate} 
+                            onChange={e => setStartDate(e.target.value)} 
+                            className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 w-full transition-all"
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1.5 w-full">
+                        <label className="text-xs font-bold text-slate-600 mr-1">تاريخ النهاية</label>
+                        <input 
+                            type="date" 
+                            value={endDate} 
+                            onChange={e => setEndDate(e.target.value)} 
+                            className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 w-full transition-all"
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1.5 w-full">
+                        <label className="text-xs font-bold text-slate-600 mr-1">الغرفة</label>
+                        <select 
+                            value={roomFilter} 
+                            onChange={e => setRoomFilter(e.target.value)} 
+                            className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 w-full transition-all outline-none"
+                        >
+                            <option value="all">كل الغرف (متضمن الكافيه)</option>
+                            {availableRooms.map(r => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                    </div>
+                </div>
+                
+                <button 
+                    onClick={fetchAnalyticsData}
+                    disabled={isLoading}
+                    className="bg-slate-900 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 active:scale-95 transition-all w-full lg:w-auto whitespace-nowrap disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                    {isLoading ? (
+                        <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            جاري التحديث...
+                        </>
+                    ) : (
+                        'تحديث البيانات'
+                    )}
+                </button>
+            </div>
+
+            {/* Interactive Client Filters Indicators */}
+            {(interactiveRoom || interactiveDate) && (
+                <div className="flex flex-wrap items-center gap-3 mb-6 bg-indigo-50 border border-indigo-100 p-3 rounded-2xl animate-fade-in-up">
+                    <span className="text-xs font-bold text-indigo-800 flex items-center gap-1">
+                        <MousePointerClick className="w-4 h-4" />
+                        الرسوم البيانية مفلترة حالياً حسب:
+                    </span>
+                    {interactiveDate && (
+                        <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-indigo-200 text-sm font-bold text-indigo-700 shadow-sm">
+                            <span>يوم: {new Date(interactiveDate).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' })}</span>
+                            <button onClick={() => setInteractiveDate(null)} className="hover:text-red-500 transition-colors">
+                                <XCircle className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
+                    {interactiveRoom && (
+                        <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-indigo-200 text-sm font-bold text-indigo-700 shadow-sm">
+                            <span>غرفة: {interactiveRoom}</span>
+                            <button onClick={() => setInteractiveRoom(null)} className="hover:text-red-500 transition-colors">
+                                <XCircle className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
+                    <button 
+                        onClick={() => { setInteractiveDate(null); setInteractiveRoom(null); }}
+                        className="text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors mr-auto underline"
+                    >
+                        مسح الفلاتر التفاعلية
+                    </button>
+                </div>
+            )}
 
             {/* Key Metrics Dashboard */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <MetricCard 
                     title="إجمالي الإيرادات" 
                     value={`${totalRevenue.toLocaleString()} ج.م`} 
-                    subtitle={`خلال ${periodDays} يوماً`}
+                    subtitle="للفترة / الفلتر الحالي"
                     icon={<TrendingUp className="w-6 h-6 text-emerald-600" />}
                     bgClass="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200"
                 />
@@ -280,16 +397,27 @@ export default function AnalyticsTab() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* Revenue Split Chart (Stacked) */}
-                <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm">
+                <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm relative group">
+                    <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold px-2 py-1 rounded-md">
+                        <MousePointerClick className="w-3 h-3" /> اضغط للفلترة باليوم
+                    </div>
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                             <CreditCard className="w-4 h-4 text-indigo-500" />
-                            مقارنة الإيرادات (بلايستيشن vs كافيه)
+                            مقارنة الإيرادات (اضغط على العمود للفلترة)
                         </h3>
                     </div>
                     <div className="h-[300px] w-full" dir="ltr">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={dailyRevenue} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                            <BarChart 
+                                data={dailyRevenue} 
+                                margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+                                onClick={(state) => {
+                                    if (state && state.activePayload && state.activePayload.length > 0) {
+                                        setInteractiveDate(state.activePayload[0].payload.rawDate);
+                                    }
+                                }}
+                            >
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                 <XAxis 
                                     dataKey="date" 
@@ -303,10 +431,26 @@ export default function AnalyticsTab() {
                                     axisLine={false}
                                     tickLine={false}
                                 />
-                                <RechartsTooltip content={<CustomTooltip />} />
+                                <RechartsTooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc'}} />
                                 <Legend wrapperStyle={{ fontSize: '12px', fontWeight: 'bold', paddingTop: '10px' }} />
-                                <Bar dataKey="psRevenue" name="البلايستيشن" stackId="a" fill="#6366f1" radius={[0, 0, 4, 4]} maxBarSize={40} />
-                                <Bar dataKey="cafeRevenue" name="الكافيه" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                                <Bar 
+                                    dataKey="psRevenue" 
+                                    name="البلايستيشن" 
+                                    stackId="a" 
+                                    fill="#6366f1" 
+                                    radius={[0, 0, 4, 4]} 
+                                    maxBarSize={40} 
+                                    className="cursor-pointer hover:opacity-80 transition-opacity" 
+                                />
+                                <Bar 
+                                    dataKey="cafeRevenue" 
+                                    name="الكافيه" 
+                                    stackId="a" 
+                                    fill="#f59e0b" 
+                                    radius={[4, 4, 0, 0]} 
+                                    maxBarSize={40} 
+                                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                                />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -355,47 +499,69 @@ export default function AnalyticsTab() {
             </div>
 
             {/* Room Popularity */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm">
-                <h3 className="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
-                    <Gamepad2 className="w-4 h-4 text-emerald-500" />
-                    الغرف الأكثر تحقيقاً للإيرادات
-                </h3>
-                <div className="h-[300px] w-full" dir="ltr">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={roomStats} layout="vertical" margin={{ top: 0, right: 10, left: 30, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                            <YAxis 
-                                dataKey="name" 
-                                type="category" 
-                                axisLine={false} 
-                                tickLine={false} 
-                                tick={{ fill: '#475569', fontSize: 12, fontWeight: 'bold' }} 
-                                width={100}
-                            />
-                            <RechartsTooltip 
-                                cursor={{ fill: '#f8fafc' }}
-                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', textAlign: 'right' }}
-                                formatter={(value: number, name: string) => [
-                                    name === 'revenue' ? `${value.toLocaleString()} ج.م` : value,
-                                    name === 'revenue' ? 'الإيرادات' : 'عدد الحجوزات'
-                                ]}
-                            />
-                            <Legend wrapperStyle={{ fontSize: '12px', fontWeight: 'bold', paddingTop: '10px' }} />
-                            <Bar dataKey="revenue" name="الإيرادات" fill="#10b981" radius={[0, 4, 4, 0]} barSize={20} />
-                            {/* <Bar dataKey="count" name="عدد الحجوزات" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} /> */}
-                        </BarChart>
-                    </ResponsiveContainer>
+            {(!interactiveRoom && roomFilter === 'all') && (
+                <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm relative group">
+                    <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2 py-1 rounded-md">
+                        <MousePointerClick className="w-3 h-3" /> اضغط للفلترة بالغرفة
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        <Gamepad2 className="w-4 h-4 text-emerald-500" />
+                        الغرف الأكثر تحقيقاً للإيرادات (اضغط على الغرفة للفلترة)
+                    </h3>
+                    <div className="h-[300px] w-full" dir="ltr">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart 
+                                data={roomStats} 
+                                layout="vertical" 
+                                margin={{ top: 0, right: 10, left: 30, bottom: 0 }}
+                                onClick={(state) => {
+                                    if (state && state.activePayload && state.activePayload.length > 0) {
+                                        setInteractiveRoom(state.activePayload[0].payload.name);
+                                    }
+                                }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                                <YAxis 
+                                    dataKey="name" 
+                                    type="category" 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{ fill: '#475569', fontSize: 12, fontWeight: 'bold' }} 
+                                    width={100}
+                                />
+                                <RechartsTooltip 
+                                    cursor={{ fill: '#f8fafc' }}
+                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', textAlign: 'right' }}
+                                    formatter={(value: number, name: string) => [
+                                        name === 'revenue' ? `${value.toLocaleString()} ج.م` : value,
+                                        name === 'revenue' ? 'الإيرادات' : 'عدد الحجوزات'
+                                    ]}
+                                />
+                                <Legend wrapperStyle={{ fontSize: '12px', fontWeight: 'bold', paddingTop: '10px' }} />
+                                <Bar 
+                                    dataKey="revenue" 
+                                    name="الإيرادات" 
+                                    radius={[0, 4, 4, 0]} 
+                                    barSize={20}
+                                    className="cursor-pointer"
+                                >
+                                    {roomStats.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill="#10b981" className="hover:opacity-80 transition-opacity" />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
-            </div>
-
+            )}
         </div>
     );
 }
 
 function MetricCard({ title, value, subtitle, icon, bgClass }: { title: string, value: string, subtitle: string, icon: React.ReactNode, bgClass: string }) {
     return (
-        <div className={`p-5 rounded-3xl border ${bgClass} shadow-sm relative overflow-hidden group`}>
+        <div className={`p-5 rounded-3xl border ${bgClass} shadow-sm relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-md`}>
             {/* Background Decorative element */}
             <div className="absolute -right-4 -top-4 opacity-10 transform group-hover:scale-110 transition-transform duration-500 pointer-events-none">
                 {icon}
@@ -403,7 +569,7 @@ function MetricCard({ title, value, subtitle, icon, bgClass }: { title: string, 
             
             <div className="flex justify-between items-start mb-4 relative z-10">
                 <h4 className="text-xs sm:text-sm font-bold text-slate-700 opacity-90">{title}</h4>
-                <div className="p-2 bg-white/60 backdrop-blur-sm rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.05)] text-slate-700">
+                <div className="p-2 bg-white/60 backdrop-blur-sm rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.05)] text-slate-700 transition-colors group-hover:bg-white/90">
                     {icon}
                 </div>
             </div>
