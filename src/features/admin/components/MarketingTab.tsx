@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { MessageCircle, Users, Download, Copy, Send, Search } from 'lucide-react';
+import { MessageCircle, Users, Download, Copy, Send, Search, Gamepad2, Coffee, Star } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Customer {
@@ -8,6 +8,7 @@ interface Customer {
   phone_number: string;
   full_name: string | null;
   loyalty_points_balance: number;
+  sources: ('ps' | 'cafe' | 'loyalty')[];
 }
 
 export default function MarketingTab() {
@@ -58,38 +59,53 @@ export default function MarketingTab() {
                id: phone, // using phone as unique id for map
                phone_number: c.phone_number, // original
                full_name: c.full_name,
-               loyalty_points_balance: c.loyalty_points_balance || 0
+               loyalty_points_balance: c.loyalty_points_balance || 0,
+               sources: ['loyalty']
              });
            }
         });
       }
 
-      // Add bookings (if not already added)
+      // Add bookings (Historical data)
       if (bookingsData) {
         bookingsData.forEach(b => {
            const phone = b.customer_phone ? b.customer_phone.replace(/[^0-9]/g, '') : '';
-           if (phone && phone.length >= 10 && !phoneMap.has(phone)) {
-             phoneMap.set(phone, {
-               id: phone,
-               phone_number: b.customer_phone,
-               full_name: b.customer_name,
-               loyalty_points_balance: 0
-             });
+           if (phone && phone.length >= 10) {
+             if (phoneMap.has(phone)) {
+                 const existing = phoneMap.get(phone)!;
+                 if (!existing.sources.includes('ps')) existing.sources.push('ps');
+                 if (!existing.full_name && b.customer_name) existing.full_name = b.customer_name;
+             } else {
+                 phoneMap.set(phone, {
+                   id: phone,
+                   phone_number: b.customer_phone,
+                   full_name: b.customer_name,
+                   loyalty_points_balance: 0,
+                   sources: ['ps']
+                 });
+             }
            }
         });
       }
 
-      // Add orders (if not already added)
+      // Add orders (Historical data)
       if (ordersData) {
         ordersData.forEach(o => {
            const phone = o.customer_phone ? o.customer_phone.replace(/[^0-9]/g, '') : '';
-           if (phone && phone.length >= 10 && !phoneMap.has(phone)) {
-             phoneMap.set(phone, {
-               id: phone,
-               phone_number: o.customer_phone,
-               full_name: o.customer_name,
-               loyalty_points_balance: 0
-             });
+           if (phone && phone.length >= 10) {
+             if (phoneMap.has(phone)) {
+                 const existing = phoneMap.get(phone)!;
+                 if (!existing.sources.includes('cafe')) existing.sources.push('cafe');
+                 if (!existing.full_name && o.customer_name) existing.full_name = o.customer_name;
+             } else {
+                 phoneMap.set(phone, {
+                   id: phone,
+                   phone_number: o.customer_phone,
+                   full_name: o.customer_name,
+                   loyalty_points_balance: 0,
+                   sources: ['cafe']
+                 });
+             }
            }
         });
       }
@@ -235,7 +251,29 @@ export default function MarketingTab() {
                        {filteredCustomers.map((customer) => (
                            <div key={customer.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
                                <div>
-                                   <p className="font-bold text-slate-800">{customer.full_name || 'بدون اسم'}</p>
+                                   <div className="flex items-center gap-2">
+                                       <p className="font-bold text-slate-800">{customer.full_name || 'بدون اسم'}</p>
+                                       <div className="flex items-center gap-1">
+                                           {customer.sources.includes('ps') && (
+                                               <span className="flex items-center gap-1 text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-100 font-bold" title="بلايستيشن">
+                                                   <Gamepad2 className="w-3 h-3" />
+                                                   PS
+                                               </span>
+                                           )}
+                                           {customer.sources.includes('cafe') && (
+                                               <span className="flex items-center gap-1 text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 font-bold" title="كافيه">
+                                                   <Coffee className="w-3 h-3" />
+                                                   كافيه
+                                               </span>
+                                           )}
+                                           {customer.sources.includes('loyalty') && (
+                                               <span className="flex items-center gap-1 text-[10px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-100 font-bold" title="مسجل في الولاء">
+                                                   <Star className="w-3 h-3" />
+                                                   ولاء
+                                               </span>
+                                           )}
+                                       </div>
+                                   </div>
                                    <p className="text-sm text-slate-500 font-mono mt-0.5 text-left" dir="ltr">{customer.phone_number}</p>
                                </div>
                                <a
