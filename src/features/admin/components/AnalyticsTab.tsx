@@ -412,11 +412,6 @@ export default function AnalyticsTab() {
                             <BarChart 
                                 data={dailyRevenue} 
                                 margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
-                                onClick={(state) => {
-                                    if (state && state.activePayload && state.activePayload.length > 0) {
-                                        setInteractiveDate(state.activePayload[0].payload.rawDate);
-                                    }
-                                }}
                             >
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                 <XAxis 
@@ -441,6 +436,10 @@ export default function AnalyticsTab() {
                                     radius={[0, 0, 4, 4]} 
                                     maxBarSize={40} 
                                     className="cursor-pointer hover:opacity-80 transition-opacity" 
+                                    onClick={(data: any) => {
+                                        const date = data?.rawDate || data?.payload?.rawDate;
+                                        if (date) setInteractiveDate(date);
+                                    }}
                                 />
                                 <Bar 
                                     dataKey="cafeRevenue" 
@@ -450,6 +449,10 @@ export default function AnalyticsTab() {
                                     radius={[4, 4, 0, 0]} 
                                     maxBarSize={40} 
                                     className="cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={(data: any) => {
+                                        const date = data?.rawDate || data?.payload?.rawDate;
+                                        if (date) setInteractiveDate(date);
+                                    }}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
@@ -514,11 +517,6 @@ export default function AnalyticsTab() {
                                 data={roomStats} 
                                 layout="vertical" 
                                 margin={{ top: 0, right: 10, left: 30, bottom: 0 }}
-                                onClick={(state) => {
-                                    if (state && state.activePayload && state.activePayload.length > 0) {
-                                        setInteractiveRoom(state.activePayload[0].payload.name);
-                                    }
-                                }}
                             >
                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                                 <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
@@ -545,9 +543,17 @@ export default function AnalyticsTab() {
                                     radius={[0, 4, 4, 0]} 
                                     barSize={20}
                                     className="cursor-pointer"
+                                    onClick={(data: any) => {
+                                        const rName = data?.name || data?.payload?.name;
+                                        if (rName) setInteractiveRoom(rName);
+                                    }}
                                 >
                                     {roomStats.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill="#10b981" className="hover:opacity-80 transition-opacity" />
+                                        <Cell 
+                                            key={`cell-${index}`} 
+                                            fill="#10b981" 
+                                            className="hover:opacity-80 transition-opacity cursor-pointer" 
+                                        />
                                     ))}
                                 </Bar>
                             </BarChart>
