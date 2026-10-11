@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase';
 import D95MiniLogo from '@/components/brand/D95MiniLogo';
 
 export default function AdminLoginPage() {
-    const [email, setEmail] = useState('admin@d95.com');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -85,8 +85,9 @@ export default function AdminLoginPage() {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="البريد الإلكتروني المعتمد للإدارة"
+                                placeholder="name@example.com"
                                 required
+                                autoFocus
                                 className="w-full bg-[#1c1417] border border-white/10 rounded-xl pr-11 pl-4 py-3 text-white text-xs sm:text-sm font-mono placeholder:text-neutral-600 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all text-left"
                                 dir="ltr"
                             />
@@ -105,7 +106,6 @@ export default function AdminLoginPage() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••••••"
                                 required
-                                autoFocus
                                 className="w-full bg-[#1c1417] border border-white/10 rounded-xl pr-11 pl-11 py-3 text-white text-xs sm:text-sm font-mono placeholder:text-neutral-600 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all text-left"
                                 dir="ltr"
                             />
