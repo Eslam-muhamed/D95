@@ -168,21 +168,35 @@ export default function GatewayPage() {
                         <span className="absolute -bottom-1.5 -left-1.5 text-xs text-neutral-400 font-brush">✕</span>
                         <span className="absolute -bottom-1.5 -right-1.5 text-xs text-neutral-400 font-brush">✕</span>
 
-                        <div className="flex items-center justify-center gap-3 sm:gap-6 py-1 text-center" dir="ltr">
-                            <div className="flex items-center gap-2">
-                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-                                <span className="font-bebas text-3xl sm:text-4xl font-black tracking-wider text-neutral-900 dark:text-white">
-                                    24 / 7
-                                </span>
-                            </div>
-                            <div className="h-8 w-px bg-neutral-300 dark:bg-neutral-500/50" />
-                            <div className="flex flex-col text-left">
+                        <div className="grid grid-cols-2 divide-x divide-neutral-300 dark:divide-neutral-500/50 text-center" dir="ltr">
+                            {/* FROM */}
+                            <div className="px-2 sm:px-4 flex flex-col items-center">
                                 <span className="font-bebas text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 tracking-widest uppercase font-bold">
-                                    OPEN 24 HOURS
+                                    FROM
                                 </span>
-                                <span className="font-bebas text-base sm:text-lg font-black text-red-600 tracking-wider">
-                                    NON-STOP GAMING &amp; CAFÉ
+                                <div className="flex items-baseline gap-1 mt-0.5">
+                                    <span className="font-bebas text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white">
+                                        08:00
+                                    </span>
+                                    <span className="font-bebas text-sm sm:text-base font-bold text-red-600">
+                                        AM
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* TO */}
+                            <div className="px-2 sm:px-4 flex flex-col items-center">
+                                <span className="font-bebas text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 tracking-widest uppercase font-bold">
+                                    TO
                                 </span>
+                                <div className="flex items-baseline gap-1 mt-0.5">
+                                    <span className="font-bebas text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white">
+                                        04:00
+                                    </span>
+                                    <span className="font-bebas text-sm sm:text-base font-bold text-red-600">
+                                        AM
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -59,14 +59,48 @@ function formatTimeDetailed(date: Date): string {
     return `${String(h12).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${period}`;
 }
 
-const TIMELINE_TICKS = [
-    { label: '8:00 ص', percent: 0 },
-    { label: '12:00 م', percent: 20 },
-    { label: '4:00 م', percent: 40 },
-    { label: '8:00 م', percent: 60 },
-    { label: '12:00 ص', percent: 80 },
-    { label: '4:00 ص', percent: 100 },
-];
+// Generate timeline ruler ticks dynamically based on current operating hours
+function getTimelineTicks(): { label: string; percent: number }[] {
+    if (OPERATING_HOURS.TOTAL_OPERATING_HOURS === 24) {
+        return [
+            { label: '12:00 ص', percent: 0 },
+            { label: '4:00 ص', percent: 16.67 },
+            { label: '8:00 ص', percent: 33.33 },
+            { label: '12:00 م', percent: 50 },
+            { label: '4:00 م', percent: 66.67 },
+            { label: '8:00 م', percent: 83.33 },
+            { label: '12:00 ص', percent: 100 },
+        ];
+    }
+
+    // Default or custom shift hours (e.g. 08:00 AM to 04:00 AM)
+    const totalHours = OPERATING_HOURS.TOTAL_OPERATING_HOURS || 20;
+    const startHour = OPERATING_HOURS.START_HOUR ?? 8;
+    const step = 4;
+    const ticks: { label: string; percent: number }[] = [];
+
+    for (let h = 0; h <= totalHours; h += step) {
+        const actualHour = (startHour + h) % 24;
+        const h12 = actualHour % 12 === 0 ? 12 : actualHour % 12;
+        const period = actualHour >= 12 && actualHour < 24 ? 'م' : 'ص';
+        ticks.push({
+            label: `${h12}:00 ${period}`,
+            percent: Math.round((h / totalHours) * 100),
+        });
+    }
+
+    if (ticks[ticks.length - 1]?.percent < 100) {
+        const endHour = (startHour + totalHours) % 24;
+        const h12 = endHour % 12 === 0 ? 12 : endHour % 12;
+        const period = endHour >= 12 && endHour < 24 ? 'م' : 'ص';
+        ticks.push({
+            label: `${h12}:00 ${period}`,
+            percent: 100,
+        });
+    }
+
+    return ticks;
+}
 
 export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = ({
     selectedDate,
@@ -84,6 +118,9 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
     // Accordion collapse/expand state (collapsed by default)
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [hoveredSlot, setHoveredSlot] = useState<TimelineSlot | null>(null);
+
+    // Compute timeline axis ticks (e.g. 12:00 AM, 4:00 AM ... in 24/7 mode)
+    const timelineTicks = useMemo(() => getTimelineTicks(), []);
 
     // Compute slots (1-hour intervals across operating hours, e.g. 24 hours 24/7)
     // with FULL account of minutes for every booking
@@ -315,18 +352,18 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
                                 <div className="relative pt-1 pb-1 px-1 sm:px-2 select-none" dir="ltr">
                                     {/* Tick Labels */}
                                     <div className="flex justify-between items-end mb-1 font-mono text-[9px] sm:text-[11px] text-neutral-400">
-                                        {TIMELINE_TICKS.map((tick, idx) => (
+                                        {timelineTicks.map((tick, idx) => (
                                             <div
                                                 key={idx}
                                                 className={`flex flex-col items-center ${
                                                     idx === 0
                                                         ? 'items-start'
-                                                        : idx === TIMELINE_TICKS.length - 1
+                                                        : idx === timelineTicks.length - 1
                                                         ? 'items-end'
                                                         : 'items-center'
                                                 }`}
                                             >
-                                                <span className="text-neutral-300 font-semibold mb-1">
+                                                <span className="text-neutral-300 font-semibold mb-1 whitespace-nowrap">
                                                     {tick.label}
                                                 </span>
                                                 <div className="w-[1.5px] h-2 bg-neutral-600 dark:bg-neutral-700" />
