@@ -35,6 +35,7 @@ import {
     calculateEndDateTime,
     getBusinessOperatingWindow,
     checkAvailability,
+    formatArabicTime,
     formatArabicTimeFromDate,
     getCairoTodayDateString,
     OPERATING_HOURS,
@@ -840,8 +841,9 @@ export default function BookingDetailsPage() {
                                 </span>
                             </div>
                             <span className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5 leading-relaxed">
-                                مواعيد العمل: ٨ مساءً حتى ٤ فجراً <br />
-                                (الأوقات بعد منتصف الليل تُحسب ضمن يوم الحجز الحالي)
+                                {OPERATING_HOURS.TOTAL_OPERATING_HOURS === 24
+                                    ? 'مواعيد العمل: مفتوح 24 ساعة يومياً (24/7) دون توقف'
+                                    : `مواعيد العمل: من ${formatArabicTime(OPERATING_HOURS.START_HOUR, 0)} حتى ${formatArabicTime(OPERATING_HOURS.CLOSING_HOUR, 0)}`}
                             </span>
                         </div>
 
