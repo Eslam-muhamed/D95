@@ -7,9 +7,12 @@ import {
     Timer,
     Check,
     ChevronDown,
+    Moon,
+    Sparkles,
 } from 'lucide-react';
 import {
     type BookingInterval,
+    addDaysToDateString,
     createDateTimeFromBusinessDate,
     formatArabicTime,
     formatArabicTimeFromDate,
@@ -18,11 +21,12 @@ import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 import { toast } from 'sonner';
 
 export interface HourlySlotData {
-    hour24: number; // 0..23
+    hour24: number; // 0..23 for main day, 24..29 for next day late night
     hour12: number;
     period: 'AM' | 'PM';
     label: string; // e.g. "12:00 ص" or "10:00 م"
-    endLabel: string; // e.g. "01:00 ص"
+    endLabel: string;
+    isLateNight: boolean;
     start: Date;
     end: Date;
     isPast: boolean;
@@ -72,19 +76,20 @@ export default function HourlyBookingSlotsGrid({
         };
     }, [isDurationMenuOpen]);
 
-    // Build the 24 hourly slots for the selected date in chronological order (00:00 -> 23:00)
-    const slots = useMemo<HourlySlotData[]>(() => {
-        const result: HourlySlotData[] = [];
+    // Build slots: 0..23 for selectedDate + 24..29 for Next Day Late Night
+    const { mainSlots, lateNightSlots, allSlots } = useMemo(() => {
+        const main: HourlySlotData[] = [];
+        const lateNight: HourlySlotData[] = [];
         const now = Date.now();
+        const nextDateStr = addDaysToDateString(selectedDate, 1);
 
+        // 1. Standard 24 hours of selectedDate (0..23)
         for (let h = 0; h < 24; h++) {
             const time24 = `${String(h).padStart(2, '0')}:00`;
             const start = createDateTimeFromBusinessDate(selectedDate, time24);
-            const end = new Date(start.getTime() + 60 * 60 * 1000); // 1-hour slot
-
+            const end = new Date(start.getTime() + 60 * 60 * 1000);
             const isPast = end.getTime() <= now;
 
-            // Check if this 1-hour slot overlaps any occupied interval in the database
             let isBooked = false;
             let conflictingBooking: BookingInterval | undefined;
 
@@ -105,7 +110,6 @@ export default function HourlyBookingSlotsGrid({
             const label = formatArabicTime(h, 0);
             const endLabel = formatArabicTime(nextHour, 0);
 
-            // Check if slot falls within user selected startHour + duration
             let isSelected = false;
             let isStartHour = false;
             let isSubsequentHour = false;
@@ -114,20 +118,18 @@ export default function HourlyBookingSlotsGrid({
                 const selectedEndHour = selectedStartHour24 + durationHours;
                 if (h >= selectedStartHour24 && h < selectedEndHour) {
                     isSelected = true;
-                    if (h === selectedStartHour24) {
-                        isStartHour = true;
-                    } else {
-                        isSubsequentHour = true;
-                    }
+                    if (h === selectedStartHour24) isStartHour = true;
+                    else isSubsequentHour = true;
                 }
             }
 
-            result.push({
+            main.push({
                 hour24: h,
                 hour12,
                 period,
                 label,
                 endLabel,
+                isLateNight: false,
                 start,
                 end,
                 isPast,
@@ -139,13 +141,77 @@ export default function HourlyBookingSlotsGrid({
             });
         }
 
-        return result;
+        // 2. Late Night hours after 11:00 PM (12:00 AM -> 05:00 AM of Next Calendar Day, hours 24..29)
+        for (let actualH = 0; actualH < 6; actualH++) {
+            const virtualH = 24 + actualH; // 24, 25, 26, 27, 28, 29
+            const time24 = `${String(actualH).padStart(2, '0')}:00`;
+            const start = createDateTimeFromBusinessDate(nextDateStr, time24);
+            const end = new Date(start.getTime() + 60 * 60 * 1000);
+            const isPast = end.getTime() <= now;
+
+            let isBooked = false;
+            let conflictingBooking: BookingInterval | undefined;
+
+            const slotStartMs = start.getTime();
+            const slotEndMs = end.getTime();
+
+            for (const inv of occupiedIntervals) {
+                if (slotStartMs < inv.end.getTime() && slotEndMs > inv.start.getTime()) {
+                    isBooked = true;
+                    conflictingBooking = inv;
+                    break;
+                }
+            }
+
+            const hour12 = actualH === 0 ? 12 : actualH;
+            const label = formatArabicTime(actualH, 0);
+            const endLabel = formatArabicTime((actualH + 1) % 24, 0);
+
+            let isSelected = false;
+            let isStartHour = false;
+            let isSubsequentHour = false;
+
+            if (selectedStartHour24 !== null) {
+                const selectedEndHour = selectedStartHour24 + durationHours;
+                if (virtualH >= selectedStartHour24 && virtualH < selectedEndHour) {
+                    isSelected = true;
+                    if (virtualH === selectedStartHour24) isStartHour = true;
+                    else isSubsequentHour = true;
+                }
+            }
+
+            lateNight.push({
+                hour24: virtualH,
+                hour12,
+                period: 'AM',
+                label,
+                endLabel,
+                isLateNight: true,
+                start,
+                end,
+                isPast,
+                isBooked,
+                isSelected,
+                isStartHour,
+                isSubsequentHour,
+                conflictingBooking,
+            });
+        }
+
+        return { mainSlots: main, lateNightSlots: lateNight, allSlots: [...main, ...lateNight] };
     }, [selectedDate, occupiedIntervals, selectedStartHour24, durationHours]);
 
-    // Slot click handler: Selects the clicked hour as start, and spans durationHours consecutive slots
+    // Slot click handler
     const handleSlotClick = (slot: HourlySlotData) => {
         if (slot.isPast) {
-            toast.error('هذا الوقت قد مضى بالفعل، يرجى اختيار موعد قادم ⏳');
+            // Friendly tip if user clicked past morning slot thinking it's tonight's session
+            if (!slot.isLateNight && slot.hour24 < 6) {
+                toast.info('💡 هل تقصد سهرة الليلة بعد منتصف الليل؟ ستجدها بالأسفل مباشرة في قسم "سهرة الليلة" 🌙', {
+                    duration: 4500,
+                });
+            } else {
+                toast.error('هذا الوقت قد مضى بالفعل، يرجى اختيار موعد قادم ⏳');
+            }
             return;
         }
 
@@ -169,12 +235,7 @@ export default function HourlyBookingSlotsGrid({
 
         for (let offset = 1; offset < requestedDuration; offset++) {
             const checkH = startH + offset;
-            if (checkH >= 24) {
-                canFitRequested = false;
-                conflictHour = checkH;
-                break;
-            }
-            const nextSlot = slots.find((s) => s.hour24 === checkH);
+            const nextSlot = allSlots.find((s) => s.hour24 === checkH);
             if (!nextSlot || nextSlot.isBooked || nextSlot.isPast) {
                 canFitRequested = false;
                 conflictHour = checkH;
@@ -185,17 +246,21 @@ export default function HourlyBookingSlotsGrid({
 
         if (canFitRequested) {
             onSelectSlot(startH, requestedDuration);
+            const endHourCalculated = (startH + requestedDuration) % 24;
+            const formattedEnd = formatArabicTime(endHourCalculated, 0);
+            const nightNote = slot.isLateNight || (startH < 24 && startH + requestedDuration > 24)
+                ? ' (سهرة الليلة 🌙)'
+                : '';
+
             if (requestedDuration > 1) {
-                const endH = (startH + requestedDuration) % 24;
-                toast.success(`تم اختيار ${requestedDuration} ساعات تبدأ من ${slot.label} حتى ${formatArabicTime(endH, 0)} 🎮`);
+                toast.success(`تم حجز ${requestedDuration} ساعات: من ${slot.label} حتى ${formattedEnd}${nightNote} 🎮`);
             } else {
-                toast.success(`تم اختيار الساعة: ${slot.label} 🎮`);
+                toast.success(`تم اختيار الساعة: ${slot.label}${nightNote} 🎮`);
             }
         } else {
-            // Automatically select the maximum consecutive available hours
             onSelectSlot(startH, availableCount);
-            const conflictSlot = slots.find((s) => s.hour24 === conflictHour);
-            const conflictLabel = conflictSlot ? conflictSlot.label : 'نهاية اليوم';
+            const conflictSlot = allSlots.find((s) => s.hour24 === conflictHour);
+            const conflictLabel = conflictSlot ? conflictSlot.label : 'نهاية الفترة';
             toast.warning(
                 `الساعة ${conflictLabel} محجوزة! تم تحديد المتاح فقط (${availableCount} ${availableCount === 1 ? 'ساعة' : 'ساعات'}) 🔒`
             );
@@ -207,33 +272,25 @@ export default function HourlyBookingSlotsGrid({
         playPs5NavigateSound();
 
         if (selectedStartHour24 === null) {
-            // Setting duration before picking a slot
             onChangeDuration(newDuration);
             return;
         }
 
-        // A start hour is already selected:
         if (newDuration <= durationHours) {
             onSelectSlot(selectedStartHour24, newDuration);
             return;
         }
 
-        // Expanding duration:
         const startH = selectedStartHour24;
         let canExpand = true;
         let conflictLabel = '';
 
         for (let offset = 1; offset < newDuration; offset++) {
             const checkH = startH + offset;
-            if (checkH >= 24) {
-                canExpand = false;
-                conflictLabel = 'نهاية اليوم';
-                break;
-            }
-            const nextSlot = slots.find((s) => s.hour24 === checkH);
+            const nextSlot = allSlots.find((s) => s.hour24 === checkH);
             if (!nextSlot || nextSlot.isBooked || nextSlot.isPast) {
                 canExpand = false;
-                conflictLabel = nextSlot ? nextSlot.label : `${checkH}:00`;
+                conflictLabel = nextSlot ? nextSlot.label : `${checkH % 24}:00`;
                 break;
             }
         }
@@ -248,18 +305,20 @@ export default function HourlyBookingSlotsGrid({
     // Selected session label
     const selectedSessionInfo = useMemo(() => {
         if (selectedStartHour24 === null) return null;
-        const startSlot = slots.find((s) => s.hour24 === selectedStartHour24);
+        const startSlot = allSlots.find((s) => s.hour24 === selectedStartHour24);
         if (!startSlot) return null;
 
         const endHour24 = (selectedStartHour24 + durationHours) % 24;
         const formattedEnd = formatArabicTime(endHour24, 0);
+        const isLateNightSession = selectedStartHour24 >= 24 || (selectedStartHour24 < 24 && selectedStartHour24 + durationHours > 24);
 
         return {
             startLabel: startSlot.label,
             endLabel: formattedEnd,
+            isLateNight: isLateNightSession,
             totalPrice: Math.round(durationHours * roomRate),
         };
-    }, [slots, selectedStartHour24, durationHours, roomRate]);
+    }, [allSlots, selectedStartHour24, durationHours, roomRate]);
 
     return (
         <div className="space-y-3" dir="rtl">
@@ -358,70 +417,149 @@ export default function HourlyBookingSlotsGrid({
                     <motion.div
                         initial={{ opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="p-3 rounded-xl bg-red-500/10 dark:bg-red-950/30 border border-red-500/30 flex items-center justify-between gap-2.5 text-xs"
+                        className="p-3 rounded-xl bg-red-500/10 dark:bg-red-950/30 border border-red-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs"
                     >
                         <div className="flex items-center gap-2 text-neutral-900 dark:text-white font-bold">
                             <CheckCircle2 className="w-4 h-4 text-red-600 dark:text-red-500 shrink-0" />
                             <span>
                                 موعدك المختار: من <strong className="text-red-600 dark:text-red-400 font-mono text-sm">{selectedSessionInfo.startLabel}</strong> حتى <strong className="text-red-600 dark:text-red-400 font-mono text-sm">{selectedSessionInfo.endLabel}</strong> ({durationHours} {durationHours === 1 ? 'ساعة' : 'ساعات'})
+                                {selectedSessionInfo.isLateNight && (
+                                    <span className="mr-1.5 inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 font-bold border border-indigo-500/30">
+                                        <Moon className="w-3 h-3" />
+                                        <span>سهرة الليلة (فجر اليوم التالي)</span>
+                                    </span>
+                                )}
                             </span>
                         </div>
-                        <span className="font-mono font-black text-red-600 dark:text-red-400 px-2.5 py-1 bg-red-500/15 rounded-lg shrink-0">
+                        <span className="font-mono font-black text-red-600 dark:text-red-400 px-2.5 py-1 bg-red-500/15 rounded-lg shrink-0 self-start sm:self-auto">
                             الإجمالي: {selectedSessionInfo.totalPrice} ج.م
                         </span>
                     </motion.div>
                 )}
             </div>
 
-            {/* 24 Hourly Slots - Unified Single Grid in Chronological Order */}
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                {slots.map((slot) => {
-                    const {
-                        hour24,
-                        label,
-                        isPast,
-                        isBooked,
-                        isSelected,
-                        isStartHour,
-                    } = slot;
+            {/* 1. Main 24 Hourly Slots Grid (00:00 -> 23:00) */}
+            <div className="space-y-1.5">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                    {mainSlots.map((slot) => {
+                        const {
+                            hour24,
+                            label,
+                            isPast,
+                            isBooked,
+                            isSelected,
+                            isStartHour,
+                        } = slot;
 
-                    return (
-                        <button
-                            key={hour24}
-                            type="button"
-                            onClick={() => handleSlotClick(slot)}
-                            disabled={isPast || isBooked}
-                            className={`relative h-12 px-2.5 rounded-xl border text-center transition-all duration-150 outline-none flex items-center justify-center gap-1.5 ${
-                                isPast
-                                    ? 'bg-neutral-100/50 dark:bg-white/[0.02] border-neutral-200/50 dark:border-white/[0.04] opacity-30 cursor-not-allowed text-neutral-400'
-                                    : isBooked
-                                    ? 'bg-red-500/10 dark:bg-red-950/20 border-red-500/25 text-red-500/80 cursor-not-allowed line-through'
-                                    : isSelected
-                                    ? 'bg-gradient-to-r from-red-600 to-rose-600 border-red-500 text-white font-extrabold shadow-md shadow-red-600/30 scale-[1.02] z-10 cursor-pointer'
-                                    : 'bg-white dark:bg-[#161214] hover:bg-neutral-50 dark:hover:bg-white/[0.06] border-neutral-200 dark:border-white/10 text-neutral-800 dark:text-neutral-200 hover:border-red-500/60 hover:text-red-600 dark:hover:text-red-400 cursor-pointer active:scale-95'
-                            }`}
-                        >
-                            <span className="font-mono text-xs sm:text-sm font-bold tracking-tight whitespace-nowrap">
-                                {label}
-                            </span>
-
-                            {isBooked && (
-                                <Lock className="w-3 h-3 text-red-500 shrink-0" />
-                            )}
-
-                            {isSelected && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-white shadow-xs shrink-0" />
-                            )}
-
-                            {/* Subtle badge for start hour in multi-hour booking */}
-                            {isSelected && durationHours > 1 && isStartHour && (
-                                <span className="absolute -top-1.5 -right-1 text-[8px] font-sans font-bold px-1 rounded bg-black text-white border border-white/20 shadow-xs">
-                                    بدء
+                        return (
+                            <button
+                                key={hour24}
+                                type="button"
+                                onClick={() => handleSlotClick(slot)}
+                                disabled={isPast || isBooked}
+                                className={`relative h-12 px-2.5 rounded-xl border text-center transition-all duration-150 outline-none flex items-center justify-center gap-1.5 ${
+                                    isPast
+                                        ? 'bg-neutral-100/50 dark:bg-white/[0.02] border-neutral-200/50 dark:border-white/[0.04] opacity-30 cursor-not-allowed text-neutral-400'
+                                        : isBooked
+                                        ? 'bg-red-500/10 dark:bg-red-950/20 border-red-500/25 text-red-500/80 cursor-not-allowed line-through'
+                                        : isSelected
+                                        ? 'bg-gradient-to-r from-red-600 to-rose-600 border-red-500 text-white font-extrabold shadow-md shadow-red-600/30 scale-[1.02] z-10 cursor-pointer'
+                                        : 'bg-white dark:bg-[#161214] hover:bg-neutral-50 dark:hover:bg-white/[0.06] border-neutral-200 dark:border-white/10 text-neutral-800 dark:text-neutral-200 hover:border-red-500/60 hover:text-red-600 dark:hover:text-red-400 cursor-pointer active:scale-95'
+                                }`}
+                            >
+                                <span className="font-mono text-xs sm:text-sm font-bold tracking-tight whitespace-nowrap">
+                                    {label}
                                 </span>
-                            )}
-                        </button>
-                    );
-                })}
+
+                                {isBooked && (
+                                    <Lock className="w-3 h-3 text-red-500 shrink-0" />
+                                )}
+
+                                {isSelected && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-white shadow-xs shrink-0" />
+                                )}
+
+                                {isSelected && durationHours > 1 && isStartHour && (
+                                    <span className="absolute -top-1.5 -right-1 text-[8px] font-sans font-bold px-1 rounded bg-black text-white border border-white/20 shadow-xs">
+                                        بدء
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* 2. Direct Late Night Extension: سهرة الليلة (بعد ١٢ منتصف الليل) */}
+            <div className="pt-3 border-t border-neutral-200/70 dark:border-white/[0.08] space-y-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 px-1">
+                    <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
+                            <Moon className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-xs sm:text-sm text-neutral-900 dark:text-white">
+                                سهرة الليلة (بعد ١٢ منتصف الليل)
+                            </span>
+                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/25 flex items-center gap-1">
+                                <Sparkles className="w-2.5 h-2.5" />
+                                <span>فجر اليوم التالي</span>
+                            </span>
+                        </div>
+                    </div>
+                    <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                        احجز سهرتك بعد 11:00 م مباشرة دون الحاجة لتغيير التاريخ 🎮
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    {lateNightSlots.map((slot) => {
+                        const {
+                            hour24,
+                            label,
+                            isPast,
+                            isBooked,
+                            isSelected,
+                            isStartHour,
+                        } = slot;
+
+                        return (
+                            <button
+                                key={hour24}
+                                type="button"
+                                onClick={() => handleSlotClick(slot)}
+                                disabled={isPast || isBooked}
+                                className={`relative h-12 px-2.5 rounded-xl border text-center transition-all duration-150 outline-none flex items-center justify-center gap-1.5 ${
+                                    isPast
+                                        ? 'bg-neutral-100/50 dark:bg-white/[0.02] border-neutral-200/50 dark:border-white/[0.04] opacity-30 cursor-not-allowed text-neutral-400'
+                                        : isBooked
+                                        ? 'bg-red-500/10 dark:bg-red-950/20 border-red-500/25 text-red-500/80 cursor-not-allowed line-through'
+                                        : isSelected
+                                        ? 'bg-gradient-to-r from-indigo-600 via-rose-600 to-red-600 border-red-500 text-white font-extrabold shadow-md shadow-red-600/30 scale-[1.02] z-10 cursor-pointer'
+                                        : 'bg-indigo-950/20 dark:bg-indigo-950/30 hover:bg-indigo-900/30 border-indigo-500/25 dark:border-indigo-500/30 text-indigo-900 dark:text-indigo-200 hover:border-red-500/60 hover:text-white cursor-pointer active:scale-95'
+                                }`}
+                            >
+                                <span className="font-mono text-xs sm:text-sm font-bold tracking-tight whitespace-nowrap">
+                                    {label}
+                                </span>
+
+                                {isBooked && (
+                                    <Lock className="w-3 h-3 text-red-500 shrink-0" />
+                                )}
+
+                                {isSelected && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-white shadow-xs shrink-0" />
+                                )}
+
+                                {isSelected && durationHours > 1 && isStartHour && (
+                                    <span className="absolute -top-1.5 -right-1 text-[8px] font-sans font-bold px-1 rounded bg-black text-white border border-white/20 shadow-xs">
+                                        بدء
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Discreet Legend */}
@@ -433,6 +571,10 @@ export default function HourlyBookingSlotsGrid({
                 <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-red-600 shadow-[0_0_6px_rgba(220,38,38,0.8)]" />
                     <span>محدد</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-indigo-500/60" />
+                    <span>سهرة</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-red-900/60" />

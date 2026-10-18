@@ -345,17 +345,23 @@ export default function BookingDetailsPage() {
     const hasSelectedTime = selectedStartHour24 !== null;
     const hasSelectedDuration = durationHours !== null && durationHours > 0;
 
+    const isLateNightHour = selectedStartHour24 !== null && selectedStartHour24 >= 24;
+    const effectiveBookingDate = isLateNightHour 
+        ? addDaysToDateString(selectedDate, 1) 
+        : selectedDate;
+
     // Convert slot selection into 24-hour time string
     const time24 = useMemo(() => {
         if (!hasSelectedTime || selectedStartHour24 === null) return null;
-        return `${String(selectedStartHour24).padStart(2, '0')}:00`;
+        const h = selectedStartHour24 % 24;
+        return `${String(h).padStart(2, '0')}:00`;
     }, [hasSelectedTime, selectedStartHour24]);
 
     // Construct start datetime
     const startDateTime = useMemo(() => {
-        if (!time24) return null;
-        return createDateTimeFromBusinessDate(selectedDate, time24);
-    }, [selectedDate, time24]);
+        if (!time24 || selectedStartHour24 === null) return null;
+        return createDateTimeFromBusinessDate(effectiveBookingDate, time24);
+    }, [effectiveBookingDate, time24, selectedStartHour24]);
 
     // Fetch occupied intervals from database
     const loadOccupiedIntervals = useCallback(async () => {
@@ -431,7 +437,7 @@ export default function BookingDetailsPage() {
         const result = checkAvailability(
             startDateTime,
             durationHours,
-            selectedDate,
+            effectiveBookingDate,
             effectiveOccupiedIntervals
         );
 
@@ -442,7 +448,7 @@ export default function BookingDetailsPage() {
             formattedStart: formatArabicTimeDetailed(startDateTime),
             formattedEnd: formatArabicTimeDetailed(endDateTime),
         };
-    }, [startDateTime, durationHours, selectedDate, effectiveOccupiedIntervals]);
+    }, [startDateTime, durationHours, effectiveBookingDate, effectiveOccupiedIntervals]);
 
     const roomSubtotal = hasSelectedDuration ? Math.round((durationHours || 0) * currentRoom.rate) : 0;
     const isReadyToContinue = hasSelectedTime && hasSelectedDuration && currentAvailability.isAvailable;
@@ -482,7 +488,7 @@ export default function BookingDetailsPage() {
             roomId: currentRoom.id,
             roomName: currentRoom.name,
             roomNameEn: currentRoom.nameEn,
-            date: selectedDate,
+            date: effectiveBookingDate,
             startTime: currentAvailability.formattedStart,
             endTime: currentAvailability.formattedEnd,
             startDateTime: currentAvailability.startDateTime?.toISOString(),
