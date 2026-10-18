@@ -25,9 +25,8 @@
 | **أرقام التليفون، الواتساب، المحافظ، إنستاباي الافتراضية** | [`src/constants/contactInfo.ts`](file:///Users/jrslam/D95/src/constants/contactInfo.ts) |
 | **أصناف المنيو (الأسعار، الصور، الأسماء، التوفر)** | من لوحة التحكم `/admin` مباشرة (أو من جدول `products` في Supabase) |
 | **الصفحة الافتتاحية (البوابة - الدخول للبلايستيشن أو الكافيه)** | [`src/pages/GatewayPage.tsx`](file:///Users/jrslam/D95/src/pages/GatewayPage.tsx) |
-| **صفحة البلايستيشن والغرف وعرض المواصفات والأسعار** | [`src/pages/PlaystationPage.tsx`](file:///Users/jrslam/D95/src/pages/PlaystationPage.tsx) |
-| **خطوة حجز الغرفة (تحديد اليوم، عجلة الوقت، الساعات)** | [`src/pages/BookingDetailsPage.tsx`](file:///Users/jrslam/D95/src/pages/BookingDetailsPage.tsx) |
-| **شريط التايم لاين والمواعيد المحجوزة والمتاحة** | [`src/components/booking/BookingTimelineSchedule.tsx`](file:///Users/jrslam/D95/src/components/booking/BookingTimelineSchedule.tsx) |
+| **خطوة حجز الغرفة (تحديد اليوم، خانات الـ 24 ساعة)** | [`src/features/booking/pages/BookingDetailsPage.tsx`](file:///Users/jrslam/D95/src/features/booking/pages/BookingDetailsPage.tsx) |
+| **خانات المواعيد الـ 24 ساعة وحالة الحجز التفاعلية** | [`src/features/booking/components/HourlyBookingSlotsGrid.tsx`](file:///Users/jrslam/D95/src/features/booking/components/HourlyBookingSlotsGrid.tsx) |
 | **صفحة الدفع (بيانات العميل، فودافون كاش، كود USSD، إنستاباي)** | [`src/pages/BookingPaymentPage.tsx`](file:///Users/jrslam/D95/src/pages/BookingPaymentPage.tsx) |
 | **تذكرة الحجز والباركود وزر إرسال الحجز واتساب** | [`src/pages/BookingSuccessPage.tsx`](file:///Users/jrslam/D95/src/pages/BookingSuccessPage.tsx) |
 | **صفحة المنيو وتصفح المشروبات والحلويات** | [`src/pages/MenuPage.tsx`](file:///Users/jrslam/D95/src/pages/MenuPage.tsx) |
@@ -195,15 +194,13 @@ src/
   2. **محدد تاريخ الحجز (Date Picker)**:
      - شريط الأيام السريع للأيام القادمة.
      - زر فتح الكالندر الشهري الكامل.
-  3. **عجلة الوقت الدوارة (Drum Wheel Time Picker)**:
-     - مكون [`DrumWheelColumn`](file:///Users/jrslam/D95/src/pages/BookingDetailsPage.tsx#L136): اختيار الساعة، الدقيقة، والفترة (صباحاً / مساءً).
-     - متطابق بدقة مع توقيت القاهرة وساعات عمل المكان المفتوحة 24 ساعة (24/7).
-  4. **محدد مدة اللعب (Duration Selector)**:
-     - أزرار اختيار الساعات: `1 h`, `2 h`, `3 h`, `4 h`, `5 h`, `6 h`.
-  5. **الجدول الزمني التفاعلي ([`BookingTimelineSchedule`](file:///Users/jrslam/D95/src/components/booking/BookingTimelineSchedule.tsx))**:
-     - رسم بياني حي لمواعيد اليوم، يعرض الفترات المحجوزة بالأحمر والمتاحة بالأخضر، ويحدد الفترة المختارة بالنيون.
-     - فحص فوري للتعارض ومنع الحجز المزدوج.
-  6. **إضافة مشروبات وسناكس من الكافيه داخل الجلسة (Optional Cafe Add-ons)**:
+  3. **خانات حجز المواعيد الـ 24 ساعة ([`HourlyBookingSlotsGrid`](file:///Users/jrslam/D95/src/features/booking/components/HourlyBookingSlotsGrid.tsx))**:
+     - نظام خانات الحجز الصريحة لكافة الـ 24 ساعة في اليوم (24/7).
+     - يعرض كل ساعة كخانة مستقلة (المتاح 🟢، المحجوز 🔴 🔒، الذي مضى ⚪، والمحدد ✨).
+     - يوضح فترات اليوم دون لبس (سهرة ليلية 🌙، صباحاً ☀️، ظهراً ☀️، مساءً 🌆).
+     - فلاتر سريعة للفترات (الكل، السهرة، النهار، المساء) مع إمكانية زيادة وتقليل المدة واختيار ساعات متصلة.
+     - فحص حي ومنع أي تعارض مع الحجوزات القائمة.
+  4. **إضافة مشروبات وسناكس من الكافيه داخل الجلسة (Optional Cafe Add-ons)**:
      - اختيار مشروبات سريعة مسبقاً لتكون جاهزة فور الوصول.
   7. **ملخص التكلفة وزر المتابعة**:
      - إجمالي حجز الغرفة + إجمالي المشروبات = الإجمالي الكلي.
