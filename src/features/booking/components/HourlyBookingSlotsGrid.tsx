@@ -421,9 +421,26 @@ export default function HourlyBookingSlotsGrid({
     }, [allSlots, selectedStartHour24, durationHours, roomRate]);
 
     return (
-        <div className="space-y-3" dir="rtl">
+        <div className="space-y-3 relative" dir="rtl">
+            {/* Backdrop overlay for mobile priority (tapping outside dismisses cleanly without accidental clicks) */}
+            <AnimatePresence>
+                {(isDateMenuOpen || isDurationMenuOpen) && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] sm:bg-transparent"
+                        onClick={() => {
+                            setIsDateMenuOpen(false);
+                            setIsDurationMenuOpen(false);
+                        }}
+                    />
+                )}
+            </AnimatePresence>
+
             {/* Unified Control Card: Header + Date Dropdown + Duration Dropdown + Guide Pill */}
-            <div className="bg-white/90 dark:bg-[#130f11] backdrop-blur-md border border-neutral-200/90 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
+            <div className="bg-white/90 dark:bg-[#130f11] backdrop-blur-md border border-neutral-200/90 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-sm space-y-3 relative z-30">
                 
                 {/* Row 1: Title & Action Dropdown Buttons (Date + Duration) */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -442,149 +459,10 @@ export default function HourlyBookingSlotsGrid({
                         </div>
                     </div>
 
-                    {/* Left: Two Compact Dropdown Pills (Date & Duration) */}
-                    <div className="flex items-center gap-2 self-start sm:self-auto">
+                    {/* Left: Two Compact Dropdown Pills (Duration + Date) */}
+                    <div className="flex items-center gap-2 self-start sm:self-auto relative z-50">
                         
-                        {/* 1. Date Dropdown Button */}
-                        <div className="relative" ref={dateMenuRef}>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setIsDateMenuOpen(!isDateMenuOpen);
-                                    setIsDurationMenuOpen(false);
-                                    playPs5NavigateSound();
-                                }}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] border border-neutral-200/90 dark:border-white/10 text-neutral-800 dark:text-neutral-100 shadow-xs active:scale-95"
-                                title="اختر تاريخ الحجز"
-                            >
-                                <Calendar className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
-                                <span>{formattedDateLabel}</span>
-                                <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${isDateMenuOpen ? 'rotate-180' : ''}`} />
-                            </button>
-
-                            {/* Date Popover */}
-                            <AnimatePresence>
-                                {isDateMenuOpen && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -6, scale: 0.95 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: -6, scale: 0.95 }}
-                                        transition={{ duration: 0.15 }}
-                                        className="absolute left-0 sm:left-0 z-40 mt-1.5 w-72 sm:w-80 p-3 bg-white dark:bg-[#181416] border border-neutral-200 dark:border-white/10 rounded-2xl shadow-2xl space-y-2.5 text-right"
-                                    >
-                                        {/* Header */}
-                                        <div className="flex items-center justify-between pb-1.5 border-b border-neutral-100 dark:border-white/[0.06]">
-                                            <span className="font-bold text-xs text-neutral-900 dark:text-white flex items-center gap-1.5">
-                                                <Calendar className="w-3.5 h-3.5 text-red-600 dark:text-red-500" />
-                                                <span>اختر يوم الحجز</span>
-                                            </span>
-                                            <button
-                                                type="button"
-                                                onClick={() => setIsDateMenuOpen(false)}
-                                                className="w-6 h-6 rounded-lg bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-                                                aria-label="إغلاق"
-                                            >
-                                                <X size={13} />
-                                            </button>
-                                        </div>
-
-                                        {/* Quick Select Buttons: اليوم، غداً، بعد غد */}
-                                        <div className="grid grid-cols-3 gap-1.5">
-                                            {quickShortcuts.map((sc) => {
-                                                const isSelected = selectedDate === sc.iso;
-                                                return (
-                                                    <button
-                                                        key={sc.iso}
-                                                        type="button"
-                                                        onClick={() => {
-                                                            onChangeDate?.(sc.iso);
-                                                            playPs5SelectSound();
-                                                            setIsDateMenuOpen(false);
-                                                        }}
-                                                        className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all text-center border cursor-pointer ${
-                                                            isSelected
-                                                                ? 'bg-red-600 border-red-600 text-white shadow-xs'
-                                                                : 'bg-neutral-50 dark:bg-white/[0.04] border-neutral-200/70 dark:border-white/10 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.08]'
-                                                        }`}
-                                                    >
-                                                        {sc.label}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-
-                                        {/* Month Navigation */}
-                                        <div className="flex items-center justify-between px-1 text-xs pt-1 border-t border-neutral-100 dark:border-white/[0.06]">
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    if (canGoPrevMonth) {
-                                                        setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
-                                                        playPs5NavigateSound();
-                                                    }
-                                                }}
-                                                disabled={!canGoPrevMonth}
-                                                className="p-1 rounded-lg border border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                                                title="الشهر السابق"
-                                            >
-                                                <ChevronRight className="w-3.5 h-3.5" />
-                                            </button>
-
-                                            <span className="font-bold text-neutral-900 dark:text-white">
-                                                {ARABIC_MONTHS[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
-                                            </span>
-
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
-                                                    playPs5NavigateSound();
-                                                }}
-                                                className="p-1 rounded-lg border border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
-                                                title="الشهر القادم"
-                                            >
-                                                <ChevronLeft className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
-
-                                        {/* Calendar Grid of Day Cells */}
-                                        <div className="grid grid-cols-7 gap-1">
-                                            {monthDaysGrid.map((cell, idx) => {
-                                                if (!cell) {
-                                                    return <div key={`empty-${idx}`} className="h-7" />;
-                                                }
-                                                const isSelected = selectedDate === cell.iso;
-                                                return (
-                                                    <button
-                                                        key={cell.iso}
-                                                        type="button"
-                                                        disabled={cell.isPast}
-                                                        onClick={() => {
-                                                            onChangeDate?.(cell.iso);
-                                                            playPs5SelectSound();
-                                                            setIsDateMenuOpen(false);
-                                                        }}
-                                                        className={`h-7 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
-                                                            cell.isPast
-                                                                ? 'text-neutral-300 dark:text-neutral-600 opacity-40 cursor-not-allowed'
-                                                                : isSelected
-                                                                ? 'bg-red-600 text-white shadow-xs scale-105 z-10'
-                                                                : cell.isToday
-                                                                ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30 hover:bg-red-500/20 cursor-pointer'
-                                                                : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.08] cursor-pointer'
-                                                        }`}
-                                                    >
-                                                        <span>{cell.dayNumber}</span>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
-
-                        {/* 2. Duration Dropdown Button */}
+                        {/* 1. Duration Dropdown Button (المدة) */}
                         <div className="relative" ref={durationMenuRef}>
                             <button
                                 type="button"
@@ -605,41 +483,215 @@ export default function HourlyBookingSlotsGrid({
                             <AnimatePresence>
                                 {isDurationMenuOpen && (
                                     <motion.div
-                                        initial={{ opacity: 0, y: -6, scale: 0.95 }}
+                                        initial={{ opacity: 0, y: -6, scale: 0.96 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: -6, scale: 0.95 }}
+                                        exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                         transition={{ duration: 0.15 }}
-                                        className="absolute left-0 sm:left-0 z-40 mt-1.5 w-52 p-1.5 bg-white dark:bg-[#181316] border border-neutral-200 dark:border-white/10 rounded-xl shadow-2xl space-y-1"
+                                        className="absolute top-full mt-2 right-0 sm:right-auto sm:left-0 z-50 w-56 sm:w-60 p-3 bg-white dark:bg-[#181316] border border-neutral-200 dark:border-white/10 rounded-2xl shadow-2xl space-y-1.5 text-right"
                                     >
-                                        <div className="px-2.5 py-1 text-[10px] font-bold text-neutral-400 border-b border-neutral-100 dark:border-white/[0.05] mb-1">
-                                            اختر مدة الجلسة:
+                                        {/* Header */}
+                                        <div className="flex items-center justify-between pb-2 mb-1.5 border-b border-neutral-100 dark:border-white/[0.08]">
+                                            <div className="text-right">
+                                                <span className="font-bold text-xs sm:text-sm text-neutral-800 dark:text-neutral-200">
+                                                    اختر مدة الجلسة
+                                                </span>
+                                            </div>
+                                            <div className="text-left font-mono leading-tight">
+                                                <div className="font-bold text-xs sm:text-sm text-neutral-900 dark:text-white">
+                                                    {roomRate}
+                                                </div>
+                                                <div className="text-[10px] text-neutral-400 font-sans">
+                                                    ج.م /س
+                                                </div>
+                                            </div>
                                         </div>
-                                        {DURATION_CHOICES.map((hrs) => {
-                                            const isSelected = durationHours === hrs;
-                                            return (
-                                                <button
-                                                    key={hrs}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        handleDurationChange(hrs);
-                                                        setIsDurationMenuOpen(false);
-                                                    }}
-                                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                                        isSelected
-                                                            ? 'bg-red-600 text-white shadow-xs'
-                                                            : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06]'
-                                                    }`}
-                                                >
-                                                    <span className="flex items-center gap-1.5">
-                                                        {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
-                                                        <span>{hrs === 1 ? 'ساعة واحدة (1 س)' : hrs === 2 ? 'ساعتان (2 س)' : `${hrs} ساعات`}</span>
-                                                    </span>
-                                                    <span className={`font-mono text-[11px] ${isSelected ? 'text-white/90' : 'text-neutral-400'}`}>
-                                                        {hrs * roomRate} ج.م
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
+
+                                        {/* Choices list */}
+                                        <div className="space-y-1">
+                                            {DURATION_CHOICES.map((hrs) => {
+                                                const isSelected = durationHours === hrs;
+                                                return (
+                                                    <button
+                                                        key={hrs}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            handleDurationChange(hrs);
+                                                            setIsDurationMenuOpen(false);
+                                                        }}
+                                                        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                                                            isSelected
+                                                                ? 'bg-red-600 text-white shadow-md'
+                                                                : 'text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/[0.06]'
+                                                        }`}
+                                                    >
+                                                        {/* Left: Price */}
+                                                        <span className={`font-mono text-xs sm:text-sm font-bold ${isSelected ? 'text-white' : 'text-neutral-400 dark:text-neutral-300'}`}>
+                                                            {hrs * roomRate} ج.م
+                                                        </span>
+
+                                                        {/* Right: "h X" with dot indicator */}
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-mono tracking-wide font-bold">h {hrs}</span>
+                                                            {isSelected ? (
+                                                                <span className="w-2.5 h-2.5 rounded-full bg-white shadow-xs shrink-0" />
+                                                            ) : (
+                                                                <span className="w-2.5 h-2.5 rounded-full border border-neutral-400 dark:border-neutral-500 shrink-0" />
+                                                            )}
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+
+                        {/* 2. Date Dropdown Button (التاريخ) */}
+                        <div className="relative" ref={dateMenuRef}>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsDateMenuOpen(!isDateMenuOpen);
+                                    setIsDurationMenuOpen(false);
+                                    playPs5NavigateSound();
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] border border-neutral-200/90 dark:border-white/10 text-neutral-800 dark:text-neutral-100 shadow-xs active:scale-95"
+                                title="اختر تاريخ الحجز"
+                            >
+                                <Calendar className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+                                <span>{formattedDateLabel}</span>
+                                <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${isDateMenuOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {/* Date Popover */}
+                            <AnimatePresence>
+                                {isDateMenuOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                                        transition={{ duration: 0.15 }}
+                                        className="absolute top-full mt-2 left-0 sm:left-auto sm:right-0 z-50 w-[290px] sm:w-[310px] max-w-[calc(100vw-32px)] p-3.5 bg-white dark:bg-[#181416] border border-neutral-200 dark:border-white/10 rounded-2xl shadow-2xl space-y-2.5 text-right"
+                                    >
+                                        {/* Header */}
+                                        <div className="flex items-center justify-between pb-2 border-b border-neutral-100 dark:border-white/[0.08]">
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className="w-4 h-4 text-red-600 dark:text-red-500 shrink-0" />
+                                                <span className="font-extrabold text-xs sm:text-sm text-neutral-900 dark:text-white">
+                                                    اختر يوم الحجز
+                                                </span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsDateMenuOpen(false)}
+                                                className="w-7 h-7 rounded-lg bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800/80 dark:hover:bg-neutral-700 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                                                aria-label="إغلاق"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+
+                                        {/* Quick Select Buttons: اليوم، غداً، بعد غد */}
+                                        <div className="grid grid-cols-3 gap-1.5">
+                                            {quickShortcuts.map((sc) => {
+                                                const isSelected = selectedDate === sc.iso;
+                                                return (
+                                                    <button
+                                                        key={sc.iso}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            onChangeDate?.(sc.iso);
+                                                            playPs5SelectSound();
+                                                            setIsDateMenuOpen(false);
+                                                        }}
+                                                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all text-center border cursor-pointer ${
+                                                            isSelected
+                                                                ? 'bg-red-600 border-red-600 text-white font-extrabold shadow-sm'
+                                                                : 'bg-neutral-50 dark:bg-[#1c181a] border-neutral-200/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.08]'
+                                                        }`}
+                                                    >
+                                                        {sc.label}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Month Navigation */}
+                                        <div className="flex items-center justify-between px-1 py-1 text-xs">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (canGoPrevMonth) {
+                                                        setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+                                                        playPs5NavigateSound();
+                                                    }
+                                                }}
+                                                disabled={!canGoPrevMonth}
+                                                className="w-8 h-8 rounded-lg border border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.08] disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center transition-colors cursor-pointer"
+                                                title="الشهر السابق"
+                                            >
+                                                <ChevronRight className="w-4 h-4" />
+                                            </button>
+
+                                            <span className="font-extrabold text-sm sm:text-base text-neutral-900 dark:text-white tracking-wide">
+                                                {ARABIC_MONTHS[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
+                                            </span>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+                                                    playPs5NavigateSound();
+                                                }}
+                                                className="w-8 h-8 rounded-lg border border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.08] flex items-center justify-center transition-colors cursor-pointer"
+                                                title="الشهر القادم"
+                                            >
+                                                <ChevronLeft className="w-4 h-4" />
+                                            </button>
+                                        </div>
+
+                                        {/* Days of week header */}
+                                        <div className="grid grid-cols-7 gap-1 text-center py-1">
+                                            {['سبت', 'أحد', 'إثن', 'ثلا', 'أرب', 'خمي', 'جمع'].map((name, idx) => (
+                                                <div key={idx} className="text-xs font-bold text-neutral-400 dark:text-neutral-400 py-0.5">
+                                                    {name}
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Calendar Grid of Day Cells */}
+                                        <div className="grid grid-cols-7 gap-1">
+                                            {monthDaysGrid.map((cell, idx) => {
+                                                if (!cell) {
+                                                    return <div key={`empty-${idx}`} className="h-8 w-8 sm:h-9 sm:w-9" />;
+                                                }
+                                                const isSelected = selectedDate === cell.iso;
+                                                return (
+                                                    <button
+                                                        key={cell.iso}
+                                                        type="button"
+                                                        disabled={cell.isPast}
+                                                        onClick={() => {
+                                                            onChangeDate?.(cell.iso);
+                                                            playPs5SelectSound();
+                                                            setIsDateMenuOpen(false);
+                                                        }}
+                                                        className={`h-8 w-8 sm:h-9 sm:w-9 mx-auto rounded-xl flex items-center justify-center text-xs sm:text-sm font-bold transition-all ${
+                                                            cell.isPast
+                                                                ? 'text-neutral-300 dark:text-neutral-600 opacity-35 cursor-not-allowed'
+                                                                : isSelected
+                                                                ? 'bg-red-600 text-white font-extrabold shadow-sm scale-105 z-10'
+                                                                : cell.isToday
+                                                                ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30 hover:bg-red-500/20 cursor-pointer'
+                                                                : 'text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/[0.08] cursor-pointer'
+                                                        }`}
+                                                    >
+                                                        <span>{cell.dayNumber}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
