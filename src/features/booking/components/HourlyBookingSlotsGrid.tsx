@@ -7,8 +7,12 @@ import {
     Timer,
     Check,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
     Moon,
     Sparkles,
+    Calendar,
+    X,
 } from 'lucide-react';
 import {
     type BookingInterval,
@@ -16,9 +20,11 @@ import {
     createDateTimeFromBusinessDate,
     formatArabicTime,
     formatArabicTimeFromDate,
+    getCairoTodayDateString,
 } from '@/lib/bookingDatetime';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 import { toast } from 'sonner';
+import Booking24HoursGuideModal from './Booking24HoursGuideModal';
 
 export interface HourlySlotData {
     hour24: number; // 0..23 for main day, 24..29 for next day late night
@@ -39,6 +45,7 @@ export interface HourlySlotData {
 
 interface HourlyBookingSlotsGridProps {
     selectedDate: string;
+    onChangeDate?: (newDate: string) => void;
     roomRate: number;
     occupiedIntervals: BookingInterval[];
     selectedStartHour24: number | null;
@@ -49,8 +56,16 @@ interface HourlyBookingSlotsGridProps {
 
 const DURATION_CHOICES = [1, 2, 3, 4, 5, 6];
 
+const ARABIC_MONTHS = [
+    'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+    'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+];
+
+const ARABIC_DAYS = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
 export default function HourlyBookingSlotsGrid({
     selectedDate,
+    onChangeDate,
     roomRate,
     occupiedIntervals,
     selectedStartHour24,
@@ -61,20 +76,105 @@ export default function HourlyBookingSlotsGrid({
     const [isDurationMenuOpen, setIsDurationMenuOpen] = useState(false);
     const durationMenuRef = useRef<HTMLDivElement>(null);
 
-    // Close duration dropdown when clicking outside
+    const [isDateMenuOpen, setIsDateMenuOpen] = useState(false);
+    const dateMenuRef = useRef<HTMLDivElement>(null);
+
+    const [isGuideOpen, setIsGuideOpen] = useState(false);
+
+    // Calendar state for date picker popover
+    const [calendarMonth, setCalendarMonth] = useState<Date>(() => {
+        const [y, m, d] = selectedDate.split('-').map(Number);
+        return new Date(y, m - 1, d || 1);
+    });
+
+    useEffect(() => {
+        const [y, m, d] = selectedDate.split('-').map(Number);
+        if (!isNaN(y) && !isNaN(m)) {
+            setCalendarMonth(new Date(y, m - 1, d || 1));
+        }
+    }, [selectedDate]);
+
+    // Close dropdowns when clicking outside
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (durationMenuRef.current && !durationMenuRef.current.contains(e.target as Node)) {
                 setIsDurationMenuOpen(false);
             }
+            if (dateMenuRef.current && !dateMenuRef.current.contains(e.target as Node)) {
+                setIsDateMenuOpen(false);
+            }
         };
-        if (isDurationMenuOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
+        document.addEventListener('mousedown', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [isDurationMenuOpen]);
+    }, []);
+
+    // Formatted date string for button label (e.g. "اليوم، 18 أكتوبر")
+    const formattedDateLabel = useMemo(() => {
+        const [y, m, d] = selectedDate.split('-').map(Number);
+        const dayDate = new Date(y, m - 1, d);
+        const todayStr = getCairoTodayDateString();
+        const tomorrowStr = addDaysToDateString(todayStr, 1);
+        const monthName = ARABIC_MONTHS[m - 1];
+
+        if (selectedDate === todayStr) {
+            return `اليوم، ${d} ${monthName}`;
+        }
+        if (selectedDate === tomorrowStr) {
+            return `غداً، ${d} ${monthName}`;
+        }
+        const dayName = ARABIC_DAYS[dayDate.getDay()];
+        return `${dayName}، ${d} ${monthName}`;
+    }, [selectedDate]);
+
+    // Quick Date shortcuts: اليوم، غداً، بعد غد
+    const quickShortcuts = useMemo(() => {
+        const todayStr = getCairoTodayDateString();
+        return [
+            { label: 'اليوم', iso: todayStr },
+            { label: 'غداً', iso: addDaysToDateString(todayStr, 1) },
+            { label: 'بعد غد', iso: addDaysToDateString(todayStr, 2) },
+        ];
+    }, []);
+
+    // Calendar monthly grid calculation
+    const monthDaysGrid = useMemo(() => {
+        const year = calendarMonth.getFullYear();
+        const month = calendarMonth.getMonth();
+        const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0=Sun..6=Sat
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const todayStr = getCairoTodayDateString();
+
+        const grid: Array<{ iso: string; dayNumber: number; isPast: boolean; isToday: boolean } | null> = [];
+
+        // Arabic week starts on Saturday (idx 0) -> map Sun(0)..Fri(5), Sat(6)
+        // Offset: (firstDayOfMonth + 1) % 7
+        const offset = (firstDayOfMonth + 1) % 7;
+        for (let i = 0; i < offset; i++) {
+            grid.push(null);
+        }
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            grid.push({
+                iso,
+                dayNumber: d,
+                isPast: iso < todayStr,
+                isToday: iso === todayStr,
+            });
+        }
+
+        return grid;
+    }, [calendarMonth]);
+
+    const canGoPrevMonth = useMemo(() => {
+        const todayStr = getCairoTodayDateString();
+        const [y, m] = todayStr.split('-').map(Number);
+        const currentYear = calendarMonth.getFullYear();
+        const currentMonth = calendarMonth.getMonth();
+        return currentYear > y || (currentYear === y && currentMonth > m - 1);
+    }, [calendarMonth]);
 
     // Build slots: 0..23 for selectedDate + 24..29 for Next Day Late Night
     const { mainSlots, lateNightSlots, allSlots } = useMemo(() => {
@@ -253,7 +353,7 @@ export default function HourlyBookingSlotsGrid({
                 : '';
 
             if (requestedDuration > 1) {
-                toast.success(`تم حجز ${requestedDuration} ساعات: من ${slot.label} حتى ${formattedEnd}${nightNote} 🎮`);
+                toast.success(`تم اختيار ${requestedDuration} ساعات: من ${slot.label} حتى ${formattedEnd}${nightNote} 🎮`);
             } else {
                 toast.success(`تم اختيار الساعة: ${slot.label}${nightNote} 🎮`);
             }
@@ -322,97 +422,249 @@ export default function HourlyBookingSlotsGrid({
 
     return (
         <div className="space-y-3" dir="rtl">
-            {/* Header: Title & Duration Dropdown */}
+            {/* Unified Control Card: Header + Date Dropdown + Duration Dropdown + Guide Pill */}
             <div className="bg-white/90 dark:bg-[#130f11] backdrop-blur-md border border-neutral-200/90 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
+                
+                {/* Row 1: Title & Action Dropdown Buttons (Date + Duration) */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    {/* Title & 24/7 status */}
+                    {/* Right: Section Title & 24/7 Subtitle */}
                     <div className="flex items-center gap-2.5">
                         <div className="w-9 h-9 rounded-xl bg-red-600/10 dark:bg-red-500/15 border border-red-500/25 flex items-center justify-center text-red-600 dark:text-red-500 shrink-0">
                             <Clock className="w-4 h-4" />
                         </div>
                         <div>
-                            <div className="flex items-center gap-2">
-                                <h3 className="font-extrabold text-sm sm:text-base text-neutral-900 dark:text-white">
-                                    اختر موعد الحجز
-                                </h3>
-                                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                                    24/7 مفتوح
-                                </span>
-                            </div>
-                            <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                                اضغط على ساعة بدء الحجز المطلوبة
+                            <h3 className="font-extrabold text-sm sm:text-base text-neutral-900 dark:text-white flex items-center gap-2">
+                                <span>وقت البدء ومدة الجلسة</span>
+                            </h3>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                                مواعيد العمل: مفتوح 24 ساعة يومياً (24/7) دون توقف
                             </p>
                         </div>
                     </div>
 
-                    {/* Small & Simple Duration Dropdown Button */}
-                    <div className="relative self-start sm:self-auto" ref={durationMenuRef}>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setIsDurationMenuOpen(!isDurationMenuOpen);
-                                playPs5NavigateSound();
-                            }}
-                            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] border border-neutral-200/90 dark:border-white/10 text-neutral-800 dark:text-neutral-100 shadow-xs active:scale-95"
-                            aria-label="تحديد مدة الجلسة"
-                        >
-                            <Timer className="w-3.5 h-3.5 text-red-600 dark:text-red-500 shrink-0" />
-                            <span className="text-neutral-500 dark:text-neutral-400 font-medium">المدة:</span>
-                            <span className="font-extrabold text-neutral-900 dark:text-white">
-                                {durationHours === 1 ? 'ساعة واحدة' : durationHours === 2 ? 'ساعتان' : `${durationHours} ساعات`}
-                            </span>
-                            <span className="font-mono text-red-600 dark:text-red-400 text-[11px] font-bold">
-                                ({Math.round(durationHours * roomRate)} ج.م)
-                            </span>
-                            <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${isDurationMenuOpen ? 'rotate-180' : ''}`} />
-                        </button>
+                    {/* Left: Two Compact Dropdown Pills (Date & Duration) */}
+                    <div className="flex items-center gap-2 self-start sm:self-auto">
+                        
+                        {/* 1. Date Dropdown Button */}
+                        <div className="relative" ref={dateMenuRef}>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsDateMenuOpen(!isDateMenuOpen);
+                                    setIsDurationMenuOpen(false);
+                                    playPs5NavigateSound();
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] border border-neutral-200/90 dark:border-white/10 text-neutral-800 dark:text-neutral-100 shadow-xs active:scale-95"
+                                title="اختر تاريخ الحجز"
+                            >
+                                <Calendar className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+                                <span>{formattedDateLabel}</span>
+                                <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${isDateMenuOpen ? 'rotate-180' : ''}`} />
+                            </button>
 
-                        {/* Dropdown Menu */}
-                        <AnimatePresence>
-                            {isDurationMenuOpen && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: -6, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: -6, scale: 0.95 }}
-                                    transition={{ duration: 0.15 }}
-                                    className="absolute left-0 sm:left-0 z-30 mt-1.5 w-52 p-1.5 bg-white dark:bg-[#181316] border border-neutral-200 dark:border-white/10 rounded-xl shadow-2xl space-y-1"
-                                >
-                                    <div className="px-2.5 py-1 text-[10px] font-bold text-neutral-400 border-b border-neutral-100 dark:border-white/[0.05] mb-1">
-                                        اختر مدة الجلسة:
-                                    </div>
-                                    {DURATION_CHOICES.map((hrs) => {
-                                        const isSelected = durationHours === hrs;
-                                        return (
+                            {/* Date Popover */}
+                            <AnimatePresence>
+                                {isDateMenuOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -6, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: -6, scale: 0.95 }}
+                                        transition={{ duration: 0.15 }}
+                                        className="absolute left-0 sm:left-0 z-40 mt-1.5 w-72 sm:w-80 p-3 bg-white dark:bg-[#181416] border border-neutral-200 dark:border-white/10 rounded-2xl shadow-2xl space-y-2.5 text-right"
+                                    >
+                                        {/* Header */}
+                                        <div className="flex items-center justify-between pb-1.5 border-b border-neutral-100 dark:border-white/[0.06]">
+                                            <span className="font-bold text-xs text-neutral-900 dark:text-white flex items-center gap-1.5">
+                                                <Calendar className="w-3.5 h-3.5 text-red-600 dark:text-red-500" />
+                                                <span>اختر يوم الحجز</span>
+                                            </span>
                                             <button
-                                                key={hrs}
+                                                type="button"
+                                                onClick={() => setIsDateMenuOpen(false)}
+                                                className="w-6 h-6 rounded-lg bg-neutral-100 hover:bg-neutral-200 dark:bg-white/10 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                                                aria-label="إغلاق"
+                                            >
+                                                <X size={13} />
+                                            </button>
+                                        </div>
+
+                                        {/* Quick Select Buttons: اليوم، غداً، بعد غد */}
+                                        <div className="grid grid-cols-3 gap-1.5">
+                                            {quickShortcuts.map((sc) => {
+                                                const isSelected = selectedDate === sc.iso;
+                                                return (
+                                                    <button
+                                                        key={sc.iso}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            onChangeDate?.(sc.iso);
+                                                            playPs5SelectSound();
+                                                            setIsDateMenuOpen(false);
+                                                        }}
+                                                        className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all text-center border cursor-pointer ${
+                                                            isSelected
+                                                                ? 'bg-red-600 border-red-600 text-white shadow-xs'
+                                                                : 'bg-neutral-50 dark:bg-white/[0.04] border-neutral-200/70 dark:border-white/10 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.08]'
+                                                        }`}
+                                                    >
+                                                        {sc.label}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Month Navigation */}
+                                        <div className="flex items-center justify-between px-1 text-xs pt-1 border-t border-neutral-100 dark:border-white/[0.06]">
+                                            <button
                                                 type="button"
                                                 onClick={() => {
-                                                    handleDurationChange(hrs);
-                                                    setIsDurationMenuOpen(false);
+                                                    if (canGoPrevMonth) {
+                                                        setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+                                                        playPs5NavigateSound();
+                                                    }
                                                 }}
-                                                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                                    isSelected
-                                                        ? 'bg-red-600 text-white shadow-xs'
-                                                        : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06]'
-                                                }`}
+                                                disabled={!canGoPrevMonth}
+                                                className="p-1 rounded-lg border border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                                title="الشهر السابق"
                                             >
-                                                <span className="flex items-center gap-1.5">
-                                                    {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
-                                                    <span>{hrs === 1 ? 'ساعة واحدة' : hrs === 2 ? 'ساعتان' : `${hrs} ساعات`}</span>
-                                                </span>
-                                                <span className={`font-mono text-[11px] ${isSelected ? 'text-white/90' : 'text-neutral-400'}`}>
-                                                    {hrs * roomRate} ج.م
-                                                </span>
+                                                <ChevronRight className="w-3.5 h-3.5" />
                                             </button>
-                                        );
-                                    })}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+
+                                            <span className="font-bold text-neutral-900 dark:text-white">
+                                                {ARABIC_MONTHS[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
+                                            </span>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+                                                    playPs5NavigateSound();
+                                                }}
+                                                className="p-1 rounded-lg border border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                                                title="الشهر القادم"
+                                            >
+                                                <ChevronLeft className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+
+                                        {/* Calendar Grid of Day Cells */}
+                                        <div className="grid grid-cols-7 gap-1">
+                                            {monthDaysGrid.map((cell, idx) => {
+                                                if (!cell) {
+                                                    return <div key={`empty-${idx}`} className="h-7" />;
+                                                }
+                                                const isSelected = selectedDate === cell.iso;
+                                                return (
+                                                    <button
+                                                        key={cell.iso}
+                                                        type="button"
+                                                        disabled={cell.isPast}
+                                                        onClick={() => {
+                                                            onChangeDate?.(cell.iso);
+                                                            playPs5SelectSound();
+                                                            setIsDateMenuOpen(false);
+                                                        }}
+                                                        className={`h-7 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
+                                                            cell.isPast
+                                                                ? 'text-neutral-300 dark:text-neutral-600 opacity-40 cursor-not-allowed'
+                                                                : isSelected
+                                                                ? 'bg-red-600 text-white shadow-xs scale-105 z-10'
+                                                                : cell.isToday
+                                                                ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30 hover:bg-red-500/20 cursor-pointer'
+                                                                : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.08] cursor-pointer'
+                                                        }`}
+                                                    >
+                                                        <span>{cell.dayNumber}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+
+                        {/* 2. Duration Dropdown Button */}
+                        <div className="relative" ref={durationMenuRef}>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsDurationMenuOpen(!isDurationMenuOpen);
+                                    setIsDateMenuOpen(false);
+                                    playPs5NavigateSound();
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer bg-red-950/20 hover:bg-red-950/30 dark:bg-red-950/30 dark:hover:bg-red-950/40 border border-red-500/35 text-red-600 dark:text-red-400 shadow-xs active:scale-95"
+                                aria-label="تحديد مدة الجلسة"
+                            >
+                                <Timer className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+                                <span>المدة: {durationHours} h</span>
+                                <ChevronDown className={`w-3.5 h-3.5 text-red-500/70 transition-transform duration-200 ${isDurationMenuOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {/* Duration Dropdown Popover */}
+                            <AnimatePresence>
+                                {isDurationMenuOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -6, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: -6, scale: 0.95 }}
+                                        transition={{ duration: 0.15 }}
+                                        className="absolute left-0 sm:left-0 z-40 mt-1.5 w-52 p-1.5 bg-white dark:bg-[#181316] border border-neutral-200 dark:border-white/10 rounded-xl shadow-2xl space-y-1"
+                                    >
+                                        <div className="px-2.5 py-1 text-[10px] font-bold text-neutral-400 border-b border-neutral-100 dark:border-white/[0.05] mb-1">
+                                            اختر مدة الجلسة:
+                                        </div>
+                                        {DURATION_CHOICES.map((hrs) => {
+                                            const isSelected = durationHours === hrs;
+                                            return (
+                                                <button
+                                                    key={hrs}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        handleDurationChange(hrs);
+                                                        setIsDurationMenuOpen(false);
+                                                    }}
+                                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                                        isSelected
+                                                            ? 'bg-red-600 text-white shadow-xs'
+                                                            : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06]'
+                                                    }`}
+                                                >
+                                                    <span className="flex items-center gap-1.5">
+                                                        {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                                                        <span>{hrs === 1 ? 'ساعة واحدة (1 س)' : hrs === 2 ? 'ساعتان (2 س)' : `${hrs} ساعات`}</span>
+                                                    </span>
+                                                    <span className={`font-mono text-[11px] ${isSelected ? 'text-white/90' : 'text-neutral-400'}`}>
+                                                        {hrs * roomRate} ج.م
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
                 </div>
 
-                {/* Active Selection Live Ribbon */}
+                {/* Row 2: Golden Guide Pill */}
+                <div className="flex items-center justify-start pt-1">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setIsGuideOpen(true);
+                            playPs5SelectSound();
+                        }}
+                        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-950/30 hover:bg-amber-950/50 border border-amber-500/50 text-amber-300 dark:text-amber-300 text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
+                    >
+                        <span className="text-sm">💡</span>
+                        <span>دليل حجز السهرة (12 بالليل vs 12 الظهر)</span>
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+                    </button>
+                </div>
+
+                {/* Row 3: Active Selection Live Ribbon */}
                 {selectedSessionInfo && (
                     <motion.div
                         initial={{ opacity: 0, y: -4 }}
@@ -585,6 +837,16 @@ export default function HourlyBookingSlotsGrid({
                     <span>مضى</span>
                 </div>
             </div>
+
+            {/* Guide Modal Component */}
+            <Booking24HoursGuideModal
+                isOpen={isGuideOpen}
+                onClose={() => setIsGuideOpen(false)}
+                onApplyMidnightExample={() => {
+                    // Automatically select 12:00 AM in Late Night section (hour 24)
+                    onSelectSlot(24, durationHours);
+                }}
+            />
         </div>
     );
 }
