@@ -38,6 +38,7 @@ import {
     formatArabicTime,
     formatArabicTimeFromDate,
     getCairoTodayDateString,
+    addDaysToDateString,
     OPERATING_HOURS,
 } from '@/lib/bookingDatetime';
 import { fetchRoomOccupiedIntervals, fetchRoomRates, type RoomRates } from '@/features/booking/services/bookingService';
@@ -502,11 +503,14 @@ export default function BookingDetailsPage() {
     }, []);
 
     const handleApplyMidnightExample = () => {
+        const todayStr = getCairoTodayDateString();
+        const tomorrowStr = addDaysToDateString(todayStr, 1);
+        setSelectedDate(tomorrowStr);
         setSelectedHour(12);
         setSelectedMinute(0);
         setSelectedPeriod('AM');
         setDurationHours(1);
-        toast.success('تم ضبط الموعد على 12:00 بالليل (منتصف الليل) بنجاح 🎮✨');
+        toast.success('تم اختيار يوم الغد والساعة 12:00 ص (سهرة الليلة القادمة) بنجاح 🎮✨');
     };
 
     const [occupiedIntervals, setOccupiedIntervals] = useState<BookingInterval[]>([]);

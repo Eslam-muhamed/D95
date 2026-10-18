@@ -9,7 +9,9 @@ import {
     X,
     HelpCircle,
     Zap,
-    Compass
+    Calendar,
+    Compass,
+    AlertTriangle
 } from 'lucide-react';
 import { playPs5NavigateSound, playPs5SelectSound } from '@/lib/sound';
 
@@ -108,7 +110,7 @@ export default function Booking24HoursGuideModal({
                                         </h3>
                                     </div>
                                     <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                                        إزاي تحجز في أي وقت من الليل أو النهار بكل سهولة وبدون لخبطة
+                                        إزاي تختار اليوم والوقت بدون أي لخبطة بين الليل والنهار
                                     </p>
                                 </div>
                             </div>
@@ -125,16 +127,52 @@ export default function Booking24HoursGuideModal({
 
                         {/* Modal Scrollable Content */}
                         <div className="p-4 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto scrollbar-thin">
-                            {/* 1. Main Visual Comparison: Noon vs Midnight */}
+
+                            {/* 1. CRITICAL: Calendar Day Switch Rule */}
+                            <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border-2 border-amber-500/40 space-y-2.5 relative shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-xs font-black text-amber-700 dark:text-amber-300">
+                                        <Calendar className="w-4 h-4 text-amber-500 shrink-0" />
+                                        <span>أهم خطوة: اختيار اليوم في التقويم لسهرة الليلة</span>
+                                    </div>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                                        هام جداً ⚠️
+                                    </span>
+                                </div>
+
+                                <p className="text-xs text-neutral-700 dark:text-neutral-200 leading-relaxed">
+                                    لو أنت قاعد دلوقتي وعاوز تسهر <strong>الليلة دي بعد الساعة ١٢ بالليل</strong> (من 12 بليل لـ 1 بليل أو الفجر):
+                                    <br />
+                                    👉 <strong>لازم تختار في التقويم (غداً / اليوم التالي) أولاً!</strong>
+                                </p>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
+                                    <div className="p-2.5 rounded-xl bg-white/90 dark:bg-black/40 border border-red-500/30 text-neutral-700 dark:text-neutral-300">
+                                        <div className="font-bold text-red-600 dark:text-red-400 mb-0.5 flex items-center gap-1">
+                                            <span>❌ لو تركت التقويم على "اليوم":</span>
+                                        </div>
+                                        <span>النظام هيعتبر ١٢ بالليل دي بتاعة فجر اليوم اللي فات وسيظهر لك أنها (وقت مضى).</span>
+                                    </div>
+
+                                    <div className="p-2.5 rounded-xl bg-white/90 dark:bg-black/40 border border-emerald-500/40 text-neutral-700 dark:text-neutral-300">
+                                        <div className="font-bold text-emerald-600 dark:text-emerald-400 mb-0.5 flex items-center gap-1">
+                                            <span>✅ لما تختار "غداً":</span>
+                                        </div>
+                                        <span>١٢:٠٠ ص في اليوم الجديد هي أول ساعة في سهرتك الليلة دي ومتاحة للحجز فوراً!</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 2. Visual Comparison: Noon vs Midnight */}
                             <div className="space-y-2">
                                 <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
                                     <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
-                                    <span>الفرق بين ١٢ الظهر و ١٢ بالليل (اللخبطة الأشهر):</span>
+                                    <span>الفرق بين ١٢ الظهر و ١٢ بالليل (اللخبطة في ص و م):</span>
                                 </span>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                     {/* ☀️ 12 الظهر */}
-                                    <div className="p-3 sm:p-3.5 rounded-2xl bg-amber-500/5 dark:bg-amber-950/20 border border-amber-500/25 relative overflow-hidden flex flex-col justify-between">
+                                    <div className="p-3 sm:p-3.5 rounded-2xl bg-neutral-100 dark:bg-white/[0.04] border border-neutral-200 dark:border-white/[0.08] relative overflow-hidden flex flex-col justify-between">
                                         <div className="flex items-center justify-between mb-2">
                                             <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 text-xs font-bold">
                                                 <Sun className="w-4 h-4 text-amber-500" />
@@ -145,7 +183,7 @@ export default function Booking24HoursGuideModal({
                                             </span>
                                         </div>
 
-                                        <div className="bg-white/90 dark:bg-black/40 rounded-xl p-2.5 text-center border border-amber-500/20 shadow-xs mb-2">
+                                        <div className="bg-white dark:bg-black/40 rounded-xl p-2.5 text-center border border-neutral-200 dark:border-white/10 shadow-xs mb-2">
                                             <span className="font-mono text-2xl font-black text-neutral-900 dark:text-white">
                                                 12:00 <span className="text-amber-600 dark:text-amber-400 text-lg">م</span>
                                             </span>
@@ -155,7 +193,7 @@ export default function Booking24HoursGuideModal({
                                         </div>
 
                                         <p className="text-[11px] text-neutral-600 dark:text-neutral-300 leading-relaxed">
-                                            لو حابب تحجز في عز النهار، اختر في العداد: <strong>12</strong> والفترة <strong>م</strong> (مساءً).
+                                            لو حابب تلعب في عز النهار، اختر في العداد: <strong>12</strong> والفترة <strong>م</strong> (مساءً).
                                         </p>
                                     </div>
 
@@ -172,7 +210,7 @@ export default function Booking24HoursGuideModal({
                                             </span>
                                         </div>
 
-                                        <div className="bg-white/90 dark:bg-black/60 rounded-xl p-2.5 text-center border border-indigo-500/30 shadow-xs mb-2">
+                                        <div className="bg-white dark:bg-black/60 rounded-xl p-2.5 text-center border border-indigo-500/30 shadow-xs mb-2">
                                             <span className="font-mono text-2xl font-black text-neutral-900 dark:text-white">
                                                 12:00 <span className="text-emerald-500 text-lg">ص</span>
                                             </span>
@@ -182,46 +220,54 @@ export default function Booking24HoursGuideModal({
                                         </div>
 
                                         <p className="text-[11px] text-neutral-600 dark:text-neutral-300 leading-relaxed">
-                                            <strong>١٢ بالليل رسمياً تُكتب (ص):</strong> لأن التوقيت العالمي يعتبر منتصف الليل هو أول دقيقة في اليوم الجديد.
+                                            <strong>١٢ بالليل تُكتب (ص):</strong> لأن التقويم العالمي يعتبر منتصف الليل هي أول دقيقة في اليوم الجديد.
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* 2. Concrete Practical Example: 12 AM to 1 AM */}
+                            {/* 3. Concrete 4-Step Practical Example */}
                             <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-red-500/10 via-red-500/5 to-transparent border border-red-500/30 space-y-2.5">
                                 <div className="flex items-center gap-2 text-xs font-bold text-red-600 dark:text-red-400">
                                     <Sparkles className="w-4 h-4 text-red-500" />
-                                    <span>مثال تطبيقي: عاوز تحجز من ١٢ بالليل لـ ١ بالليل؟</span>
+                                    <span>ملخص الخطوات: عاوز تحجز سهرة من ١٢ بالليل لـ ١ بالليل؟</span>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                                    <div className="p-2.5 rounded-xl bg-white/80 dark:bg-black/40 border border-neutral-200/80 dark:border-white/[0.06] flex items-center gap-2">
-                                        <div className="w-5 h-5 rounded-full bg-red-500 text-white font-mono text-xs flex items-center justify-center font-bold shrink-0">1</div>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                                    <div className="p-2 rounded-xl bg-white/80 dark:bg-black/40 border border-neutral-200/80 dark:border-white/[0.06] flex items-center gap-2">
+                                        <div className="w-5 h-5 rounded-full bg-red-500 text-white font-mono text-[11px] flex items-center justify-center font-bold shrink-0">1</div>
                                         <div>
-                                            <span className="text-[10px] text-neutral-400 block">الساعة في العداد</span>
+                                            <span className="text-[10px] text-neutral-400 block">التقويم</span>
+                                            <span className="font-bold text-amber-500 text-[11px]">اختر غداً</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-2 rounded-xl bg-white/80 dark:bg-black/40 border border-neutral-200/80 dark:border-white/[0.06] flex items-center gap-2">
+                                        <div className="w-5 h-5 rounded-full bg-red-500 text-white font-mono text-[11px] flex items-center justify-center font-bold shrink-0">2</div>
+                                        <div>
+                                            <span className="text-[10px] text-neutral-400 block">الساعة</span>
                                             <span className="font-mono font-bold text-neutral-900 dark:text-white">اختر 12</span>
                                         </div>
                                     </div>
 
-                                    <div className="p-2.5 rounded-xl bg-white/80 dark:bg-black/40 border border-neutral-200/80 dark:border-white/[0.06] flex items-center gap-2">
-                                        <div className="w-5 h-5 rounded-full bg-red-500 text-white font-mono text-xs flex items-center justify-center font-bold shrink-0">2</div>
+                                    <div className="p-2 rounded-xl bg-white/80 dark:bg-black/40 border border-neutral-200/80 dark:border-white/[0.06] flex items-center gap-2">
+                                        <div className="w-5 h-5 rounded-full bg-red-500 text-white font-mono text-[11px] flex items-center justify-center font-bold shrink-0">3</div>
                                         <div>
-                                            <span className="text-[10px] text-neutral-400 block">الفترة في العداد</span>
-                                            <span className="font-mono font-bold text-emerald-500 dark:text-emerald-400">اختر (ص) وليس (م)</span>
+                                            <span className="text-[10px] text-neutral-400 block">الفترة</span>
+                                            <span className="font-mono font-bold text-emerald-500">(ص) وليس (م)</span>
                                         </div>
                                     </div>
 
-                                    <div className="p-2.5 rounded-xl bg-white/80 dark:bg-black/40 border border-neutral-200/80 dark:border-white/[0.06] flex items-center gap-2">
-                                        <div className="w-5 h-5 rounded-full bg-red-500 text-white font-mono text-xs flex items-center justify-center font-bold shrink-0">3</div>
+                                    <div className="p-2 rounded-xl bg-white/80 dark:bg-black/40 border border-neutral-200/80 dark:border-white/[0.06] flex items-center gap-2">
+                                        <div className="w-5 h-5 rounded-full bg-red-500 text-white font-mono text-[11px] flex items-center justify-center font-bold shrink-0">4</div>
                                         <div>
-                                            <span className="text-[10px] text-neutral-400 block">المدة المطلوبة</span>
-                                            <span className="font-mono font-bold text-neutral-900 dark:text-white">اختر ساعة (1h)</span>
+                                            <span className="text-[10px] text-neutral-400 block">المدة</span>
+                                            <span className="font-mono font-bold text-neutral-900 dark:text-white">اختر 1 ساعة</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pt-1.5">
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pt-1">
                                     <div className="flex items-center gap-1.5 text-xs text-neutral-700 dark:text-neutral-300">
                                         <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                                         <span>ستبدأ جلستك <strong>12:00 ص</strong> وتنتهي <strong>01:00 ص</strong>.</span>
@@ -234,13 +280,13 @@ export default function Booking24HoursGuideModal({
                                             className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-md hover:shadow-red-500/25 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
                                         >
                                             <Zap className="w-3.5 h-3.5 text-amber-300" />
-                                            <span>⚡ اضبط العداد على 12:00 بالليل الآن</span>
+                                            <span>⚡ اضبط لي سهرة الليلة (12:00 ص) الآن</span>
                                         </button>
                                     )}
                                 </div>
                             </div>
 
-                            {/* 3. Easy Alternative: Timeline Schedule Bar */}
+                            {/* 4. Alternative: Timeline Schedule Bar */}
                             <div className="p-3.5 rounded-2xl bg-neutral-100/80 dark:bg-white/[0.04] border border-neutral-200/80 dark:border-white/[0.06] flex items-start gap-3">
                                 <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-500 shrink-0 mt-0.5">
                                     <Clock className="w-4 h-4" />
@@ -250,7 +296,7 @@ export default function Booking24HoursGuideModal({
                                         💡 طريقة أسهل بكثير: استعمل "مخطط المواعيد"
                                     </h4>
                                     <p className="text-[11px] text-neutral-600 dark:text-neutral-400 mt-1 leading-relaxed">
-                                        مش محتاج تحتار بين (ص) و (م)! افتح <strong>مخطط المواعيد</strong> بالأعلى، وانقر مباشرة على الخانة الخضراء للساعة اللي تعجبك، وسيتم ضبط العداد تلقائياً بلمسة واحدة.
+                                        مش محتاج تحتار بين (ص) و (م)! اختر اليوم ثم افتح <strong>مخطط المواعيد</strong> بالأعلى، وانقر مباشرة على الخانة الخضراء للساعة اللي تعجبك، وسيتم ضبط العداد تلقائياً بلمسة واحدة.
                                     </p>
                                 </div>
                             </div>
