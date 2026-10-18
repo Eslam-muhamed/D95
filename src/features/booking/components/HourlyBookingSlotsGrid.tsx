@@ -96,7 +96,7 @@ export default function HourlyBookingSlotsGrid({
 
     // Close dropdowns when clicking outside
     useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
+        const handleClickOutside = (e: MouseEvent | TouchEvent) => {
             if (durationMenuRef.current && !durationMenuRef.current.contains(e.target as Node)) {
                 setIsDurationMenuOpen(false);
             }
@@ -105,8 +105,10 @@ export default function HourlyBookingSlotsGrid({
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
         };
     }, []);
 
@@ -421,23 +423,7 @@ export default function HourlyBookingSlotsGrid({
     }, [allSlots, selectedStartHour24, durationHours, roomRate]);
 
     return (
-        <div className="space-y-3 relative" dir="rtl">
-            {/* Backdrop overlay for mobile priority (tapping outside dismisses cleanly without accidental clicks) */}
-            <AnimatePresence>
-                {(isDateMenuOpen || isDurationMenuOpen) && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.15 }}
-                        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] sm:bg-transparent"
-                        onClick={() => {
-                            setIsDateMenuOpen(false);
-                            setIsDurationMenuOpen(false);
-                        }}
-                    />
-                )}
-            </AnimatePresence>
+        <div className="space-y-3" dir="rtl">
 
             {/* Unified Control Card: Header + Date Dropdown + Duration Dropdown + Guide Pill */}
             <div className="bg-white/90 dark:bg-[#130f11] backdrop-blur-md border border-neutral-200/90 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-sm space-y-3 relative z-30">
