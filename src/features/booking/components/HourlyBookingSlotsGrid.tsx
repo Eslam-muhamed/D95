@@ -73,6 +73,7 @@ export default function HourlyBookingSlotsGrid({
     onSelectSlot,
     onChangeDuration,
 }: HourlyBookingSlotsGridProps) {
+    const containerRef = useRef<HTMLDivElement>(null);
     const [isDurationMenuOpen, setIsDurationMenuOpen] = useState(false);
     const durationMenuRef = useRef<HTMLDivElement>(null);
 
@@ -339,6 +340,15 @@ export default function HourlyBookingSlotsGrid({
             // Select the actual hour on tomorrow
             onSelectSlot(actualH, requestedDuration);
 
+            // Smoothly scroll up to the booking container / selected slot so customer sees their selection immediately
+            setTimeout(() => {
+                if (containerRef.current) {
+                    const yOffset = -76;
+                    const y = containerRef.current.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) + yOffset;
+                    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+                }
+            }, 60);
+
             const [y, m, d] = tomorrowStr.split('-').map(Number);
             const monthName = ARABIC_MONTHS[m - 1];
             const endHourCalculated = (actualH + requestedDuration) % 24;
@@ -448,7 +458,7 @@ export default function HourlyBookingSlotsGrid({
     }, [allSlots, selectedStartHour24, durationHours, roomRate]);
 
     return (
-        <div className="space-y-3" dir="rtl">
+        <div ref={containerRef} className="space-y-3 scroll-mt-20 sm:scroll-mt-24" dir="rtl">
 
             {/* Unified Control Card: Header + Date Dropdown + Duration Dropdown + Guide Pill */}
             <div className="bg-white/90 dark:bg-[#130f11] backdrop-blur-md border border-neutral-200/90 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-sm space-y-3 relative z-30">
@@ -778,7 +788,7 @@ export default function HourlyBookingSlotsGrid({
                                         : isBooked
                                         ? 'bg-red-500/10 dark:bg-red-950/20 border-red-500/25 text-red-500/80 cursor-not-allowed line-through'
                                         : isSelected
-                                        ? 'bg-gradient-to-r from-red-600 to-rose-600 border-red-500 text-white font-extrabold shadow-md shadow-red-600/30 scale-[1.02] z-10 cursor-pointer'
+                                        ? 'bg-gradient-to-r from-red-600 to-rose-600 border-red-500 text-white font-extrabold shadow-md shadow-red-600/30 scale-[1.02] z-10 cursor-pointer ring-2 ring-red-400 ring-offset-2 ring-offset-white dark:ring-offset-[#130f11]'
                                         : 'bg-white dark:bg-[#161214] hover:bg-neutral-50 dark:hover:bg-white/[0.06] border-neutral-200 dark:border-white/10 text-neutral-800 dark:text-neutral-200 hover:border-red-500/60 hover:text-red-600 dark:hover:text-red-400 cursor-pointer active:scale-95'
                                 }`}
                             >
@@ -850,7 +860,7 @@ export default function HourlyBookingSlotsGrid({
                                         : isBooked
                                         ? 'bg-red-500/10 dark:bg-red-950/20 border-red-500/25 text-red-500/80 cursor-not-allowed line-through'
                                         : isSelected
-                                        ? 'bg-gradient-to-r from-indigo-600 via-rose-600 to-red-600 border-red-500 text-white font-extrabold shadow-md shadow-red-600/30 scale-[1.02] z-10 cursor-pointer'
+                                        ? 'bg-gradient-to-r from-indigo-600 via-rose-600 to-red-600 border-red-500 text-white font-extrabold shadow-md shadow-red-600/30 scale-[1.02] z-10 cursor-pointer ring-2 ring-indigo-400 ring-offset-2 ring-offset-white dark:ring-offset-[#130f11]'
                                         : 'bg-indigo-950/20 dark:bg-indigo-950/30 hover:bg-indigo-900/30 border-indigo-500/25 dark:border-indigo-500/30 text-indigo-900 dark:text-indigo-200 hover:border-red-500/60 hover:text-white cursor-pointer active:scale-95'
                                 }`}
                             >

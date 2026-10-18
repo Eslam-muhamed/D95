@@ -59,8 +59,8 @@ const ROOMS: RoomData[] = [
         id: 'room-2',
         code: 'ROOM 01',
         titleEn: 'LA CASA DE PAPEL',
-        titleAr: 'غرفة لا كاسا دي بابيل (La Casa De Papel)',
-        subtitle: 'أجواء حماسية وتخطيط احترافي مستوحاة من مسلسل لا كاسا دي بابيل',
+        titleAr: 'ROOM 01 • LA CASA DE PAPEL',
+        subtitle: 'أجواء حماسية وتخطيط احترافي مستوحاة من أجواء La Casa De Papel',
         rate: 80,
         badge: 'Available',
         accentColor: '#ff007f',
@@ -106,8 +106,8 @@ const ROOMS: RoomData[] = [
         id: 'room-1',
         code: 'ROOM 02',
         titleEn: 'BREAKING BAD',
-        titleAr: 'غرفة بريكينج باد (Breaking Bad)',
-        subtitle: 'أجواء الكيمياء والغموض المستوحاة من مسلسل بريكينج باد',
+        titleAr: 'ROOM 02 • BREAKING BAD',
+        subtitle: 'أجواء الكيمياء والغموض المستوحاة من أجواء Breaking Bad',
         rate: 80,
         badge: 'Available',
         accentColor: '#10b981',
@@ -396,7 +396,7 @@ export default function PlaystationPage() {
                                     <div className="relative w-full aspect-[4/3] xs:aspect-[16/11] sm:aspect-[16/9] overflow-hidden bg-neutral-950">
                                         <img
                                             src={room.interiorImg}
-                                            alt={room.titleAr}
+                                            alt={room.titleEn}
                                             loading="eager"
                                             decoding="async"
                                             className="w-full h-full object-cover brightness-[0.85] contrast-[1.08] group-hover:scale-105 group-hover:brightness-95 transition-all duration-500 ease-out"
@@ -439,20 +439,17 @@ export default function PlaystationPage() {
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
                                                     <span
-                                                        className={`text-[9px] sm:text-xs font-bebas font-bold uppercase tracking-wider px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded ${
+                                                        className={`text-[9px] sm:text-xs font-bebas font-bold uppercase tracking-wider px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded ${
                                                             isRoom1
                                                                 ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-500/40'
                                                                 : 'bg-rose-950/90 text-rose-300 border border-rose-500/40'
                                                         }`}
                                                     >
-                                                        {room.titleEn}
-                                                    </span>
-                                                    <span className="text-[10px] sm:text-xs text-neutral-300 font-bebas tracking-wide font-bold hidden md:inline">
                                                         PlayStation 5 VIP
                                                     </span>
                                                 </div>
-                                                <h3 className="font-bebas text-base sm:text-2xl font-black text-white drop-shadow-md truncate tracking-wide">
-                                                    {isRoom1 ? 'غرفة بريكينج باد' : 'غرفة لا كاسا دي بابيل'}
+                                                <h3 className="font-bebas text-base sm:text-2xl font-black text-white drop-shadow-md truncate tracking-wide uppercase">
+                                                    {room.titleEn}
                                                 </h3>
                                             </div>
 
