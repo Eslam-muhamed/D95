@@ -42,6 +42,7 @@ import {
 } from '@/lib/bookingDatetime';
 import { fetchRoomOccupiedIntervals, fetchRoomRates, type RoomRates } from '@/features/booking/services/bookingService';
 import { BookingTimelineSchedule } from '@/components/booking/BookingTimelineSchedule';
+import Booking24HoursGuideModal from '../components/Booking24HoursGuideModal';
 
 interface Room {
     id: string;
@@ -482,6 +483,32 @@ export default function BookingDetailsPage() {
     const [selectedMinute, setSelectedMinute] = useState<number>(0);
     const [selectedPeriod, setSelectedPeriod] = useState<'AM' | 'PM'>('PM');
 
+    // 24-Hour booking guide modal state
+    const [isGuideModalOpen, setIsGuideModalOpen] = useState<boolean>(false);
+
+    // Auto open guide modal on first visit if user hasn't seen it yet
+    useEffect(() => {
+        try {
+            const hasSeen = localStorage.getItem('d95_has_seen_24h_guide_v1');
+            if (!hasSeen) {
+                const timer = setTimeout(() => {
+                    setIsGuideModalOpen(true);
+                }, 700);
+                return () => clearTimeout(timer);
+            }
+        } catch {
+            // Ignore storage errors
+        }
+    }, []);
+
+    const handleApplyMidnightExample = () => {
+        setSelectedHour(12);
+        setSelectedMinute(0);
+        setSelectedPeriod('AM');
+        setDurationHours(1);
+        toast.success('تم ضبط الموعد على 12:00 بالليل (منتصف الليل) بنجاح 🎮✨');
+    };
+
     const [occupiedIntervals, setOccupiedIntervals] = useState<BookingInterval[]>([]);
     const [loadingIntervals, setLoadingIntervals] = useState<boolean>(false);
 
@@ -845,6 +872,21 @@ export default function BookingDetailsPage() {
                                     ? 'مواعيد العمل: مفتوح 24 ساعة يومياً (24/7) دون توقف'
                                     : `مواعيد العمل: من ${formatArabicTime(OPERATING_HOURS.START_HOUR, 0)} حتى ${formatArabicTime(OPERATING_HOURS.CLOSING_HOUR, 0)}`}
                             </span>
+
+                            {/* 💡 24/7 Guide Modal Trigger Button */}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsGuideModalOpen(true);
+                                    playPs5NavigateSound();
+                                }}
+                                className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-500/15 to-amber-500/5 hover:from-amber-500/20 hover:to-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/35 hover:border-amber-500/50 text-[11px] font-bold transition-all cursor-pointer active:scale-95 group w-fit shadow-xs"
+                                title="اضغط هنا لشرح نظام حجز السهرة ومنتصف الليل (12 بالليل vs 12 الظهر)"
+                            >
+                                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                                <Sparkles className="w-3.5 h-3.5 text-amber-500 group-hover:rotate-12 transition-transform" />
+                                <span>دليل حجز السهرة (12 بالليل vs 12 الظهر) 💡</span>
+                            </button>
                         </div>
 
                         {/* Controls Group: Mobile-First Prioritized (Order: 1. المدة, 2. اليوم, 3. المحجوز) */}
@@ -1372,6 +1414,13 @@ export default function BookingDetailsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* 24-Hours & Midnight Booking Guide Modal */}
+            <Booking24HoursGuideModal
+                isOpen={isGuideModalOpen}
+                onClose={() => setIsGuideModalOpen(false)}
+                onApplyMidnightExample={handleApplyMidnightExample}
+            />
 
         </div>
     );
