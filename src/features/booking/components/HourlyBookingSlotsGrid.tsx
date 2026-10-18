@@ -327,6 +327,31 @@ export default function HourlyBookingSlotsGrid({
 
         playPs5SelectSound();
 
+        // Special case: Late Night shortcut slot (فجر الغد)
+        // Automatically transition active date to tomorrow, selecting actualH on tomorrow!
+        if (slot.isLateNight) {
+            const tomorrowStr = addDaysToDateString(selectedDate, 1);
+            const actualH = slot.hour24 % 24; // 0, 1, 2, 3, 4, 5
+            const requestedDuration = durationHours;
+
+            // Switch active date to tomorrow
+            onChangeDate?.(tomorrowStr);
+            // Select the actual hour on tomorrow
+            onSelectSlot(actualH, requestedDuration);
+
+            const [y, m, d] = tomorrowStr.split('-').map(Number);
+            const monthName = ARABIC_MONTHS[m - 1];
+            const endHourCalculated = (actualH + requestedDuration) % 24;
+            const formattedEnd = formatArabicTime(endHourCalculated, 0);
+
+            if (requestedDuration > 1) {
+                toast.success(`تم الانتقال لغداً (${d} ${monthName}) واختيار: من ${slot.label} حتى ${formattedEnd} 🌙🎮`);
+            } else {
+                toast.success(`تم الانتقال لغداً (${d} ${monthName}) واختيار: ${slot.label} 🌙🎮`);
+            }
+            return;
+        }
+
         const startH = slot.hour24;
         const requestedDuration = durationHours;
 
@@ -412,7 +437,7 @@ export default function HourlyBookingSlotsGrid({
 
         const endHour24 = (selectedStartHour24 + durationHours) % 24;
         const formattedEnd = formatArabicTime(endHour24, 0);
-        const isLateNightSession = selectedStartHour24 >= 24 || (selectedStartHour24 < 24 && selectedStartHour24 + durationHours > 24);
+        const isLateNightSession = (selectedStartHour24 >= 0 && selectedStartHour24 < 6) || selectedStartHour24 >= 24 || (selectedStartHour24 < 24 && selectedStartHour24 + durationHours > 24);
 
         return {
             startLabel: startSlot.label,
@@ -716,7 +741,7 @@ export default function HourlyBookingSlotsGrid({
                                 {selectedSessionInfo.isLateNight && (
                                     <span className="mr-1.5 inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 font-bold border border-indigo-500/30">
                                         <Moon className="w-3 h-3" />
-                                        <span>سهرة الليلة (فجر اليوم التالي)</span>
+                                        <span>فترة السهرة والفجر 🌙</span>
                                     </span>
                                 )}
                             </span>
