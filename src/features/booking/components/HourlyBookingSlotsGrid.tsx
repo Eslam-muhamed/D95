@@ -4,9 +4,6 @@ import {
     Clock,
     Lock,
     CheckCircle2,
-    Sun,
-    Moon,
-    Sunset,
     Timer,
     Check,
     ChevronDown,
@@ -26,7 +23,6 @@ export interface HourlySlotData {
     period: 'AM' | 'PM';
     label: string; // e.g. "12:00 ص" or "10:00 م"
     endLabel: string; // e.g. "01:00 ص"
-    periodGroup: 'night' | 'day' | 'evening';
     start: Date;
     end: Date;
     isPast: boolean;
@@ -47,8 +43,6 @@ interface HourlyBookingSlotsGridProps {
     onChangeDuration: (newDuration: number) => void;
 }
 
-type PeriodFilter = 'all' | 'evening' | 'night' | 'day';
-
 const DURATION_CHOICES = [1, 2, 3, 4, 5, 6];
 
 export default function HourlyBookingSlotsGrid({
@@ -60,7 +54,6 @@ export default function HourlyBookingSlotsGrid({
     onSelectSlot,
     onChangeDuration,
 }: HourlyBookingSlotsGridProps) {
-    const [filter, setFilter] = useState<PeriodFilter>('all');
     const [isDurationMenuOpen, setIsDurationMenuOpen] = useState(false);
     const durationMenuRef = useRef<HTMLDivElement>(null);
 
@@ -79,7 +72,7 @@ export default function HourlyBookingSlotsGrid({
         };
     }, [isDurationMenuOpen]);
 
-    // Build the 24 hourly slots for the selected date
+    // Build the 24 hourly slots for the selected date in chronological order (00:00 -> 23:00)
     const slots = useMemo<HourlySlotData[]>(() => {
         const result: HourlySlotData[] = [];
         const now = Date.now();
@@ -112,17 +105,6 @@ export default function HourlyBookingSlotsGrid({
             const label = formatArabicTime(h, 0);
             const endLabel = formatArabicTime(nextHour, 0);
 
-            // Grouping:
-            // Night (السهرة): 00:00 - 05:59 (hours 0..5)
-            // Day (النهار): 06:00 - 17:59 (hours 6..17)
-            // Evening (المساء): 18:00 - 23:59 (hours 18..23)
-            let periodGroup: 'night' | 'day' | 'evening' = 'night';
-            if (h >= 6 && h < 18) {
-                periodGroup = 'day';
-            } else if (h >= 18) {
-                periodGroup = 'evening';
-            }
-
             // Check if slot falls within user selected startHour + duration
             let isSelected = false;
             let isStartHour = false;
@@ -146,7 +128,6 @@ export default function HourlyBookingSlotsGrid({
                 period,
                 label,
                 endLabel,
-                periodGroup,
                 start,
                 end,
                 isPast,
@@ -160,39 +141,6 @@ export default function HourlyBookingSlotsGrid({
 
         return result;
     }, [selectedDate, occupiedIntervals, selectedStartHour24, durationHours]);
-
-    // Statistics count
-    const stats = useMemo(() => {
-        let available = 0;
-        let booked = 0;
-        let past = 0;
-
-        slots.forEach((s) => {
-            if (s.isPast) past++;
-            else if (s.isBooked) booked++;
-            else available++;
-        });
-
-        return { available, booked, past };
-    }, [slots]);
-
-    // Groups for display
-    const groups = useMemo(() => {
-        const evening = slots.filter((s) => s.periodGroup === 'evening');
-        const night = slots.filter((s) => s.periodGroup === 'night');
-        const day = slots.filter((s) => s.periodGroup === 'day');
-
-        if (filter === 'evening') return [{ id: 'evening', title: 'الفترة المسائية', subtitle: '٠٦:٠٠ م - ١١:٠٠ م', icon: <Sunset className="w-4 h-4 text-rose-400" />, slots: evening }];
-        if (filter === 'night') return [{ id: 'night', title: 'فترة السهرة', subtitle: '١٢:٠٠ منتصف الليل - ٠٥:٠٠ ص', icon: <Moon className="w-4 h-4 text-indigo-400" />, slots: night }];
-        if (filter === 'day') return [{ id: 'day', title: 'فترة الصباح والنهار', subtitle: '٠٦:٠٠ ص - ٠٥:٠٠ م', icon: <Sun className="w-4 h-4 text-amber-400" />, slots: day }];
-
-        // 'all': Show Evening first (most popular for gaming), then Night, then Day
-        return [
-            { id: 'evening', title: 'الفترة المسائية', subtitle: '٠٦:٠٠ م - ١١:٠٠ م', icon: <Sunset className="w-4 h-4 text-rose-400" />, slots: evening },
-            { id: 'night', title: 'فترة السهرة', subtitle: '١٢:٠٠ منتصف الليل - ٠٥:٠٠ ص', icon: <Moon className="w-4 h-4 text-indigo-400" />, slots: night },
-            { id: 'day', title: 'فترة الصباح والنهار', subtitle: '٠٦:٠٠ ص - ٠٥:٠٠ م', icon: <Sun className="w-4 h-4 text-amber-400" />, slots: day },
-        ];
-    }, [slots, filter]);
 
     // Slot click handler: Selects the clicked hour as start, and spans durationHours consecutive slots
     const handleSlotClick = (slot: HourlySlotData) => {
@@ -314,13 +262,11 @@ export default function HourlyBookingSlotsGrid({
     }, [slots, selectedStartHour24, durationHours, roomRate]);
 
     return (
-        <div className="space-y-4" dir="rtl">
-            {/* Control Panel: Header with Dropdown & Filter Tabs */}
-            <div className="bg-white/90 dark:bg-[#130f11] backdrop-blur-md border border-neutral-200/90 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-sm space-y-3.5">
-                
-                {/* Header Row: Title on right, Simple Duration Dropdown Button on left */}
+        <div className="space-y-3" dir="rtl">
+            {/* Header: Title & Duration Dropdown */}
+            <div className="bg-white/90 dark:bg-[#130f11] backdrop-blur-md border border-neutral-200/90 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    {/* Right: Title & 24/7 status */}
+                    {/* Title & 24/7 status */}
                     <div className="flex items-center gap-2.5">
                         <div className="w-9 h-9 rounded-xl bg-red-600/10 dark:bg-red-500/15 border border-red-500/25 flex items-center justify-center text-red-600 dark:text-red-500 shrink-0">
                             <Clock className="w-4 h-4" />
@@ -335,12 +281,12 @@ export default function HourlyBookingSlotsGrid({
                                 </span>
                             </div>
                             <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                                اختر المدة واضغط على ساعة البدء المطلوبة
+                                اضغط على ساعة بدء الحجز المطلوبة
                             </p>
                         </div>
                     </div>
 
-                    {/* Left: Small & Simple Duration Dropdown Button */}
+                    {/* Small & Simple Duration Dropdown Button */}
                     <div className="relative self-start sm:self-auto" ref={durationMenuRef}>
                         <button
                             type="button"
@@ -425,140 +371,57 @@ export default function HourlyBookingSlotsGrid({
                         </span>
                     </motion.div>
                 )}
-
-                {/* Filter Tabs */}
-                <div className="flex items-center gap-1.5 p-1 bg-neutral-100 dark:bg-white/[0.04] rounded-xl text-xs overflow-x-auto scrollbar-none">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setFilter('all');
-                            playPs5NavigateSound();
-                        }}
-                        className={`flex-1 min-w-[70px] py-1.5 px-2 rounded-lg font-bold transition-all cursor-pointer whitespace-nowrap text-center ${
-                            filter === 'all'
-                                ? 'bg-white dark:bg-[#20191c] text-neutral-900 dark:text-white shadow-xs'
-                                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
-                        }`}
-                    >
-                        الكل (24س)
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setFilter('evening');
-                            playPs5NavigateSound();
-                        }}
-                        className={`flex-1 min-w-[110px] py-1.5 px-2 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap text-center ${
-                            filter === 'evening'
-                                ? 'bg-rose-600 text-white shadow-xs'
-                                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
-                        }`}
-                    >
-                        <Sunset className="w-3.5 h-3.5" />
-                        <span>المساء (6م - 12ص)</span>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setFilter('night');
-                            playPs5NavigateSound();
-                        }}
-                        className={`flex-1 min-w-[110px] py-1.5 px-2 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap text-center ${
-                            filter === 'night'
-                                ? 'bg-indigo-600 text-white shadow-xs'
-                                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
-                        }`}
-                    >
-                        <Moon className="w-3.5 h-3.5" />
-                        <span>السهرة (12ص - 6ص)</span>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setFilter('day');
-                            playPs5NavigateSound();
-                        }}
-                        className={`flex-1 min-w-[110px] py-1.5 px-2 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap text-center ${
-                            filter === 'day'
-                                ? 'bg-amber-600 text-white shadow-xs'
-                                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
-                        }`}
-                    >
-                        <Sun className="w-3.5 h-3.5" />
-                        <span>النهار (6ص - 6م)</span>
-                    </button>
-                </div>
             </div>
 
-            {/* Slots Organized in Clean Groups */}
-            <div className="space-y-4">
-                {groups.map((group) => (
-                    <div key={group.id} className="space-y-2">
-                        {/* Group Header (shown when 'all' is selected to divide the day naturally) */}
-                        {filter === 'all' && (
-                            <div className="flex items-center justify-between px-1 text-xs text-neutral-500 dark:text-neutral-400">
-                                <span className="font-extrabold flex items-center gap-1.5 text-neutral-800 dark:text-neutral-200">
-                                    {group.icon}
-                                    <span>{group.title}</span>
+            {/* 24 Hourly Slots - Unified Single Grid in Chronological Order */}
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                {slots.map((slot) => {
+                    const {
+                        hour24,
+                        label,
+                        isPast,
+                        isBooked,
+                        isSelected,
+                        isStartHour,
+                    } = slot;
+
+                    return (
+                        <button
+                            key={hour24}
+                            type="button"
+                            onClick={() => handleSlotClick(slot)}
+                            disabled={isPast || isBooked}
+                            className={`relative h-12 px-2.5 rounded-xl border text-center transition-all duration-150 outline-none flex items-center justify-center gap-1.5 ${
+                                isPast
+                                    ? 'bg-neutral-100/50 dark:bg-white/[0.02] border-neutral-200/50 dark:border-white/[0.04] opacity-30 cursor-not-allowed text-neutral-400'
+                                    : isBooked
+                                    ? 'bg-red-500/10 dark:bg-red-950/20 border-red-500/25 text-red-500/80 cursor-not-allowed line-through'
+                                    : isSelected
+                                    ? 'bg-gradient-to-r from-red-600 to-rose-600 border-red-500 text-white font-extrabold shadow-md shadow-red-600/30 scale-[1.02] z-10 cursor-pointer'
+                                    : 'bg-white dark:bg-[#161214] hover:bg-neutral-50 dark:hover:bg-white/[0.06] border-neutral-200 dark:border-white/10 text-neutral-800 dark:text-neutral-200 hover:border-red-500/60 hover:text-red-600 dark:hover:text-red-400 cursor-pointer active:scale-95'
+                            }`}
+                        >
+                            <span className="font-mono text-xs sm:text-sm font-bold tracking-tight whitespace-nowrap">
+                                {label}
+                            </span>
+
+                            {isBooked && (
+                                <Lock className="w-3 h-3 text-red-500 shrink-0" />
+                            )}
+
+                            {isSelected && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-white shadow-xs shrink-0" />
+                            )}
+
+                            {/* Subtle badge for start hour in multi-hour booking */}
+                            {isSelected && durationHours > 1 && isStartHour && (
+                                <span className="absolute -top-1.5 -right-1 text-[8px] font-sans font-bold px-1 rounded bg-black text-white border border-white/20 shadow-xs">
+                                    بدء
                                 </span>
-                                <span className="text-[11px] font-mono text-neutral-400">
-                                    {group.subtitle}
-                                </span>
-                            </div>
-                        )}
-
-                        {/* Crisp Minimalist Gaming Pills Grid */}
-                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                            {group.slots.map((slot) => {
-                                const {
-                                    hour24,
-                                    label,
-                                    isPast,
-                                    isBooked,
-                                    isSelected,
-                                    isStartHour,
-                                } = slot;
-
-                                return (
-                                    <button
-                                        key={hour24}
-                                        type="button"
-                                        onClick={() => handleSlotClick(slot)}
-                                        disabled={isPast || isBooked}
-                                        className={`relative h-12 px-2.5 rounded-xl border text-center transition-all duration-150 outline-none flex items-center justify-center gap-1.5 ${
-                                            isPast
-                                                ? 'bg-neutral-100/50 dark:bg-white/[0.02] border-neutral-200/50 dark:border-white/[0.04] opacity-30 cursor-not-allowed text-neutral-400'
-                                                : isBooked
-                                                ? 'bg-red-500/10 dark:bg-red-950/20 border-red-500/25 text-red-500/80 cursor-not-allowed line-through'
-                                                : isSelected
-                                                ? 'bg-gradient-to-r from-red-600 to-rose-600 border-red-500 text-white font-extrabold shadow-md shadow-red-600/30 scale-[1.02] z-10 cursor-pointer'
-                                                : 'bg-white dark:bg-[#161214] hover:bg-neutral-50 dark:hover:bg-white/[0.06] border-neutral-200 dark:border-white/10 text-neutral-800 dark:text-neutral-200 hover:border-red-500/60 hover:text-red-600 dark:hover:text-red-400 cursor-pointer active:scale-95'
-                                        }`}
-                                    >
-                                        <span className="font-mono text-xs sm:text-sm font-bold tracking-tight whitespace-nowrap">
-                                            {label}
-                                        </span>
-
-                                        {isBooked && (
-                                            <Lock className="w-3 h-3 text-red-500 shrink-0" />
-                                        )}
-
-                                        {isSelected && (
-                                            <span className="w-1.5 h-1.5 rounded-full bg-white shadow-xs shrink-0" />
-                                        )}
-
-                                        {/* Subtle badge for start hour in multi-hour booking */}
-                                        {isSelected && durationHours > 1 && isStartHour && (
-                                            <span className="absolute -top-1.5 -right-1 text-[8px] font-sans font-bold px-1 rounded bg-black text-white border border-white/20 shadow-xs">
-                                                بدء
-                                            </span>
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                ))}
+                            )}
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Discreet Legend */}
