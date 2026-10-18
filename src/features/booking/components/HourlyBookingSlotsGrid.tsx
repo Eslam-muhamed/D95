@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Clock,
@@ -9,6 +9,7 @@ import {
     Sunset,
     Timer,
     Check,
+    ChevronDown,
 } from 'lucide-react';
 import {
     type BookingInterval,
@@ -60,6 +61,23 @@ export default function HourlyBookingSlotsGrid({
     onChangeDuration,
 }: HourlyBookingSlotsGridProps) {
     const [filter, setFilter] = useState<PeriodFilter>('all');
+    const [isDurationMenuOpen, setIsDurationMenuOpen] = useState(false);
+    const durationMenuRef = useRef<HTMLDivElement>(null);
+
+    // Close duration dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (durationMenuRef.current && !durationMenuRef.current.contains(e.target as Node)) {
+                setIsDurationMenuOpen(false);
+            }
+        };
+        if (isDurationMenuOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isDurationMenuOpen]);
 
     // Build the 24 hourly slots for the selected date
     const slots = useMemo<HourlySlotData[]>(() => {
@@ -236,7 +254,7 @@ export default function HourlyBookingSlotsGrid({
         }
     };
 
-    // Duration change handler from the top selector
+    // Duration change handler
     const handleDurationChange = (newDuration: number) => {
         playPs5NavigateSound();
 
@@ -297,11 +315,12 @@ export default function HourlyBookingSlotsGrid({
 
     return (
         <div className="space-y-4" dir="rtl">
-            {/* Control Panel: Duration & Filter */}
-            <div className="bg-white/90 dark:bg-[#130f11] backdrop-blur-md border border-neutral-200/90 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+            {/* Control Panel: Header with Dropdown & Filter Tabs */}
+            <div className="bg-white/90 dark:bg-[#130f11] backdrop-blur-md border border-neutral-200/90 dark:border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-sm space-y-3.5">
                 
-                {/* Header Row */}
-                <div className="flex items-center justify-between gap-3">
+                {/* Header Row: Title on right, Simple Duration Dropdown Button on left */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    {/* Right: Title & 24/7 status */}
                     <div className="flex items-center gap-2.5">
                         <div className="w-9 h-9 rounded-xl bg-red-600/10 dark:bg-red-500/15 border border-red-500/25 flex items-center justify-center text-red-600 dark:text-red-500 shrink-0">
                             <Clock className="w-4 h-4" />
@@ -316,58 +335,79 @@ export default function HourlyBookingSlotsGrid({
                                 </span>
                             </div>
                             <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                                اختر المدة أولاً ثم اضغط على ساعة البدء المطلوبة
+                                اختر المدة واضغط على ساعة البدء المطلوبة
                             </p>
                         </div>
                     </div>
 
-                    {/* Stats pill */}
-                    <div className="hidden sm:flex items-center gap-2 text-xs font-mono font-bold">
-                        <span className="text-neutral-400">
-                            {stats.available} ساعة متاحة
-                        </span>
-                    </div>
-                </div>
+                    {/* Left: Small & Simple Duration Dropdown Button */}
+                    <div className="relative self-start sm:self-auto" ref={durationMenuRef}>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsDurationMenuOpen(!isDurationMenuOpen);
+                                playPs5NavigateSound();
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer bg-neutral-100 hover:bg-neutral-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] border border-neutral-200/90 dark:border-white/10 text-neutral-800 dark:text-neutral-100 shadow-xs active:scale-95"
+                            aria-label="تحديد مدة الجلسة"
+                        >
+                            <Timer className="w-3.5 h-3.5 text-red-600 dark:text-red-500 shrink-0" />
+                            <span className="text-neutral-500 dark:text-neutral-400 font-medium">المدة:</span>
+                            <span className="font-extrabold text-neutral-900 dark:text-white">
+                                {durationHours === 1 ? 'ساعة واحدة' : durationHours === 2 ? 'ساعتان' : `${durationHours} ساعات`}
+                            </span>
+                            <span className="font-mono text-red-600 dark:text-red-400 text-[11px] font-bold">
+                                ({Math.round(durationHours * roomRate)} ج.م)
+                            </span>
+                            <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform duration-200 ${isDurationMenuOpen ? 'rotate-180' : ''}`} />
+                        </button>
 
-                {/* 1. Duration Selector - Sleek Segmented Control */}
-                <div className="pt-2 border-t border-neutral-100 dark:border-white/[0.05] space-y-2">
-                    <div className="flex items-center justify-between text-xs font-bold text-neutral-600 dark:text-neutral-300">
-                        <span className="flex items-center gap-1.5">
-                            <Timer className="w-3.5 h-3.5 text-red-600 dark:text-red-500" />
-                            <span>مدة الجلسة:</span>
-                        </span>
-                        <span className="font-mono text-red-600 dark:text-red-400">
-                            {durationHours === 1 ? 'ساعة واحدة' : durationHours === 2 ? 'ساعتان' : `${durationHours} ساعات`} ({Math.round(durationHours * roomRate)} ج.م)
-                        </span>
-                    </div>
-
-                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                        {DURATION_CHOICES.map((hrs) => {
-                            const isSelected = durationHours === hrs;
-                            return (
-                                <button
-                                    key={hrs}
-                                    type="button"
-                                    onClick={() => handleDurationChange(hrs)}
-                                    className={`py-2 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer border text-center flex flex-col items-center justify-center gap-0.5 ${
-                                        isSelected
-                                            ? 'bg-red-600 border-red-500 text-white shadow-md shadow-red-600/30 scale-[1.02]'
-                                            : 'bg-neutral-50 dark:bg-white/[0.03] border-neutral-200/80 dark:border-white/10 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.07]'
-                                    }`}
+                        {/* Dropdown Menu */}
+                        <AnimatePresence>
+                            {isDurationMenuOpen && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -6, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: -6, scale: 0.95 }}
+                                    transition={{ duration: 0.15 }}
+                                    className="absolute left-0 sm:left-0 z-30 mt-1.5 w-52 p-1.5 bg-white dark:bg-[#181316] border border-neutral-200 dark:border-white/10 rounded-xl shadow-2xl space-y-1"
                                 >
-                                    <span className="font-extrabold">
-                                        {hrs === 1 ? '1 ساعة' : hrs === 2 ? '2 ساعة' : `${hrs} ساعات`}
-                                    </span>
-                                    <span className={`text-[10px] font-mono ${isSelected ? 'text-white/80' : 'text-neutral-400'}`}>
-                                        {hrs * roomRate} ج.م
-                                    </span>
-                                </button>
-                            );
-                        })}
+                                    <div className="px-2.5 py-1 text-[10px] font-bold text-neutral-400 border-b border-neutral-100 dark:border-white/[0.05] mb-1">
+                                        اختر مدة الجلسة:
+                                    </div>
+                                    {DURATION_CHOICES.map((hrs) => {
+                                        const isSelected = durationHours === hrs;
+                                        return (
+                                            <button
+                                                key={hrs}
+                                                type="button"
+                                                onClick={() => {
+                                                    handleDurationChange(hrs);
+                                                    setIsDurationMenuOpen(false);
+                                                }}
+                                                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                                    isSelected
+                                                        ? 'bg-red-600 text-white shadow-xs'
+                                                        : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06]'
+                                                }`}
+                                            >
+                                                <span className="flex items-center gap-1.5">
+                                                    {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                                                    <span>{hrs === 1 ? 'ساعة واحدة' : hrs === 2 ? 'ساعتان' : `${hrs} ساعات`}</span>
+                                                </span>
+                                                <span className={`font-mono text-[11px] ${isSelected ? 'text-white/90' : 'text-neutral-400'}`}>
+                                                    {hrs * roomRate} ج.م
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
 
-                {/* 2. Active Selection Live Ribbon */}
+                {/* Active Selection Live Ribbon */}
                 {selectedSessionInfo && (
                     <motion.div
                         initial={{ opacity: 0, y: -4 }}
@@ -386,7 +426,7 @@ export default function HourlyBookingSlotsGrid({
                     </motion.div>
                 )}
 
-                {/* 3. Filter Tabs */}
+                {/* Filter Tabs */}
                 <div className="flex items-center gap-1.5 p-1 bg-neutral-100 dark:bg-white/[0.04] rounded-xl text-xs overflow-x-auto scrollbar-none">
                     <button
                         type="button"
@@ -477,7 +517,6 @@ export default function HourlyBookingSlotsGrid({
                                     isBooked,
                                     isSelected,
                                     isStartHour,
-                                    isSubsequentHour,
                                 } = slot;
 
                                 return (
