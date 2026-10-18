@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import type { DBBooking, BookingPolicy } from '@/types/database';
 import {
     type BookingInterval,
+    OPERATING_HOURS,
     createDateTimeFromBusinessDate,
     calculateEndDateTime,
     getBusinessOperatingWindow,
@@ -544,9 +545,9 @@ export function calculateBookingExtensionInfo(
 
     const ONE_MINUTE_MS = 60 * 1000;
     
-    // Operating window closing check (04:00 AM next day)
+    // Operating window closing check (in 24/7 mode, venue never closes)
     const { closing } = getBusinessOperatingWindow(targetBooking.booking_date);
-    const exceedsClosing = newEnd.getTime() > closing.getTime();
+    const exceedsClosing = OPERATING_HOURS.TOTAL_OPERATING_HOURS < 24 && newEnd.getTime() > closing.getTime();
 
     // Check chained conflicts
     const conflictingBookings: ConflictingBookingShiftInfo[] = [];
@@ -904,24 +905,35 @@ export async function fetchOperatingHoursSettings(): Promise<{start_hour: number
         .select('setting_value')
         .eq('setting_key', 'operating_hours')
         .single();
-    if (error || !data) return { start_hour: 8, closing_hour: 4 };
+    if (error || !data) return { start_hour: 0, closing_hour: 0 };
     const val = data.setting_value as any;
     return {
-        start_hour: val.start_hour ?? 8,
-        closing_hour: val.closing_hour ?? 4
+        start_hour: val.start_hour ?? 0,
+        closing_hour: val.closing_hour ?? 0
     };
 }
 
 export async function updateOperatingHoursSettings(start: number, close: number): Promise<void> {
+    const is24 = (start === 0 && close === 0) || (start === close);
+    const totalHours = is24 ? 24 : (close < start ? (24 - start + close) : (close - start));
     const { error } = await supabase
         .from('system_settings')
-        .update({ setting_value: { start_hour: start, closing_hour: close } })
+        .update({
+            setting_value: {
+                start_hour: start,
+                closing_hour: close,
+                is_24_hours: is24,
+                total_hours: totalHours,
+            },
+            updated_at: new Date().toISOString(),
+        })
         .eq('setting_key', 'operating_hours');
     if (error) throw error;
     // Update local immediately
     const { OPERATING_HOURS } = await import('@/lib/bookingDatetime');
     OPERATING_HOURS.START_HOUR = start;
     OPERATING_HOURS.CLOSING_HOUR = close;
+    OPERATING_HOURS.TOTAL_OPERATING_HOURS = totalHours;
 }
 
 export async function fetchRoomRates(): Promise<RoomRates> {

@@ -166,8 +166,8 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
     const [archiveLoading, setArchiveLoading] = useState<boolean>(false);
 
     // Operating Hours State
-    const [startHour, setStartHour] = useState<number>(8);
-    const [closingHour, setClosingHour] = useState<number>(4);
+    const [startHour, setStartHour] = useState<number>(0);
+    const [closingHour, setClosingHour] = useState<number>(0);
     const [isSavingHours, setIsSavingHours] = useState<boolean>(false);
 
     // Live Clock
@@ -2227,21 +2227,44 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
                                     <Clock className="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-bold text-slate-900">ساعات عمل الوردية (الشيفت)</h3>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-sm font-bold text-slate-900">ساعات عمل الوردية (الشيفت)</h3>
+                                        {(startHour === 0 && closingHour === 0) ? (
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                                مفتوح 24 ساعة (24/7)
+                                            </span>
+                                        ) : (
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                                وردية مخصصة
+                                            </span>
+                                        )}
+                                    </div>
                                     <p className="text-xs text-slate-500">
-                                        يتم حساب إيرادات ومبيعات اليوم بناءً على هذا التوقيت
+                                        يتم حساب إيرادات ومبيعات اليوم وجدول الحجوزات بناءً على هذا التوقيت
                                     </p>
                                 </div>
                             </div>
-                            <button
-                                type="button"
-                                onClick={handleSaveOperatingHours}
-                                disabled={isSavingHours}
-                                className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-colors cursor-pointer shrink-0 disabled:opacity-50 flex items-center gap-1.5 justify-center sm:justify-start"
-                            >
-                                {isSavingHours ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                                حفظ ساعات العمل
-                            </button>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setStartHour(0);
+                                        setClosingHour(0);
+                                    }}
+                                    className="px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition-colors cursor-pointer"
+                                >
+                                    ⚡ تفعيل 24 ساعة (24/7)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleSaveOperatingHours}
+                                    disabled={isSavingHours}
+                                    className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-colors cursor-pointer shrink-0 disabled:opacity-50 flex items-center gap-1.5 justify-center sm:justify-start"
+                                >
+                                    {isSavingHours ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                                    حفظ ساعات العمل
+                                </button>
+                            </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-2 p-3 bg-slate-50 rounded-xl border border-slate-200/60">
                             <div>
@@ -2255,7 +2278,7 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
                                     >
                                         {[...Array(24)].map((_, i) => (
                                             <option key={i} value={i}>
-                                                {i === 0 ? '12:00 AM' : i < 12 ? `${i}:00 AM` : i === 12 ? '12:00 PM' : `${i - 12}:00 PM`}
+                                                {i === 0 ? '12:00 AM (منتصف الليل)' : i < 12 ? `${i}:00 AM` : i === 12 ? '12:00 PM (ظهراً)' : `${i - 12}:00 PM`}
                                             </option>
                                         ))}
                                     </select>
@@ -2273,7 +2296,7 @@ export default function SimpleOperationsTab({ userEmail = 'admin@d95.com' }: Sim
                                     >
                                         {[...Array(24)].map((_, i) => (
                                             <option key={i} value={i}>
-                                                {i === 0 ? '12:00 AM' : i < 12 ? `${i}:00 AM` : i === 12 ? '12:00 PM' : `${i - 12}:00 PM`}
+                                                {i === 0 ? '12:00 AM (24 ساعة / كامل اليوم)' : i < 12 ? `${i}:00 AM` : i === 12 ? '12:00 PM' : `${i - 12}:00 PM`}
                                             </option>
                                         ))}
                                     </select>

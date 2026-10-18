@@ -141,7 +141,7 @@ src/
      - شارة الحالة: `مفتوح الآن • OFFICIAL PORTAL`
      - لوجو الفرشاة [`D95BrushLogo`](file:///Users/jrslam/D95/src/components/brand/D95BrushLogo.tsx).
      - عنوان ضخم بتأثير Bebas: `WE ARE OPEN`.
-     - بوكس ساعات العمل: `FROM 08:00 AM TO 04:00 AM`.
+     - بوكس ساعات العمل: `24/7 OPEN 24 HOURS (NON-STOP GAMING & CAFÉ)`.
      - الشعار: `PLAY • COMPETE • RELAX • REPEAT`.
   3. **البوابتان التفاعليتان (Dual Portals)**:
      - **بوابة البلايستيشن (ZONE 01 - PS5 ARENA)**:
@@ -197,7 +197,7 @@ src/
      - زر فتح الكالندر الشهري الكامل.
   3. **عجلة الوقت الدوارة (Drum Wheel Time Picker)**:
      - مكون [`DrumWheelColumn`](file:///Users/jrslam/D95/src/pages/BookingDetailsPage.tsx#L136): اختيار الساعة، الدقيقة، والفترة (صباحاً / مساءً).
-     - متطابق بدقة مع توقيت القاهرة وساعات عمل المكان (من 08:00 ص حتى 04:00 فجراً).
+     - متطابق بدقة مع توقيت القاهرة وساعات عمل المكان المفتوحة 24 ساعة (24/7).
   4. **محدد مدة اللعب (Duration Selector)**:
      - أزرار اختيار الساعات: `1 h`, `2 h`, `3 h`, `4 h`, `5 h`, `6 h`.
   5. **الجدول الزمني التفاعلي ([`BookingTimelineSchedule`](file:///Users/jrslam/D95/src/components/booking/BookingTimelineSchedule.tsx))**:
@@ -409,7 +409,7 @@ export const CONTACT_INFO = {
     whatsappNumber: '201000000095',     // رقم الواتساب الرسمي
     instapayHandle: 'd95lounge@instapay', // معرف إنستاباي
     walletNumber: '01000000095',        // رقم فودافون كاش / المحفظة
-    workingHours: 'يومياً: 08:00 ص – 04:00 ص (20 ساعة متواصلة)',
+    workingHours: 'يومياً: مفتوح 24 ساعة على مدار اليوم (24/7)',
     address: 'D95 Gaming Lounge & Café',
     googleMapsLink: 'https://maps.google.com',
     mapsEmbedSrc: '',

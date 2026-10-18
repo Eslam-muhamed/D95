@@ -674,7 +674,7 @@ export default function PlaystationPage() {
                 <footer className="text-center space-y-3 pt-2">
                     <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white dark:bg-[#18090d] border border-neutral-300 dark:border-red-600/40 text-xs text-neutral-800 dark:text-neutral-200 shadow-sm">
                         <Clock className="w-4 h-4 text-red-600 dark:text-red-500" />
-                        <span>مواعيد العمل المعتمدة: يومياً من <strong>08:00 صباحاً</strong> حتى <strong>04:00 فجراً</strong></span>
+                        <span>مواعيد العمل المعتمدة: <strong>مفتوح 24 ساعة يومياً (24/7)</strong> على مدار اليوم</span>
                     </div>
 
                     {CONTACT_INFO.instagramUrl && (

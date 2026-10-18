@@ -610,7 +610,7 @@ export default function BookingDetailsPage() {
                     toast.error('هذا الوقت قد مضى، يرجى اختيار موعد قادم ⏳');
                 }
             } else if (currentAvailability.reason === 'EXCEEDS_CLOSING') {
-                toast.error('الموعد مع المدة المحددة يتجاوز موعد إغلاق الصالة (04:00 ص) ⚠️');
+                toast.error('الموعد مع المدة المحددة يتجاوز ساعات العمل المتاحة ⚠️');
             } else if (currentAvailability.reason === 'OVERLAP_CONFLICT') {
                 const conf = 'conflictingInterval' in currentAvailability ? currentAvailability.conflictingInterval : undefined;
                 const confMsg = conf
@@ -664,7 +664,7 @@ export default function BookingDetailsPage() {
                     toast.error('هذا الوقت قد مضى، يرجى اختيار موعد قادم ⏳');
                 }
             } else if (currentAvailability.reason === 'EXCEEDS_CLOSING') {
-                toast.error('الموعد مع المدة المحددة يتجاوز موعد إغلاق الصالة (04:00 ص) ⚠️');
+                toast.error('الموعد مع المدة المحددة يتجاوز ساعات العمل المتاحة ⚠️');
             } else if (currentAvailability.reason === 'OVERLAP_CONFLICT') {
                 const conf = currentAvailability.conflictingInterval;
                 const confMsg = conf
@@ -1198,7 +1198,7 @@ export default function BookingDetailsPage() {
                                                     return 'هذا الوقت قد مضى';
                                                 })()
                                                 : currentAvailability.reason === 'EXCEEDS_CLOSING'
-                                                ? 'يتجاوز موعد الإغلاق (04:00 ص)'
+                                                ? 'يتجاوز ساعات العمل المتاحة'
                                                 : currentAvailability.conflictingInterval
                                                 ? `يتعارض مع حجز آخر (${formatArabicTimeDetailed(currentAvailability.conflictingInterval.start)})`
                                                 : 'غير متاح'}

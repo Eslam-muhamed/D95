@@ -2,8 +2,7 @@
  * Comprehensive Test Suite for PlayStation Booking Dynamic Availability Engine.
  * Covers all 6 Prompt Examples and all 20 Edge Cases.
  */
-import * as dotenv from 'dotenv';
-dotenv.config();
+import 'dotenv/config';
 
 import {
     OPERATING_HOURS,
@@ -19,8 +18,8 @@ import {
 import { supabase } from '../src/lib/supabase';
 
 const TEST_DATE = '2026-09-09';
-// Fixed reference "now" well before any bookings for deterministic testing: 2026-09-09 08:00 AM
-const FIXED_NOW = new Date(2026, 8, 9, 8, 0, 0);
+// Fixed reference "now" well before any bookings for deterministic testing: 2026-09-09 00:00 AM
+const FIXED_NOW = new Date(2026, 8, 9, 0, 0, 0);
 
 let passedCount = 0;
 let failedCount = 0;
@@ -73,26 +72,30 @@ async function runAllTests() {
         assert(res.isAvailable === true, 'Example 3: 02:00-03:00 PM vs requested 03:00-04:00 PM (touching edge) is AVAILABLE');
     }
 
-    // Example 4: Existing: 11:30 PM -> 12:30 AM, Requested: 12:30 AM -> 01:30 AM => AVAILABLE
+    // Example 4: Touching boundary at early morning:
+    // Existing: 00:30 AM -> 01:30 AM, Requested: 01:30 AM -> 02:30 AM => AVAILABLE
     {
+        const existingStart = createDateTimeFromBusinessDate(TEST_DATE, '00:30');
         const existing: BookingInterval[] = [{
-            start: createDateTimeFromBusinessDate(TEST_DATE, '23:30'),
-            end: createDateTimeFromBusinessDate(TEST_DATE, '00:30'),
+            start: existingStart,
+            end: calculateEndDateTime(existingStart, 1),
         }];
-        const reqStart = createDateTimeFromBusinessDate(TEST_DATE, '00:30');
+        const reqStart = createDateTimeFromBusinessDate(TEST_DATE, '01:30');
         const res = checkAvailability(reqStart, 1, TEST_DATE, existing, FIXED_NOW);
-        assert(res.isAvailable === true, 'Example 4: 11:30 PM-12:30 AM vs requested 12:30-01:30 AM is AVAILABLE');
+        assert(res.isAvailable === true, 'Example 4: 12:30-01:30 AM vs requested 01:30-02:30 AM (touching edge) is AVAILABLE');
     }
 
-    // Example 5: Existing: 11:30 PM -> 12:30 AM, Requested: 12:15 AM -> 01:15 AM => UNAVAILABLE
+    // Example 5: Overlapping in early morning:
+    // Existing: 00:30 AM -> 01:30 AM, Requested: 01:15 AM -> 02:15 AM => UNAVAILABLE
     {
+        const existingStart = createDateTimeFromBusinessDate(TEST_DATE, '00:30');
         const existing: BookingInterval[] = [{
-            start: createDateTimeFromBusinessDate(TEST_DATE, '23:30'),
-            end: createDateTimeFromBusinessDate(TEST_DATE, '00:30'),
+            start: existingStart,
+            end: calculateEndDateTime(existingStart, 1),
         }];
-        const reqStart = createDateTimeFromBusinessDate(TEST_DATE, '00:15');
+        const reqStart = createDateTimeFromBusinessDate(TEST_DATE, '01:15');
         const res = checkAvailability(reqStart, 1, TEST_DATE, existing, FIXED_NOW);
-        assert(res.isAvailable === false && res.reason === 'OVERLAP_CONFLICT', 'Example 5: 11:30 PM-12:30 AM vs requested 12:15-01:15 AM is UNAVAILABLE');
+        assert(res.isAvailable === false && res.reason === 'OVERLAP_CONFLICT', 'Example 5: 12:30-01:30 AM vs requested 01:15-02:15 AM is UNAVAILABLE');
     }
 
     // Example 6: Existing: 02:00 AM -> 03:00 AM, Requested: 03:00 AM -> 04:00 AM => AVAILABLE
@@ -103,7 +106,7 @@ async function runAllTests() {
         }];
         const reqStart = createDateTimeFromBusinessDate(TEST_DATE, '03:00');
         const res = checkAvailability(reqStart, 1, TEST_DATE, existing, FIXED_NOW);
-        assert(res.isAvailable === true, 'Example 6: 02:00-03:00 AM vs requested 03:00-04:00 AM (ending at closing) is AVAILABLE');
+        assert(res.isAvailable === true, 'Example 6: 02:00-03:00 AM vs requested 03:00-04:00 AM is AVAILABLE in 24/7 mode');
     }
 
     console.log('\n====================================================');
@@ -209,7 +212,7 @@ async function runAllTests() {
         assert(isNextCalendarDay && res.isAvailable, 'Edge Case 9: Midnight crossing (11:30 PM -> 01:30 AM next day) properly calculated and AVAILABLE');
     }
 
-    // Edge Case 10: Booking ending exactly at 04:00 AM
+    // Edge Case 10: 24/7 Operation: Bookings at late night / early morning (02:00 AM -> 04:00 AM) are AVAILABLE
     {
         // 03:00 AM + 1 hour = 04:00 AM
         const s = createDateTimeFromBusinessDate(TEST_DATE, '03:00');
@@ -217,18 +220,17 @@ async function runAllTests() {
         // 02:00 AM + 2 hours = 04:00 AM
         const s2 = createDateTimeFromBusinessDate(TEST_DATE, '02:00');
         const res2 = checkAvailability(s2, 2, TEST_DATE, [], FIXED_NOW);
-        assert(res1.isAvailable && res2.isAvailable, 'Edge Case 10: Bookings ending exactly at 04:00 AM are AVAILABLE');
+        assert(res1.isAvailable && res2.isAvailable, 'Edge Case 10: Bookings at 02:00-04:00 AM are AVAILABLE in 24/7 mode');
     }
 
-    // Edge Case 11: Attempt to go beyond 04:00 AM
+    // Edge Case 11: 24/7 Operation: Bookings crossing past 04:00 AM (e.g. 03:30 AM -> 05:30 AM) are AVAILABLE
     {
-        // 03:15 AM + 1 hour = 04:15 AM (past closing)
+        // In 24/7 mode, the lounge never closes at 04:00 AM
         const s1 = createDateTimeFromBusinessDate(TEST_DATE, '03:15');
-        const res1 = checkAvailability(s1, 1, TEST_DATE, [], FIXED_NOW);
-        // 02:15 AM + 2 hours = 04:15 AM
-        const s2 = createDateTimeFromBusinessDate(TEST_DATE, '02:15');
+        const res1 = checkAvailability(s1, 2, TEST_DATE, [], FIXED_NOW);
+        const s2 = createDateTimeFromBusinessDate(TEST_DATE, '04:00');
         const res2 = checkAvailability(s2, 2, TEST_DATE, [], FIXED_NOW);
-        assert(!res1.isAvailable && res1.reason === 'EXCEEDS_CLOSING' && !res2.isAvailable, 'Edge Case 11: Booking extending past 04:00 AM is rejected with EXCEEDS_CLOSING');
+        assert(res1.isAvailable && res2.isAvailable, 'Edge Case 11: Booking crossing 04:00 AM and starting at 04:00 AM is AVAILABLE in 24/7 mode');
     }
 
     // Edge Case 12: Attempt to book a past time
@@ -276,13 +278,18 @@ async function runAllTests() {
         assert(!res.isAvailable && res.reason === 'INVALID_DURATION', 'Edge Case 18: Duration < 1 hour is rejected with INVALID_DURATION');
     }
 
-    // Edge Case 19: Invalid start time (outside 08:00 AM -> 04:00 AM window)
+    // Edge Case 19: 24/7 Operation: 05:00 AM is AVAILABLE; start time on different date rejected with EXCEEDS_CLOSING
     {
-        // 05:00 AM on a future business date (outside 08:00 AM -> 04:00 AM window)
         const futureDate = '2026-09-15';
-        const outsideStart = new Date(2026, 8, 15, 5, 0, 0); // 05:00 AM on Sep 15
-        const res = checkAvailability(outsideStart, 1, futureDate, [], FIXED_NOW);
-        assert(!res.isAvailable && res.reason === 'EXCEEDS_CLOSING', 'Edge Case 19: Start time outside operating hours is rejected with EXCEEDS_CLOSING');
+        // 05:00 AM is now valid and open in 24/7 mode
+        const earlyMorning = createDateTimeFromBusinessDate(futureDate, '05:00');
+        const resEarly = checkAvailability(earlyMorning, 1, futureDate, [], FIXED_NOW);
+        assert(resEarly.isAvailable, 'Edge Case 19a: 05:00 AM is AVAILABLE in 24/7 mode');
+
+        // Start time belonging to another date (e.g. 2026-09-16) is rejected for business date 2026-09-15
+        const diffDateStart = createDateTimeFromBusinessDate('2026-09-16', '12:00');
+        const resDiff = checkAvailability(diffDateStart, 1, futureDate, [], FIXED_NOW);
+        assert(!resDiff.isAvailable && resDiff.reason === 'EXCEEDS_CLOSING', 'Edge Case 19b: Start time outside chosen date boundary is rejected with EXCEEDS_CLOSING');
     }
 
     // Edge Case 20: Manipulated frontend request (e.g. negative duration, missing name, end < start)

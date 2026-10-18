@@ -2,10 +2,10 @@
  * PlayStation Booking DateTime, Operating Hours, and Dynamic Availability Engine.
  * 
  * Operating hours:
- * 08:00 AM -> 04:00 AM the following calendar day (20 continuous hours).
+ * 24/7 (24 continuous hours daily).
  * 
  * Timeline:
- * 08:00 AM (Day 1) ────────────────────────────── 04:00 AM (Day 2)
+ * 12:00 AM ────────────────────────────── 12:00 AM (24 Hours Non-Stop)
  * 
  * Availability is continuous: rooms are AVAILABLE by default, and become unavailable
  * ONLY during the exact intervals occupied by confirmed/pending customer bookings.
@@ -15,11 +15,11 @@
  */
 
 export const OPERATING_HOURS = {
-    START_HOUR: 8,      // 08:00 AM
+    START_HOUR: 0,      // 12:00 AM (24/7)
     START_MINUTE: 0,
-    CLOSING_HOUR: 4,    // 04:00 AM next day (Default)
+    CLOSING_HOUR: 0,    // 12:00 AM next day (24/7)
     CLOSING_MINUTE: 0,
-    TOTAL_OPERATING_HOURS: 20,
+    TOTAL_OPERATING_HOURS: 24,
     INTERVAL_MINUTES: 15,
     MIN_DURATION_HOURS: 1.0,
     MAX_DURATION_HOURS: 12.0,
@@ -40,11 +40,28 @@ export async function fetchAndSetOperatingHours() {
             
         if (!error && data?.setting_value) {
             const val = data.setting_value as any;
-            if (val.closing_hour !== undefined) {
-                OPERATING_HOURS.CLOSING_HOUR = Number(val.closing_hour);
-            }
-            if (val.start_hour !== undefined) {
-                OPERATING_HOURS.START_HOUR = Number(val.start_hour);
+            const is24 = val.is_24_hours === true || 
+                         (Number(val.start_hour) === 0 && Number(val.closing_hour) === 0) || 
+                         (val.start_hour !== undefined && val.closing_hour !== undefined && Number(val.start_hour) === Number(val.closing_hour)) ||
+                         Number(val.total_hours) === 24;
+
+            if (is24) {
+                OPERATING_HOURS.START_HOUR = 0;
+                OPERATING_HOURS.CLOSING_HOUR = 0;
+                OPERATING_HOURS.TOTAL_OPERATING_HOURS = 24;
+            } else {
+                if (val.closing_hour !== undefined) {
+                    OPERATING_HOURS.CLOSING_HOUR = Number(val.closing_hour);
+                }
+                if (val.start_hour !== undefined) {
+                    OPERATING_HOURS.START_HOUR = Number(val.start_hour);
+                }
+                if (val.closing_hour !== undefined && val.start_hour !== undefined) {
+                    const start = Number(val.start_hour);
+                    const close = Number(val.closing_hour);
+                    const diff = close < start ? (24 - start + close) : (close - start);
+                    OPERATING_HOURS.TOTAL_OPERATING_HOURS = diff === 0 ? 24 : diff;
+                }
             }
         }
         hasFetchedSettings = true;
@@ -66,7 +83,7 @@ export interface TimeOption {
     periodName: string;       // "الفترة الصباحية", "فترة السهرة", etc.
     hour24: number;
     minute: number;
-    isNextDay: boolean;       // true if between 00:00 and 04:00 AM
+    isNextDay: boolean;       // true if between 00:00 and START_HOUR
     startDateTime: Date;      // Full Date object for this business date
 }
 
@@ -90,11 +107,11 @@ export function addDaysToDateString(dateStr: string, days: number): string {
  * Get today's calendar date string in YYYY-MM-DD pinned to Africa/Cairo timezone.
  */
 export function getCairoTodayDateString(): string {
-    // Business logic: The day ends at 4:00 AM.
-    // So any time before 4:00 AM should be considered the previous day.
-    // We can achieve this by subtracting 4 hours from the current time.
     const now = new Date();
-    const businessDate = new Date(now.getTime() - OPERATING_HOURS.CLOSING_HOUR * 3600 * 1000);
+    // In 24/7 mode, the business date is the exact calendar date in Africa/Cairo.
+    // If running in a custom shift mode, subtract closing hour to preserve night shift grouping.
+    const hourOffset = OPERATING_HOURS.TOTAL_OPERATING_HOURS === 24 ? 0 : OPERATING_HOURS.CLOSING_HOUR;
+    const businessDate = new Date(now.getTime() - hourOffset * 3600 * 1000);
     
     try {
         const formatter = new Intl.DateTimeFormat('en-CA', {
@@ -186,14 +203,15 @@ export function getPeriodName(hour24: number): string {
 
 /**
  * Convert a businessDate and a time24 string (e.g. "23:30" or "01:15") into an exact Date object in Cairo time.
- * If hour < 8 (e.g. 00:00 to 04:00), it belongs to the next calendar day.
+ * If START_HOUR > 0 and hour < START_HOUR, it belongs to the next calendar day.
+ * In 24/7 mode (START_HOUR === 0), all hours 0..23 belong to businessDate.
  */
 export function createDateTimeFromBusinessDate(businessDate: string, time24: string): Date {
     const [hStr, mStr] = time24.split(':');
     const hour = parseInt(hStr, 10);
     const minute = parseInt(mStr, 10);
 
-    const isNextDay = hour < OPERATING_HOURS.START_HOUR;
+    const isNextDay = OPERATING_HOURS.START_HOUR > 0 && hour < OPERATING_HOURS.START_HOUR;
     const targetDateStr = isNextDay ? addDaysToDateString(businessDate, 1) : businessDate;
 
     const [y, m, d] = targetDateStr.split('-').map(Number);
@@ -212,25 +230,34 @@ export function createDateTimeFromBusinessDate(businessDate: string, time24: str
     return result;
 }
 
-
 /**
  * Get opening and closing Date objects for a business date pinned to Cairo time.
- * Opening: businessDate 08:00:00
- * Closing: (businessDate + 1 day) 04:00:00
+ * In 24-hour mode:
+ * Opening is businessDate 00:00:00.
+ * Closing extends through the 24 hours of that business date + MAX_DURATION_HOURS
+ * so that bookings starting near midnight can check availability and intervals across midnight seamlessly.
  */
 export function getBusinessOperatingWindow(businessDate: string): { opening: Date; closing: Date } {
-    const opening = createDateTimeFromBusinessDate(businessDate, '08:00');
-    const closing = createDateTimeFromBusinessDate(businessDate, '04:00');
+    if (OPERATING_HOURS.TOTAL_OPERATING_HOURS === 24) {
+        const opening = createDateTimeFromBusinessDate(businessDate, '00:00');
+        const nextDayOpening = createDateTimeFromBusinessDate(addDaysToDateString(businessDate, 1), '00:00');
+        const closing = new Date(nextDayOpening.getTime() + OPERATING_HOURS.MAX_DURATION_HOURS * 3600 * 1000);
+        return { opening, closing };
+    }
+    const startStr = `${String(OPERATING_HOURS.START_HOUR).padStart(2, '0')}:00`;
+    const closeStr = `${String(OPERATING_HOURS.CLOSING_HOUR).padStart(2, '0')}:00`;
+    const opening = createDateTimeFromBusinessDate(businessDate, startStr);
+    const closing = createDateTimeFromBusinessDate(businessDate, closeStr);
     return { opening, closing };
 }
 
 /**
- * Generate all 15-minute start time options throughout the 20-hour operating window.
- * From 08:00 AM of businessDate up to 03:45 AM of next calendar day.
+ * Generate all 15-minute start time options throughout the operating window.
+ * In 24-hour mode, from 00:00 (12:00 AM) up to 23:45 (11:45 PM).
  */
 export function generateStartTimeOptions(businessDate: string): TimeOption[] {
     const options: TimeOption[] = [];
-    const totalMinutes = OPERATING_HOURS.TOTAL_OPERATING_HOURS * 60; // 1200 mins
+    const totalMinutes = OPERATING_HOURS.TOTAL_OPERATING_HOURS * 60;
 
     for (let offset = 0; offset < totalMinutes; offset += OPERATING_HOURS.INTERVAL_MINUTES) {
         const totalStartMinutes = (OPERATING_HOURS.START_HOUR * 60) + offset;
@@ -238,7 +265,7 @@ export function generateStartTimeOptions(businessDate: string): TimeOption[] {
         const minute = totalStartMinutes % 60;
 
         const time24 = `${String(hour24).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-        const isNextDay = hour24 < OPERATING_HOURS.START_HOUR;
+        const isNextDay = OPERATING_HOURS.START_HOUR > 0 && hour24 < OPERATING_HOURS.START_HOUR;
         const startDateTime = createDateTimeFromBusinessDate(businessDate, time24);
 
         options.push({
@@ -256,10 +283,12 @@ export function generateStartTimeOptions(businessDate: string): TimeOption[] {
 }
 
 /**
- * Calculate the latest start time for a given duration so booking does not exceed closing (04:00 AM next day).
- * latestStartTime = closing - duration.
+ * Calculate the latest start time for a given duration.
  */
 export function getLatestAllowedStartTime(businessDate: string, durationHours: number): Date {
+    if (OPERATING_HOURS.TOTAL_OPERATING_HOURS === 24) {
+        return createDateTimeFromBusinessDate(businessDate, '23:45');
+    }
     const { closing } = getBusinessOperatingWindow(businessDate);
     return new Date(closing.getTime() - durationHours * 3600 * 1000);
 }
@@ -287,8 +316,8 @@ export function doesIntervalOverlap(
 
 /**
  * Check availability of a proposed booking window against:
- * 1. Minimum duration
- * 2. Operating hours boundary (closing at 04:00 AM next day)
+ * 1. Minimum and Maximum duration
+ * 2. Operating hours boundary
  * 3. Past time (if start is in the past)
  * 4. Existing bookings overlap
  */
@@ -299,7 +328,7 @@ export function checkAvailability(
     existingBookings: BookingInterval[],
     now: Date = new Date()
 ): AvailabilityResult {
-    if (durationHours < OPERATING_HOURS.MIN_DURATION_HOURS) {
+    if (durationHours < OPERATING_HOURS.MIN_DURATION_HOURS || durationHours > OPERATING_HOURS.MAX_DURATION_HOURS) {
         return { isAvailable: false, reason: 'INVALID_DURATION' };
     }
 
@@ -313,8 +342,17 @@ export function checkAvailability(
     const endDateTime = calculateEndDateTime(startDateTime, durationHours);
 
     // 2. Must be within operating hours
-    if (startDateTime.getTime() < opening.getTime() || endDateTime.getTime() > closing.getTime()) {
-        return { isAvailable: false, reason: 'EXCEEDS_CLOSING' };
+    if (OPERATING_HOURS.TOTAL_OPERATING_HOURS === 24) {
+        // In 24/7 mode, start time must be on the selected business date:
+        // >= 00:00 of businessDate and < 00:00 of the following day
+        const nextDayOpening = createDateTimeFromBusinessDate(addDaysToDateString(businessDate, 1), '00:00');
+        if (startDateTime.getTime() < opening.getTime() || startDateTime.getTime() >= nextDayOpening.getTime()) {
+            return { isAvailable: false, reason: 'EXCEEDS_CLOSING' };
+        }
+    } else {
+        if (startDateTime.getTime() < opening.getTime() || endDateTime.getTime() > closing.getTime()) {
+            return { isAvailable: false, reason: 'EXCEEDS_CLOSING' };
+        }
     }
 
     // 3. Overlap check against all blocking bookings
@@ -343,7 +381,11 @@ export function getTimelineSegments(
     businessDate: string,
     existingBookings: BookingInterval[]
 ): Array<{ start: Date; end: Date; isBooked: boolean; percentStart: number; percentWidth: number }> {
-    const { opening, closing } = getBusinessOperatingWindow(businessDate);
+    const opening = createDateTimeFromBusinessDate(businessDate, OPERATING_HOURS.TOTAL_OPERATING_HOURS === 24 ? '00:00' : `${String(OPERATING_HOURS.START_HOUR).padStart(2, '0')}:00`);
+    const closing = OPERATING_HOURS.TOTAL_OPERATING_HOURS === 24
+        ? createDateTimeFromBusinessDate(addDaysToDateString(businessDate, 1), '00:00')
+        : createDateTimeFromBusinessDate(businessDate, `${String(OPERATING_HOURS.CLOSING_HOUR).padStart(2, '0')}:00`);
+
     const totalDurationMs = closing.getTime() - opening.getTime();
 
     // Filter and clamp active bookings to this operating window
@@ -394,3 +436,4 @@ export function getTimelineSegments(
 
     return segments;
 }
+

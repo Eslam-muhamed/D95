@@ -11,7 +11,7 @@ export const CONTACT_INFO = {
     whatsappNumber: '201000000095',
     instapayHandle: 'd95lounge@instapay',
     walletNumber: '01000000095',
-    workingHours: 'يومياً: 08:00 ص – 04:00 ص (20 ساعة متواصلة)',
+    workingHours: 'يومياً: مفتوح 24 ساعة على مدار اليوم (24/7)',
     address: 'D95 Gaming Lounge & Café',
     googleMapsLink: 'https://maps.app.goo.gl/7hUeemWJLdJtNosX6',
     mapsEmbedSrc: '',

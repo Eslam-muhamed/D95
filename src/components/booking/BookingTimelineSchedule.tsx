@@ -85,13 +85,13 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [hoveredSlot, setHoveredSlot] = useState<TimelineSlot | null>(null);
 
-    // Compute exactly 20 slots (1-hour intervals across the 20 operating hours from 08:00 AM to 04:00 AM)
+    // Compute slots (1-hour intervals across operating hours, e.g. 24 hours 24/7)
     // with FULL account of minutes for every booking
     const slots = useMemo<TimelineSlot[]>(() => {
         const result: TimelineSlot[] = [];
         const now = Date.now();
 
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < OPERATING_HOURS.TOTAL_OPERATING_HOURS; i++) {
             const slotHour = (OPERATING_HOURS.START_HOUR + i) % 24;
             const endHour = (OPERATING_HOURS.START_HOUR + i + 1) % 24;
 
@@ -361,7 +361,7 @@ export const BookingTimelineSchedule: React.FC<BookingTimelineScheduleProps> = (
 
                                     </div>
 
-                                    {/* The Horizontal Timeline Track of 20 Rounded Squares (08:00 AM - 04:00 AM) */}
+                                    {/* The Horizontal Timeline Track of Rounded Squares (24 Hours 24/7) */}
                                     <div className="space-y-1.5">
                                         <div
                                             className="flex items-center gap-1 sm:gap-1.5 p-1.5 sm:p-2.5 bg-black/60 dark:bg-black/80 rounded-xl border border-white/[0.06] overflow-x-auto select-none"
