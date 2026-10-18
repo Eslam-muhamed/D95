@@ -169,32 +169,33 @@ export default function GatewayPage() {
                         <span className="absolute -bottom-1.5 -right-1.5 text-xs text-neutral-400 font-brush">✕</span>
 
                         <div className="grid grid-cols-2 divide-x divide-neutral-300 dark:divide-neutral-500/50 text-center" dir="ltr">
-                            {/* FROM */}
+                            {/* 24 HOURS */}
                             <div className="px-2 sm:px-4 flex flex-col items-center">
-                                <span className="font-bebas text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 tracking-widest uppercase font-bold">
-                                    FROM
+                                <span className="font-bebas text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 tracking-widest uppercase font-bold flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    OPEN DAILY
                                 </span>
                                 <div className="flex items-baseline gap-1 mt-0.5">
                                     <span className="font-bebas text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white">
-                                        08:00
+                                        24
                                     </span>
                                     <span className="font-bebas text-sm sm:text-base font-bold text-red-600">
-                                        AM
+                                        HOURS
                                     </span>
                                 </div>
                             </div>
 
-                            {/* TO */}
+                            {/* 7 DAYS / NON-STOP */}
                             <div className="px-2 sm:px-4 flex flex-col items-center">
                                 <span className="font-bebas text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 tracking-widest uppercase font-bold">
-                                    TO
+                                    NON-STOP
                                 </span>
                                 <div className="flex items-baseline gap-1 mt-0.5">
                                     <span className="font-bebas text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white">
-                                        04:00
+                                        7
                                     </span>
                                     <span className="font-bebas text-sm sm:text-base font-bold text-red-600">
-                                        AM
+                                        DAYS
                                     </span>
                                 </div>
                             </div>
