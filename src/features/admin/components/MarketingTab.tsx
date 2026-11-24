@@ -1,0 +1,298 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { MessageCircle, Users, Download, Copy, Send, Search, Gamepad2, Coffee, Star } from 'lucide-react';
+import { toast } from 'sonner';
+
+interface Customer {
+  id: string;
+  phone_number: string;
+  full_name: string | null;
+  loyalty_points_balance: number;
+  sources: ('ps' | 'cafe' | 'loyalty')[];
+}
+
+export default function MarketingTab() {
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [messageTemplate, setMessageTemplate] = useState('أهلاً بك في D95 Lounge 🎮☕\n\nحبينا نعرف رأيك في تجربتك معانا وهل في أي ملاحظات نقدر نحسن بيها الخدمة؟ \n\nتقييمك يهمنا جداً!');
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+
+      // 1. Fetch from customers table (New loyalty system)
+      const { data: loyaltyCustomers, error: cError } = await supabase
+        .from('customers')
+        .select('phone_number, full_name, loyalty_points_balance')
+        .order('created_at', { ascending: false });
+
+      if (cError) throw cError;
+
+      // 2. Fetch from ps_bookings (Historical data)
+      const { data: bookingsData, error: bError } = await supabase
+        .from('ps_bookings')
+        .select('customer_phone, customer_name');
+
+      if (bError) throw bError;
+
+      // 3. Fetch from orders (Historical data)
+      const { data: ordersData, error: oError } = await supabase
+        .from('orders')
+        .select('customer_phone, customer_name');
+
+      if (oError) throw oError;
+
+      // Merge and deduplicate by phone number
+      const phoneMap = new Map<string, Customer>();
+
+      // First add loyalty customers (they have points and might have better data)
+      if (loyaltyCustomers) {
+        loyaltyCustomers.forEach(c => {
+           const phone = c.phone_number ? c.phone_number.replace(/[^0-9]/g, '') : '';
+           if (phone && phone.length >= 10) {
+             phoneMap.set(phone, {
+               id: phone, // using phone as unique id for map
+               phone_number: c.phone_number, // original
+               full_name: c.full_name,
+               loyalty_points_balance: c.loyalty_points_balance || 0,
+               sources: ['loyalty']
+             });
+           }
+        });
+      }
+
+      // Add bookings (Historical data)
+      if (bookingsData) {
+        bookingsData.forEach(b => {
+           const phone = b.customer_phone ? b.customer_phone.replace(/[^0-9]/g, '') : '';
+           if (phone && phone.length >= 10) {
+             if (phoneMap.has(phone)) {
+                 const existing = phoneMap.get(phone)!;
+                 if (!existing.sources.includes('ps')) existing.sources.push('ps');
+                 if (!existing.full_name && b.customer_name) existing.full_name = b.customer_name;
+             } else {
+                 phoneMap.set(phone, {
+                   id: phone,
+                   phone_number: b.customer_phone,
+                   full_name: b.customer_name,
+                   loyalty_points_balance: 0,
+                   sources: ['ps']
+                 });
+             }
+           }
+        });
+      }
+
+      // Add orders (Historical data)
+      if (ordersData) {
+        ordersData.forEach(o => {
+           const phone = o.customer_phone ? o.customer_phone.replace(/[^0-9]/g, '') : '';
+           if (phone && phone.length >= 10) {
+             if (phoneMap.has(phone)) {
+                 const existing = phoneMap.get(phone)!;
+                 if (!existing.sources.includes('cafe')) existing.sources.push('cafe');
+                 if (!existing.full_name && o.customer_name) existing.full_name = o.customer_name;
+             } else {
+                 phoneMap.set(phone, {
+                   id: phone,
+                   phone_number: o.customer_phone,
+                   full_name: o.customer_name,
+                   loyalty_points_balance: 0,
+                   sources: ['cafe']
+                 });
+             }
+           }
+        });
+      }
+
+      const allCustomers = Array.from(phoneMap.values());
+      // Sort to show ones with names or points first maybe, or just as is.
+      setCustomers(allCustomers);
+    } catch (err: unknown) {
+      console.error('Error fetching marketing customers:', err);
+      toast.error('حدث خطأ أثناء تجميع أرقام العملاء');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getWhatsAppLink = (phone: string | null | undefined, name: string | null) => {
+    // Basic Egypt phone number formatting for WA link
+    const safePhone = phone || '';
+    let formattedPhone = safePhone.replace(/[^0-9]/g, '');
+    if (formattedPhone.startsWith('01')) {
+      formattedPhone = '2' + formattedPhone;
+    }
+
+    let text = messageTemplate;
+    if (name) {
+      text = `أهلاً ${name}،\n\n` + text;
+    }
+    return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`;
+  };
+
+  const copyAllNumbers = () => {
+    const numbers = customers.map(c => c.phone_number).join('\n');
+    navigator.clipboard.writeText(numbers);
+    toast.success('تم نسخ جميع الأرقام بنجاح');
+  };
+
+  const exportToCSV = () => {
+    const headers = ['Name', 'Phone', 'Loyalty Points'];
+    const rows = customers.map(c => [c.full_name || 'بدون اسم', c.phone_number, c.loyalty_points_balance]);
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `customers_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const filteredCustomers = customers.filter(c => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    const nameMatch = c.full_name?.toLowerCase().includes(q);
+    const phoneMatch = c.phone_number?.toLowerCase().includes(q);
+    return nameMatch || phoneMatch;
+  });
+
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500" dir="rtl">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-inner shrink-0">
+            <MessageCircle className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-slate-800">التسويق عبر واتساب</h2>
+            <p className="text-sm text-slate-500 font-medium">تواصل مع عملائك لعرض الخصومات أو طلب التقييم</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg font-bold border border-emerald-100">
+                <Users className="w-4 h-4" />
+                <span>{customers.length} عميل</span>
+            </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Template Form */}
+        <div className="lg:col-span-1 space-y-4">
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <Send className="w-5 h-5 text-emerald-500" />
+                    محتوى الرسالة
+                </h3>
+                <textarea
+                    value={messageTemplate}
+                    onChange={(e) => setMessageTemplate(e.target.value)}
+                    rows={6}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all resize-none outline-none"
+                    placeholder="اكتب رسالتك هنا..."
+                />
+                <p className="text-[11px] text-slate-500 mt-2">
+                    ملاحظة: سيتم إضافة اسم العميل تلقائياً في بداية الرسالة إذا كان مسجلاً.
+                </p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+                 <h3 className="font-bold text-slate-800 mb-2">أدوات إضافية (إرسال جماعي)</h3>
+                 <button onClick={copyAllNumbers} className="w-full flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-bold transition-colors cursor-pointer">
+                     <Copy className="w-4 h-4" />
+                     نسخ كل الأرقام
+                 </button>
+                 <button onClick={exportToCSV} className="w-full flex items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-4 py-2.5 rounded-xl font-bold transition-colors cursor-pointer">
+                     <Download className="w-4 h-4" />
+                     تصدير الأرقام (CSV)
+                 </button>
+                 <p className="text-[10px] text-slate-400 text-center leading-relaxed">
+                     استخدم التصدير أو النسخ إذا كنت تستخدم برامج أو إضافات للإرسال الجماعي عبر الواتساب.
+                 </p>
+            </div>
+        </div>
+
+        {/* Customer List */}
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[600px]">
+           <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/50">
+               <h3 className="font-bold text-slate-800 whitespace-nowrap">قائمة العملاء (إرسال فردي)</h3>
+               <div className="relative w-full sm:w-64">
+                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                       <Search className="w-4 h-4 text-slate-400" />
+                   </div>
+                   <input
+                       type="text"
+                       placeholder="ابحث بالاسم أو الرقم..."
+                       value={searchQuery}
+                       onChange={(e) => setSearchQuery(e.target.value)}
+                       className="w-full bg-white border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 block pr-10 p-2 transition-all outline-none"
+                   />
+               </div>
+           </div>
+
+           <div className="flex-1 overflow-auto p-0 scrollbar-thin scrollbar-thumb-slate-200">
+               {loading ? (
+                   <div className="flex justify-center items-center h-full">
+                       <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                   </div>
+               ) : filteredCustomers.length === 0 ? (
+                   <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                       <Users className="w-12 h-12 text-slate-300 mb-3" />
+                       <p>{searchQuery ? 'لا توجد نتائج مطابقة للبحث' : 'لا يوجد عملاء مسجلين حتى الآن'}</p>
+                   </div>
+               ) : (
+                   <div className="divide-y divide-slate-100">
+                       {filteredCustomers.map((customer) => (
+                           <div key={customer.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                               <div>
+                                   <div className="flex items-center gap-2">
+                                       <p className="font-bold text-slate-800">{customer.full_name || 'بدون اسم'}</p>
+                                       <div className="flex items-center gap-1">
+                                           {customer.sources.includes('ps') && (
+                                               <span className="flex items-center gap-1 text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-100 font-bold" title="بلايستيشن">
+                                                   <Gamepad2 className="w-3 h-3" />
+                                                   PS
+                                               </span>
+                                           )}
+                                           {customer.sources.includes('cafe') && (
+                                               <span className="flex items-center gap-1 text-[10px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 font-bold" title="كافيه">
+                                                   <Coffee className="w-3 h-3" />
+                                                   كافيه
+                                               </span>
+                                           )}
+                                           {customer.sources.includes('loyalty') && (
+                                               <span className="flex items-center gap-1 text-[10px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-100 font-bold" title="مسجل في الولاء">
+                                                   <Star className="w-3 h-3" />
+                                                   ولاء
+                                               </span>
+                                           )}
+                                       </div>
+                                   </div>
+                                   <p className="text-sm text-slate-500 font-mono mt-0.5 text-left" dir="ltr">{customer.phone_number}</p>
+                               </div>
+                               <a
+                                   href={getWhatsAppLink(customer.phone_number, customer.full_name)}
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold transition-all shadow-sm shadow-emerald-200 active:scale-95"
+                               >
+                                   <MessageCircle className="w-4 h-4" />
+                                   <span className="hidden sm:inline">مراسلة</span>
+                               </a>
+                           </div>
+                       ))}
+                   </div>
+               )}
+           </div>
+        </div>
+      </div>
+    </div>
+  );
+}

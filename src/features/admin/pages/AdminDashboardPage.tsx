@@ -9,6 +9,7 @@ import {
     Star,
     ExternalLink,
     LogOut,
+    MessageCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import SimpleOperationsTab from '@/features/admin/components/SimpleOperationsTab';
@@ -20,12 +21,13 @@ import VenueStatusControl from '@/features/admin/components/VenueStatusControl';
 import UnifiedRevenueCard from '@/features/admin/components/UnifiedRevenueCard';
 import TournamentsTab from '@/features/admin/components/TournamentsTab';
 import AnalyticsTab from '@/features/admin/components/AnalyticsTab';
+import MarketingTab from '@/features/admin/components/MarketingTab';
 import SectionErrorBoundary from '@/components/features/SectionErrorBoundary';
 import { supabase } from '@/lib/supabase';
 import { playPs5NavigateSound } from '@/lib/sound';
 import { Trophy, Activity } from 'lucide-react';
 
-type TabType = 'operations' | 'orders' | 'menu_settings' | 'payment_settings' | 'loyalty' | 'tournaments' | 'analytics';
+type TabType = 'operations' | 'orders' | 'menu_settings' | 'payment_settings' | 'loyalty' | 'tournaments' | 'analytics' | 'marketing';
 
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
@@ -106,14 +108,19 @@ export default function AdminDashboardPage() {
             label: 'إعدادات الدفع والمحافظ',
             icon: <Wallet className="w-4 h-4" />,
         },
+        {
+            id: 'marketing',
+            label: 'التسويق واتساب',
+            icon: <MessageCircle className="w-4 h-4" />,
+        },
     ];
 
     return (
         <div className="min-h-screen w-full bg-slate-100/70 text-slate-900 font-body selection:bg-red-600 selection:text-white flex flex-col" dir="rtl">
             {/* Top Navigation Bar */}
-            <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200/90 px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-xs">
+            <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200/90 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-2 shadow-xs">
                 {/* Brand & Connection Badge */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 shrink-0">
                     <div className="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white shadow-sm">
                         <Gamepad2 className="w-5 h-5" />
                     </div>
@@ -132,7 +139,7 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* Desktop Tabs In Header */}
-                <div className="hidden md:flex items-center gap-1 bg-slate-100/90 border border-slate-200 p-1 rounded-xl">
+                <div className="hidden md:flex items-center gap-1 bg-slate-100/90 border border-slate-200 p-1 rounded-xl min-w-0 overflow-x-auto scrollbar-hide">
                     {navItems.map((item) => {
                         const isActive = activeTab === item.id;
                         return (
@@ -143,7 +150,7 @@ export default function AdminDashboardPage() {
                                     playPs5NavigateSound();
                                     setActiveTab(item.id);
                                 }}
-                                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                                     isActive
                                         ? 'bg-red-600 text-white shadow-sm'
                                         : 'text-slate-600 hover:text-slate-900 hover:bg-white'
@@ -162,7 +169,7 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* Right Actions: Public Site Link + Logout */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                     <VenueStatusControl userEmail={userEmail} variant="badge" />
 
                     <a
@@ -238,6 +245,7 @@ export default function AdminDashboardPage() {
                     {activeTab === 'loyalty' && <LoyaltyTab />}
                     {activeTab === 'tournaments' && <TournamentsTab />}
                     {activeTab === 'analytics' && <AnalyticsTab />}
+                    {activeTab === 'marketing' && <MarketingTab />}
                 </SectionErrorBoundary>
             </main>
 
@@ -330,6 +338,19 @@ export default function AdminDashboardPage() {
                 >
                     <Trophy className="w-5 h-5" />
                     <span className="text-[10px]">البطولات</span>
+                </button>
+                <button
+                    type="button"
+                    onClick={() => {
+                        playPs5NavigateSound();
+                        setActiveTab('marketing');
+                    }}
+                    className={`flex-1 flex flex-col items-center gap-1 py-1 rounded-xl transition-all cursor-pointer ${
+                        activeTab === 'marketing' ? 'text-emerald-500 font-bold' : 'text-slate-500'
+                    }`}
+                >
+                    <MessageCircle className="w-5 h-5" />
+                    <span className="text-[10px]">تسويق</span>
                 </button>
             </nav>
         </div>
